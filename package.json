@@ -1,0 +1,54 @@
+{
+  "name": "in-memory-snapshot-manager-for-protopedia",
+  "version": "0.0.1",
+  "description": "In-memory snapshot manager for ProtoPedia prototypes with TTL and efficient data access.",
+  "engines": {
+    "node": ">=20"
+  },
+  "private": false,
+  "type": "module",
+  "keywords": [
+    "in-memory-store",
+    "client",
+    "protopedia",
+    "nodejs",
+    "typescript"
+  ],
+  "author": "F88 <685250+F88@users.noreply.github.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/F88/in-memory-snapshot-manager-for-protopedia#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/F88/in-memory-snapshot-manager-for-protopedia.git"
+  },
+  "bugs": {
+    "url": "https://github.com/F88/in-memory-snapshot-manager-for-protopedia/issues"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint \"**/*.ts\"",
+    "lint:fix": "eslint \"**/*.ts\" --fix"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^10.1.0",
+    "@types/eslint": "^9.6.1",
+    "@types/node": "^24.10.1",
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "@vitest/coverage-v8": "^4.0.15",
+    "eslint": "^9.15.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.31.0",
+    "prettier": "^3.7.4",
+    "protopedia-api-v2-client": "^1.0.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.15"
+  },
+  "peerDependencies": {
+    "protopedia-api-v2-client": "^1.0.0"
+  }
+}
