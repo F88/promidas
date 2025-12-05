@@ -1,5 +1,9 @@
 # in-memory-snapshot-manager-for-protopedia
 
+PROMIDAS
+
+ProtoPedia Resource Organized Management In-memory Data Access Store
+
 In-memory snapshot manager for ProtoPedia prototypes with TTL and efficient data access.
 
 ## Project Overview
