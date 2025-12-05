@@ -29,3 +29,6 @@ coverage/
 
 # Misc
 *.log
+
+# NPM package
+*.tgz
