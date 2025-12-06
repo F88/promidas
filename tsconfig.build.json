@@ -1,0 +1,30 @@
+{
+  "extends": "./tsconfig.base.json",
+
+  "include": [
+    //
+    "lib/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "scripts",
+    "**/*.test.ts",
+    "**/*.perf.test.ts",
+    "**/__tests__",
+    "vitest.config.ts"
+  ],
+
+  "compilerOptions": {
+    /* Modules */
+    "rootDir": "./lib",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    /* Emit */
+    "outDir": "./dist",
+    "declaration": true,
+    // "declarationDir": "lib/types",
+    "declarationMap": true,
+    "sourceMap": true
+  }
+}

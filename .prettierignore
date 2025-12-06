@@ -1,0 +1,17 @@
+# Build outputs
+.next/
+out/
+build/
+dist/
+coverage/
+
+# Dependencies
+node_modules/
+
+# Storybook build
+storybook-static/
+
+# Misc
+package-lock.json
+renovate.json
+tools/prompts/*

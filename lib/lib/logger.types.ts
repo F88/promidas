@@ -1,0 +1,9 @@
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'silent';
+
+export type Logger = {
+  level: LogLevel;
+  debug: (message: string, meta?: unknown) => void;
+  info: (message: string, meta?: unknown) => void;
+  warn: (message: string, meta?: unknown) => void;
+  error: (message: string, meta?: unknown) => void;
+};

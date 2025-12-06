@@ -1,0 +1,40 @@
+# Node dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# TypeScript
+*.tsbuildinfo
+*.d.ts
+*.d.ts.map
+*.js
+*.js.map
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Editor/OS files
+.DS_Store
+.vscode/
+.idea/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Coverage
+coverage/
+test-report.junit.xml
+
+# NPM package
+*.tgz
+
+# Misc
+*.log
+
