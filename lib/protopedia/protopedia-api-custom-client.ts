@@ -20,7 +20,7 @@
  */
 import {
   createProtoPediaClient,
-  ListPrototypesParams,
+  type ListPrototypesParams,
   ProtoPediaApiClient,
   type ProtoPediaApiClientOptions,
 } from 'protopedia-api-v2-client';

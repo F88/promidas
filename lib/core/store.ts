@@ -7,7 +7,7 @@
  */
 import { createConsoleLogger } from '../lib/logger';
 
-import { NormalizedPrototype } from './types';
+import type { NormalizedPrototype } from './types';
 
 const THIRTY_MINUTES_IN_MS = 30 * 60 * 1_000;
 
@@ -118,7 +118,7 @@ export class PrototypeMapStore {
       prototypes.length > 0
         ? prototypes.reduce(
             (max, prototype) => (prototype.id > max ? prototype.id : max),
-            prototypes[0].id,
+            prototypes[0]!.id,
           )
         : null;
 

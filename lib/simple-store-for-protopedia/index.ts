@@ -12,7 +12,7 @@
  * All read operations work only against the current in-memory snapshot.
  * Network calls are performed only by setup/refresh operations.
  */
-import {
+import type {
   ListPrototypesParams,
   ProtoPediaApiClientOptions,
 } from 'protopedia-api-v2-client';

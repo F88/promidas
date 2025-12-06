@@ -18,6 +18,7 @@
   "compilerOptions": {
     /* Modules */
     "rootDir": "./lib",
+    "module": "ESNext",
     "moduleResolution": "Bundler",
     /* Emit */
     "outDir": "./dist",

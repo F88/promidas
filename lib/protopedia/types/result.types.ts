@@ -1,4 +1,4 @@
-import { NormalizedPrototype } from '../../core/types';
+import type { NormalizedPrototype } from '../../core/types';
 
 /**
  * Successful response from fetchPrototypes containing an array of prototypes.

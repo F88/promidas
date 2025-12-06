@@ -20,7 +20,7 @@
  *
  * @module
  */
-import { ListPrototypesParams } from 'protopedia-api-v2-client';
+import type { ListPrototypesParams } from 'protopedia-api-v2-client';
 
 import type { NormalizedPrototype } from '../core/types';
 

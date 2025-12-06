@@ -18,7 +18,7 @@
  *   without throwing exceptions.
  */
 import { createConsoleLogger } from '../../lib/logger';
-import { NetworkFailure } from '../types/prototype-api.types';
+import type { NetworkFailure } from '../types/prototype-api.types';
 import type { FetchPrototypesResult } from '../types/result.types';
 
 const logger = createConsoleLogger('info');
@@ -191,16 +191,17 @@ export function handleApiError(error: unknown): FetchPrototypesResult {
     const message =
       error instanceof Error ? error.message : 'Failed to fetch prototypes';
 
+    const details: NetworkFailure['details'] = {};
+    if (statusText !== undefined) details.statusText = statusText;
+    if (code !== undefined) details.code = code;
+    if (url !== undefined) details.url = url;
+    if (requestId !== undefined) details.requestId = requestId;
+
     return {
       ok: false,
       status,
       error: message,
-      details: {
-        statusText,
-        code,
-        url,
-        requestId,
-      },
+      details,
     };
   }
 

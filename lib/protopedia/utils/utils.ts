@@ -16,7 +16,7 @@
  */
 import type { ResultOfListPrototypesApiResponse } from 'protopedia-api-v2-client';
 
-import { NormalizedPrototype } from '../../core/types';
+import type { NormalizedPrototype } from '../../core/types';
 
 import { normalizeProtoPediaTimestamp } from './time';
 
@@ -93,20 +93,16 @@ export const splitPipeSeparatedString = (value: string): string[] => {
 export function normalizePrototype(
   prototype: UpstreamPrototype,
 ): NormalizedPrototype {
-  return {
+  const normalized: NormalizedPrototype = {
     id: prototype.id,
     prototypeNm: prototype.prototypeNm,
-    tags: prototype.tags ? splitPipeSeparatedString(prototype.tags) : [],
     teamNm: prototype.teamNm,
     users: prototype.users ? splitPipeSeparatedString(prototype.users) : [],
-    summary: prototype.summary,
     status: prototype.status,
     releaseFlg: prototype.releaseFlg,
-    createId: prototype.createId,
     createDate:
       normalizeProtoPediaTimestamp(prototype.createDate) ??
       prototype.createDate,
-    updateId: prototype.updateId,
     updateDate:
       normalizeProtoPediaTimestamp(prototype.updateDate) ??
       prototype.updateDate,
@@ -114,25 +110,53 @@ export function normalizePrototype(
       normalizeProtoPediaTimestamp(prototype.releaseDate) ??
       prototype.releaseDate,
     revision: prototype.revision,
-    awards: prototype.awards ? splitPipeSeparatedString(prototype.awards) : [],
     freeComment: prototype.freeComment,
-    systemDescription: prototype.systemDescription,
     viewCount: prototype.viewCount,
     goodCount: prototype.goodCount,
     commentCount: prototype.commentCount,
-    videoUrl: prototype.videoUrl,
     mainUrl: prototype.mainUrl,
-    relatedLink: prototype.relatedLink,
-    relatedLink2: prototype.relatedLink2,
-    relatedLink3: prototype.relatedLink3,
-    relatedLink4: prototype.relatedLink4,
-    relatedLink5: prototype.relatedLink5,
     licenseType: prototype.licenseType,
     thanksFlg: prototype.thanksFlg,
-    events: prototype.events ? splitPipeSeparatedString(prototype.events) : [],
-    officialLink: prototype.officialLink,
-    materials: prototype.materials
+  };
+
+  // Optional fields - only set if defined or explicitly set to empty/null
+  if ('tags' in prototype)
+    normalized.tags = prototype.tags
+      ? splitPipeSeparatedString(prototype.tags)
+      : [];
+  if (prototype.summary !== undefined) normalized.summary = prototype.summary;
+  if (prototype.createId !== undefined)
+    normalized.createId = prototype.createId;
+  if (prototype.updateId !== undefined)
+    normalized.updateId = prototype.updateId;
+  if ('awards' in prototype)
+    normalized.awards = prototype.awards
+      ? splitPipeSeparatedString(prototype.awards)
+      : [];
+  if (prototype.systemDescription !== undefined)
+    normalized.systemDescription = prototype.systemDescription;
+  if (prototype.videoUrl !== undefined)
+    normalized.videoUrl = prototype.videoUrl;
+  if (prototype.relatedLink !== undefined)
+    normalized.relatedLink = prototype.relatedLink;
+  if (prototype.relatedLink2 !== undefined)
+    normalized.relatedLink2 = prototype.relatedLink2;
+  if (prototype.relatedLink3 !== undefined)
+    normalized.relatedLink3 = prototype.relatedLink3;
+  if (prototype.relatedLink4 !== undefined)
+    normalized.relatedLink4 = prototype.relatedLink4;
+  if (prototype.relatedLink5 !== undefined)
+    normalized.relatedLink5 = prototype.relatedLink5;
+  if ('events' in prototype)
+    normalized.events = prototype.events
+      ? splitPipeSeparatedString(prototype.events)
+      : [];
+  if (prototype.officialLink !== undefined)
+    normalized.officialLink = prototype.officialLink;
+  if ('materials' in prototype)
+    normalized.materials = prototype.materials
       ? splitPipeSeparatedString(prototype.materials)
-      : [],
-  } satisfies NormalizedPrototype;
+      : [];
+
+  return normalized;
 }

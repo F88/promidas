@@ -17,7 +17,7 @@
  * its methods to keep a local snapshot of ProtoPedia data in sync with the
  * API.
  */
-import {
+import type {
   ListPrototypesParams,
   ProtoPediaApiClientOptions,
 } from 'protopedia-api-v2-client';

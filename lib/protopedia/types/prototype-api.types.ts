@@ -8,5 +8,7 @@ export type NetworkFailure = {
   details?: {
     statusText?: string;
     code?: string;
+    url?: string;
+    requestId?: string;
   };
 };
