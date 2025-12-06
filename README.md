@@ -105,7 +105,7 @@ client internally by providing the same options shape.
 ### Normalized Data Model
 
 - The core normalized type is `NormalizedPrototype` (see
-  `lib/api/prototypes.ts`).
+  `lib/core/types.ts`).
 - It is derived from `ResultOfListPrototypesApiResponse` provided by
   `protopedia-api-v2-client`.
 - Key normalization rules:
@@ -120,7 +120,7 @@ client internally by providing the same options shape.
 ### Fetch Layer
 
 - The primary fetch helper is `getPrototypes` located in
-  `lib/fetcher/get-prototypes.ts`.
+  `lib/protopedia/fetch-prototypes.ts`.
 - It expects an instance of `ProtoPediaApiClient` from
   `protopedia-api-v2-client` and uses `listPrototypes` under the hood.
 - Request parameters are typed as `ListPrototypesParams` from
@@ -134,7 +134,7 @@ client internally by providing the same options shape.
 ### In-Memory Prototype Store
 
 - The in-memory store is implemented as `PrototypeMapStore` in
-  `lib/stores/prototype-map-store.ts`.
+  `lib/core/store.ts`.
 - Responsibilities:
     - Hold a map of `prototypeId -> NormalizedPrototype` with a
       consistently updated backing array for iteration and random access.
@@ -152,7 +152,7 @@ client internally by providing the same options shape.
 ### Logger
 
 - The library ships with a minimal, dependency-free logger interface
-  defined in `lib/types/logger.types.ts`.
+  defined in `lib/lib/logger.types.ts`.
 - A default implementation is provided via `createConsoleLogger` in
   `lib/lib/logger.ts`.
 - Log levels:
@@ -179,7 +179,7 @@ client internally by providing the same options shape.
 ### Error Handling
 
 - Network-level failures are represented by the `NetworkFailure` type
-  (see `lib/types/prototype-api.types.ts`).
+  (see `lib/protopedia/types/prototype-api.types.ts`).
 - Fetch helpers like `getPrototypes` return discriminated unions so
   callers must explicitly handle both success and failure cases.
 - Application-level logic can choose to log, retry, or surface these
