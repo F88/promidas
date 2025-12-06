@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "moduleResolution": "Bundler",
+    "rootDir": "./lib",
+    "outDir": "./dist",
+    "declarationMap": true,
+    "sourceMap": true
+  },
+  "include": ["lib/**/*.ts"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.perf.test.ts",
+    "**/__tests__",
+    "vitest.config.ts"
+  ]
+}
