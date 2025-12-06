@@ -38,7 +38,8 @@
     "pack": "npm pack",
     "prebuild": "npm run clean",
     "prepublishOnly": "npm run build",
-    "typecheck": "tsc --project tsconfig.dev.json --noEmit"
+    "typecheck": "tsc --project tsconfig.dev.json --noEmit",
+    "prepare": "npm run build"
   },
   "devDependencies": {
     "@faker-js/faker": "^10.1.0",
