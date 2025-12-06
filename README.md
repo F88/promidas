@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/F88/promidas/actions/workflows/ci.yml/badge.svg)](https://github.com/F88/promidas/actions/workflows/ci.yml)
 
-[![codecov](https://codecov.io/github/F88/promidas/graph/badge.svg?token=M8TED1WKR5)](https://codecov.io/github/F88/promidas)
+[![codecov](https://codecov.io/github/F88/promidas/graph/badge.svg)](https://codecov.io/github/F88/promidas)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/F88/promidas)
 
 ProtoPedia Resource Organized Management In-memory Data Access Store
