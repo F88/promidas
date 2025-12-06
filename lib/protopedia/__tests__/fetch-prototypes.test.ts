@@ -5,7 +5,7 @@ import {
   fetchAndNormalizePrototypes,
   type ListPrototypesClient,
 } from '../fetch-prototypes';
-import * as networkUtils from '../utils/network-utils';
+import * as networkUtils from '../utils/network-utils.js';
 
 vi.mock('../utils/network-utils', async () => {
   const actual = await vi.importActual<typeof networkUtils>(

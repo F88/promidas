@@ -5,9 +5,9 @@
  * The store sits above upstream fetch logic, allowing server actions to reuse
  * canonical data without repeated API calls while still respecting TTL limits.
  */
-import { createConsoleLogger } from '../lib/logger';
+import { createConsoleLogger } from '../lib/logger.js';
 
-import type { NormalizedPrototype } from './types';
+import type { NormalizedPrototype } from './types.js';
 
 const THIRTY_MINUTES_IN_MS = 30 * 60 * 1_000;
 

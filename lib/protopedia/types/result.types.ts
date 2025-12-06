@@ -1,4 +1,4 @@
-import type { NormalizedPrototype } from '../../core/types';
+import type { NormalizedPrototype } from '../../core/types.js';
 
 /**
  * Successful response from fetchPrototypes containing an array of prototypes.

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { JST_OFFSET_MS, normalizeProtoPediaTimestamp } from '../../utils/time';
+import {
+  JST_OFFSET_MS,
+  normalizeProtoPediaTimestamp,
+} from '../../utils/time.js';
 
 describe('time utilities', () => {
   describe('JST_OFFSET_MS', () => {

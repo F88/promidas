@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { NormalizedPrototype } from '../../../core/types';
+import type { NormalizedPrototype } from '../../../core/types.js';
 import {
   splitPipeSeparatedString,
   normalizePrototype,

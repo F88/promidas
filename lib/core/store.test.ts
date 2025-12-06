@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { PrototypeMapStore } from './store';
-import type { NormalizedPrototype } from './types';
+import { PrototypeMapStore } from './store.js';
+import type { NormalizedPrototype } from './types.js';
 
 const createPrototype = (
   overrides: Partial<NormalizedPrototype> = {},

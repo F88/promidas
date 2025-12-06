@@ -17,10 +17,10 @@ import type {
   ProtoPediaApiClientOptions,
 } from 'protopedia-api-v2-client';
 
-import type { PrototypeMapStoreConfig } from '../core/store';
-import type { NormalizedPrototype } from '../core/types';
+import type { PrototypeMapStoreConfig } from '../core/store.js';
+import type { NormalizedPrototype } from '../core/types.js';
 
-import { createProtopediaInMemoryRepositoryImpl } from './protopedia-in-memory-repository';
+import { createProtopediaInMemoryRepositoryImpl } from './protopedia-in-memory-repository.js';
 
 /**
  * Basic statistics about the current in-memory snapshot for ProtoPedia.

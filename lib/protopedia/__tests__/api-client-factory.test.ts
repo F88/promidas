@@ -1,8 +1,8 @@
 import { createProtoPediaClient } from 'protopedia-api-v2-client';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-import * as fetchPrototypesModule from '../fetch-prototypes';
-import { createProtopediaApiCustomClient } from '../protopedia-api-custom-client';
+import * as fetchPrototypesModule from '../fetch-prototypes.js';
+import { createProtopediaApiCustomClient } from '../protopedia-api-custom-client.js';
 
 vi.mock('protopedia-api-v2-client', () => ({
   createProtoPediaClient: vi.fn(),

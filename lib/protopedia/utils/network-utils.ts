@@ -17,9 +17,9 @@
  * - Ensuring all API errors are normalized into {@link FetchPrototypesResult}
  *   without throwing exceptions.
  */
-import { createConsoleLogger } from '../../lib/logger';
-import type { NetworkFailure } from '../types/prototype-api.types';
-import type { FetchPrototypesResult } from '../types/result.types';
+import { createConsoleLogger } from '../../lib/logger.js';
+import type { NetworkFailure } from '../types/prototype-api.types.js';
+import type { FetchPrototypesResult } from '../types/result.types.js';
 
 const logger = createConsoleLogger('info');
 

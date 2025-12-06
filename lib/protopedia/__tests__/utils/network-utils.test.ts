@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { NetworkFailure } from '../../types/prototype-api.types';
+import { NetworkFailure } from '../../types/prototype-api.types.js';
 import {
   constructDisplayMessage,
   handleApiError,

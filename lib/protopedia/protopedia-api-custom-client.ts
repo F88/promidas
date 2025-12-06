@@ -25,8 +25,8 @@ import {
   type ProtoPediaApiClientOptions,
 } from 'protopedia-api-v2-client';
 
-import { fetchAndNormalizePrototypes } from './fetch-prototypes';
-import type { FetchPrototypesResult } from './types/result.types';
+import { fetchAndNormalizePrototypes } from './fetch-prototypes.js';
+import type { FetchPrototypesResult } from './types/result.types.js';
 
 /**
  * Re-export the SDK's client options type used by

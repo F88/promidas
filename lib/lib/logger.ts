@@ -1,4 +1,4 @@
-import type { Logger, LogLevel } from './logger.types';
+import type { Logger, LogLevel } from './logger.types.js';
 
 const levelOrder: LogLevel[] = ['debug', 'info', 'warn', 'error', 'silent'];
 
