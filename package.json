@@ -1,6 +1,6 @@
 {
   "name": "@f88/promidas",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "In-memory snapshot manager for ProtoPedia prototypes with TTL and efficient data access.",
   "engines": {
     "node": ">=20"
@@ -64,12 +64,12 @@
     "LICENSE",
     "dist"
   ],
-  "main": "./dist/lib/index.js",
-  "types": "./dist/lib/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/lib/index.d.ts",
-      "import": "./dist/lib/index.js"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     }
   },
   "publishConfig": {
