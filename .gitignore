@@ -30,6 +30,7 @@ yarn-error.log*
 
 # Coverage
 coverage/
+test-report.junit.xml
 
 # NPM package
 *.tgz
