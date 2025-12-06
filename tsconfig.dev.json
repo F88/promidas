@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./tsconfig.base.json"
+  // "include": [
+  //
+  // "lib/**/*.ts"
+  // "vitest.config.ts",
+  // "scripts/**/*.ts"
+  // ],
+  // "exclude": [
+  //
+  // "node_modules",
+  // "dist"
+  // ],
+  // "compilerOptions": {
+  /* Modules */
+  // "types": ["node", "vitest/globals"],
+  /* Emit */
+  // "noEmit": true
+  // }
+}

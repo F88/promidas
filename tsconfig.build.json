@@ -1,19 +1,29 @@
 {
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "moduleResolution": "Bundler",
-    "rootDir": "./lib",
-    "outDir": "./dist",
-    "declarationMap": true,
-    "sourceMap": true
-  },
-  "include": ["lib/**/*.ts"],
+  "extends": "./tsconfig.base.json",
+
+  "include": [
+    //
+    "lib/**/*.ts"
+  ],
   "exclude": [
     "node_modules",
     "dist",
+    "scripts",
     "**/*.test.ts",
     "**/*.perf.test.ts",
     "**/__tests__",
     "vitest.config.ts"
-  ]
+  ],
+
+  "compilerOptions": {
+    /* Modules */
+    "rootDir": "./lib",
+    "moduleResolution": "Bundler",
+    /* Emit */
+    "outDir": "./dist",
+    "declaration": true,
+    // "declarationDir": "lib/types",
+    "declarationMap": true,
+    "sourceMap": true
+  }
 }

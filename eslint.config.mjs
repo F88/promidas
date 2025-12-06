@@ -10,6 +10,7 @@ export default [
       'node_modules/**',
       'eslint.config.mjs',
       'prettier.config.mjs',
+      '**/*.d.ts',
     ],
   },
   {
