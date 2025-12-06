@@ -202,7 +202,7 @@ environments.
 
 - Random one prototype in a view
     - On first load, fetch a page of prototypes via
-      `protopediaNoStoreClient` and `getPrototypes`.
+      `createProtopediaApiCustomClient` and `fetchAndNormalizePrototypes`.
     - Normalize and push all results into a shared `PrototypeMapStore`
       instance.
     - When the user clicks a "Show me something" button, call
@@ -213,7 +213,7 @@ environments.
       `NormalizedPrototype` objects from the list response.
     - On a detail page or modal, first call `store.getById(id)`.
     - If the prototype is not found in the store, fall back to a
-      single-item fetch using `protopediaNoStoreClient`, normalize the
+      single-item fetch using `createProtopediaApiCustomClient`, normalize the
       result, insert it into the store, and then render it.
 
 ### Server-side examples
@@ -227,8 +227,8 @@ environments.
       `getPrototypes` and repopulate the map before serving results.
 
 - Batch or CLI processing of multiple prototypes
-    - From a CLI or batch script, use `protopediaNoStoreClient`
-      together with `getPrototypes` to fetch multiple prototypes in a
+    - From a CLI or batch script, use `createProtopediaApiCustomClient`
+      together with `fetchAndNormalizePrototypes` to fetch multiple prototypes in a
       single call.
     - Work against the normalized `NormalizedPrototype[]` result for
       tasks like exporting to CSV, generating static content, or
@@ -255,7 +255,7 @@ npm install github:F88/promidas protopedia-api-v2-client
 ### Quick Start
 
 ```typescript
-import { createProtopediaInMemoryRepository } from 'memorystore-for-pp';
+import { createProtopediaInMemoryRepository } from '@f88/promidas';
 
 // Create repository with custom configuration
 const repo = createProtopediaInMemoryRepository(
