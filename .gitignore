@@ -7,10 +7,10 @@ build/
 
 # TypeScript
 *.tsbuildinfo
-*.js
-*.js.map
 *.d.ts
 *.d.ts.map
+*.js
+*.js.map
 
 # Logs
 npm-debug.log*
