@@ -21,7 +21,7 @@ patterns, and how to combine the store-wide TTL with background
 refresh.
 
 For payload size and memory characteristics of the store, see
-`STORE-DESIGN-NOTES.md`.
+`STORE-DESIGN.md`.
 
 ## Overview
 
