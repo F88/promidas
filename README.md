@@ -249,7 +249,7 @@ more advanced patterns such as:
 ### Installation
 
 ```bash
-npm install memorystore-for-pp protopedia-api-v2-client
+npm install github:F88/promidas protopedia-api-v2-client
 ```
 
 ### Quick Start
