@@ -7,6 +7,10 @@ build/
 
 # TypeScript
 *.tsbuildinfo
+*.js
+*.js.map
+*.d.ts
+*.d.ts.map
 
 # Logs
 npm-debug.log*
@@ -27,8 +31,9 @@ yarn-error.log*
 # Coverage
 coverage/
 
+# NPM package
+*.tgz
+
 # Misc
 *.log
 
-# NPM package
-*.tgz
