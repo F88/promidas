@@ -100,7 +100,7 @@ ProtoPedia HTTP API.
 ### 1. Create a repository instance
 
 ```ts
-import { createProtopediaInMemoryRepository } from 'memorystore-for-pp';
+import { createProtopediaInMemoryRepository } from 'in-memory-snapshot-manager-for-protopedia';
 
 const repo = createProtopediaInMemoryRepository(
     {
