@@ -191,7 +191,7 @@ In practice, you would wire these pieces together as follows:
 ```ts
 const store = new PrototypeMapStore();
 
-async function refreshTask(): Promise<void> {
+async function refreshTask(client: ProtoPediaApiClient): Promise<void> {
     await refreshAll(store, client);
 }
 
