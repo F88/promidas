@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { NetworkFailure } from '../../types/prototype-api.types.js';
+import type { NetworkFailure } from '../../types/prototype-api.types.js';
 import {
   constructDisplayMessage,
   handleApiError,
   resolveErrorMessage,
-} from '../../utils/network-utils';
+} from '../../utils/network-utils.js';
 
 vi.mock('../../lib/logger', () => ({
   createConsoleLogger: () => ({
@@ -59,7 +59,6 @@ describe('network-utils', () => {
         error: new Error('Resource not found'),
         details: {
           statusText: 'Not Found',
-          code: undefined,
         },
       };
 
@@ -209,9 +208,6 @@ describe('network-utils', () => {
           error: 'Authentication failed',
           details: {
             statusText: 'Unauthorized',
-            code: undefined,
-            url: undefined,
-            requestId: undefined,
           },
         });
       });
@@ -246,10 +242,7 @@ describe('network-utils', () => {
           status: 503,
           error: 'Service temporarily unavailable',
           details: {
-            statusText: undefined,
             code: 'SERVICE_UNAVAILABLE',
-            url: undefined,
-            requestId: undefined,
           },
         });
       });
