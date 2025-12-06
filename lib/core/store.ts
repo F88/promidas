@@ -84,15 +84,10 @@ export class PrototypeMapStore {
   }
 
   /**
-   * Replaces the current prototype snapshot with the provided collection if within size limits.
-   *
-   * @returns Metadata about the stored snapshot, or null when the payload exceeded limits.
-   */
-  /**
    * Store the provided snapshot if it fits within the configured payload limit.
    *
-   * Performs size estimation, replaces both the backing map and ordered array,
-   * and refreshes metadata used for TTL enforcement.
+   * @param prototypes
+   * @returns Metadata about the stored snapshot, or null when the payload exceeded limits.
    */
   setAll(
     prototypes: NormalizedPrototype[],
