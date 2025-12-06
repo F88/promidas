@@ -31,7 +31,7 @@ export const createConsoleLogger = (level: LogLevel = 'info'): Logger => {
     debug: (message, meta) => {
       if (!shouldLog(level, 'debug') || !safeDebug) return;
       const payload =
-        meta && typeof meta === 'object'
+        meta && typeof meta === 'object' && !Array.isArray(meta)
           ? { level: 'debug', ...(meta as Record<string, unknown>) }
           : { level: 'debug', meta };
       safeDebug(message, payload);
