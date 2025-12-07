@@ -9,7 +9,8 @@
 
 ProtoPedia Resource Organized Management In-memory Data Access Store
 
-In-memory snapshot manager for ProtoPedia prototypes with TTL and efficient data access.
+Featuring a core in-memory snapshot manager, this project provides TTL and efficient data access for ProtoPedia prototypes.
+A ready-to-use utility tool is also bundled for combining with an API client.
 
 ## Project Overview
 
