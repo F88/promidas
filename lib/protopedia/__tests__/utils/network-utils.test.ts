@@ -51,6 +51,41 @@ describe('network-utils', () => {
         'Unknown error occurred.',
       );
     });
+
+    it('handles Error with whitespace-only message', () => {
+      const error = new Error('   ');
+      expect(resolveErrorMessage(error)).toBe('   ');
+    });
+
+    it('handles string with whitespace-only', () => {
+      expect(resolveErrorMessage('   ')).toBe('   ');
+    });
+
+    it('handles object with message property as non-string', () => {
+      expect(resolveErrorMessage({ message: 123 })).toBe(
+        'Unknown error occurred.',
+      );
+    });
+
+    it('handles bigint value', () => {
+      expect(resolveErrorMessage(BigInt(404))).toBe('Unknown error occurred.');
+    });
+
+    it('handles Error subclass', () => {
+      class CustomError extends Error {
+        constructor(message: string) {
+          super(message);
+          this.name = 'CustomError';
+        }
+      }
+      const error = new CustomError('Custom error occurred');
+      expect(resolveErrorMessage(error)).toBe('Custom error occurred');
+    });
+
+    it('handles DOMException', () => {
+      const error = new DOMException('Operation failed', 'AbortError');
+      expect(resolveErrorMessage(error)).toBe('Operation failed');
+    });
   });
 
   describe('constructDisplayMessage', () => {
@@ -154,6 +189,144 @@ describe('network-utils', () => {
         'Unknown error occurred. (500)',
       );
     });
+
+    it('handles empty string statusText', () => {
+      const failure: NetworkFailure = {
+        status: 500,
+        error: new Error('Internal error'),
+        details: {
+          res: {
+            statusText: '',
+          },
+        },
+      };
+
+      expect(constructDisplayMessage(failure)).toBe('Internal error (500)');
+    });
+
+    it('handles empty string code', () => {
+      const failure: NetworkFailure = {
+        status: 500,
+        error: new Error('Connection error'),
+        details: {
+          res: {
+            code: '',
+          },
+        },
+      };
+
+      expect(constructDisplayMessage(failure)).toBe('Connection error (500)');
+    });
+
+    it('uses code when statusText is empty', () => {
+      const failure: NetworkFailure = {
+        status: 500,
+        error: new Error('Network failure'),
+        details: {
+          res: {
+            statusText: '',
+            code: 'ECONNREFUSED',
+          },
+        },
+      };
+
+      expect(constructDisplayMessage(failure)).toBe(
+        'ECONNREFUSED: Network failure (500)',
+      );
+    });
+
+    it('handles very long error messages', () => {
+      const longMessage = 'A'.repeat(1000);
+      const failure: NetworkFailure = {
+        status: 500,
+        error: new Error(longMessage),
+      };
+
+      const result = constructDisplayMessage(failure);
+      expect(result).toBe(`${longMessage} (500)`);
+      expect(result.length).toBe(1006); // 1000 + ' (500)'.length
+    });
+
+    it('handles status code 0', () => {
+      const failure: NetworkFailure = {
+        status: 0,
+        error: new Error('Network error'),
+      };
+
+      expect(constructDisplayMessage(failure)).toBe('Network error (0)');
+    });
+
+    it('handles negative status codes', () => {
+      const failure: NetworkFailure = {
+        status: -1,
+        error: new Error('Invalid status'),
+      };
+
+      expect(constructDisplayMessage(failure)).toBe('Invalid status (-1)');
+    });
+
+    it('does not duplicate prefix with different case', () => {
+      const failure: NetworkFailure = {
+        status: 404,
+        error: new Error('not found: Resource missing'),
+        details: {
+          res: {
+            statusText: 'Not Found',
+          },
+        },
+      };
+
+      // Case-sensitive check - prefix will be added
+      expect(constructDisplayMessage(failure)).toBe(
+        'Not Found: not found: Resource missing (404)',
+      );
+    });
+
+    it('handles prefix exactly matching message', () => {
+      const failure: NetworkFailure = {
+        status: 401,
+        error: new Error('Unauthorized'),
+        details: {
+          res: {
+            statusText: 'Unauthorized',
+          },
+        },
+      };
+
+      expect(constructDisplayMessage(failure)).toBe('Unauthorized (401)');
+    });
+
+    it('handles prefix with colon in error message', () => {
+      const failure: NetworkFailure = {
+        status: 500,
+        error: new Error('Error: Something went wrong'),
+        details: {
+          res: {
+            code: 'ERROR',
+          },
+        },
+      };
+
+      expect(constructDisplayMessage(failure)).toBe(
+        'ERROR: Error: Something went wrong (500)',
+      );
+    });
+
+    it('handles multiple colons in message', () => {
+      const failure: NetworkFailure = {
+        status: 500,
+        error: new Error('Error: Failed: Connection: Timeout'),
+        details: {
+          res: {
+            statusText: 'Internal Server Error',
+          },
+        },
+      };
+
+      expect(constructDisplayMessage(failure)).toBe(
+        'Internal Server Error: Error: Failed: Connection: Timeout (500)',
+      );
+    });
   });
 
   describe('handleApiError', () => {
@@ -177,6 +350,22 @@ describe('network-utils', () => {
         expect(result.ok).toBe(false);
         if (!result.ok) {
           expect(result.status).toBe(504);
+        }
+      });
+
+      it('returns consistent result for multiple AbortErrors', () => {
+        const abortError1 = new DOMException('Timeout 1', 'AbortError');
+        const abortError2 = new DOMException('Timeout 2', 'AbortError');
+
+        const result1 = handleApiError(abortError1);
+        const result2 = handleApiError(abortError2);
+
+        expect(result1).toEqual(result2);
+        expect(result1.ok).toBe(false);
+        expect(result2.ok).toBe(false);
+        if (!result1.ok && !result2.ok) {
+          expect(result1.status).toBe(504);
+          expect(result2.status).toBe(504);
         }
       });
     });
@@ -312,6 +501,109 @@ describe('network-utils', () => {
           expect(result.details?.res?.code).toBeUndefined();
         }
       });
+
+      it('handles ProtoPediaApiError with missing req.method', () => {
+        const apiError = new ProtoPediaApiError({
+          message: 'Bad gateway',
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+            method: undefined as any,
+          },
+          status: 502,
+          statusText: 'Bad Gateway',
+        });
+
+        const result = handleApiError(apiError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.status).toBe(502);
+          expect(result.details?.req?.url).toBe(
+            'https://protopedia.cc/api/prototypes',
+          );
+          expect(result.details?.req?.method).toBeUndefined();
+        }
+      });
+
+      it('handles ProtoPediaApiError with missing req.url', () => {
+        const apiError = new ProtoPediaApiError({
+          message: 'Request failed',
+          req: {
+            url: undefined as any,
+            method: 'POST',
+          },
+          status: 400,
+          statusText: 'Bad Request',
+        });
+
+        const result = handleApiError(apiError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.details?.req?.url).toBeUndefined();
+          expect(result.details?.req?.method).toBe('POST');
+        }
+      });
+
+      it('handles ProtoPediaApiError with very long URL', () => {
+        const longUrl = 'https://protopedia.cc/api/' + 'a'.repeat(1000);
+        const apiError = new ProtoPediaApiError({
+          message: 'Request failed',
+          req: {
+            url: longUrl,
+            method: 'GET',
+          },
+          status: 414,
+          statusText: 'URI Too Long',
+        });
+
+        const result = handleApiError(apiError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.details?.req?.url).toBe(longUrl);
+          expect(result.details?.req?.url?.length).toBeGreaterThan(1000);
+        }
+      });
+
+      it('handles ProtoPediaApiError with empty message', () => {
+        const apiError = new ProtoPediaApiError({
+          message: '',
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+            method: 'GET',
+          },
+          status: 500,
+          statusText: 'Internal Server Error',
+        });
+
+        const result = handleApiError(apiError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.error).toBe('');
+          expect(result.status).toBe(500);
+        }
+      });
+
+      it('handles ProtoPediaApiError with status 0', () => {
+        const apiError = new ProtoPediaApiError({
+          message: 'Network error',
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+            method: 'GET',
+          },
+          status: 0,
+          statusText: '',
+        });
+
+        const result = handleApiError(apiError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.status).toBe(0);
+        }
+      });
     });
 
     describe('HTTP-like error handling', () => {
@@ -414,6 +706,197 @@ describe('network-utils', () => {
           expect(result.error).toBe('Failed to fetch prototypes');
         }
       });
+
+      it('handles HTTP error with only req.url', () => {
+        const httpError = Object.assign(new Error('Request failed'), {
+          status: 400,
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+          },
+        });
+
+        const result = handleApiError(httpError);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 400,
+          error: 'Request failed',
+          details: {
+            req: {
+              url: 'https://protopedia.cc/api/prototypes',
+            },
+          },
+        });
+      });
+
+      it('handles HTTP error with only req.method', () => {
+        const httpError = Object.assign(new Error('Method not allowed'), {
+          status: 405,
+          req: {
+            method: 'DELETE',
+          },
+        });
+
+        const result = handleApiError(httpError);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 405,
+          error: 'Method not allowed',
+          details: {
+            req: {
+              method: 'DELETE',
+            },
+          },
+        });
+      });
+
+      it('does not create empty req object when no req fields present', () => {
+        const httpError = Object.assign(new Error('Server error'), {
+          status: 500,
+          statusText: 'Internal Server Error',
+        });
+
+        const result = handleApiError(httpError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.details?.req).toBeUndefined();
+          expect(result.details?.res).toBeDefined();
+        }
+      });
+
+      it('does not create empty res object when no res fields present', () => {
+        const httpError = Object.assign(new Error('Request failed'), {
+          status: 400,
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+            method: 'POST',
+          },
+        });
+
+        const result = handleApiError(httpError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.details?.req).toBeDefined();
+          expect(result.details?.res).toBeUndefined();
+        }
+      });
+
+      it('handles HTTP error with status as string number', () => {
+        const httpError = {
+          status: '404' as any,
+          message: 'Not found',
+        };
+
+        const result = handleApiError(httpError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.status).toBe(404);
+        }
+      });
+
+      it('handles HTTP error with very large status code', () => {
+        const httpError = Object.assign(new Error('Invalid status'), {
+          status: 999999,
+        });
+
+        const result = handleApiError(httpError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.status).toBe(999999);
+        }
+      });
+
+      it('handles HTTP error with all possible metadata', () => {
+        const httpError = Object.assign(new Error('Complete error'), {
+          status: 422,
+          statusText: 'Unprocessable Entity',
+          code: 'VALIDATION_ERROR',
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+            method: 'POST',
+          },
+        });
+
+        const result = handleApiError(httpError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.status).toBe(422);
+          expect(result.error).toBe('Complete error');
+          expect(result.details?.req?.url).toBe(
+            'https://protopedia.cc/api/prototypes',
+          );
+          expect(result.details?.req?.method).toBe('POST');
+          expect(result.details?.res?.statusText).toBe('Unprocessable Entity');
+          expect(result.details?.res?.code).toBe('VALIDATION_ERROR');
+        }
+      });
+
+      it('handles HTTP error with empty string req.url', () => {
+        const httpError = Object.assign(new Error('Empty URL'), {
+          status: 400,
+          req: {
+            url: '',
+            method: 'GET',
+          },
+        });
+
+        const result = handleApiError(httpError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.details?.req?.url).toBe('');
+        }
+      });
+
+      it('handles HTTP error with empty string req.method', () => {
+        const httpError = Object.assign(new Error('Empty method'), {
+          status: 400,
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+            method: '',
+          },
+        });
+
+        const result = handleApiError(httpError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.details?.req?.method).toBe('');
+        }
+      });
+
+      it('handles HTTP error with null status', () => {
+        const httpError = {
+          status: null as any,
+          message: 'Null status',
+        };
+
+        const result = handleApiError(httpError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.status).toBe(500); // status ?? 500
+        }
+      });
+
+      it('handles HTTP error with negative status', () => {
+        const httpError = Object.assign(new Error('Negative status'), {
+          status: -500,
+        });
+
+        const result = handleApiError(httpError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.status).toBe(-500);
+        }
+      });
     });
 
     describe('unexpected error handling', () => {
@@ -505,6 +988,151 @@ describe('network-utils', () => {
           expect(result.error).toBe('Array length out of bounds');
         }
       });
+
+      it('handles Error with empty message', () => {
+        const error = new Error('');
+        const result = handleApiError(error);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 500,
+          error: '',
+          details: {},
+        });
+      });
+
+      it('handles plain object without status', () => {
+        const error = { message: 'Plain object error' };
+        const result = handleApiError(error);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 500,
+          error: 'Failed to fetch prototypes',
+          details: {},
+        });
+      });
+
+      it('handles array as error', () => {
+        const error = ['error', 'occurred'];
+        const result = handleApiError(error);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 500,
+          error: 'Failed to fetch prototypes',
+          details: {},
+        });
+      });
+
+      it('handles function as error', () => {
+        const error = () => 'error function';
+        const result = handleApiError(error);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 500,
+          error: 'Failed to fetch prototypes',
+          details: {},
+        });
+      });
+
+      it('handles symbol as error', () => {
+        const error = Symbol('error');
+        const result = handleApiError(error);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 500,
+          error: 'Failed to fetch prototypes',
+          details: {},
+        });
+      });
+
+      it('handles boolean as error', () => {
+        const result = handleApiError(false);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 500,
+          error: 'Failed to fetch prototypes',
+          details: {},
+        });
+      });
+
+      it('handles RegExp as error', () => {
+        const error = /error pattern/;
+        const result = handleApiError(error);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 500,
+          error: 'Failed to fetch prototypes',
+          details: {},
+        });
+      });
+
+      it('handles Date as error', () => {
+        const error = new Date();
+        const result = handleApiError(error);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 500,
+          error: 'Failed to fetch prototypes',
+          details: {},
+        });
+      });
+
+      it('handles Map as error', () => {
+        const error = new Map([['key', 'value']]);
+        const result = handleApiError(error);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 500,
+          error: 'Failed to fetch prototypes',
+          details: {},
+        });
+      });
+
+      it('handles Set as error', () => {
+        const error = new Set([1, 2, 3]);
+        const result = handleApiError(error);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 500,
+          error: 'Failed to fetch prototypes',
+          details: {},
+        });
+      });
+
+      it('handles Promise as error', () => {
+        const error = Promise.resolve('error');
+        const result = handleApiError(error);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 500,
+          error: 'Failed to fetch prototypes',
+          details: {},
+        });
+      });
+
+      it('handles circular reference object', () => {
+        const error: any = { name: 'circular' };
+        error.self = error;
+
+        const result = handleApiError(error);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 500,
+          error: 'Failed to fetch prototypes',
+          details: {},
+        });
+      });
     });
 
     describe('edge cases', () => {
@@ -588,6 +1216,165 @@ describe('network-utils', () => {
             expect(result.details).toBeDefined();
           }
         });
+      });
+
+      it('result object has correct shape', () => {
+        const error = new Error('Test error');
+        const result = handleApiError(error);
+
+        expect(result).toHaveProperty('ok');
+        expect(result).toHaveProperty('status');
+        expect(result).toHaveProperty('error');
+        expect(result).toHaveProperty('details');
+
+        expect(Object.keys(result).sort()).toEqual([
+          'details',
+          'error',
+          'ok',
+          'status',
+        ]);
+      });
+
+      it('status is always a number', () => {
+        const testCases = [
+          new DOMException('Aborted', 'AbortError'),
+          new ProtoPediaApiError({
+            message: 'API error',
+            req: { url: 'https://test.com', method: 'GET' },
+            status: 404,
+            statusText: 'Not Found',
+          }),
+          { status: 500, message: 'Server error' },
+          new Error('Unexpected'),
+        ];
+
+        testCases.forEach((error) => {
+          const result = handleApiError(error);
+          expect(result.ok).toBe(false);
+          if (!result.ok) {
+            expect(typeof result.status).toBe('number');
+          }
+        });
+      });
+
+      it('error is always a string', () => {
+        const testCases = [
+          new DOMException('Aborted', 'AbortError'),
+          new ProtoPediaApiError({
+            message: 'API error',
+            req: { url: 'https://test.com', method: 'GET' },
+            status: 404,
+            statusText: 'Not Found',
+          }),
+          { status: 500, message: 'Server error' },
+          new Error('Unexpected'),
+          null,
+          undefined,
+          123,
+        ];
+
+        testCases.forEach((error) => {
+          const result = handleApiError(error);
+          expect(result.ok).toBe(false);
+          if (!result.ok) {
+            expect(typeof result.error).toBe('string');
+          }
+        });
+      });
+
+      it('details is always an object', () => {
+        const testCases = [
+          new DOMException('Aborted', 'AbortError'),
+          new ProtoPediaApiError({
+            message: 'API error',
+            req: { url: 'https://test.com', method: 'GET' },
+            status: 404,
+            statusText: 'Not Found',
+          }),
+          { status: 500, message: 'Server error' },
+          new Error('Unexpected'),
+        ];
+
+        testCases.forEach((error) => {
+          const result = handleApiError(error);
+          expect(result.ok).toBe(false);
+          if (!result.ok) {
+            expect(typeof result.details).toBe('object');
+            expect(result.details).not.toBeNull();
+            expect(Array.isArray(result.details)).toBe(false);
+          }
+        });
+      });
+
+      it('empty details object is distinct from undefined', () => {
+        const error = new Error('Test error');
+        const result = handleApiError(error);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.details).toEqual({});
+          expect(Object.keys(result.details!).length).toBe(0);
+        }
+      });
+
+      it('details with req only has no res property', () => {
+        const httpError = Object.assign(new Error('Request error'), {
+          status: 400,
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+            method: 'POST',
+          },
+        });
+
+        const result = handleApiError(httpError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.details).toHaveProperty('req');
+          expect(result.details).not.toHaveProperty('res');
+          expect(Object.keys(result.details!)).toEqual(['req']);
+        }
+      });
+
+      it('details with res only has no req property', () => {
+        const httpError = Object.assign(new Error('Response error'), {
+          status: 500,
+          statusText: 'Internal Server Error',
+        });
+
+        const result = handleApiError(httpError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.details).toHaveProperty('res');
+          expect(result.details).not.toHaveProperty('req');
+          expect(Object.keys(result.details!)).toEqual(['res']);
+        }
+      });
+
+      it('handles multiple errors in sequence', () => {
+        const errors = [
+          new DOMException('Abort', 'AbortError'),
+          new Error('Generic error'),
+          { status: 404, message: 'Not found' },
+        ];
+
+        const results = errors.map((e) => handleApiError(e));
+
+        results.forEach((result) => {
+          expect(result.ok).toBe(false);
+          if (!result.ok) {
+            expect(result).toHaveProperty('status');
+            expect(result).toHaveProperty('error');
+            expect(result).toHaveProperty('details');
+          }
+        });
+
+        if (!results[0]!.ok && !results[1]!.ok && !results[2]!.ok) {
+          expect(results[0]!.status).toBe(504);
+          expect(results[1]!.status).toBe(500);
+          expect(results[2]!.status).toBe(404);
+        }
       });
     });
 
