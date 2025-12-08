@@ -1176,8 +1176,8 @@ describe('network-utils', () => {
 
         expect(result.ok).toBe(false);
         if (!result.ok) {
-          // Number('NOT_A_NUMBER') returns NaN
-          expect(Number.isNaN(result.status)).toBe(true);
+          // Non-numeric status defaults to 500
+          expect(result.status).toBe(500);
         }
       });
 

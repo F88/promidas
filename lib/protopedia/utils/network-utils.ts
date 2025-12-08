@@ -212,7 +212,11 @@ export function handleApiError(error: unknown): FetchPrototypesResult {
 
   // Handle HTTP-like errors with a `status` property
   if (typeof error === 'object' && error !== null && 'status' in error) {
-    const status = Number((error as { status?: number }).status ?? 500);
+    const rawStatus = (error as { status?: unknown }).status;
+    const parsedStatus =
+      typeof rawStatus === 'number' ? rawStatus : Number(rawStatus);
+    const status =
+      Number.isFinite(parsedStatus) && rawStatus != null ? parsedStatus : 500;
     const errorObj = error as {
       statusText?: string;
       code?: string;
