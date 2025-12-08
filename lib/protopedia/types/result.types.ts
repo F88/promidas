@@ -1,5 +1,7 @@
 import type { NormalizedPrototype } from '../../core/types.js';
 
+import type { NetworkFailure } from './prototype-api.types.js';
+
 /**
  * Successful response from fetchPrototypes containing an array of prototypes.
  */
@@ -13,15 +15,8 @@ export type FetchPrototypesSuccess = {
  */
 export type FetchPrototypesFailure = {
   ok: false;
-  status: number;
   error: string;
-  details?: {
-    statusText?: string;
-    code?: string;
-    url?: string;
-    requestId?: string;
-  };
-};
+} & Omit<NetworkFailure, 'error'>;
 
 /**
  * Result type for fetchPrototypes function - either success with data or failure with error.
