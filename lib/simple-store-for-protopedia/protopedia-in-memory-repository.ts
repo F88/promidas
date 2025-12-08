@@ -33,7 +33,7 @@ import { constructDisplayMessage } from '../protopedia/utils/network-utils.js';
 import type {
   ProtopediaInMemoryRepository,
   ProtopediaInMemoryRepositoryStats,
-} from './index';
+} from './index.js';
 
 const DEFAULT_FETCH_PARAMS: ListPrototypesParams = {
   offset: 0,
