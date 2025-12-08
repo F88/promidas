@@ -1,16 +1,17 @@
 import {
-  ListPrototypesParams,
-  ProtoPediaApiClientOptions,
+  type ListPrototypesParams,
+  type ProtoPediaApiClientOptions,
 } from 'protopedia-api-v2-client';
 
 import {
   createProtopediaInMemoryRepository,
-  PrototypeMapStoreConfig,
-} from '../lib';
+  type PrototypeMapStoreConfig,
+} from '../lib/index.js';
 
 async function main() {
   const token = process.env.PROTOPEDIA_API_V2_TOKEN;
-  const logLevel = process.env.PROTOPEDIA_API_V2_LOG_LEVEL;
+  const logLevel = process.env
+    .PROTOPEDIA_API_V2_LOG_LEVEL as ProtoPediaApiClientOptions['logLevel'];
 
   if (!token) {
     console.error(
@@ -25,8 +26,8 @@ async function main() {
     ttlMs: 60_000, // 60 seconds for testing
   };
   const protoPediaApiClientOptions: ProtoPediaApiClientOptions = {
-    token: token,
-    logLevel: logLevel as ProtoPediaApiClientOptions['logLevel'],
+    token,
+    ...(logLevel && { logLevel }),
   };
   const repo = createProtopediaInMemoryRepository(
     prototypeMapStoreConfig,

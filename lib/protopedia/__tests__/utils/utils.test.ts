@@ -5,7 +5,7 @@ import {
   splitPipeSeparatedString,
   normalizePrototype,
   type UpstreamPrototype,
-} from '../../utils/utils';
+} from '../../utils/utils.js';
 
 describe('utils', () => {
   describe('splitPipeSeparatedString', () => {
@@ -73,7 +73,7 @@ describe('utils', () => {
       const longString = Array(100).fill('tag').join('|');
       const result = splitPipeSeparatedString(longString);
       expect(result).toHaveLength(100);
-      expect(result.every((s) => s === 'tag')).toBe(true);
+      expect(result.every((s: string) => s === 'tag')).toBe(true);
     });
   });
 

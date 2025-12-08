@@ -1,10 +1,10 @@
-import { ListPrototypesParams } from 'protopedia-api-v2-client';
+import type { ListPrototypesParams } from 'protopedia-api-v2-client';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import {
   fetchAndNormalizePrototypes,
   type ListPrototypesClient,
-} from '../fetch-prototypes';
+} from '../fetch-prototypes.js';
 import * as networkUtils from '../utils/network-utils.js';
 
 vi.mock('../utils/network-utils', async () => {
@@ -53,10 +53,10 @@ describe('fetchAndNormalizePrototypes', () => {
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data).toHaveLength(2);
-        expect(result.data[0].id).toBe(1);
-        expect(result.data[0].prototypeNm).toBe('Test 1');
-        expect(result.data[1].id).toBe(2);
-        expect(result.data[1].prototypeNm).toBe('Test 2');
+        expect(result.data[0]!.id).toBe(1);
+        expect(result.data[0]!.prototypeNm).toBe('Test 1');
+        expect(result.data[1]!.id).toBe(2);
+        expect(result.data[1]!.prototypeNm).toBe('Test 2');
       }
 
       expect(mockClient.listPrototypes).toHaveBeenCalledWith(params);
@@ -112,7 +112,7 @@ describe('fetchAndNormalizePrototypes', () => {
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data).toHaveLength(1);
-        expect(result.data[0].id).toBe(42);
+        expect(result.data[0]!.id).toBe(42);
       }
     });
 
@@ -137,8 +137,8 @@ describe('fetchAndNormalizePrototypes', () => {
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data).toHaveLength(50);
-        expect(result.data[0].id).toBe(1);
-        expect(result.data[49].id).toBe(50);
+        expect(result.data[0]!.id).toBe(1);
+        expect(result.data[49]!.id).toBe(50);
       }
     });
   });
@@ -292,8 +292,8 @@ describe('fetchAndNormalizePrototypes', () => {
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data).toHaveLength(2);
-        expect(result.data[0].id).toBe(1);
-        expect(result.data[1].prototypeNm).toBe('Partial');
+        expect(result.data[0]!.id).toBe(1);
+        expect(result.data[1]!.prototypeNm).toBe('Partial');
       }
     });
 
@@ -346,8 +346,8 @@ describe('fetchAndNormalizePrototypes', () => {
         limit: 10,
       });
 
-      expect(result1.ok && result1.data[0].id).toBe(1);
-      expect(result2.ok && result2.data[0].id).toBe(2);
+      expect(result1.ok && result1.data[0]!.id).toBe(1);
+      expect(result2.ok && result2.data[0]!.id).toBe(2);
       expect(listPrototypesMock).toHaveBeenCalledTimes(2);
     });
 
@@ -365,9 +365,9 @@ describe('fetchAndNormalizePrototypes', () => {
         fetchAndNormalizePrototypes(mockClient, { offset: 20, limit: 10 }),
       ]);
 
-      expect(result1.ok && result1.data[0].id).toBe(0);
-      expect(result2.ok && result2.data[0].id).toBe(10);
-      expect(result3.ok && result3.data[0].id).toBe(20);
+      expect(result1.ok && result1.data[0]!.id).toBe(0);
+      expect(result2.ok && result2.data[0]!.id).toBe(10);
+      expect(result3.ok && result3.data[0]!.id).toBe(20);
       expect(listPrototypesMock).toHaveBeenCalledTimes(3);
     });
   });
@@ -417,9 +417,9 @@ describe('fetchAndNormalizePrototypes', () => {
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.data[0].id).toBe(5);
-        expect(result.data[1].id).toBe(3);
-        expect(result.data[2].id).toBe(1);
+        expect(result.data[0]!.id).toBe(5);
+        expect(result.data[1]!.id).toBe(3);
+        expect(result.data[2]!.id).toBe(1);
       }
     });
   });
@@ -609,7 +609,7 @@ describe('fetchAndNormalizePrototypes', () => {
       const results = await Promise.all(calls);
 
       expect(results).toHaveLength(10);
-      expect(results.every((r) => r.ok)).toBe(true);
+      expect(results.every((r: { ok: boolean }) => r.ok)).toBe(true);
       expect(mockClient.listPrototypes).toHaveBeenCalledTimes(10);
     });
 
