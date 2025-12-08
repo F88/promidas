@@ -11,7 +11,7 @@ import {
 async function main() {
   const token = process.env.PROTOPEDIA_API_V2_TOKEN;
   const logLevel = process.env
-    .PROTOPEDIA_API_V2_LOG_LEVEL as ProtoPediaApiClientOptions['logLevel'];
+    .PROTOPEDIA_API_V2_LOG_LEVEL as ProtoPediaApiClientOptions['logLevel'] | undefined;
 
   if (!token) {
     console.error(
