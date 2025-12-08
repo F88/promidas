@@ -9,7 +9,7 @@
  *
  * Key responsibilities:
  * - Detecting `AbortError` (timeout) and mapping it to HTTP 504.
- * - Extracting metadata (status, statusText, code, url, requestId) from
+ * - Extracting metadata (status, statusText, code, url) from
  *   HTTP-like error objects.
  * - Constructing user-friendly error messages with status codes and
  *   context.
@@ -17,6 +17,8 @@
  * - Ensuring all API errors are normalized into {@link FetchPrototypesResult}
  *   without throwing exceptions.
  */
+import { ProtoPediaApiError } from 'protopedia-api-v2-client';
+
 import { createConsoleLogger } from '../../lib/logger.js';
 import type { NetworkFailure } from '../types/prototype-api.types.js';
 import type { FetchPrototypesResult } from '../types/result.types.js';
@@ -88,8 +90,8 @@ export const resolveErrorMessage = (value: unknown): string => {
  */
 export const constructDisplayMessage = (failure: NetworkFailure): string => {
   const { error, status, details } = failure;
-  const statusText = details?.statusText;
-  const code = details?.code;
+  const statusText = details?.res?.statusText;
+  const code = details?.res?.code;
   let message = resolveErrorMessage(error);
 
   const prefix = statusText || code;
@@ -105,6 +107,27 @@ export const constructDisplayMessage = (failure: NetworkFailure): string => {
 };
 
 /**
+ * Create a FetchPrototypesResult failure object.
+ *
+ * @param status - HTTP status code
+ * @param error - Error message string
+ * @param details - Optional additional error details
+ * @returns A FetchPrototypesResult with ok: false
+ */
+function createFailureResult(
+  status: number,
+  error: string,
+  details?: NetworkFailure['details'],
+): FetchPrototypesResult {
+  return {
+    ok: false,
+    status,
+    error,
+    ...(details && { details }),
+  };
+}
+
+/**
  * Normalize errors thrown during ProtoPedia API calls into a
  * {@link FetchPrototypesResult} failure object.
  *
@@ -112,107 +135,123 @@ export const constructDisplayMessage = (failure: NetworkFailure): string => {
  * It ensures that:
  *
  * - `AbortError` (typically from `AbortController` timeout) is mapped
- *   to HTTP 504 Gateway Timeout.
+ *   to HTTP 504 Gateway Timeout with empty `details`.
+ * - {@link ProtoPediaApiError} from protopedia-api-v2-client is normalized
+ *   with request/response metadata preserved in the `details` field.
  * - HTTP-like errors with a `status` property are normalized with their
- *   metadata (statusText, code, url, requestId) preserved in the `details`
- *   field.
+ *   metadata (statusText, code, url) preserved in the `details` field.
  * - Unexpected errors (no `status` property) are mapped to HTTP 500
- *   Internal Server Error.
- * - All cases produce a {@link FetchPrototypesResult} with `ok: false`,
- *   never throwing an exception.
- * - Diagnostic logs are emitted for monitoring and debugging.
+ *   Internal Server Error with empty `details`.
+ * - All cases produce a {@link FetchPrototypesResult} with `ok: false`
+ *   and a consistent `details` object.
+ * - Never throws exceptions - all errors are converted to Result types.
+ * - The complete result object is logged for monitoring and debugging.
  *
  * @param error - The error value thrown by an upstream API call. Can be
- *   an `Error`, a DOMException, an HTTP-like object with a `status`
- *   property, or any other value.
+ *   a {@link ProtoPediaApiError}, a DOMException, an HTTP-like object
+ *   with a `status` property, or any other value.
  * @returns A {@link FetchPrototypesResult} with `ok: false`, a status
- *   code, and an error message. May include a `details` object with
- *   additional context.
+ *   code, an error message, and a `details` object (which may be empty).
  *
  * @example
  * ```ts
  * // AbortError (timeout)
  * const abortError = new DOMException('Aborted', 'AbortError');
  * handleApiError(abortError);
- * // => { ok: false, status: 504, error: 'Upstream request timed out' }
+ * // => { ok: false, status: 504, error: 'Upstream request timed out', details: {} }
  *
- * // HTTP error with metadata
- * const httpError = {
+ * // ProtoPediaApiError
+ * const apiError = new ProtoPediaApiError({
+ *   message: 'Prototype not found',
+ *   req: { url: 'https://protopedia.cc/api/prototypes', method: 'GET' },
  *   status: 404,
  *   statusText: 'Not Found',
- *   code: 'RESOURCE_NOT_FOUND',
- *   url: 'https://protopedia.cc/api/prototypes',
- *   message: 'Prototype not found',
- * };
- * handleApiError(httpError);
+ * });
+ * handleApiError(apiError);
  * // => {
  * //   ok: false,
  * //   status: 404,
  * //   error: 'Prototype not found',
- * //   details: { statusText: 'Not Found', code: 'RESOURCE_NOT_FOUND', ... }
+ * //   details: {
+ * //     req: { url: 'https://protopedia.cc/api/prototypes', method: 'GET' },
+ * //     res: { statusText: 'Not Found' }
+ * //   }
  * // }
  *
  * // Unexpected error
  * handleApiError(new Error('Unexpected crash'));
- * // => { ok: false, status: 500, error: 'Unexpected crash' }
+ * // => { ok: false, status: 500, error: 'Unexpected crash', details: {} }
  * ```
  */
 export function handleApiError(error: unknown): FetchPrototypesResult {
+  // Handle AbortError (timeout)
   if (error instanceof DOMException && error.name === 'AbortError') {
-    logger.warn('Upstream request aborted (timeout)', {
-      errorType: 'AbortError',
-    });
+    const result = createFailureResult(504, 'Upstream request timed out', {});
 
-    return {
-      ok: false,
-      status: 504,
-      error: 'Upstream request timed out',
-    };
+    logger.warn('Upstream request aborted (timeout)', result);
+
+    return result;
   }
 
+  // Handle ProtoPediaApiError specifically
+  if (error instanceof ProtoPediaApiError) {
+    const result = createFailureResult(error.status, error.message, {
+      req: {
+        url: error.req.url,
+        method: error.req.method,
+      },
+      res: {
+        statusText: error.statusText,
+      },
+    });
+
+    logger.warn('HTTP error when calling ProtoPedia API', result);
+
+    return result;
+  }
+
+  // Handle HTTP-like errors with a `status` property
   if (typeof error === 'object' && error !== null && 'status' in error) {
     const status = Number((error as { status?: number }).status ?? 500);
     const errorObj = error as {
       statusText?: string;
       code?: string;
-      url?: string;
-      requestId?: string;
+      req?: {
+        url?: string;
+        method?: string;
+      };
     };
-    const { statusText, code, url, requestId } = errorObj;
-
-    logger.warn('HTTP error when calling ProtoPedia API', {
-      status,
-      statusText,
-      code,
-      url,
-      requestId,
-    });
+    const { statusText, code, req } = errorObj;
 
     const message =
       error instanceof Error ? error.message : 'Failed to fetch prototypes';
 
     const details: NetworkFailure['details'] = {};
-    if (statusText !== undefined) details.statusText = statusText;
-    if (code !== undefined) details.code = code;
-    if (url !== undefined) details.url = url;
-    if (requestId !== undefined) details.requestId = requestId;
+    if (req?.url !== undefined || req?.method !== undefined) {
+      details.req = {};
+      if (req.url !== undefined) details.req.url = req.url;
+      if (req.method !== undefined) details.req.method = req.method;
+    }
+    if (statusText !== undefined || code !== undefined) {
+      details.res = {};
+      if (statusText !== undefined) details.res.statusText = statusText;
+      if (code !== undefined) details.res.code = code;
+    }
 
-    return {
-      ok: false,
-      status,
-      error: message,
-      details,
-    };
+    const result = createFailureResult(status, message, details);
+
+    logger.warn('HTTP error when calling ProtoPedia API', result);
+
+    return result;
   }
 
-  logger.error('Unexpected error while calling ProtoPedia API', {
-    error: error instanceof Error ? error.message : String(error),
-  });
+  const result = createFailureResult(
+    500,
+    error instanceof Error ? error.message : 'Failed to fetch prototypes',
+    {},
+  );
 
-  return {
-    ok: false,
-    status: 500,
-    error:
-      error instanceof Error ? error.message : 'Failed to fetch prototypes',
-  };
+  logger.error('Unexpected error while calling ProtoPedia API', result);
+
+  return result;
 }

@@ -1,3 +1,4 @@
+import { ProtoPediaApiError } from 'protopedia-api-v2-client';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { NetworkFailure } from '../../types/prototype-api.types.js';
@@ -58,7 +59,9 @@ describe('network-utils', () => {
         status: 404,
         error: new Error('Resource not found'),
         details: {
-          statusText: 'Not Found',
+          res: {
+            statusText: 'Not Found',
+          },
         },
       };
 
@@ -72,7 +75,9 @@ describe('network-utils', () => {
         status: 500,
         error: new Error('Connection failed'),
         details: {
-          code: 'ECONNREFUSED',
+          res: {
+            code: 'ECONNREFUSED',
+          },
         },
       };
 
@@ -86,7 +91,9 @@ describe('network-utils', () => {
         status: 401,
         error: new Error('Unauthorized: Invalid token'),
         details: {
-          statusText: 'Unauthorized',
+          res: {
+            statusText: 'Unauthorized',
+          },
         },
       };
 
@@ -109,7 +116,9 @@ describe('network-utils', () => {
         status: 503,
         error: 'Service unavailable',
         details: {
-          statusText: 'Service Unavailable',
+          res: {
+            statusText: 'Service Unavailable',
+          },
         },
       };
 
@@ -123,8 +132,10 @@ describe('network-utils', () => {
         status: 404,
         error: new Error('Not found'),
         details: {
-          statusText: 'Not Found',
-          code: 'ERR_404',
+          res: {
+            statusText: 'Not Found',
+            code: 'ERR_404',
+          },
         },
       };
 
@@ -155,6 +166,7 @@ describe('network-utils', () => {
           ok: false,
           status: 504,
           error: 'Upstream request timed out',
+          details: {},
         });
       });
 
@@ -169,14 +181,149 @@ describe('network-utils', () => {
       });
     });
 
+    describe('ProtoPediaApiError handling', () => {
+      it('normalizes ProtoPediaApiError with full metadata', () => {
+        const apiError = new ProtoPediaApiError({
+          message: 'Prototype not found',
+          req: {
+            url: 'https://protopedia.cc/api/prototypes/123',
+            method: 'GET',
+          },
+          status: 404,
+          statusText: 'Not Found',
+        });
+
+        const result = handleApiError(apiError);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 404,
+          error: 'Prototype not found',
+          details: {
+            req: {
+              url: 'https://protopedia.cc/api/prototypes/123',
+              method: 'GET',
+            },
+            res: {
+              statusText: 'Not Found',
+            },
+          },
+        });
+      });
+
+      it('handles ProtoPediaApiError with different status codes', () => {
+        const apiError = new ProtoPediaApiError({
+          message: 'Unauthorized access',
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+            method: 'POST',
+          },
+          status: 401,
+          statusText: 'Unauthorized',
+        });
+
+        const result = handleApiError(apiError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.status).toBe(401);
+          expect(result.error).toBe('Unauthorized access');
+          expect(result.details?.req?.method).toBe('POST');
+          expect(result.details?.res?.statusText).toBe('Unauthorized');
+        }
+      });
+
+      it('includes request method and URL from ProtoPediaApiError', () => {
+        const apiError = new ProtoPediaApiError({
+          message: 'Service unavailable',
+          req: {
+            url: 'https://protopedia.cc/api/prototypes/search',
+            method: 'GET',
+          },
+          status: 503,
+          statusText: 'Service Unavailable',
+        });
+
+        const result = handleApiError(apiError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.details?.req).toEqual({
+            url: 'https://protopedia.cc/api/prototypes/search',
+            method: 'GET',
+          });
+        }
+      });
+
+      it('preserves statusText from ProtoPediaApiError', () => {
+        const apiError = new ProtoPediaApiError({
+          message: 'Bad request',
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+            method: 'POST',
+          },
+          status: 400,
+          statusText: 'Bad Request',
+        });
+
+        const result = handleApiError(apiError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.details?.res?.statusText).toBe('Bad Request');
+        }
+      });
+
+      it('handles ProtoPediaApiError with empty statusText', () => {
+        const apiError = new ProtoPediaApiError({
+          message: 'Internal server error',
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+            method: 'GET',
+          },
+          status: 500,
+          statusText: '',
+        });
+
+        const result = handleApiError(apiError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.status).toBe(500);
+          expect(result.details?.res?.statusText).toBe('');
+        }
+      });
+
+      it('does not include code field for ProtoPediaApiError', () => {
+        const apiError = new ProtoPediaApiError({
+          message: 'Not found',
+          req: {
+            url: 'https://protopedia.cc/api/prototypes/999',
+            method: 'GET',
+          },
+          status: 404,
+          statusText: 'Not Found',
+        });
+
+        const result = handleApiError(apiError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.details?.res?.code).toBeUndefined();
+        }
+      });
+    });
+
     describe('HTTP-like error handling', () => {
       it('normalizes HTTP error with all metadata fields', () => {
         const httpError = Object.assign(new Error('Prototype not found'), {
           status: 404,
           statusText: 'Not Found',
           code: 'RESOURCE_NOT_FOUND',
-          url: 'https://protopedia.cc/api/prototypes',
-          requestId: 'req-12345',
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+            method: 'GET',
+          },
         });
 
         const result = handleApiError(httpError);
@@ -186,10 +333,14 @@ describe('network-utils', () => {
           status: 404,
           error: 'Prototype not found',
           details: {
-            statusText: 'Not Found',
-            code: 'RESOURCE_NOT_FOUND',
-            url: 'https://protopedia.cc/api/prototypes',
-            requestId: 'req-12345',
+            req: {
+              url: 'https://protopedia.cc/api/prototypes',
+              method: 'GET',
+            },
+            res: {
+              statusText: 'Not Found',
+              code: 'RESOURCE_NOT_FOUND',
+            },
           },
         });
       });
@@ -207,7 +358,9 @@ describe('network-utils', () => {
           status: 401,
           error: 'Authentication failed',
           details: {
-            statusText: 'Unauthorized',
+            res: {
+              statusText: 'Unauthorized',
+            },
           },
         });
       });
@@ -242,7 +395,9 @@ describe('network-utils', () => {
           status: 503,
           error: 'Service temporarily unavailable',
           details: {
-            code: 'SERVICE_UNAVAILABLE',
+            res: {
+              code: 'SERVICE_UNAVAILABLE',
+            },
           },
         });
       });
@@ -270,6 +425,7 @@ describe('network-utils', () => {
           ok: false,
           status: 500,
           error: 'Unexpected crash',
+          details: {},
         });
       });
 
@@ -280,6 +436,7 @@ describe('network-utils', () => {
           ok: false,
           status: 500,
           error: 'Failed to fetch prototypes',
+          details: {},
         });
       });
 
@@ -290,6 +447,7 @@ describe('network-utils', () => {
           ok: false,
           status: 500,
           error: 'Failed to fetch prototypes',
+          details: {},
         });
       });
 
@@ -300,6 +458,7 @@ describe('network-utils', () => {
           ok: false,
           status: 500,
           error: 'Failed to fetch prototypes',
+          details: {},
         });
       });
 
@@ -310,7 +469,41 @@ describe('network-utils', () => {
           ok: false,
           status: 500,
           error: 'Failed to fetch prototypes',
+          details: {},
         });
+      });
+
+      it('includes empty details for unexpected errors', () => {
+        const error = new Error('Network failure');
+        const result = handleApiError(error);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.details).toEqual({});
+        }
+      });
+
+      it('handles TypeError with proper error message', () => {
+        const error = new TypeError('Cannot read property of undefined');
+        const result = handleApiError(error);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 500,
+          error: 'Cannot read property of undefined',
+          details: {},
+        });
+      });
+
+      it('handles RangeError with proper error message', () => {
+        const error = new RangeError('Array length out of bounds');
+        const result = handleApiError(error);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.status).toBe(500);
+          expect(result.error).toBe('Array length out of bounds');
+        }
       });
     });
 
@@ -358,6 +551,12 @@ describe('network-utils', () => {
       it('always returns ok: false', () => {
         const testCases = [
           new DOMException('Aborted', 'AbortError'),
+          new ProtoPediaApiError({
+            message: 'Test error',
+            req: { url: 'https://test.com', method: 'GET' },
+            status: 500,
+            statusText: 'Internal Server Error',
+          }),
           { status: 404, message: 'Not found' },
           new Error('Crash'),
           'String error',
@@ -367,6 +566,105 @@ describe('network-utils', () => {
         testCases.forEach((error) => {
           const result = handleApiError(error);
           expect(result.ok).toBe(false);
+        });
+      });
+
+      it('always includes details field', () => {
+        const testCases = [
+          new DOMException('Aborted', 'AbortError'),
+          new ProtoPediaApiError({
+            message: 'API error',
+            req: { url: 'https://test.com', method: 'GET' },
+            status: 404,
+            statusText: 'Not Found',
+          }),
+          new Error('Unexpected error'),
+        ];
+
+        testCases.forEach((error) => {
+          const result = handleApiError(error);
+          expect(result.ok).toBe(false);
+          if (!result.ok) {
+            expect(result.details).toBeDefined();
+          }
+        });
+      });
+    });
+
+    describe('v2.0.0 error format compatibility', () => {
+      it('handles v2.0.0 error format with req.url', () => {
+        const v2Error = Object.assign(new Error('API request failed'), {
+          status: 404,
+          statusText: 'Not Found',
+          code: 'RESOURCE_NOT_FOUND',
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+            method: 'GET',
+          },
+        });
+
+        const result = handleApiError(v2Error);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 404,
+          error: 'API request failed',
+          details: {
+            req: {
+              url: 'https://protopedia.cc/api/prototypes',
+              method: 'GET',
+            },
+            res: {
+              statusText: 'Not Found',
+              code: 'RESOURCE_NOT_FOUND',
+            },
+          },
+        });
+      });
+
+      it('handles v2.0.0 error with req.url only', () => {
+        const v2Error = Object.assign(new Error('API request failed'), {
+          status: 500,
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+            method: 'POST',
+          },
+        });
+
+        const result = handleApiError(v2Error);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 500,
+          error: 'API request failed',
+          details: {
+            req: {
+              url: 'https://protopedia.cc/api/prototypes',
+              method: 'POST',
+            },
+          },
+        });
+      });
+
+      it('handles v2.0.0 error without method', () => {
+        const v2Error = Object.assign(new Error('API request failed'), {
+          status: 403,
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+          },
+        });
+
+        const result = handleApiError(v2Error);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 403,
+          error: 'API request failed',
+          details: {
+            req: {
+              url: 'https://protopedia.cc/api/prototypes',
+            },
+          },
         });
       });
     });
