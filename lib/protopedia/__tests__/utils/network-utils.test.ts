@@ -141,6 +141,7 @@ describe('network-utils', () => {
       const failure: NetworkFailure = {
         status: 500,
         error: new Error('Internal error'),
+        details: {},
       };
 
       expect(constructDisplayMessage(failure)).toBe('Internal error (500)');
@@ -183,6 +184,7 @@ describe('network-utils', () => {
       const failure: NetworkFailure = {
         status: 500,
         error: null,
+        details: {},
       };
 
       expect(constructDisplayMessage(failure)).toBe(
@@ -240,6 +242,7 @@ describe('network-utils', () => {
       const failure: NetworkFailure = {
         status: 500,
         error: new Error(longMessage),
+        details: {},
       };
 
       const result = constructDisplayMessage(failure);
@@ -251,6 +254,7 @@ describe('network-utils', () => {
       const failure: NetworkFailure = {
         status: 0,
         error: new Error('Network error'),
+        details: {},
       };
 
       expect(constructDisplayMessage(failure)).toBe('Network error (0)');
@@ -260,6 +264,7 @@ describe('network-utils', () => {
       const failure: NetworkFailure = {
         status: -1,
         error: new Error('Invalid status'),
+        details: {},
       };
 
       expect(constructDisplayMessage(failure)).toBe('Invalid status (-1)');

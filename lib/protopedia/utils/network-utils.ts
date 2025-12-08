@@ -111,19 +111,19 @@ export const constructDisplayMessage = (failure: NetworkFailure): string => {
  *
  * @param status - HTTP status code
  * @param error - Error message string
- * @param details - Optional additional error details
+ * @param details - Additional error details (always required, use {} if no metadata)
  * @returns A FetchPrototypesResult with ok: false
  */
 function createFailureResult(
   status: number,
   error: string,
-  details?: NetworkFailure['details'],
+  details: NetworkFailure['details'],
 ): FetchPrototypesResult {
   return {
     ok: false,
     status,
     error,
-    ...(details && { details }),
+    details,
   };
 }
 

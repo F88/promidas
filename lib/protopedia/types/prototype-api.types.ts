@@ -56,7 +56,7 @@ export type NetworkFailure = {
    * Additional error details from request and response.
    * Always present, but may be an empty object for errors without metadata.
    */
-  details?: {
+  details: {
     /** Request information (compatible with ProtoPediaApiError.req from v2.0.0) */
     req?: {
       /** HTTP method (e.g., "GET", "POST") */
