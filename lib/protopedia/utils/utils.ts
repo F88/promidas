@@ -120,43 +120,59 @@ export function normalizePrototype(
   };
 
   // Optional fields - only set if defined or explicitly set to empty/null
-  if ('tags' in prototype)
+  if ('tags' in prototype) {
     normalized.tags = prototype.tags
       ? splitPipeSeparatedString(prototype.tags)
       : [];
-  if (prototype.summary !== undefined) normalized.summary = prototype.summary;
-  if (prototype.createId !== undefined)
+  }
+  if (prototype.summary !== undefined) {
+    normalized.summary = prototype.summary;
+  }
+  if (prototype.createId !== undefined) {
     normalized.createId = prototype.createId;
-  if (prototype.updateId !== undefined)
+  }
+  if (prototype.updateId !== undefined) {
     normalized.updateId = prototype.updateId;
-  if ('awards' in prototype)
+  }
+  if ('awards' in prototype) {
     normalized.awards = prototype.awards
       ? splitPipeSeparatedString(prototype.awards)
       : [];
-  if (prototype.systemDescription !== undefined)
+  }
+  if (prototype.systemDescription !== undefined) {
     normalized.systemDescription = prototype.systemDescription;
-  if (prototype.videoUrl !== undefined)
+  }
+  if (prototype.videoUrl !== undefined) {
     normalized.videoUrl = prototype.videoUrl;
-  if (prototype.relatedLink !== undefined)
+  }
+  if (prototype.relatedLink !== undefined) {
     normalized.relatedLink = prototype.relatedLink;
-  if (prototype.relatedLink2 !== undefined)
+  }
+  if (prototype.relatedLink2 !== undefined) {
     normalized.relatedLink2 = prototype.relatedLink2;
-  if (prototype.relatedLink3 !== undefined)
+  }
+  if (prototype.relatedLink3 !== undefined) {
     normalized.relatedLink3 = prototype.relatedLink3;
-  if (prototype.relatedLink4 !== undefined)
+  }
+  if (prototype.relatedLink4 !== undefined) {
     normalized.relatedLink4 = prototype.relatedLink4;
-  if (prototype.relatedLink5 !== undefined)
+  }
+  if (prototype.relatedLink5 !== undefined) {
     normalized.relatedLink5 = prototype.relatedLink5;
-  if ('events' in prototype)
+  }
+  if ('events' in prototype) {
     normalized.events = prototype.events
       ? splitPipeSeparatedString(prototype.events)
       : [];
-  if (prototype.officialLink !== undefined)
+  }
+  if (prototype.officialLink !== undefined) {
     normalized.officialLink = prototype.officialLink;
-  if ('materials' in prototype)
+  }
+  if ('materials' in prototype) {
     normalized.materials = prototype.materials
       ? splitPipeSeparatedString(prototype.materials)
       : [];
+  }
 
   return normalized;
 }

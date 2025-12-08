@@ -233,13 +233,21 @@ export function handleApiError(error: unknown): FetchPrototypesResult {
     const details: NetworkFailure['details'] = {};
     if (req?.url !== undefined || req?.method !== undefined) {
       details.req = {};
-      if (req.url !== undefined) details.req.url = req.url;
-      if (req.method !== undefined) details.req.method = req.method;
+      if (req.url !== undefined) {
+        details.req.url = req.url;
+      }
+      if (req.method !== undefined) {
+        details.req.method = req.method;
+      }
     }
     if (statusText !== undefined || code !== undefined) {
       details.res = {};
-      if (statusText !== undefined) details.res.statusText = statusText;
-      if (code !== undefined) details.res.code = code;
+      if (statusText !== undefined) {
+        details.res.statusText = statusText;
+      }
+      if (code !== undefined) {
+        details.res.code = code;
+      }
     }
 
     const result = createFailureResult(status, message, details);
