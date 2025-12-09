@@ -191,7 +191,7 @@ describe('createInMemoryRepositoryImpl', () => {
       expect(stats.cachedAt).not.toBeNull();
 
       const random = await repo.getRandomPrototypeFromSnapshot();
-      expect(random).toBeUndefined();
+      expect(random).toBeNull();
     });
   });
 
@@ -297,7 +297,7 @@ describe('createInMemoryRepositoryImpl', () => {
       expect(afterStats.size).toBe(1);
 
       const random = await repo.getRandomPrototypeFromSnapshot();
-      expect(random).toBeDefined();
+      expect(random).not.toBeNull();
       expect(random?.id).toBe(1);
     });
 
@@ -337,7 +337,7 @@ describe('createInMemoryRepositoryImpl', () => {
       const repo = createProtopediaInMemoryRepositoryImpl({}, {});
 
       const random = await repo.getRandomPrototypeFromSnapshot();
-      expect(random).toBeUndefined();
+      expect(random).toBeNull();
     });
 
     it('returns a prototype when the snapshot is populated', async () => {
@@ -355,7 +355,7 @@ describe('createInMemoryRepositoryImpl', () => {
       await repo.setupSnapshot({});
 
       const random = await repo.getRandomPrototypeFromSnapshot();
-      expect(random).toBeDefined();
+      expect(random).not.toBeNull();
       expect(random?.id).toBe(42);
     });
 
@@ -373,7 +373,7 @@ describe('createInMemoryRepositoryImpl', () => {
       await repo.setupSnapshot({});
 
       const random = await repo.getRandomPrototypeFromSnapshot();
-      expect(random).toBeDefined();
+      expect(random).not.toBeNull();
       expect([1, 2, 3]).toContain(random?.id);
       expect(['alpha', 'beta', 'gamma']).toContain(random?.prototypeNm);
     });
@@ -395,7 +395,7 @@ describe('createInMemoryRepositoryImpl', () => {
       await repo.setupSnapshot({});
 
       const missing = await repo.getPrototypeFromSnapshotById(1234);
-      expect(missing).toBeUndefined();
+      expect(missing).toBeNull();
     });
 
     it('returns the correct prototype for a known id', async () => {
@@ -413,7 +413,7 @@ describe('createInMemoryRepositoryImpl', () => {
       await repo.setupSnapshot({});
 
       const found = await repo.getPrototypeFromSnapshotById(9);
-      expect(found).toBeDefined();
+      expect(found).not.toBeNull();
       expect(found?.id).toBe(9);
       expect(found?.prototypeNm).toBe('known entry');
     });
@@ -439,7 +439,7 @@ describe('createInMemoryRepositoryImpl', () => {
       expect(proto1?.prototypeNm).toBe('first');
       expect(proto2?.prototypeNm).toBe('second');
       expect(proto3?.prototypeNm).toBe('third');
-      expect(missing).toBeUndefined();
+      expect(missing).toBeNull();
     });
   });
 
@@ -466,7 +466,7 @@ describe('createInMemoryRepositoryImpl', () => {
       await repo.setupSnapshot({});
 
       const stats = repo.getStats();
-      expect(typeof stats.cachedAt).toBe('number');
+      expect(stats.cachedAt).toBeInstanceOf(Date);
       expect(stats.cachedAt).not.toBeNull();
       expect(stats.size).toBe(1);
     });
@@ -515,8 +515,11 @@ describe('createInMemoryRepositoryImpl', () => {
       const stats2 = repo.getStats();
       const secondCachedAt = stats2.cachedAt;
 
+      expect(firstCachedAt).not.toBeNull();
       expect(secondCachedAt).not.toBeNull();
-      expect(secondCachedAt).toBeGreaterThan(firstCachedAt!);
+      expect(secondCachedAt!.getTime()).toBeGreaterThan(
+        firstCachedAt!.getTime(),
+      );
     });
 
     it('reports isExpired as false immediately after setup with short TTL', async () => {
@@ -682,8 +685,8 @@ describe('createInMemoryRepositoryImpl', () => {
       const old2 = await repo.getPrototypeFromSnapshotById(2);
       const newProto = await repo.getPrototypeFromSnapshotById(3);
 
-      expect(old1).toBeUndefined();
-      expect(old2).toBeUndefined();
+      expect(old1).toBeNull();
+      expect(old2).toBeNull();
       expect(newProto?.prototypeNm).toBe('new');
     });
   });
@@ -847,7 +850,7 @@ describe('createInMemoryRepositoryImpl', () => {
 
       const stored = await repo.getPrototypeFromSnapshotById(12345);
 
-      expect(stored).toBeDefined();
+      expect(stored).not.toBeNull();
       expect(stored?.id).toBe(12345);
       expect(stored?.prototypeNm).toBe('Test Prototype');
       expect(stored?.teamNm).toBe('Test Team');
@@ -872,7 +875,7 @@ describe('createInMemoryRepositoryImpl', () => {
       await repo.setupSnapshot({});
 
       const stored = await repo.getPrototypeFromSnapshotById(1);
-      expect(stored).toBeDefined();
+      expect(stored).not.toBeNull();
       expect(stored?.id).toBe(1);
     });
   });
@@ -967,12 +970,12 @@ describe('createInMemoryRepositoryImpl', () => {
         repo.getPrototypeFromSnapshotById(1),
         repo.getPrototypeFromSnapshotById(2),
         repo.getRandomPrototypeFromSnapshot(),
-        repo.getStats(),
+        Promise.resolve(repo.getStats()),
       ]);
 
       expect(results[0]?.prototypeNm).toBe('one');
       expect(results[1]?.prototypeNm).toBe('two');
-      expect(results[2]).toBeDefined();
+      expect(results[2]).not.toBeNull();
       expect(results[3].size).toBe(2);
     });
 
@@ -998,7 +1001,7 @@ describe('createInMemoryRepositoryImpl', () => {
       expect(proto?.prototypeNm).toBe('second');
 
       const missingOld = await repo.getPrototypeFromSnapshotById(1);
-      expect(missingOld).toBeUndefined();
+      expect(missingOld).toBeNull();
     });
   });
 
