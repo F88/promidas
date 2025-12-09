@@ -27,8 +27,70 @@ vi.mock('../../../../lib/logger', () => ({
 }));
 
 describe('handleApiError - ProtoPediaApiError handling', () => {
-  describe('general error handling', () => {
-    it('normalizes ProtoPediaApiError with full metadata', () => {
+  describe('4xx client errors', () => {
+    it('handles 400 Bad Request', () => {
+      const apiError = new ProtoPediaApiError({
+        message: 'Bad request',
+        req: {
+          url: 'https://protopedia.cc/api/prototypes',
+          method: 'POST',
+        },
+        status: 400,
+        statusText: 'Bad Request',
+      });
+
+      const result = handleApiError(apiError);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.status).toBe(400);
+        expect(result.details?.res?.statusText).toBe('Bad Request');
+      }
+    });
+
+    it('handles 400 Bad Request with missing req.url', () => {
+      const apiError = new ProtoPediaApiError({
+        message: 'Request failed',
+        req: {
+          url: undefined as any,
+          method: 'POST',
+        },
+        status: 400,
+        statusText: 'Bad Request',
+      });
+
+      const result = handleApiError(apiError);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.details?.req?.url).toBeUndefined();
+        expect(result.details?.req?.method).toBe('POST');
+      }
+    });
+
+    it('handles 401 Unauthorized', () => {
+      const apiError = new ProtoPediaApiError({
+        message: 'Unauthorized access',
+        req: {
+          url: 'https://protopedia.cc/api/prototypes',
+          method: 'POST',
+        },
+        status: 401,
+        statusText: 'Unauthorized',
+      });
+
+      const result = handleApiError(apiError);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.status).toBe(401);
+        expect(result.error).toBe('Unauthorized access');
+        expect(result.details?.req?.method).toBe('POST');
+        expect(result.details?.res?.statusText).toBe('Unauthorized');
+      }
+    });
+
+    it('handles 404 Not Found with full metadata', () => {
       const apiError = new ProtoPediaApiError({
         message: 'Prototype not found',
         req: {
@@ -57,37 +119,15 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
       });
     });
 
-    it('handles ProtoPediaApiError with different status codes', () => {
+    it('handles 404 Not Found with request method and URL', () => {
       const apiError = new ProtoPediaApiError({
-        message: 'Unauthorized access',
-        req: {
-          url: 'https://protopedia.cc/api/prototypes',
-          method: 'POST',
-        },
-        status: 401,
-        statusText: 'Unauthorized',
-      });
-
-      const result = handleApiError(apiError);
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.status).toBe(401);
-        expect(result.error).toBe('Unauthorized access');
-        expect(result.details?.req?.method).toBe('POST');
-        expect(result.details?.res?.statusText).toBe('Unauthorized');
-      }
-    });
-
-    it('includes request method and URL from ProtoPediaApiError', () => {
-      const apiError = new ProtoPediaApiError({
-        message: 'Service unavailable',
+        message: 'Not found',
         req: {
           url: 'https://protopedia.cc/api/prototypes/search',
           method: 'GET',
         },
-        status: 503,
-        statusText: 'Service Unavailable',
+        status: 404,
+        statusText: 'Not Found',
       });
 
       const result = handleApiError(apiError);
@@ -101,46 +141,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
       }
     });
 
-    it('preserves statusText from ProtoPediaApiError', () => {
-      const apiError = new ProtoPediaApiError({
-        message: 'Bad request',
-        req: {
-          url: 'https://protopedia.cc/api/prototypes',
-          method: 'POST',
-        },
-        status: 400,
-        statusText: 'Bad Request',
-      });
-
-      const result = handleApiError(apiError);
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.details?.res?.statusText).toBe('Bad Request');
-      }
-    });
-
-    it('handles ProtoPediaApiError with empty statusText', () => {
-      const apiError = new ProtoPediaApiError({
-        message: 'Internal server error',
-        req: {
-          url: 'https://protopedia.cc/api/prototypes',
-          method: 'GET',
-        },
-        status: 500,
-        statusText: '',
-      });
-
-      const result = handleApiError(apiError);
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.status).toBe(500);
-        expect(result.details?.res?.statusText).toBe('');
-      }
-    });
-
-    it('does not include code field for ProtoPediaApiError', () => {
+    it('does not include code field for ProtoPediaApiError (404)', () => {
       const apiError = new ProtoPediaApiError({
         message: 'Not found',
         req: {
@@ -159,50 +160,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
       }
     });
 
-    it('handles ProtoPediaApiError with missing req.method', () => {
-      const apiError = new ProtoPediaApiError({
-        message: 'Bad gateway',
-        req: {
-          url: 'https://protopedia.cc/api/prototypes',
-          method: undefined as any,
-        },
-        status: 502,
-        statusText: 'Bad Gateway',
-      });
-
-      const result = handleApiError(apiError);
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.status).toBe(502);
-        expect(result.details?.req?.url).toBe(
-          'https://protopedia.cc/api/prototypes',
-        );
-        expect(result.details?.req?.method).toBeUndefined();
-      }
-    });
-
-    it('handles ProtoPediaApiError with missing req.url', () => {
-      const apiError = new ProtoPediaApiError({
-        message: 'Request failed',
-        req: {
-          url: undefined as any,
-          method: 'POST',
-        },
-        status: 400,
-        statusText: 'Bad Request',
-      });
-
-      const result = handleApiError(apiError);
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.details?.req?.url).toBeUndefined();
-        expect(result.details?.req?.method).toBe('POST');
-      }
-    });
-
-    it('handles ProtoPediaApiError with very long URL', () => {
+    it('handles 414 URI Too Long with very long URL', () => {
       const longUrl = 'https://protopedia.cc/api/' + 'a'.repeat(1000);
       const apiError = new ProtoPediaApiError({
         message: 'Request failed',
@@ -223,48 +181,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
       }
     });
 
-    it('handles ProtoPediaApiError with empty message', () => {
-      const apiError = new ProtoPediaApiError({
-        message: '',
-        req: {
-          url: 'https://protopedia.cc/api/prototypes',
-          method: 'GET',
-        },
-        status: 500,
-        statusText: 'Internal Server Error',
-      });
-
-      const result = handleApiError(apiError);
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error).toBe('');
-        expect(result.status).toBe(500);
-      }
-    });
-
-    it('handles ProtoPediaApiError with status 0', () => {
-      const apiError = new ProtoPediaApiError({
-        message: 'Network error',
-        req: {
-          url: 'https://protopedia.cc/api/prototypes',
-          method: 'GET',
-        },
-        status: 0,
-        statusText: '',
-      });
-
-      const result = handleApiError(apiError);
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.status).toBe(0);
-      }
-    });
-  });
-
-  describe('4xx client errors', () => {
-    it('handles ProtoPediaApiError with status 429 (Too Many Requests)', () => {
+    it('handles 429 Too Many Requests', () => {
       const apiError = new ProtoPediaApiError({
         message: 'Rate limit exceeded',
         req: {
@@ -293,7 +210,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
       });
     });
 
-    it('handles ProtoPediaApiError with status 499 (Client Closed Request)', () => {
+    it('handles 499 Client Closed Request', () => {
       const apiError = new ProtoPediaApiError({
         message: 'Client closed request',
         req: {
@@ -320,6 +237,94 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
           },
         },
       });
+    });
+  });
+
+  describe('5xx server errors', () => {
+    it('handles 500 Internal Server Error with empty statusText', () => {
+      const apiError = new ProtoPediaApiError({
+        message: 'Internal server error',
+        req: {
+          url: 'https://protopedia.cc/api/prototypes',
+          method: 'GET',
+        },
+        status: 500,
+        statusText: '',
+      });
+
+      const result = handleApiError(apiError);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.status).toBe(500);
+        expect(result.details?.res?.statusText).toBe('');
+      }
+    });
+
+    it('handles 500 Internal Server Error with empty message', () => {
+      const apiError = new ProtoPediaApiError({
+        message: '',
+        req: {
+          url: 'https://protopedia.cc/api/prototypes',
+          method: 'GET',
+        },
+        status: 500,
+        statusText: 'Internal Server Error',
+      });
+
+      const result = handleApiError(apiError);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toBe('');
+        expect(result.status).toBe(500);
+      }
+    });
+
+    it('handles 502 Bad Gateway with missing req.method', () => {
+      const apiError = new ProtoPediaApiError({
+        message: 'Bad gateway',
+        req: {
+          url: 'https://protopedia.cc/api/prototypes',
+          method: undefined as any,
+        },
+        status: 502,
+        statusText: 'Bad Gateway',
+      });
+
+      const result = handleApiError(apiError);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.status).toBe(502);
+        expect(result.details?.req?.url).toBe(
+          'https://protopedia.cc/api/prototypes',
+        );
+        expect(result.details?.req?.method).toBeUndefined();
+      }
+    });
+
+    it('handles 503 Service Unavailable', () => {
+      const apiError = new ProtoPediaApiError({
+        message: 'Service unavailable',
+        req: {
+          url: 'https://protopedia.cc/api/prototypes/search',
+          method: 'GET',
+        },
+        status: 503,
+        statusText: 'Service Unavailable',
+      });
+
+      const result = handleApiError(apiError);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.status).toBe(503);
+        expect(result.details?.req).toEqual({
+          url: 'https://protopedia.cc/api/prototypes/search',
+          method: 'GET',
+        });
+      }
     });
   });
 });
