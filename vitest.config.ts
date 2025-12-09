@@ -27,7 +27,7 @@ export default defineConfig(({ mode }) => {
           '**/__tests__/**',
           'lib/index.ts',
           'lib/core/types.ts',
-          'lib/simple-store-for-protopedia/index.ts',
+          'lib/repository/index.ts',
         ],
       },
     },
