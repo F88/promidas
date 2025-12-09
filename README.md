@@ -9,248 +9,52 @@
 
 ProtoPedia Resource Organized Management In-memory Data Access Store
 
-Featuring a core in-memory snapshot manager, this project provides TTL and efficient data access for ProtoPedia prototypes.
-It also bundles a ready-to-use utility tool for combining with an API client.
+A toolset library for ProtoPedia providing independent store and fetcher components, and a high-level repository for easy data management.
 
 ## Project Overview
 
-This repository provides a comprehensive solution for managing ProtoPedia data in memory, consisting of three key layers:
+This repository provides a modular toolset for managing ProtoPedia data, consisting of independent components and a high-level repository:
 
-1. **`lib/core`** - Core in-memory snapshot store (`PrototypeMapStore`)
-    - TTL-based snapshot management
+1. **`NormalizedPrototype`** - Standardized data model (`NormalizedPrototype`)
+    - Type-safe, normalized representation of ProtoPedia prototypes
+    - Consistent handling of dates, arrays, and optional fields
+    - Shared across all layers of the library
+
+2. **`lib/store`** - Standalone In-memory Store (`PrototypeMapStore`)
+    - Generic snapshot management with TTL support
     - O(1) lookups by ID and efficient random selection
-    - Payload size guards and refresh coordination
+    - Independent of any specific API client
+    - [Documentation](lib/store/docs/USAGE.md)
 
-2. **`lib/protopedia`** - Reference implementation for ProtoPedia API Ver 2.0 Client
-    - Fetch and normalize ProtoPedia prototypes
-    - Error handling and network utilities
-    - Type-safe integration with `protopedia-api-v2-client`
+3. **`lib/fetcher`** - API Client Utilities (`ProtopediaApiCustomClient`)
+    - Utilities to fetch and normalize ProtoPedia prototypes
+    - Error handling and network helpers for `protopedia-api-v2-client`
+    - Can be used independently to build custom data pipelines
+    - [Documentation](lib/fetcher/docs/USAGE.md)
 
-3. **`lib/simple-store-for-protopedia`** - Sample repository implementation
-    - Combines `PrototypeMapStore` with ProtoPedia API client
-    - Ready-to-use `createProtopediaInMemoryRepository` factory
-    - Demonstrates best practices for snapshot-based data management
+4. **`lib/repository`** - Ready-to-use Repository (`ProtopediaInMemoryRepository`)
+    - Integrates `lib/store` and `lib/fetcher` into a single easy-to-use package
+    - Provides `createProtopediaInMemoryRepository` factory
+    - Best for most use cases requiring caching and automatic refreshing
+    - [Documentation](lib/repository/docs/USAGE.md)
 
 This project extracts and generalizes the data-fetching and in-memory data management capabilities originally implemented in [F88/mugen-protopedia](https://github.com/F88/mugen-protopedia/), providing them as a standalone, reusable library for various applications.
 
 ## ProtoPedia API Ver 2.0
 
-ProtoPedia API Ver 2.0 · Apiary
-<https://protopediav2.docs.apiary.io/#>
+This library uses ProtoPedia API Ver 2.0.
+To use the API, you need an Access Token (Bearer Token).
+
+Please refer to the API documentation for details:
+[ProtoPedia API Ver 2.0 · Apiary](https://protopediav2.docs.apiary.io/)
 
 ## Full Supported API Client
 
-This library is designed to work very closely with the official
-[protopedia-api-v2-client](https://www.npmjs.com/package/protopedia-api-v2-client).
+This library fully supports [protopedia-api-v2-client](https://www.npmjs.com/package/protopedia-api-v2-client).
 
-If you are happy to use `protopedia-api-v2-client` as your ProtoPedia
-API client, this library already **fully supports it** out of the box.
-You can plug an existing client instance into the memorystore layer, or
-let this library create and manage the client for you.
+For details on how to integrate with `protopedia-api-v2-client` and use custom fetchers (e.g. for Next.js), please refer to [`lib/fetcher/docs/USAGE.md`](lib/fetcher/docs/USAGE.md).
 
-In practice, you can treat this library as a reference implementation
-of how to integrate `ProtoPedia API Ver 2.0 Client for Javascript`
-into real-world applications.
-
-### Example: custom fetcher for Next.js
-
-You can pass any `fetch` implementation to the official client factory
-via its options. This makes it easy to adapt to different runtimes such
-as Node.js, browsers, or Next.js server components.
-
-```ts
-import { createProtoPediaClient } from 'protopedia-api-v2-client';
-
-const CONNECTION_AND_HEADER_TIMEOUT_MS = 5_000;
-
-export const customClientForNextJs = createProtoPediaClient({
-    token: process.env.PROTOPEDIA_API_TOKEN ?? '',
-    baseUrl: 'https://api.protopedia.net',
-    fetch: async (url, init) => {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(
-            () => controller.abort(),
-            CONNECTION_AND_HEADER_TIMEOUT_MS,
-        );
-
-        try {
-            return await globalThis.fetch(url, {
-                ...init,
-                signal: controller.signal,
-                cache: 'force-cache',
-                next: {
-                    revalidate: 60,
-                },
-            });
-        } finally {
-            clearTimeout(timeoutId);
-        }
-    },
-    // Reduce noisy logs in development; can be overridden via env
-    logLevel: process.env.NODE_ENV === 'production' ? 'error' : 'debug',
-});
-```
-
-The resulting client can then be passed into this library's
-memorystore layer, or you can let this library create a compatible
-client internally by providing the same options shape.
-
-## Specifications
-
-### Goals
-
-- Provide a thin, runtime-agnostic layer for working with ProtoPedia
-  API v2 from both Node.js and browser environments.
-- Normalize upstream ProtoPedia responses into a stable, well-typed
-  `NormalizedPrototype` structure.
-- Offer an in-memory store that keeps a snapshot of ProtoPedia
-  prototypes and provides fast lookups and random selection.
-- Integrate smoothly with the official
-  `protopedia-api-v2-client` package.
-
-### Normalized Data Model
-
-- The core normalized type is `NormalizedPrototype` (see
-  `lib/protopedia/types/normalized-prototype.ts`).
-- It is derived from `ResultOfListPrototypesApiResponse` provided by
-  `protopedia-api-v2-client`.
-- Key normalization rules:
-    - Pipe-separated strings (for example, tags or users) are converted
-      into string arrays.
-    - Date/time fields from ProtoPedia are normalized to ISO 8601
-      strings in UTC.
-    - Count fields are converted to numbers where needed.
-    - Optional or missing fields are represented with `null` or
-      reasonable defaults instead of ad-hoc falsy values.
-
-### Fetch Layer
-
-- The primary fetch helper is `getPrototypes` located in
-  `lib/protopedia/fetch-prototypes.ts`.
-- It expects an instance of `ProtoPediaApiClient` from
-  `protopedia-api-v2-client` and uses `listPrototypes` under the hood.
-- Request parameters are typed as `ListPrototypesParams` from
-  `protopedia-api-v2-client`.
-- The result type is a discriminated union:
-    - `FetchPrototypesResult` with shape `{ ok: true, data: NormalizedPrototype[] }`
-    - or an error branch with `{ ok: false, error: NetworkFailure }`.
-- All fetch results are immediately passed through `normalizePrototype`
-  to ensure consumers only handle `NormalizedPrototype` objects.
-
-### In-Memory Prototype Store
-
-- The in-memory store is implemented as `PrototypeMapStore` in
-  `lib/core/store.ts`.
-- Responsibilities:
-    - Hold a map of `prototypeId -> NormalizedPrototype` with a
-      consistently updated backing array for iteration and random access.
-    - Provide O(1) access by id and efficient random selection.
-    - Optionally enforce a TTL (time-to-live) and rough size estimation
-      to avoid unbounded growth.
-    - Offer `runExclusive` to coordinate refresh operations and avoid
-      duplicate concurrent fetches.
-- Typical usage pattern:
-    - Try to read from the map store first.
-    - If the store is empty or stale, fetch from ProtoPedia API v2,
-      normalize the response, populate the store, and then serve the
-      result from the store.
-
-### Logger
-
-- The library ships with a minimal, dependency-free logger interface
-  defined in `lib/lib/logger.types.ts`.
-- A default implementation is provided via `createConsoleLogger` in
-  `lib/lib/logger.ts`.
-- Log levels:
-    - `debug`, `info`, `warn`, `error`, `silent`.
-- The `Logger` interface exposes the following methods:
-    - `debug(message: string, meta?: unknown)`
-    - `info(message: string, meta?: unknown)`
-    - `warn(message: string, meta?: unknown)`
-    - `error(message: string, meta?: unknown)`
-- In environments where logging is not desired, `createNoopLogger`
-  returns a logger that discards all messages.
-
-### Server / Client Usage
-
-- The core fetcher and store are designed to be usable from both
-  server-side and client-side code, as long as you can provide a
-  configured `ProtoPediaApiClient` instance.
-- Higher-level integration code (such as Next.js server actions) can
-  build on top of these primitives to implement behavior like:
-    - Get from the map store if present.
-    - Otherwise, fetch from the ProtoPedia API v2, populate the store,
-      and then return the freshly fetched data.
-
-### Error Handling
-
-- Network-level failures are represented by the `NetworkFailure` type
-  (see `lib/protopedia/types/prototype-api.types.ts`).
-- Fetch helpers like `getPrototypes` return discriminated unions so
-  callers must explicitly handle both success and failure cases.
-- Application-level logic can choose to log, retry, or surface these
-  failures depending on the runtime environment.
-
-## Use Cases
-
-This library is intended to sit between your application code and the
-ProtoPedia API:
-
-- lib user
-  -> API client (`protopedia-api-v2-client`)
-  -> in-memory store (`PrototypeMapStore`)
-  -> ProtoPedia API v2
-
-It is designed to work in both client-side (SPA) and server-side
-environments.
-
-### Client-side (SPA) examples
-
-- Random one prototype in a view
-    - On first load, fetch a page of prototypes via
-      `createProtopediaApiCustomClient` and `fetchAndNormalizePrototypes`.
-    - Normalize and push all results into a shared `PrototypeMapStore`
-      instance.
-    - When the user clicks a "Show me something" button, call
-      `store.getRandom()` and render the returned `NormalizedPrototype`.
-
-- Detail view by id with in-memory cache
-    - When rendering a list, fill the `PrototypeMapStore` with all
-      `NormalizedPrototype` objects from the list response.
-    - On a detail page or modal, first call `store.getById(id)`.
-    - If the prototype is not found in the store, fall back to a
-      single-item fetch using `createProtopediaApiCustomClient`, normalize the
-      result, insert it into the store, and then render it.
-
-### Server-side examples
-
-- Node.js process with an in-memory cache
-    - Keep a single `PrototypeMapStore` instance in your Node.js
-      process.
-    - On each incoming request, first try to satisfy reads from the
-      store (by id, or via `getRandom`).
-    - When the store is empty or past a configured TTL, refresh it via
-      `getPrototypes` and repopulate the map before serving results.
-
-- Batch or CLI processing of multiple prototypes
-    - From a CLI or batch script, use `createProtopediaApiCustomClient`
-      together with `fetchAndNormalizePrototypes` to fetch multiple prototypes in a
-      single call.
-    - Work against the normalized `NormalizedPrototype[]` result for
-      tasks like exporting to CSV, generating static content, or
-      populating another database.
-    - Optionally, load the same data into `PrototypeMapStore` to make
-      it easy to perform repeated lookups or random sampling during the
-      batch job.
-
-In addition to the examples above, the library is intended to support
-more advanced patterns such as:
-
-- Fetching prototypes filtered by tags or other query parameters.
-- Using custom `PrototypeMapStore` instances with flexible TTL and
-  sizing strategies per use case.
-
-## Usage
+## Quick Start
 
 ### Installation
 
@@ -258,7 +62,7 @@ more advanced patterns such as:
 npm install github:F88/promidas protopedia-api-v2-client
 ```
 
-### Quick Start
+### Usage
 
 ```typescript
 import { createProtopediaInMemoryRepository } from '@f88/promidas';
@@ -298,7 +102,7 @@ if (stats.isExpired) {
 
 ### Example Script
 
-See `scripts/try-protopedia-simple-store.ts` for a complete example that demonstrates:
+See `scripts/try-protopedia-repository.ts` for a complete example that demonstrates:
 
 - Repository initialization with custom TTL
 - Snapshot setup and refresh
@@ -309,32 +113,5 @@ Run the example:
 
 ```bash
 export PROTOPEDIA_API_V2_TOKEN="your-token-here"
-npx tsx scripts/try-protopedia-simple-store.ts
-```
-
-### Advanced Usage
-
-For detailed usage patterns and API documentation, see:
-
-- [`docs/SIMPLE-STORE-FOR-PROTOPEDIA.md`](docs/SIMPLE-STORE-FOR-PROTOPEDIA.md) — High-level repository usage
-- [`docs/STORE-USAGE.md`](docs/STORE-USAGE.md) — Low-level `PrototypeMapStore` API
-- [`docs/STORE-DESIGN.md`](docs/STORE-DESIGN.md) — Design notes and performance characteristics
-
-## Test Coverage
-
-This library maintains comprehensive test coverage:
-
-- **Overall Coverage**: 98.01% statements, 92.15% branches, 100% functions
-- **Test Suite**: 314 tests across 9 test files
-- **Test Categories**:
-    - Unit tests for `normalizePrototype`, `PrototypeMapStore`, and fetch utilities
-    - Integration tests for `ProtopediaInMemoryRepository`
-    - Performance tests for large datasets (1,000–10,000 prototypes)
-    - Edge case and error handling tests
-
-Run tests with:
-
-```bash
-npm test              # Run all tests
-npm run test:coverage # Run tests with coverage report
+npx tsx scripts/try-protopedia-repository.ts
 ```
