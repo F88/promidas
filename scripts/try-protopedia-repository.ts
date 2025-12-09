@@ -74,7 +74,7 @@ async function main() {
 
     // Test 5: Get specific prototype by ID
     console.log('=== Test 5: Get prototype by ID ===');
-    const byId = await repo.getPrototypeFromSnapshotById(random.id);
+    const byId = await repo.getPrototypeFromSnapshotByPrototypeId(random.id);
     if (byId) {
       console.log(`✓ Retrieved prototype #${byId.id}: ${byId.prototypeNm}`);
       console.log(
