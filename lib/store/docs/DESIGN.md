@@ -4,8 +4,8 @@ title: Store Design
 title-en: Store Design
 title-ja: ストア設計
 related:
-    - README.md "Project Overview"
-    - STORE-USAGE.md "Store Usage"
+    - ../../../README.md "Project Overview"
+    - USAGE.md "Store Usage"
 instructions-for-ais:
     - This document should be written in English for AI readability.
     - Content within code fences may be written in languages other than English.
@@ -56,7 +56,7 @@ The in-memory `PrototypeMapStore` used in this repository:
 - Targets use cases around a few thousand to ~10,000 prototypes for
   SPA and Node.js applications.
 
-Performance and memory measurements from `lib/core/store.perf.test.ts`
+Performance and memory measurements from `lib/store/store.perf.test.ts`
 show that, for the current `NormalizedPrototype` shape:
 
 - ≈1,000 items → snapshot ≈0.3 MB
@@ -75,9 +75,9 @@ than current data volumes.
 
 The memorystore implementation is thoroughly tested:
 
-- **Performance tests**: `lib/core/store.perf.test.ts` validates performance characteristics with 1,000–10,000 items
-- **Unit tests**: `lib/core/store.test.ts` with 50 test cases covering all core functionality
-- **Integration tests**: `lib/simple-store-for-protopedia/__tests__/` with 44 test cases
+- **Performance tests**: `lib/store/store.perf.test.ts` validates performance characteristics with 1,000–10,000 items
+- **Unit tests**: `lib/store/store.test.ts` with 50 test cases covering all core functionality
+- **Integration tests**: `lib/repository/__tests__/` with 44 test cases
 - **Overall coverage**: 98.01% statements, 92.15% branches, 100% functions
 
 These measurements are based on the test suite as of 2025-12-05 and should be revisited if the upstream schema or `NormalizedPrototype` shape changes significantly.

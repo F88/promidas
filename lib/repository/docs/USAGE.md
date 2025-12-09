@@ -1,10 +1,10 @@
 ---
 lang: en
-title: Usage of Simple Store for ProtoPedia
-title-en: Usage of Simple Store for ProtoPedia
-title-ja: Simple Store for ProtoPedia の使用法
+title: Usage of ProtopediaInMemoryRepository
+title-en: Usage of ProtopediaInMemoryRepository
+title-ja: ProtopediaInMemoryRepository の使用法
 related:
-    - README.md "Project Overview"
+    - ../../../README.md "Project Overview"
 instructions-for-ais:
     - This document should be written in English for AI readability.
     - Content within code fences may be written in languages other than English.
@@ -12,13 +12,13 @@ instructions-for-ais:
     - Prohibit updating title line (1st line) in this document.
 ---
 
-# simple-store-for-protopedia usage guide
+# ProtopediaInMemoryRepository Usage Guide
 
 This document describes how to use the ProtoPedia-specific in-memory
 repository built on top of the generic `PrototypeMapStore` core.
 
 The main entry point is the `createProtopediaInMemoryRepository` factory
-exported from `lib/simple-store-for-protopedia`.
+exported from `lib/repository`.
 
 ## Overview
 
@@ -39,8 +39,8 @@ Network calls are performed only by `setupSnapshot` and
 The repository interface looks like this:
 
 ```ts
-import type { NormalizedPrototype } from '../protopedia/types/normalized-prototype';
-import type { FetchPrototypesParams } from '../protopedia/types/params.type';
+import type { NormalizedPrototype } from '../types/normalized-prototype';
+import type { ListPrototypesParams } from 'protopedia-api-v2-client';
 
 export interface ProtopediaInMemoryRepositoryStats {
     size: number;
@@ -59,7 +59,7 @@ export interface ProtopediaInMemoryRepository {
      * unexpected upstream errors). In case of failure, any existing
      * in-memory snapshot remains unchanged.
      */
-    setupSnapshot(params: FetchPrototypesParams): Promise<void>;
+    setupSnapshot(params: ListPrototypesParams): Promise<void>;
 
     /**
      * Refresh the snapshot using the same strategy as the last
@@ -83,7 +83,7 @@ export interface ProtopediaInMemoryRepository {
 The factory type is:
 
 ```ts
-import type { PrototypeMapStoreConfig } from '../core/store';
+import type { PrototypeMapStoreConfig } from '../store/store';
 
 export type CreateProtopediaInMemoryRepository = (
     storeConfig: PrototypeMapStoreConfig,
@@ -187,6 +187,46 @@ async function ensureFreshSnapshot(
 
 You can call this helper before serving requests or on a periodic timer,
 depending on your application needs.
+
+## Common Use Cases
+
+This library is intended to sit between your application code and the
+ProtoPedia API. It is designed to work in both client-side (SPA) and server-side
+environments.
+
+### Client-side (SPA) examples
+
+- **Random one prototype in a view**
+    - On first load, fetch a page of prototypes.
+    - Normalize and push all results into the repository.
+    - When the user clicks a "Show me something" button, call
+      `repo.getRandomPrototypeFromSnapshot()` and render the result.
+
+- **Detail view by id with in-memory cache**
+    - When rendering a list, fill the repository with all
+      prototypes from the list response.
+    - On a detail page or modal, first call `repo.getPrototypeFromSnapshotById(id)`.
+    - If the prototype is not found in the store, fall back to a
+      single-item fetch (using the client directly or extending the repository),
+      insert it into the store, and then render it.
+
+### Server-side examples
+
+- **Node.js process with an in-memory cache**
+    - Keep a single `ProtopediaInMemoryRepository` instance in your Node.js
+      process.
+    - On each incoming request, first try to satisfy reads from the
+      store (by id, or via random).
+    - When the store is empty or past a configured TTL, refresh it via
+      `refreshSnapshot` and repopulate the map before serving results.
+
+- **Batch or CLI processing of multiple prototypes**
+    - From a CLI or batch script, use the repository to fetch multiple prototypes in a
+      single call.
+    - Work against the normalized data for tasks like exporting to CSV,
+      generating static content, or populating another database.
+    - The repository makes it easy to perform repeated lookups or random sampling
+      during the batch job.
 
 ## Notes
 

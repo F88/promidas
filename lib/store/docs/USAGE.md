@@ -4,8 +4,8 @@ title: Usage of PrototypeMapStore
 title-en: Usage of PrototypeMapStore
 title-ja: PrototypeMapStoreの使用法
 related:
-    - README.md "Project Overview"
-    - STORE-DESIGN.md "Store Design"
+    - ../../../README.md "Project Overview"
+    - DESIGN.md "Store Design"
 instructions-for-ais:
     - This document should be written in English for AI readability.
     - Content within code fences may be written in languages other than English.
@@ -16,12 +16,12 @@ instructions-for-ais:
 # Memorystore Usage Notes
 
 This document describes how to use the `PrototypeMapStore` defined in
-`lib/core/store.ts`. It focuses on the public API, typical access
+`lib/store/store.ts`. It focuses on the public API, typical access
 patterns, and how to combine the store-wide TTL with background
 refresh.
 
 For payload size and memory characteristics of the store, see
-`STORE-DESIGN.md`.
+`DESIGN.md`.
 
 ## Overview
 
@@ -42,7 +42,7 @@ The store is **snapshot-based**:
 
 ## Public API Summary
 
-All methods live on `PrototypeMapStore` in `lib/core/store.ts`.
+All methods live on `PrototypeMapStore` in `lib/store/store.ts`.
 
 ### Construction
 
@@ -130,7 +130,7 @@ A typical usage pattern is stale-while-revalidate:
 ### Example: Ensure Fresh Snapshot
 
 ```ts
-import { PrototypeMapStore } from './lib/core/store';
+import { PrototypeMapStore } from './lib/store/store';
 
 async function ensureFreshSnapshot(
     store: PrototypeMapStore,
@@ -168,7 +168,7 @@ outside the store.
 
 ```ts
 import type { ProtoPediaApiClient } from 'protopedia-api-v2-client';
-import { PrototypeMapStore } from './lib/core/store';
+import { PrototypeMapStore } from './lib/store/store';
 
 async function fetchAllPrototypesNormalized(
     client: ProtoPediaApiClient,
@@ -206,4 +206,4 @@ const prototype = store.getRandom();
 - The default `maxPayloadSizeBytes` is 30 MiB; configuring larger limits
   is rejected to avoid oversized payloads.
 - For measured memory usage and payload sizes at 1,000–10,000 items,
-  see `STORE-DESIGN-NOTES.md` and `lib/core/store.perf.test.ts`.
+  see `STORE-DESIGN-NOTES.md` and `lib/store/store.perf.test.ts`.
