@@ -34,6 +34,8 @@ export type PrototypeMapStats = {
   cachedAt: Date | null;
   /** Whether the cached snapshot has exceeded its TTL. */
   isExpired: boolean;
+  /** Remaining time in milliseconds until expiration. 0 if expired or no data cached. */
+  remainingTtlMs: number;
   /** Exact size of the cached snapshot in bytes (JSON serialized). */
   dataSizeBytes: number;
   /** Whether a background refresh operation is currently in progress. */
@@ -171,12 +173,36 @@ export class PrototypeMapStore {
     return this.cachedAt;
   }
 
+  /**
+   * Calculate elapsed time in milliseconds since the snapshot was cached.
+   * Returns 0 if no data is cached.
+   */
+  private getElapsedTime(): number {
+    if (!this.cachedAt) {
+      return 0;
+    }
+    return Date.now() - this.cachedAt.getTime();
+  }
+
+  /**
+   * Calculate remaining time in milliseconds until expiration.
+   * Returns 0 if already expired or no data is cached.
+   */
+  private getRemainingTtl(): number {
+    if (!this.cachedAt) {
+      return 0;
+    }
+    const elapsed = this.getElapsedTime();
+    const remaining = this.ttlMs - elapsed;
+    return Math.max(0, remaining);
+  }
+
   /** Determine whether the snapshot is stale based on the configured TTL. */
   isExpired(): boolean {
     if (!this.cachedAt) {
       return true;
     }
-    return Date.now() - this.cachedAt.getTime() > this.ttlMs;
+    return this.getElapsedTime() > this.ttlMs;
   }
 
   /**
@@ -247,6 +273,7 @@ export class PrototypeMapStore {
       size: this.prototypeMap.size,
       cachedAt: this.cachedAt,
       isExpired: this.isExpired(),
+      remainingTtlMs: this.getRemainingTtl(),
       dataSizeBytes: this.dataSizeBytes,
       refreshInFlight: this.isRefreshInFlight(),
     };

@@ -98,8 +98,47 @@ describe('PrototypeMapStore', () => {
         expect(stats).toHaveProperty('size');
         expect(stats).toHaveProperty('cachedAt');
         expect(stats).toHaveProperty('isExpired');
+        expect(stats).toHaveProperty('remainingTtlMs');
         expect(stats).toHaveProperty('dataSizeBytes');
         expect(stats).toHaveProperty('refreshInFlight');
+      });
+
+      it('returns correct values when no data is stored', () => {
+        const store = new PrototypeMapStore({
+          ttlMs: 10_000,
+          maxDataSizeBytes: 1024 * 1024,
+        });
+        const stats = store.getStats();
+
+        expect(stats.size).toBe(0);
+        expect(stats.cachedAt).toBeNull();
+        expect(stats.isExpired).toBe(true);
+        expect(stats.remainingTtlMs).toBe(0);
+        expect(stats.dataSizeBytes).toBe(0);
+        expect(stats.refreshInFlight).toBe(false);
+      });
+
+      it('returns correct values when empty array is stored', () => {
+        vi.useFakeTimers();
+        const now = new Date('2025-01-01T00:00:00Z');
+        vi.setSystemTime(now);
+
+        const store = new PrototypeMapStore({
+          ttlMs: 5000,
+          maxDataSizeBytes: 1024 * 1024,
+        });
+        store.setAll([]);
+
+        const stats = store.getStats();
+
+        expect(stats.size).toBe(0);
+        expect(stats.cachedAt).not.toBeNull();
+        expect(stats.cachedAt?.getTime()).toBe(now.getTime());
+        expect(stats.isExpired).toBe(false);
+        expect(stats.remainingTtlMs).toBe(5000);
+        expect(stats.dataSizeBytes).toBe(2); // JSON size of "[]"
+        expect(stats.refreshInFlight).toBe(false);
+        vi.useRealTimers();
       });
 
       it('reports correct values after setAll', () => {
@@ -118,6 +157,7 @@ describe('PrototypeMapStore', () => {
         expect(stats.size).toBe(1);
         expect(stats.cachedAt?.getTime()).toBe(now.getTime());
         expect(stats.isExpired).toBe(false);
+        expect(stats.remainingTtlMs).toBe(5000);
         expect(stats.dataSizeBytes).toBeGreaterThan(0);
         expect(stats.refreshInFlight).toBe(false);
         vi.useRealTimers();
@@ -136,6 +176,7 @@ describe('PrototypeMapStore', () => {
         const stats = store.getStats();
 
         expect(stats.isExpired).toBe(true);
+        expect(stats.remainingTtlMs).toBe(0);
         vi.useRealTimers();
       });
     });
