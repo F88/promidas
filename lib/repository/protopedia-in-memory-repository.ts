@@ -21,6 +21,7 @@ import type {
   ListPrototypesParams,
   ProtoPediaApiClientOptions,
 } from 'protopedia-api-v2-client';
+import type { DeepReadonly } from 'ts-essentials';
 
 import {
   constructDisplayMessage,
@@ -122,7 +123,7 @@ export const createProtopediaInMemoryRepositoryImpl = (
    */
   const getPrototypeFromSnapshotByPrototypeId = async (
     prototypeId: number,
-  ): Promise<NormalizedPrototype | null> => {
+  ): Promise<DeepReadonly<NormalizedPrototype> | null> => {
     return store.getByPrototypeId(prototypeId);
   };
 
@@ -131,7 +132,7 @@ export const createProtopediaInMemoryRepositoryImpl = (
    * when the snapshot is empty. Never performs HTTP requests.
    */
   const getRandomPrototypeFromSnapshot =
-    async (): Promise<NormalizedPrototype | null> => {
+    async (): Promise<DeepReadonly<NormalizedPrototype> | null> => {
       return store.getRandom();
     };
 

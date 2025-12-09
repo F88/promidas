@@ -244,7 +244,7 @@ describe('PrototypeMapStore', () => {
   describe('getMaxId', () => {
     it('returns null when store is empty', () => {
       const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
-      expect(store.getMaxId()).toBeNull();
+      expect(store.getMaxPrototypeId()).toBeNull();
     });
 
     it('returns the highest prototype id', () => {
@@ -255,7 +255,7 @@ describe('PrototypeMapStore', () => {
         createPrototype({ id: 5 }),
       ]);
 
-      expect(store.getMaxId()).toBe(7);
+      expect(store.getMaxPrototypeId()).toBe(7);
     });
 
     it('returns null after clear', () => {
@@ -263,14 +263,14 @@ describe('PrototypeMapStore', () => {
       store.setAll([createPrototype({ id: 10 })]);
       store.clear();
 
-      expect(store.getMaxId()).toBeNull();
+      expect(store.getMaxPrototypeId()).toBeNull();
     });
   });
 
   describe('getMinId', () => {
     it('returns null when store is empty', () => {
       const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
-      expect(store.getMinId()).toBeNull();
+      expect(store.getMinPrototypeId()).toBeNull();
     });
 
     it('returns the lowest prototype id', () => {
@@ -281,7 +281,7 @@ describe('PrototypeMapStore', () => {
         createPrototype({ id: 5 }),
       ]);
 
-      expect(store.getMinId()).toBe(3);
+      expect(store.getMinPrototypeId()).toBe(3);
     });
 
     it('returns null after clear', () => {
@@ -289,7 +289,7 @@ describe('PrototypeMapStore', () => {
       store.setAll([createPrototype({ id: 10 })]);
       store.clear();
 
-      expect(store.getMinId()).toBeNull();
+      expect(store.getMinPrototypeId()).toBeNull();
     });
   });
 
@@ -570,7 +570,7 @@ describe('PrototypeMapStore', () => {
       store.setAll([createPrototype({ id: 100 })]);
       store.clear();
 
-      expect(store.getMaxId()).toBeNull();
+      expect(store.getMaxPrototypeId()).toBeNull();
     });
 
     it('can be called multiple times', () => {
@@ -615,8 +615,8 @@ describe('PrototypeMapStore', () => {
       store.setAll([createPrototype({ id: 42 })]);
 
       expect(store.size).toBe(1);
-      expect(store.getMinId()).toBe(42);
-      expect(store.getMaxId()).toBe(42);
+      expect(store.getMinPrototypeId()).toBe(42);
+      expect(store.getMaxPrototypeId()).toBe(42);
       expect(store.getByPrototypeId(42)?.id).toBe(42);
     });
 
@@ -632,8 +632,8 @@ describe('PrototypeMapStore', () => {
 
       expect(result).not.toBeNull();
       expect(store.size).toBe(1000);
-      expect(store.getMinId()).toBe(1);
-      expect(store.getMaxId()).toBe(1000);
+      expect(store.getMinPrototypeId()).toBe(1);
+      expect(store.getMaxPrototypeId()).toBe(1000);
     });
 
     it('handles prototype with id 0', () => {
@@ -641,8 +641,8 @@ describe('PrototypeMapStore', () => {
       store.setAll([createPrototype({ id: 0 })]);
 
       expect(store.getByPrototypeId(0)?.id).toBe(0);
-      expect(store.getMinId()).toBe(0);
-      expect(store.getMaxId()).toBe(0);
+      expect(store.getMinPrototypeId()).toBe(0);
+      expect(store.getMaxPrototypeId()).toBe(0);
     });
 
     it('handles negative prototype ids', () => {
@@ -655,8 +655,8 @@ describe('PrototypeMapStore', () => {
 
       expect(store.getByPrototypeId(-1)?.id).toBe(-1);
       expect(store.getByPrototypeId(-10)?.id).toBe(-10);
-      expect(store.getMinId()).toBe(-10);
-      expect(store.getMaxId()).toBe(5);
+      expect(store.getMinPrototypeId()).toBe(-10);
+      expect(store.getMaxPrototypeId()).toBe(5);
     });
 
     it('preserves all prototype fields', () => {

@@ -5,6 +5,8 @@
  * The store sits above upstream fetch logic, allowing server actions to reuse
  * canonical data without repeated API calls while still respecting TTL limits.
  */
+import type { DeepReadonly } from 'ts-essentials';
+
 import { createConsoleLogger } from '../lib/logger.js';
 import type { Logger } from '../lib/logger.types.js';
 import type { NormalizedPrototype } from '../types/index.js';
@@ -48,7 +50,7 @@ export type PrototypeMapStats = {
 type RefreshTask = () => Promise<void>;
 
 type Snapshot = {
-  data: NormalizedPrototype[];
+  data: readonly DeepReadonly<NormalizedPrototype>[];
   cachedAt: Date | null;
   isExpired: boolean;
 };
@@ -159,14 +161,25 @@ export class PrototypeMapStore {
     return this.prototypeMap.size;
   }
 
-  /** Retrieve the latest fetched prototypes in their original order. */
-  getAll(): NormalizedPrototype[] {
-    return this.prototypes;
+  /**
+   * Retrieve the latest fetched prototypes in their original order.
+   *
+   * Returns type-level immutable reference to the prototypes array.
+   * DeepReadonly provides compile-time protection against mutations.
+   * No runtime overhead (no freezing or copying).
+   *
+   * @returns Type-protected readonly array of prototypes
+   */
+  getAll(): readonly DeepReadonly<NormalizedPrototype>[] {
+    return this.prototypes as readonly DeepReadonly<NormalizedPrototype>[];
   }
 
   /** Retrieve a single prototype by its numeric identifier. */
-  getByPrototypeId(prototypeId: number): NormalizedPrototype | null {
-    return this.prototypeMap.get(prototypeId) ?? null;
+  getByPrototypeId(
+    prototypeId: number,
+  ): DeepReadonly<NormalizedPrototype> | null {
+    const prototype = this.prototypeMap.get(prototypeId) ?? null;
+    return prototype as DeepReadonly<NormalizedPrototype> | null;
   }
 
   /**
@@ -175,13 +188,14 @@ export class PrototypeMapStore {
    * Returns null when the store is empty, allowing callers to fall back to
    * alternative fetch paths.
    */
-  getRandom(): NormalizedPrototype | null {
+  getRandom(): DeepReadonly<NormalizedPrototype> | null {
     if (this.prototypes.length === 0) {
       return null;
     }
 
     const index = Math.floor(Math.random() * this.prototypes.length);
-    return this.prototypes[index] ?? null;
+    const prototype = this.prototypes[index] ?? null;
+    return prototype as DeepReadonly<NormalizedPrototype> | null;
   }
 
   /** Timestamp representing when the snapshot was last refreshed. */
@@ -246,12 +260,12 @@ export class PrototypeMapStore {
     this.logger.info('PrototypeMapStore cleared', { previousSize });
   }
   /** Return the lowest prototype id cached in the store, or null when empty. */
-  getMinId(): number | null {
+  getMinPrototypeId(): number | null {
     return this.minPrototypeId;
   }
 
   /** Return the highest prototype id cached in the store, or null when empty. */
-  getMaxId(): number | null {
+  getMaxPrototypeId(): number | null {
     return this.maxPrototypeId;
   }
 

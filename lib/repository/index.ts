@@ -18,6 +18,7 @@ import type {
   ListPrototypesParams,
   ProtoPediaApiClientOptions,
 } from 'protopedia-api-v2-client';
+import type { DeepReadonly } from 'ts-essentials';
 
 import type {
   PrototypeMapStats,
@@ -88,7 +89,7 @@ export interface ProtopediaInMemoryRepository {
    */
   getPrototypeFromSnapshotByPrototypeId(
     prototypeId: number,
-  ): Promise<NormalizedPrototype | null>;
+  ): Promise<DeepReadonly<NormalizedPrototype> | null>;
 
   /**
    * Get a random prototype from the current in-memory snapshot.
@@ -100,7 +101,7 @@ export interface ProtopediaInMemoryRepository {
    * It does not throw due to ProtoPedia API failures; it only reflects
    * the current in-memory state of the snapshot.
    */
-  getRandomPrototypeFromSnapshot(): Promise<NormalizedPrototype | null>;
+  getRandomPrototypeFromSnapshot(): Promise<DeepReadonly<NormalizedPrototype> | null>;
 
   /**
    * Stats for the current snapshot, including TTL-related information.
