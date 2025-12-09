@@ -26,6 +26,19 @@ import { normalizeProtoPediaTimestamp } from './time.js';
  * This type represents a single prototype object as delivered by the
  * `listPrototypes` API response. It is the input to
  * {@link normalizePrototype}.
+ *
+ * **Important:** This is a direct re-export of the SDK's response type.
+ * If `protopedia-api-v2-client` changes its response shape in a future
+ * version, this type will automatically reflect those changes. The
+ * following areas may be affected:
+ *
+ * - {@link normalizePrototype} function implementation (field mappings)
+ * - {@link NormalizedPrototype} type definition (may need updates)
+ * - Normalization tests (may need new test cases)
+ * - Helper functions (assignPipeSeparatedIfExists, assignIfDefined)
+ *
+ * When upgrading `protopedia-api-v2-client`, review the SDK's changelog
+ * and verify that normalization logic remains compatible.
  */
 export type UpstreamPrototype = ResultOfListPrototypesApiResponse;
 
@@ -55,6 +68,51 @@ export const splitPipeSeparatedString = (value: string): string[] => {
   }
   return value.split('|').map((s) => s.trim());
 };
+
+/**
+ * Assign a pipe-separated field to the target if it exists in the source.
+ *
+ * Helper function to reduce repetition when normalizing optional
+ * pipe-separated fields. Checks if the field exists in the source object,
+ * and if so, transforms it using the provided transform function.
+ *
+ * @param target - The target object to assign to.
+ * @param source - The source object to read from.
+ * @param key - The property key to process.
+ * @param transform - Function to transform the string value into an array.
+ */
+function assignPipeSeparatedIfExists(
+  target: NormalizedPrototype,
+  source: UpstreamPrototype,
+  key: keyof UpstreamPrototype & keyof NormalizedPrototype,
+  transform: (value: string) => string[],
+): void {
+  if (key in source) {
+    const value = source[key as keyof UpstreamPrototype];
+    (target as any)[key] =
+      value && typeof value === 'string' ? transform(value) : [];
+  }
+}
+
+/**
+ * Assign a field to the target if it is defined in the source.
+ *
+ * Helper function to reduce repetition when normalizing optional fields.
+ * Only assigns the field if its value is not `undefined`.
+ *
+ * @param target - The target object to assign to.
+ * @param source - The source object to read from.
+ * @param key - The property key to process.
+ */
+function assignIfDefined(
+  target: NormalizedPrototype,
+  source: UpstreamPrototype,
+  key: keyof UpstreamPrototype & keyof NormalizedPrototype,
+): void {
+  if (source[key as keyof UpstreamPrototype] !== undefined) {
+    (target as any)[key] = source[key as keyof UpstreamPrototype];
+  }
+}
 
 /**
  * Transform an upstream prototype object into the normalized shape.
@@ -120,59 +178,41 @@ export function normalizePrototype(
   };
 
   // Optional fields - only set if defined or explicitly set to empty/null
-  if ('tags' in prototype) {
-    normalized.tags = prototype.tags
-      ? splitPipeSeparatedString(prototype.tags)
-      : [];
-  }
-  if (prototype.summary !== undefined) {
-    normalized.summary = prototype.summary;
-  }
-  if (prototype.createId !== undefined) {
-    normalized.createId = prototype.createId;
-  }
-  if (prototype.updateId !== undefined) {
-    normalized.updateId = prototype.updateId;
-  }
-  if ('awards' in prototype) {
-    normalized.awards = prototype.awards
-      ? splitPipeSeparatedString(prototype.awards)
-      : [];
-  }
-  if (prototype.systemDescription !== undefined) {
-    normalized.systemDescription = prototype.systemDescription;
-  }
-  if (prototype.videoUrl !== undefined) {
-    normalized.videoUrl = prototype.videoUrl;
-  }
-  if (prototype.relatedLink !== undefined) {
-    normalized.relatedLink = prototype.relatedLink;
-  }
-  if (prototype.relatedLink2 !== undefined) {
-    normalized.relatedLink2 = prototype.relatedLink2;
-  }
-  if (prototype.relatedLink3 !== undefined) {
-    normalized.relatedLink3 = prototype.relatedLink3;
-  }
-  if (prototype.relatedLink4 !== undefined) {
-    normalized.relatedLink4 = prototype.relatedLink4;
-  }
-  if (prototype.relatedLink5 !== undefined) {
-    normalized.relatedLink5 = prototype.relatedLink5;
-  }
-  if ('events' in prototype) {
-    normalized.events = prototype.events
-      ? splitPipeSeparatedString(prototype.events)
-      : [];
-  }
-  if (prototype.officialLink !== undefined) {
-    normalized.officialLink = prototype.officialLink;
-  }
-  if ('materials' in prototype) {
-    normalized.materials = prototype.materials
-      ? splitPipeSeparatedString(prototype.materials)
-      : [];
-  }
+  assignPipeSeparatedIfExists(
+    normalized,
+    prototype,
+    'tags',
+    splitPipeSeparatedString,
+  );
+  assignIfDefined(normalized, prototype, 'summary');
+  assignIfDefined(normalized, prototype, 'createId');
+  assignIfDefined(normalized, prototype, 'updateId');
+  assignPipeSeparatedIfExists(
+    normalized,
+    prototype,
+    'awards',
+    splitPipeSeparatedString,
+  );
+  assignIfDefined(normalized, prototype, 'systemDescription');
+  assignIfDefined(normalized, prototype, 'videoUrl');
+  assignIfDefined(normalized, prototype, 'relatedLink');
+  assignIfDefined(normalized, prototype, 'relatedLink2');
+  assignIfDefined(normalized, prototype, 'relatedLink3');
+  assignIfDefined(normalized, prototype, 'relatedLink4');
+  assignIfDefined(normalized, prototype, 'relatedLink5');
+  assignPipeSeparatedIfExists(
+    normalized,
+    prototype,
+    'events',
+    splitPipeSeparatedString,
+  );
+  assignIfDefined(normalized, prototype, 'officialLink');
+  assignPipeSeparatedIfExists(
+    normalized,
+    prototype,
+    'materials',
+    splitPipeSeparatedString,
+  );
 
   return normalized;
 }

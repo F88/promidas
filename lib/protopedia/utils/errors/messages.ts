@@ -51,7 +51,9 @@ export const resolveErrorMessage = (value: unknown): string => {
  * 1. A prefix from `details.statusText` (e.g., "Not Found") or
  *    `details.code` (e.g., "ENOTFOUND").
  * 2. The resolved error message from {@link resolveErrorMessage}.
- * 3. The HTTP status code appended in parentheses (e.g., "(404)").
+ * 3. The HTTP status code appended in parentheses (e.g., "(404)") if
+ *    status is defined. For network errors without a status, the code
+ *    is omitted.
  *
  * The result is suitable for displaying to users or logging.
  *
@@ -61,14 +63,24 @@ export const resolveErrorMessage = (value: unknown): string => {
  *
  * @example
  * ```ts
- * const failure: NetworkFailure = {
+ * // HTTP error with status
+ * const httpFailure: NetworkFailure = {
  *   status: 404,
  *   error: new Error('Resource not found'),
  *   details: { res: { statusText: 'Not Found' } },
  * };
  *
- * constructDisplayMessage(failure);
+ * constructDisplayMessage(httpFailure);
  * // => 'Not Found: Resource not found (404)'
+ *
+ * // Network error without status
+ * const networkFailure: NetworkFailure = {
+ *   error: new Error('Connection refused'),
+ *   details: { res: { code: 'ECONNREFUSED' } },
+ * };
+ *
+ * constructDisplayMessage(networkFailure);
+ * // => 'ECONNREFUSED: Connection refused'
  * ```
  */
 export const constructDisplayMessage = (failure: NetworkFailure): string => {
@@ -86,5 +98,6 @@ export const constructDisplayMessage = (failure: NetworkFailure): string => {
     }
   }
 
-  return `${message} (${status})`;
+  // Only append status code if it's defined (HTTP errors have status, network errors don't)
+  return status !== undefined ? `${message} (${status})` : message;
 };

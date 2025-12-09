@@ -321,5 +321,40 @@ describe('error-messages', () => {
         'Internal Server Error: Error: Failed: Connection: Timeout (500)',
       );
     });
+
+    it('handles network error without status (undefined)', () => {
+      const failure: NetworkFailure = {
+        error: new Error('Connection refused'),
+        details: {
+          res: {
+            code: 'ECONNREFUSED',
+          },
+        },
+      };
+
+      expect(constructDisplayMessage(failure)).toBe(
+        'ECONNREFUSED: Connection refused',
+      );
+    });
+
+    it('handles network error without status and without code', () => {
+      const failure: NetworkFailure = {
+        error: new Error('Network timeout'),
+        details: {},
+      };
+
+      expect(constructDisplayMessage(failure)).toBe('Network timeout');
+    });
+
+    it('handles AbortError without status', () => {
+      const failure: NetworkFailure = {
+        error: new DOMException('The operation was aborted', 'AbortError'),
+        details: {},
+      };
+
+      expect(constructDisplayMessage(failure)).toBe(
+        'The operation was aborted',
+      );
+    });
   });
 });
