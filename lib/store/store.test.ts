@@ -34,9 +34,9 @@ describe('PrototypeMapStore', () => {
 
   it('uses 30 minutes TTL by default', () => {
     const store = new PrototypeMapStore();
-    const stats = store.getStats();
+    const config = store.getConfig();
 
-    expect(stats.ttlMs).toBe(30 * 60 * 1_000);
+    expect(config.ttlMs).toBe(30 * 60 * 1_000);
   });
 
   it('throws when configuring payloads larger than 30 MiB', () => {
@@ -436,6 +436,36 @@ describe('PrototypeMapStore', () => {
     });
   });
 
+  describe('getConfig', () => {
+    it('returns configuration with default values', () => {
+      const store = new PrototypeMapStore();
+      const config = store.getConfig();
+
+      expect(config.ttlMs).toBe(30 * 60 * 1_000);
+      expect(config.maxPayloadSizeBytes).toBe(30 * 1024 * 1024);
+    });
+
+    it('returns configuration with custom values', () => {
+      const store = new PrototypeMapStore({
+        ttlMs: 5000,
+        maxPayloadSizeBytes: 1024 * 1024,
+      });
+      const config = store.getConfig();
+
+      expect(config.ttlMs).toBe(5000);
+      expect(config.maxPayloadSizeBytes).toBe(1024 * 1024);
+    });
+
+    it('returns all required fields', () => {
+      const store = new PrototypeMapStore();
+      const config = store.getConfig();
+
+      expect(config).toHaveProperty('ttlMs');
+      expect(config).toHaveProperty('maxPayloadSizeBytes');
+      expect(Object.keys(config).length).toBe(2);
+    });
+  });
+
   describe('getStats', () => {
     it('returns all statistics', () => {
       const store = new PrototypeMapStore({
@@ -446,7 +476,6 @@ describe('PrototypeMapStore', () => {
 
       expect(stats).toHaveProperty('size');
       expect(stats).toHaveProperty('cachedAt');
-      expect(stats).toHaveProperty('ttlMs');
       expect(stats).toHaveProperty('isExpired');
       expect(stats).toHaveProperty('approxSizeBytes');
       expect(stats).toHaveProperty('refreshInFlight');
@@ -467,7 +496,6 @@ describe('PrototypeMapStore', () => {
 
       expect(stats.size).toBe(1);
       expect(stats.cachedAt?.getTime()).toBe(now.getTime());
-      expect(stats.ttlMs).toBe(5000);
       expect(stats.isExpired).toBe(false);
       expect(stats.approxSizeBytes).toBeGreaterThan(0);
       expect(stats.refreshInFlight).toBe(false);

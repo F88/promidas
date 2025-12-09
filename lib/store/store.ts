@@ -20,12 +20,21 @@ export type PrototypeMapStoreConfig = {
   maxPayloadSizeBytes?: number;
 };
 
-type PrototypeMapStats = {
+/**
+ * Statistics and metadata about the current state of the PrototypeMapStore.
+ *
+ * Provides information about cache health, configuration, and runtime state.
+ */
+export type PrototypeMapStats = {
+  /** Number of prototypes currently stored in the cache. */
   size: number;
+  /** Timestamp when the snapshot was last cached, or null if never cached. */
   cachedAt: Date | null;
-  ttlMs: number;
+  /** Whether the cached snapshot has exceeded its TTL. */
   isExpired: boolean;
+  /** Approximate size of the cached snapshot in bytes. */
   approxSizeBytes: number;
+  /** Whether a background refresh operation is currently in progress. */
   refreshInFlight: boolean;
 };
 
@@ -224,15 +233,32 @@ export class PrototypeMapStore {
     return this.refreshPromise !== null;
   }
 
-  /** Provide statistics describing cache health and configuration. */
+  /**
+   * Provide statistics describing cache health and runtime state.
+   *
+   * Returns metadata about the current snapshot including size, expiration status,
+   * and refresh state. For configuration values like TTL, use {@link getConfig}.
+   */
   getStats(): PrototypeMapStats {
     return {
       size: this.prototypeMap.size,
       cachedAt: this.cachedAt,
-      ttlMs: this.ttlMs,
       isExpired: this.isExpired(),
       approxSizeBytes: this.approxSizeBytes,
       refreshInFlight: this.isRefreshInFlight(),
+    };
+  }
+
+  /**
+   * Retrieve the configuration used to initialize this store.
+   *
+   * Returns the resolved configuration values (TTL and max payload size) that were
+   * set during instantiation. These values are immutable after construction.
+   */
+  getConfig(): Required<PrototypeMapStoreConfig> {
+    return {
+      ttlMs: this.ttlMs,
+      maxPayloadSizeBytes: this.maxPayloadSizeBytes,
     };
   }
 

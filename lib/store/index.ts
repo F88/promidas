@@ -6,9 +6,15 @@
  * - {@link PrototypeMapStore} — The main store class handling in-memory snapshots,
  *   TTL expiration, and efficient lookups.
  * - {@link PrototypeMapStoreConfig} — Configuration options for the store
- *   (TTL, max payload size, log level).
+ *   (TTL, max payload size).
+ * - {@link PrototypeMapStats} — Statistics and metadata about the current state
+ *   of the store, returned by `getStats()`.
  *
  * @module
  */
 
-export { PrototypeMapStore, type PrototypeMapStoreConfig } from './store.js';
+export {
+  PrototypeMapStore,
+  type PrototypeMapStats,
+  type PrototypeMapStoreConfig,
+} from './store.js';

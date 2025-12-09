@@ -19,33 +19,20 @@ import type {
   ProtoPediaApiClientOptions,
 } from 'protopedia-api-v2-client';
 
-import type { PrototypeMapStoreConfig } from '../store/index.js';
+import type {
+  PrototypeMapStats,
+  PrototypeMapStoreConfig,
+} from '../store/index.js';
 import type { NormalizedPrototype } from '../types/index.js';
 
 import { createProtopediaInMemoryRepositoryImpl } from './protopedia-in-memory-repository.js';
 
 /**
- * Basic statistics about the current in-memory snapshot for ProtoPedia.
+ * Statistics about the current in-memory snapshot for ProtoPedia.
  *
- * These values are derived from the underlying PrototypeMapStore and are
- * useful to drive TTL-based refresh policies.
+ * Re-exported from {@link PrototypeMapStats} for convenience.
  */
-export interface ProtopediaInMemoryRepositoryStats {
-  /** Number of prototypes currently in the in-memory snapshot. */
-  size: number;
-
-  /**
-   * When the current snapshot was fetched, in milliseconds since epoch.
-   * Null means the snapshot has never been populated.
-   */
-  cachedAt: number | null;
-
-  /**
-   * Whether the underlying store considers the snapshot expired according
-   * to its TTL configuration.
-   */
-  isExpired: boolean;
-}
+export type { PrototypeMapStats as ProtopediaInMemoryRepositoryStats } from '../store/index.js';
 
 /**
  * In-memory, snapshot-based repository for ProtoPedia prototypes.
@@ -127,7 +114,14 @@ export interface ProtopediaInMemoryRepository {
    * This method never throws due to ProtoPedia API failures; it only
    * reports the current in-memory state.
    */
-  getStats(): ProtopediaInMemoryRepositoryStats;
+  getStats(): PrototypeMapStats;
+
+  /**
+   * Retrieve the configuration used to initialize the underlying store.
+   *
+   * Returns the TTL and maximum payload size settings.
+   */
+  getConfig(): Required<PrototypeMapStoreConfig>;
 }
 
 /**

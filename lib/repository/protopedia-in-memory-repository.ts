@@ -28,14 +28,12 @@ import {
 } from '../fetcher/index.js';
 import {
   PrototypeMapStore,
+  type PrototypeMapStats,
   type PrototypeMapStoreConfig,
 } from '../store/index.js';
 import type { NormalizedPrototype } from '../types/index.js';
 
-import type {
-  ProtopediaInMemoryRepository,
-  ProtopediaInMemoryRepositoryStats,
-} from './index.js';
+import type { ProtopediaInMemoryRepository } from './index.js';
 
 const DEFAULT_FETCH_PARAMS: ListPrototypesParams = {
   offset: 0,
@@ -140,19 +138,17 @@ export const createProtopediaInMemoryRepositoryImpl = (
   };
 
   /**
-   * Derive stats for the current snapshot from the underlying store.
-   * Converts Date-based `cachedAt` into a millisecond timestamp.
+   * Return stats for the current snapshot from the underlying store.
    */
-  const getStats = (): ProtopediaInMemoryRepositoryStats => {
-    const snapshotStats = store.getStats();
-    return {
-      size: snapshotStats.size,
-      cachedAt:
-        snapshotStats.cachedAt instanceof Date
-          ? snapshotStats.cachedAt.getTime()
-          : null,
-      isExpired: snapshotStats.isExpired ?? false,
-    };
+  const getStats = (): PrototypeMapStats => {
+    return store.getStats();
+  };
+
+  /**
+   * Return the configuration used to initialize the underlying store.
+   */
+  const getConfig = (): Required<PrototypeMapStoreConfig> => {
+    return store.getConfig();
   };
 
   return {
@@ -161,5 +157,6 @@ export const createProtopediaInMemoryRepositoryImpl = (
     getPrototypeFromSnapshotById,
     getRandomPrototypeFromSnapshot,
     getStats,
+    getConfig,
   };
 };
