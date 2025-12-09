@@ -8,7 +8,9 @@
 import { createConsoleLogger } from '../lib/logger.js';
 import type { NormalizedPrototype } from '../types/index.js';
 
-const THIRTY_MINUTES_IN_MS = 30 * 60 * 1_000;
+const DEFAULT_TTL_MS = 30 * 60 * 1_000; // 30 minutes
+const DEFAULT_DATA_SIZE_BYTES = 10 * 1024 * 1024; // 10 MiB
+const MAX_DATA_SIZE_BYTES = 30 * 1024 * 1024; // 30 MiB
 
 /**
  * Configuration options for the PrototypeMapStore.
@@ -16,8 +18,8 @@ const THIRTY_MINUTES_IN_MS = 30 * 60 * 1_000;
 export type PrototypeMapStoreConfig = {
   /** TTL in milliseconds after which the cached snapshot is considered expired. */
   ttlMs?: number;
-  /** Maximum allowed payload size in bytes for storing snapshots. */
-  maxPayloadSizeBytes?: number;
+  /** Maximum allowed data size in bytes for storing snapshots. */
+  maxDataSizeBytes?: number;
 };
 
 /**
@@ -32,8 +34,8 @@ export type PrototypeMapStats = {
   cachedAt: Date | null;
   /** Whether the cached snapshot has exceeded its TTL. */
   isExpired: boolean;
-  /** Approximate size of the cached snapshot in bytes. */
-  approxSizeBytes: number;
+  /** Exact size of the cached snapshot in bytes (JSON serialized). */
+  dataSizeBytes: number;
   /** Whether a background refresh operation is currently in progress. */
   refreshInFlight: boolean;
 };
@@ -58,7 +60,7 @@ export class PrototypeMapStore {
 
   private readonly ttlMs: number;
 
-  private readonly maxPayloadSizeBytes: number;
+  private readonly maxDataSizeBytes: number;
 
   private prototypeMap = new Map<number, NormalizedPrototype>();
 
@@ -68,44 +70,45 @@ export class PrototypeMapStore {
 
   private cachedAt: Date | null = null;
 
-  private approxSizeBytes = 0;
+  private dataSizeBytes = 0;
 
   private refreshPromise: Promise<void> | null = null;
 
   constructor({
-    ttlMs = THIRTY_MINUTES_IN_MS,
-    maxPayloadSizeBytes = 30 * 1024 * 1024,
+    ttlMs = DEFAULT_TTL_MS,
+    maxDataSizeBytes = DEFAULT_DATA_SIZE_BYTES,
   }: PrototypeMapStoreConfig = {}) {
-    if (maxPayloadSizeBytes > 30 * 1024 * 1024) {
+    // Throw if maxDataSizeBytes exceeds the hard limit
+    if (maxDataSizeBytes > MAX_DATA_SIZE_BYTES) {
+      const maxMiB = (MAX_DATA_SIZE_BYTES / (1024 * 1024)).toFixed(0);
       throw new Error(
-        'PrototypeMapStore maxPayloadSizeBytes must be <= 30 MiB to prevent oversized payloads',
+        `PrototypeMapStore maxDataSizeBytes must be <= ${MAX_DATA_SIZE_BYTES} bytes (${maxMiB} MiB) to prevent oversized data`,
       );
     }
 
     this.ttlMs = ttlMs;
-    this.maxPayloadSizeBytes = maxPayloadSizeBytes;
+    this.maxDataSizeBytes = maxDataSizeBytes;
 
     this.logger.info('PrototypeMapStore initialized', {
       ttlMs: this.ttlMs,
-      maxPayloadSizeBytes: this.maxPayloadSizeBytes,
+      maxDataSizeBytes: this.maxDataSizeBytes,
     });
   }
 
   /**
    * Store the provided snapshot if it fits within the configured payload limit.
    *
-   * @param prototypes
-   * @returns Metadata about the stored snapshot, or null when the payload exceeded limits.
+   * @param prototypes - Array of normalized prototypes to store
+   * @returns Metadata about the stored snapshot including the exact data size in bytes,
+   *          or null when the payload exceeded the configured maximum size limit.
    */
-  setAll(
-    prototypes: NormalizedPrototype[],
-  ): { approxSizeBytes: number } | null {
-    const approxSizeBytes = this.estimateSize(prototypes);
+  setAll(prototypes: NormalizedPrototype[]): { dataSizeBytes: number } | null {
+    const dataSizeBytes = this.estimateSize(prototypes);
 
-    if (approxSizeBytes > this.maxPayloadSizeBytes) {
-      this.logger.warn('Snapshot skipped: payload exceeds maximum size', {
-        approxSizeBytes,
-        maxPayloadSizeBytes: this.maxPayloadSizeBytes,
+    if (dataSizeBytes > this.maxDataSizeBytes) {
+      this.logger.warn('Snapshot skipped: data exceeds maximum size', {
+        dataSizeBytes,
+        maxDataSizeBytes: this.maxDataSizeBytes,
         count: prototypes.length,
       });
       return null;
@@ -116,7 +119,7 @@ export class PrototypeMapStore {
     );
     this.prototypes = prototypes;
     this.cachedAt = new Date();
-    this.approxSizeBytes = approxSizeBytes;
+    this.dataSizeBytes = dataSizeBytes;
     this.maxPrototypeId =
       prototypes.length > 0
         ? prototypes.reduce(
@@ -127,10 +130,10 @@ export class PrototypeMapStore {
 
     this.logger.info('PrototypeMapStore snapshot updated', {
       count: this.prototypeMap.size,
-      approxSizeBytes,
+      dataSizeBytes,
     });
 
-    return { approxSizeBytes };
+    return { dataSizeBytes };
   }
 
   /** Count of prototypes currently kept in the in-memory map. */
@@ -195,7 +198,7 @@ export class PrototypeMapStore {
     this.prototypeMap.clear();
     this.prototypes = [];
     this.cachedAt = null;
-    this.approxSizeBytes = 0;
+    this.dataSizeBytes = 0;
     this.maxPrototypeId = null;
     this.logger.info('PrototypeMapStore cleared', { previousSize });
   }
@@ -244,7 +247,7 @@ export class PrototypeMapStore {
       size: this.prototypeMap.size,
       cachedAt: this.cachedAt,
       isExpired: this.isExpired(),
-      approxSizeBytes: this.approxSizeBytes,
+      dataSizeBytes: this.dataSizeBytes,
       refreshInFlight: this.isRefreshInFlight(),
     };
   }
@@ -258,7 +261,7 @@ export class PrototypeMapStore {
   getConfig(): Required<PrototypeMapStoreConfig> {
     return {
       ttlMs: this.ttlMs,
-      maxPayloadSizeBytes: this.maxPayloadSizeBytes,
+      maxDataSizeBytes: this.maxDataSizeBytes,
     };
   }
 

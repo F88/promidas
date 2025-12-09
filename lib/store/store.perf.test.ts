@@ -31,7 +31,7 @@ describe('PrototypeMapStore performance (non-strict)', () => {
     );
 
     const store = new PrototypeMapStore({
-      maxPayloadSizeBytes: 30 * 1024 * 1024,
+      maxDataSizeBytes: 30 * 1024 * 1024,
     });
 
     const startSetAll = performance.now();
