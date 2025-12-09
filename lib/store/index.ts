@@ -9,6 +9,8 @@
  *   (TTL, max payload size).
  * - {@link PrototypeMapStats} — Statistics and metadata about the current state
  *   of the store, returned by `getStats()`.
+ * - {@link Logger} — Logger interface for custom logging implementations.
+ * - {@link LogLevel} — Log level type for controlling logger verbosity.
  *
  * @module
  */
@@ -18,3 +20,5 @@ export {
   type PrototypeMapStats,
   type PrototypeMapStoreConfig,
 } from './store.js';
+
+export type { Logger, LogLevel } from '../lib/logger.types.js';

@@ -40,7 +40,7 @@ describe('PrototypeMapStore performance (non-strict)', () => {
 
     const startGetById = performance.now();
     for (let id = 1; id <= count; id += 1) {
-      const prototype = store.getById(id);
+      const prototype = store.getByPrototypeId(id);
       if (!prototype) {
         throw new Error('Missing prototype in performance test');
       }

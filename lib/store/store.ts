@@ -6,6 +6,7 @@
  * canonical data without repeated API calls while still respecting TTL limits.
  */
 import { createConsoleLogger } from '../lib/logger.js';
+import type { Logger } from '../lib/logger.types.js';
 import type { NormalizedPrototype } from '../types/index.js';
 
 const DEFAULT_TTL_MS = 30 * 60 * 1_000; // 30 minutes
@@ -20,6 +21,8 @@ export type PrototypeMapStoreConfig = {
   ttlMs?: number;
   /** Maximum allowed data size in bytes for storing snapshots. */
   maxDataSizeBytes?: number;
+  /** Custom logger instance. Defaults to console logger with 'info' level. */
+  logger?: Logger;
 };
 
 /**
@@ -58,7 +61,7 @@ type Snapshot = {
  * {@link runExclusive} to avoid redundant upstream calls.
  */
 export class PrototypeMapStore {
-  private readonly logger = createConsoleLogger('info');
+  private readonly logger: Logger;
 
   private readonly ttlMs: number;
 
@@ -67,6 +70,8 @@ export class PrototypeMapStore {
   private prototypeMap = new Map<number, NormalizedPrototype>();
 
   private prototypes: NormalizedPrototype[] = [];
+
+  private minPrototypeId: number | null = null;
 
   private maxPrototypeId: number | null = null;
 
@@ -79,6 +84,7 @@ export class PrototypeMapStore {
   constructor({
     ttlMs = DEFAULT_TTL_MS,
     maxDataSizeBytes = DEFAULT_DATA_SIZE_BYTES,
+    logger,
   }: PrototypeMapStoreConfig = {}) {
     // Throw if maxDataSizeBytes exceeds the hard limit
     if (maxDataSizeBytes > MAX_DATA_SIZE_BYTES) {
@@ -90,6 +96,7 @@ export class PrototypeMapStore {
 
     this.ttlMs = ttlMs;
     this.maxDataSizeBytes = maxDataSizeBytes;
+    this.logger = logger ?? createConsoleLogger('info');
 
     this.logger.info('PrototypeMapStore initialized', {
       ttlMs: this.ttlMs,
@@ -122,13 +129,22 @@ export class PrototypeMapStore {
     this.prototypes = prototypes;
     this.cachedAt = new Date();
     this.dataSizeBytes = dataSizeBytes;
-    this.maxPrototypeId =
-      prototypes.length > 0
-        ? prototypes.reduce(
-            (max, prototype) => (prototype.id > max ? prototype.id : max),
-            prototypes[0]!.id,
-          )
-        : null;
+
+    if (prototypes.length > 0) {
+      const firstId = prototypes[0]!.id;
+      const { min, max } = prototypes.reduce(
+        (acc, prototype) => ({
+          min: prototype.id < acc.min ? prototype.id : acc.min,
+          max: prototype.id > acc.max ? prototype.id : acc.max,
+        }),
+        { min: firstId, max: firstId },
+      );
+      this.minPrototypeId = min;
+      this.maxPrototypeId = max;
+    } else {
+      this.minPrototypeId = null;
+      this.maxPrototypeId = null;
+    }
 
     this.logger.info('PrototypeMapStore snapshot updated', {
       count: this.prototypeMap.size,
@@ -149,8 +165,8 @@ export class PrototypeMapStore {
   }
 
   /** Retrieve a single prototype by its numeric identifier. */
-  getById(id: number): NormalizedPrototype | undefined {
-    return this.prototypeMap.get(id);
+  getByPrototypeId(prototypeId: number): NormalizedPrototype | null {
+    return this.prototypeMap.get(prototypeId) ?? null;
   }
 
   /**
@@ -225,9 +241,15 @@ export class PrototypeMapStore {
     this.prototypes = [];
     this.cachedAt = null;
     this.dataSizeBytes = 0;
+    this.minPrototypeId = null;
     this.maxPrototypeId = null;
     this.logger.info('PrototypeMapStore cleared', { previousSize });
   }
+  /** Return the lowest prototype id cached in the store, or null when empty. */
+  getMinId(): number | null {
+    return this.minPrototypeId;
+  }
+
   /** Return the highest prototype id cached in the store, or null when empty. */
   getMaxId(): number | null {
     return this.maxPrototypeId;
@@ -285,7 +307,7 @@ export class PrototypeMapStore {
    * Returns the resolved configuration values (TTL and max payload size) that were
    * set during instantiation. These values are immutable after construction.
    */
-  getConfig(): Required<PrototypeMapStoreConfig> {
+  getConfig(): Omit<Required<PrototypeMapStoreConfig>, 'logger'> {
     return {
       ttlMs: this.ttlMs,
       maxDataSizeBytes: this.maxDataSizeBytes,

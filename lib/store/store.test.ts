@@ -192,7 +192,7 @@ describe('PrototypeMapStore', () => {
 
       expect(result).not.toBeNull();
       expect(store.size).toBe(2);
-      expect(store.getById(1)?.id).toBe(1);
+      expect(store.getByPrototypeId(1)?.id).toBe(1);
     });
 
     it('skips storing when data exceeds limit', () => {
@@ -237,7 +237,7 @@ describe('PrototypeMapStore', () => {
       // Restore original implementation
       JSON.stringify = originalStringify;
 
-      expect(store.getById(1)).toBeDefined();
+      expect(store.getByPrototypeId(1)).toBeDefined();
     });
   });
 
@@ -267,6 +267,32 @@ describe('PrototypeMapStore', () => {
     });
   });
 
+  describe('getMinId', () => {
+    it('returns null when store is empty', () => {
+      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      expect(store.getMinId()).toBeNull();
+    });
+
+    it('returns the lowest prototype id', () => {
+      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      store.setAll([
+        createPrototype({ id: 3 }),
+        createPrototype({ id: 7 }),
+        createPrototype({ id: 5 }),
+      ]);
+
+      expect(store.getMinId()).toBe(3);
+    });
+
+    it('returns null after clear', () => {
+      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      store.setAll([createPrototype({ id: 10 })]);
+      store.clear();
+
+      expect(store.getMinId()).toBeNull();
+    });
+  });
+
   describe('runExclusive', () => {
     it('prevents concurrent refresh tasks', async () => {
       const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
@@ -285,7 +311,7 @@ describe('PrototypeMapStore', () => {
 
       expect(firstTask).toHaveBeenCalledTimes(1);
       expect(secondTask).toHaveBeenCalledTimes(0);
-      expect(store.getById(90)?.id).toBe(90);
+      expect(store.getByPrototypeId(90)?.id).toBe(90);
     });
   });
 
@@ -313,12 +339,12 @@ describe('PrototypeMapStore', () => {
     });
   });
 
-  describe('getById', () => {
+  describe('getByPrototypeId', () => {
     it('returns undefined for non-existent id', () => {
       const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
       store.setAll([createPrototype({ id: 1 })]);
 
-      expect(store.getById(999)).toBeUndefined();
+      expect(store.getByPrototypeId(999)).toBeNull();
     });
 
     it('retrieves prototype by id in O(1) time', () => {
@@ -328,7 +354,7 @@ describe('PrototypeMapStore', () => {
       );
       store.setAll(prototypes);
 
-      const result = store.getById(50);
+      const result = store.getByPrototypeId(50);
       expect(result?.id).toBe(50);
     });
 
@@ -337,7 +363,7 @@ describe('PrototypeMapStore', () => {
       store.setAll([createPrototype({ id: 42 })]);
       store.clear();
 
-      expect(store.getById(42)).toBeUndefined();
+      expect(store.getByPrototypeId(42)).toBeNull();
     });
   });
 
@@ -589,8 +615,9 @@ describe('PrototypeMapStore', () => {
       store.setAll([createPrototype({ id: 42 })]);
 
       expect(store.size).toBe(1);
+      expect(store.getMinId()).toBe(42);
       expect(store.getMaxId()).toBe(42);
-      expect(store.getById(42)?.id).toBe(42);
+      expect(store.getByPrototypeId(42)?.id).toBe(42);
     });
 
     it('handles large number of prototypes', () => {
@@ -605,6 +632,7 @@ describe('PrototypeMapStore', () => {
 
       expect(result).not.toBeNull();
       expect(store.size).toBe(1000);
+      expect(store.getMinId()).toBe(1);
       expect(store.getMaxId()).toBe(1000);
     });
 
@@ -612,7 +640,8 @@ describe('PrototypeMapStore', () => {
       const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
       store.setAll([createPrototype({ id: 0 })]);
 
-      expect(store.getById(0)?.id).toBe(0);
+      expect(store.getByPrototypeId(0)?.id).toBe(0);
+      expect(store.getMinId()).toBe(0);
       expect(store.getMaxId()).toBe(0);
     });
 
@@ -624,8 +653,9 @@ describe('PrototypeMapStore', () => {
         createPrototype({ id: -10 }),
       ]);
 
-      expect(store.getById(-1)?.id).toBe(-1);
-      expect(store.getById(-10)?.id).toBe(-10);
+      expect(store.getByPrototypeId(-1)?.id).toBe(-1);
+      expect(store.getByPrototypeId(-10)?.id).toBe(-10);
+      expect(store.getMinId()).toBe(-10);
       expect(store.getMaxId()).toBe(5);
     });
 
@@ -643,7 +673,7 @@ describe('PrototypeMapStore', () => {
       });
 
       store.setAll([original]);
-      const retrieved = store.getById(123);
+      const retrieved = store.getByPrototypeId(123);
 
       expect(retrieved).toEqual(original);
     });
@@ -656,8 +686,8 @@ describe('PrototypeMapStore', () => {
 
       store.setAll([createPrototype({ id: 2 }), createPrototype({ id: 3 })]);
       expect(store.size).toBe(2);
-      expect(store.getById(1)).toBeUndefined();
-      expect(store.getById(2)?.id).toBe(2);
+      expect(store.getByPrototypeId(1)).toBeNull();
+      expect(store.getByPrototypeId(2)?.id).toBe(2);
     });
 
     it('handles concurrent refresh tasks correctly', async () => {
@@ -708,7 +738,7 @@ describe('PrototypeMapStore', () => {
 
       expect(failingTask).toHaveBeenCalledTimes(1);
       expect(successTask).toHaveBeenCalledTimes(1);
-      expect(store.getById(99)?.id).toBe(99);
+      expect(store.getByPrototypeId(99)?.id).toBe(99);
     });
   });
 });
