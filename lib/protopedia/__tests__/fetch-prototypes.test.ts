@@ -5,11 +5,11 @@ import {
   fetchAndNormalizePrototypes,
   type ListPrototypesClient,
 } from '../fetch-prototypes.js';
-import * as networkUtils from '../utils/network-utils.js';
+import * as errorHandler from '../utils/error-handler.js';
 
-vi.mock('../utils/network-utils', async () => {
-  const actual = await vi.importActual<typeof networkUtils>(
-    '../utils/network-utils',
+vi.mock('../utils/error-handler', async () => {
+  const actual = await vi.importActual<typeof errorHandler>(
+    '../utils/error-handler',
   );
   return {
     ...actual,
@@ -28,7 +28,7 @@ vi.mock('../utils/utils', () => ({
 }));
 
 describe('fetchAndNormalizePrototypes', () => {
-  const handleApiErrorMock = networkUtils.handleApiError as ReturnType<
+  const handleApiErrorMock = errorHandler.handleApiError as ReturnType<
     typeof vi.fn
   >;
 
