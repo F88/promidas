@@ -16,9 +16,8 @@
  */
 import type { ResultOfListPrototypesApiResponse } from 'protopedia-api-v2-client';
 
+import { normalizeProtoPediaTimestamp } from '../../fetcher/utils/time.js';
 import type { NormalizedPrototype } from '../../types/normalized-prototype.js';
-
-import { normalizeProtoPediaTimestamp } from './time.js';
 
 /**
  * Alias for the upstream prototype shape returned by the ProtoPedia SDK.
@@ -109,9 +108,8 @@ function assignIfDefined(
   source: UpstreamPrototype,
   key: keyof UpstreamPrototype & keyof NormalizedPrototype,
 ): void {
-  const value = source[key as keyof UpstreamPrototype];
-  if (value !== undefined) {
-    (target as any)[key] = value;
+  if (source[key as keyof UpstreamPrototype] !== undefined) {
+    (target as any)[key] = source[key as keyof UpstreamPrototype];
   }
 }
 
