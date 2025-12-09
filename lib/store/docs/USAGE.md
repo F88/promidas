@@ -130,7 +130,7 @@ A typical usage pattern is stale-while-revalidate:
 ### Example: Ensure Fresh Snapshot
 
 ```ts
-import { PrototypeMapStore } from './lib/store/store';
+import { PrototypeMapStore } from '@f88/promidas';
 
 async function ensureFreshSnapshot(
     store: PrototypeMapStore,
