@@ -31,7 +31,11 @@ export {
 
 // Fetcher (API client and utilities)
 export {
+  constructDisplayMessage,
   createProtopediaApiCustomClient,
+  fetchAndNormalizePrototypes,
+  type FetchPrototypesResult,
+  type ListPrototypesClient,
   type ProtoPediaApiClientOptions,
   type ProtopediaApiCustomClient,
 } from './fetcher/index.js';
