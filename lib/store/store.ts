@@ -6,7 +6,7 @@
  * canonical data without repeated API calls while still respecting TTL limits.
  */
 import { createConsoleLogger } from '../lib/logger.js';
-import type { NormalizedPrototype } from '../types/normalized-prototype.js';
+import type { NormalizedPrototype } from '../types/index.js';
 
 const THIRTY_MINUTES_IN_MS = 30 * 60 * 1_000;
 

@@ -39,7 +39,7 @@ Network calls are performed only by `setupSnapshot` and
 The repository interface looks like this:
 
 ```ts
-import type { NormalizedPrototype } from '../types/normalized-prototype';
+import type { NormalizedPrototype } from '../types/index.js';
 import type { ListPrototypesParams } from 'protopedia-api-v2-client';
 
 export interface ProtopediaInMemoryRepositoryStats {
@@ -83,7 +83,7 @@ export interface ProtopediaInMemoryRepository {
 The factory type is:
 
 ```ts
-import type { PrototypeMapStoreConfig } from '../store/store';
+import type { PrototypeMapStoreConfig } from '../store/index.js';
 
 export type CreateProtopediaInMemoryRepository = (
     storeConfig: PrototypeMapStoreConfig,

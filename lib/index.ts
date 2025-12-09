@@ -37,8 +37,8 @@ export {
 } from './fetcher/index.js';
 
 // Protopedia In-Memory Repository
-export type {
+export {
   createProtopediaInMemoryRepository,
-  ProtopediaInMemoryRepository,
-  ProtopediaInMemoryRepositoryStats,
+  type ProtopediaInMemoryRepository,
+  type ProtopediaInMemoryRepositoryStats,
 } from './repository/index.js';

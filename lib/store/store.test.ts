@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { NormalizedPrototype } from '../types/normalized-prototype.js';
+import type { NormalizedPrototype } from '../types/index.js';
 
 import { PrototypeMapStore } from './store.js';
 

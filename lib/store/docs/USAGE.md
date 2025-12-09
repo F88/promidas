@@ -168,7 +168,7 @@ outside the store.
 
 ```ts
 import type { ProtoPediaApiClient } from 'protopedia-api-v2-client';
-import { PrototypeMapStore } from './lib/store/store';
+import { PrototypeMapStore } from './lib/store';
 
 async function fetchAllPrototypesNormalized(
     client: ProtoPediaApiClient,

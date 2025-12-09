@@ -22,13 +22,15 @@ import type {
   ProtoPediaApiClientOptions,
 } from 'protopedia-api-v2-client';
 
-import { createProtopediaApiCustomClient } from '../fetcher/protopedia-api-custom-client.js';
-import { constructDisplayMessage } from '../fetcher/utils/errors/messages.js';
+import {
+  constructDisplayMessage,
+  createProtopediaApiCustomClient,
+} from '../fetcher/index.js';
 import {
   PrototypeMapStore,
   type PrototypeMapStoreConfig,
-} from '../store/store.js';
-import type { NormalizedPrototype } from '../types/normalized-prototype.js';
+} from '../store/index.js';
+import type { NormalizedPrototype } from '../types/index.js';
 
 import type {
   ProtopediaInMemoryRepository,

@@ -1,11 +1,14 @@
 import type { ResultOfListPrototypesApiResponse } from 'protopedia-api-v2-client';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-import { createProtopediaApiCustomClient } from '../../fetcher/protopedia-api-custom-client.js';
+import { createProtopediaApiCustomClient } from '../../fetcher/index.js';
 import { createProtopediaInMemoryRepositoryImpl } from '../protopedia-in-memory-repository.js';
 
-vi.mock('../../fetcher/protopedia-api-custom-client', () => {
+vi.mock('../../fetcher/index', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../fetcher/index.js')>();
   return {
+    ...actual,
     createProtopediaApiCustomClient: vi.fn(),
   };
 });

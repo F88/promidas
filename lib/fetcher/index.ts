@@ -23,4 +23,6 @@ export {
   type ListPrototypesClient,
 } from './fetch-prototypes.js';
 
+export { constructDisplayMessage } from './utils/errors/messages.js';
+
 export type { FetchPrototypesResult } from './types/result.types.js';
