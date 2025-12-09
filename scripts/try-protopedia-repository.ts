@@ -142,6 +142,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error('Error while running try-protopedia-simple-store:', error);
+  console.error('Error while running try-protopedia-repository:', error);
   process.exit(1);
 });

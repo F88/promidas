@@ -16,7 +16,7 @@
  */
 import type { ResultOfListPrototypesApiResponse } from 'protopedia-api-v2-client';
 
-import type { NormalizedPrototype } from '../types/normalized-prototype.js';
+import type { NormalizedPrototype } from '../../types/normalized-prototype.js';
 
 import { normalizeProtoPediaTimestamp } from './time.js';
 

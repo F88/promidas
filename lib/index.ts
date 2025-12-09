@@ -32,13 +32,14 @@
  *
  * @packageDocumentation
  */
-export * from './protopedia/index.js';
-export type {
+export type { NormalizedPrototype } from './types/normalized-prototype.js';
+export * from './fetcher/index.js';
+export {
   PrototypeMapStore,
-  PrototypeMapStoreConfig,
-} from './core/store.js';
+  type PrototypeMapStoreConfig,
+} from './store/store.js';
 export type {
   ProtopediaInMemoryRepository,
   ProtopediaInMemoryRepositoryStats,
-} from './simple-store-for-protopedia/index.js';
-export { createProtopediaInMemoryRepository } from './simple-store-for-protopedia/index.js';
+} from './repository/index.js';
+export { createProtopediaInMemoryRepository } from './repository/index.js';

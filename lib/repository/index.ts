@@ -17,8 +17,8 @@ import type {
   ProtoPediaApiClientOptions,
 } from 'protopedia-api-v2-client';
 
-import type { PrototypeMapStoreConfig } from '../core/store.js';
-import type { NormalizedPrototype } from '../protopedia/types/normalized-prototype.js';
+import type { PrototypeMapStoreConfig } from '../store/store.js';
+import type { NormalizedPrototype } from '../types/normalized-prototype.js';
 
 import { createProtopediaInMemoryRepositoryImpl } from './protopedia-in-memory-repository.js';
 

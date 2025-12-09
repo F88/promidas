@@ -18,5 +18,10 @@ export {
   type ProtoPediaApiClientOptions,
 } from './protopedia-api-custom-client.js';
 
-export type { NormalizedPrototype } from './types/normalized-prototype.js';
+export {
+  fetchAndNormalizePrototypes,
+  type ListPrototypesClient,
+} from './fetch-prototypes.js';
+
+export type { NormalizedPrototype } from '../types/normalized-prototype.js';
 export type { FetchPrototypesResult } from './types/result.types.js';

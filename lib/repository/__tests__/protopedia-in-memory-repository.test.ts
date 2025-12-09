@@ -1,10 +1,10 @@
 import type { ResultOfListPrototypesApiResponse } from 'protopedia-api-v2-client';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-import { createProtopediaApiCustomClient } from '../../protopedia/protopedia-api-custom-client.js';
+import { createProtopediaApiCustomClient } from '../../fetcher/protopedia-api-custom-client.js';
 import { createProtopediaInMemoryRepositoryImpl } from '../protopedia-in-memory-repository.js';
 
-vi.mock('../../protopedia/protopedia-api-custom-client', () => {
+vi.mock('../../fetcher/protopedia-api-custom-client', () => {
   return {
     createProtopediaApiCustomClient: vi.fn(),
   };
