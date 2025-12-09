@@ -29,7 +29,9 @@ export const createConsoleLogger = (level: LogLevel = 'info'): Logger => {
   return {
     level,
     debug: (message, meta) => {
-      if (!shouldLog(level, 'debug') || !safeDebug) return;
+      if (!shouldLog(level, 'debug') || !safeDebug) {
+        return;
+      }
       const payload =
         meta && typeof meta === 'object' && !Array.isArray(meta)
           ? { level: 'debug', ...(meta as Record<string, unknown>) }
@@ -37,7 +39,9 @@ export const createConsoleLogger = (level: LogLevel = 'info'): Logger => {
       safeDebug(message, payload);
     },
     info: (message, meta) => {
-      if (!shouldLog(level, 'info') || !safeInfo) return;
+      if (!shouldLog(level, 'info') || !safeInfo) {
+        return;
+      }
       const payload =
         meta && typeof meta === 'object'
           ? { level: 'info', ...(meta as Record<string, unknown>) }
@@ -45,7 +49,9 @@ export const createConsoleLogger = (level: LogLevel = 'info'): Logger => {
       safeInfo(message, payload);
     },
     warn: (message, meta) => {
-      if (!shouldLog(level, 'warn') || !safeWarn) return;
+      if (!shouldLog(level, 'warn') || !safeWarn) {
+        return;
+      }
       const payload =
         meta && typeof meta === 'object'
           ? { level: 'warn', ...(meta as Record<string, unknown>) }
@@ -53,7 +59,9 @@ export const createConsoleLogger = (level: LogLevel = 'info'): Logger => {
       safeWarn(message, payload);
     },
     error: (message, meta) => {
-      if (!shouldLog(level, 'error') || !safeError) return;
+      if (!shouldLog(level, 'error') || !safeError) {
+        return;
+      }
       const payload =
         meta && typeof meta === 'object'
           ? { level: 'error', ...(meta as Record<string, unknown>) }

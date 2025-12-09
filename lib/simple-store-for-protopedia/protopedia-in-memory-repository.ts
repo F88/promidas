@@ -28,12 +28,12 @@ import {
 } from '../core/store.js';
 import type { NormalizedPrototype } from '../core/types.js';
 import { createProtopediaApiCustomClient } from '../protopedia/protopedia-api-custom-client.js';
-import { constructDisplayMessage } from '../protopedia/utils/network-utils.js';
+import { constructDisplayMessage } from '../protopedia/utils/errors/messages.js';
 
 import type {
   ProtopediaInMemoryRepository,
   ProtopediaInMemoryRepositoryStats,
-} from './index';
+} from './index.js';
 
 const DEFAULT_FETCH_PARAMS: ListPrototypesParams = {
   offset: 0,

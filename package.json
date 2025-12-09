@@ -29,6 +29,7 @@
     "test:coverage": "vitest run --coverage",
     "test:codecov": "vitest run --coverage --reporter=default --reporter=junit --outputFile.junit=test-report.junit.xml",
     "test:watch": "vitest",
+    "test:ui": "vitest --ui",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint \"**/*.ts\"",
@@ -48,17 +49,18 @@
     "@typescript-eslint/eslint-plugin": "^8.48.1",
     "@typescript-eslint/parser": "^8.48.1",
     "@vitest/coverage-v8": "^4.0.15",
+    "@vitest/ui": "^4.0.15",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
     "prettier": "^3.7.4",
-    "protopedia-api-v2-client": "^1.2.0",
+    "protopedia-api-v2-client": "^2.0.0",
     "rimraf": "^6.1.2",
     "typescript": "^5.9.3",
     "vitest": "^4.0.15"
   },
   "peerDependencies": {
-    "protopedia-api-v2-client": "^1.0.0"
+    "protopedia-api-v2-client": "^2.0.0"
   },
   "files": [
     "README.md",
