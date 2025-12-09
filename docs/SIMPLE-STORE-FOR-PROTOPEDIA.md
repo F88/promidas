@@ -39,7 +39,7 @@ Network calls are performed only by `setupSnapshot` and
 The repository interface looks like this:
 
 ```ts
-import type { NormalizedPrototype } from '../core/types';
+import type { NormalizedPrototype } from '../protopedia/types/normalized-prototype';
 import type { FetchPrototypesParams } from '../protopedia/types/params.type';
 
 export interface ProtopediaInMemoryRepositoryStats {

@@ -1,3 +1,12 @@
+/**
+ * Normalized prototype data structure.
+ *
+ * This type represents a ProtoPedia prototype after it has been processed
+ * by the normalization layer. It guarantees:
+ * - All pipe-separated strings are parsed into arrays
+ * - Dates are normalized to ISO 8601 strings
+ * - Optional fields are clearly typed
+ */
 export type NormalizedPrototype = {
   /* ID */
   id: number;

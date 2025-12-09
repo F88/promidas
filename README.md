@@ -111,7 +111,7 @@ client internally by providing the same options shape.
 ### Normalized Data Model
 
 - The core normalized type is `NormalizedPrototype` (see
-  `lib/core/types.ts`).
+  `lib/protopedia/types/normalized-prototype.ts`).
 - It is derived from `ResultOfListPrototypesApiResponse` provided by
   `protopedia-api-v2-client`.
 - Key normalization rules:

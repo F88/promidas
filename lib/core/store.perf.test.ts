@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { PrototypeMapStore } from './store.js';
-import type { NormalizedPrototype } from './types.js';
+import type { NormalizedPrototype } from '../protopedia/types/normalized-prototype.js';
 
 const createPrototype = (id: number): NormalizedPrototype => ({
   id,

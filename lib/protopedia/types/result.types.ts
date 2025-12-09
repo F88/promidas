@@ -1,5 +1,4 @@
-import type { NormalizedPrototype } from '../../core/types.js';
-
+import type { NormalizedPrototype } from './normalized-prototype.js';
 import type { NetworkFailure } from './prototype-api.types.js';
 
 /**

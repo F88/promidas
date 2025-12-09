@@ -30,7 +30,7 @@
  *
  * @packageDocumentation
  */
-export type { NormalizedPrototype } from './core/types.js';
+export type { NormalizedPrototype } from './protopedia/types/normalized-prototype.js';
 export type {
   PrototypeMapStore,
   PrototypeMapStoreConfig,

@@ -7,7 +7,7 @@
  */
 import { createConsoleLogger } from '../lib/logger.js';
 
-import type { NormalizedPrototype } from './types.js';
+import type { NormalizedPrototype } from '../protopedia/types/normalized-prototype.js';
 
 const THIRTY_MINUTES_IN_MS = 30 * 60 * 1_000;
 
