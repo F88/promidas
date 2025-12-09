@@ -105,11 +105,11 @@ async function main() {
   if (
     refreshedStats.cachedAt &&
     initialStats.cachedAt &&
-    refreshedStats.cachedAt > initialStats.cachedAt
+    refreshedStats.cachedAt.getTime() > initialStats.cachedAt.getTime()
   ) {
     console.log('✓ Cache timestamp updated correctly');
     console.log(
-      `  Time difference: ${refreshedStats.cachedAt - initialStats.cachedAt}ms\n`,
+      `  Time difference: ${refreshedStats.cachedAt.getTime() - initialStats.cachedAt.getTime()}ms\n`,
     );
   } else {
     console.log('✗ Cache timestamp not updated\n');
