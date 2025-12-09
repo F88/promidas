@@ -34,20 +34,20 @@
  */
 
 // types
-export type { NormalizedPrototype } from './types/normalized-prototype.js';
+export type { NormalizedPrototype } from './types/index.js';
 
 // Simple Store for ProtoPedia
 export {
   PrototypeMapStore,
   type PrototypeMapStoreConfig,
-} from './store/store.js';
+} from './store/index.js';
 
 // Fetcher (API client and utilities)
 export {
   createProtopediaApiCustomClient,
   type ProtopediaApiCustomClient,
   type ProtoPediaApiClientOptions,
-} from './fetcher/protopedia-api-custom-client.js';
+} from './fetcher/index.js';
 
 // Protopedia In-Memory Repository
 export type {
