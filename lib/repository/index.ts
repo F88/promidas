@@ -2,7 +2,7 @@
  * Simple in-memory repository for ProtoPedia prototypes.
  *
  * This module exposes a snapshot-based repository interface that is backed
- * by the generic PrototypeMapStore from `lib/core`. It is designed to be
+ * by the generic {@link PrototypeMapStore}. It is designed to be
  * easy to use from server-side or other long-lived processes that want to:
  *
  * - fetch prototypes from the ProtoPedia HTTP API,
@@ -11,6 +11,8 @@
  *
  * All read operations work only against the current in-memory snapshot.
  * Network calls are performed only by setup/refresh operations.
+ *
+ * @module
  */
 import type {
   ListPrototypesParams,

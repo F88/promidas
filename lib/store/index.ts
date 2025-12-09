@@ -1,11 +1,12 @@
 /**
- * Core in-memory snapshot store module.
+ * In-memory snapshot store module.
  *
- * This module provides the generic `PrototypeMapStore` which handles:
- * - In-memory storage of normalized prototypes
- * - TTL-based expiration logic
- * - O(1) lookups and random sampling
- * - Payload size limits
+ * This module provides the generic storage engine used by the repository:
+ *
+ * - {@link PrototypeMapStore} — The main store class handling in-memory snapshots,
+ *   TTL expiration, and efficient lookups.
+ * - {@link PrototypeMapStoreConfig} — Configuration options for the store
+ *   (TTL, max payload size, log level).
  *
  * @module
  */

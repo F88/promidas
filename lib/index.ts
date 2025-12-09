@@ -8,6 +8,9 @@
  *   prototype type used throughout the library.
  * - {@link createProtopediaApiCustomClient} — a standalone API client
  *   factory for fetching normalized prototypes.
+ * - {@link fetchAndNormalizePrototypes} — a helper to fetch and normalize
+ *   prototypes from any compatible client.
+ * - {@link constructDisplayMessage} — a helper to format error messages for display.
  * - {@link PrototypeMapStore} — a low-level in-memory store for
  *   `NormalizedPrototype` snapshots.
  * - {@link PrototypeMapStoreConfig} — configuration options for

@@ -6,7 +6,10 @@
  *
  * - {@link createProtopediaApiCustomClient} — Factory to create a configured API client.
  * - {@link ProtopediaApiCustomClient} — The client interface with helper methods.
- * - {@link NormalizedPrototype} — The normalized data structure for prototypes.
+ * - {@link ProtoPediaApiClientOptions} — Configuration options for the API client.
+ * - {@link fetchAndNormalizePrototypes} — Helper to fetch and normalize prototypes from any compatible client.
+ * - {@link ListPrototypesClient} — Interface for clients that can list prototypes.
+ * - {@link constructDisplayMessage} — Helper to format error messages for display.
  * - {@link FetchPrototypesResult} — The result type for fetch operations.
  *
  * @module
