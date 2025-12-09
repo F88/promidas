@@ -79,30 +79,28 @@ export interface ProtopediaInMemoryRepository {
   /**
    * Get a prototype from the current in-memory snapshot by id.
    *
-   * Returns:
-   * - the prototype when it exists in the snapshot, or
-   * - `undefined` when the id is not present in the current snapshot.
+   * Returns the prototype when it exists in the snapshot, or null when
+   * the id is not present in the current snapshot.
    *
    * This method does NOT perform HTTP calls.
    * It does not throw due to ProtoPedia API failures; it only reflects
    * the current in-memory state of the snapshot.
    */
-  getPrototypeFromSnapshotById(
-    id: number,
-  ): Promise<NormalizedPrototype | undefined>;
+  getPrototypeFromSnapshotByPrototypeId(
+    prototypeId: number,
+  ): Promise<NormalizedPrototype | null>;
 
   /**
    * Get a random prototype from the current in-memory snapshot.
    *
-   * Returns:
-   * - a random prototype when the snapshot is not empty, or
-   * - `undefined` when the snapshot is empty.
+   * Returns a random prototype when the snapshot is not empty, or null
+   * when the snapshot is empty.
    *
    * This method does NOT perform HTTP calls.
    * It does not throw due to ProtoPedia API failures; it only reflects
    * the current in-memory state of the snapshot.
    */
-  getRandomPrototypeFromSnapshot(): Promise<NormalizedPrototype | undefined>;
+  getRandomPrototypeFromSnapshot(): Promise<NormalizedPrototype | null>;
 
   /**
    * Stats for the current snapshot, including TTL-related information.
@@ -119,9 +117,9 @@ export interface ProtopediaInMemoryRepository {
   /**
    * Retrieve the configuration used to initialize the underlying store.
    *
-   * Returns the TTL and maximum payload size settings.
+   * Returns the TTL and maximum data size settings (logger is excluded).
    */
-  getConfig(): Required<PrototypeMapStoreConfig>;
+  getConfig(): Omit<Required<PrototypeMapStoreConfig>, 'logger'>;
 }
 
 /**

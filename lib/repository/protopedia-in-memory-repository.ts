@@ -120,22 +120,20 @@ export const createProtopediaInMemoryRepositoryImpl = (
    * Look up a prototype by id in the current snapshot.
    * Never performs HTTP requests.
    */
-  const getPrototypeFromSnapshotById = async (
-    id: number,
-  ): Promise<NormalizedPrototype | undefined> => {
-    return store.getById(id);
+  const getPrototypeFromSnapshotByPrototypeId = async (
+    prototypeId: number,
+  ): Promise<NormalizedPrototype | null> => {
+    return store.getByPrototypeId(prototypeId);
   };
 
   /**
-   * Return a random prototype from the current snapshot, or `undefined`
+   * Return a random prototype from the current snapshot, or null
    * when the snapshot is empty. Never performs HTTP requests.
    */
-  const getRandomPrototypeFromSnapshot = async (): Promise<
-    NormalizedPrototype | undefined
-  > => {
-    const value = store.getRandom();
-    return value === null ? undefined : value;
-  };
+  const getRandomPrototypeFromSnapshot =
+    async (): Promise<NormalizedPrototype | null> => {
+      return store.getRandom();
+    };
 
   /**
    * Return stats for the current snapshot from the underlying store.
@@ -147,14 +145,14 @@ export const createProtopediaInMemoryRepositoryImpl = (
   /**
    * Return the configuration used to initialize the underlying store.
    */
-  const getConfig = (): Required<PrototypeMapStoreConfig> => {
+  const getConfig = (): Omit<Required<PrototypeMapStoreConfig>, 'logger'> => {
     return store.getConfig();
   };
 
   return {
     setupSnapshot,
     refreshSnapshot,
-    getPrototypeFromSnapshotById,
+    getPrototypeFromSnapshotByPrototypeId,
     getRandomPrototypeFromSnapshot,
     getStats,
     getConfig,

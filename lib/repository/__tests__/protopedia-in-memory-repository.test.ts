@@ -121,7 +121,7 @@ describe('createInMemoryRepositoryImpl', () => {
         limit: 25,
       });
 
-      const found = await repo.getPrototypeFromSnapshotById(100);
+      const found = await repo.getPrototypeFromSnapshotByPrototypeId(100);
       expect(found?.prototypeNm).toBe('override test');
     });
 
@@ -229,7 +229,7 @@ describe('createInMemoryRepositoryImpl', () => {
         limit: 10,
       });
 
-      let prototype = await repo.getPrototypeFromSnapshotById(1);
+      let prototype = await repo.getPrototypeFromSnapshotByPrototypeId(1);
       expect(prototype?.id).toBe(1);
 
       await repo.refreshSnapshot();
@@ -239,7 +239,7 @@ describe('createInMemoryRepositoryImpl', () => {
         limit: 10,
       });
 
-      prototype = await repo.getPrototypeFromSnapshotById(2);
+      prototype = await repo.getPrototypeFromSnapshotByPrototypeId(2);
       expect(prototype?.id).toBe(2);
     });
 
@@ -319,15 +319,15 @@ describe('createInMemoryRepositoryImpl', () => {
       const repo = createProtopediaInMemoryRepositoryImpl({}, {});
 
       await repo.refreshSnapshot();
-      let proto = await repo.getPrototypeFromSnapshotById(1);
+      let proto = await repo.getPrototypeFromSnapshotByPrototypeId(1);
       expect(proto?.prototypeNm).toBe('first');
 
       await repo.refreshSnapshot();
-      proto = await repo.getPrototypeFromSnapshotById(2);
+      proto = await repo.getPrototypeFromSnapshotByPrototypeId(2);
       expect(proto?.prototypeNm).toBe('second');
 
       await repo.refreshSnapshot();
-      proto = await repo.getPrototypeFromSnapshotById(3);
+      proto = await repo.getPrototypeFromSnapshotByPrototypeId(3);
       expect(proto?.prototypeNm).toBe('third');
     });
   });
@@ -394,7 +394,7 @@ describe('createInMemoryRepositoryImpl', () => {
       const repo = createProtopediaInMemoryRepositoryImpl({}, {});
       await repo.setupSnapshot({});
 
-      const missing = await repo.getPrototypeFromSnapshotById(1234);
+      const missing = await repo.getPrototypeFromSnapshotByPrototypeId(1234);
       expect(missing).toBeNull();
     });
 
@@ -412,7 +412,7 @@ describe('createInMemoryRepositoryImpl', () => {
       const repo = createProtopediaInMemoryRepositoryImpl({}, {});
       await repo.setupSnapshot({});
 
-      const found = await repo.getPrototypeFromSnapshotById(9);
+      const found = await repo.getPrototypeFromSnapshotByPrototypeId(9);
       expect(found).not.toBeNull();
       expect(found?.id).toBe(9);
       expect(found?.prototypeNm).toBe('known entry');
@@ -431,10 +431,10 @@ describe('createInMemoryRepositoryImpl', () => {
       const repo = createProtopediaInMemoryRepositoryImpl({}, {});
       await repo.setupSnapshot({});
 
-      const proto1 = await repo.getPrototypeFromSnapshotById(1);
-      const proto2 = await repo.getPrototypeFromSnapshotById(2);
-      const proto3 = await repo.getPrototypeFromSnapshotById(3);
-      const missing = await repo.getPrototypeFromSnapshotById(999);
+      const proto1 = await repo.getPrototypeFromSnapshotByPrototypeId(1);
+      const proto2 = await repo.getPrototypeFromSnapshotByPrototypeId(2);
+      const proto3 = await repo.getPrototypeFromSnapshotByPrototypeId(3);
+      const missing = await repo.getPrototypeFromSnapshotByPrototypeId(999);
 
       expect(proto1?.prototypeNm).toBe('first');
       expect(proto2?.prototypeNm).toBe('second');
@@ -622,7 +622,7 @@ describe('createInMemoryRepositoryImpl', () => {
       stats = repo.getStats();
       expect(stats.size).toBe(1);
 
-      const proto = await repo.getPrototypeFromSnapshotById(1);
+      const proto = await repo.getPrototypeFromSnapshotByPrototypeId(1);
       expect(proto?.prototypeNm).toBe('success');
     });
 
@@ -645,12 +645,12 @@ describe('createInMemoryRepositoryImpl', () => {
         'Temporary network issue',
       );
 
-      const oldProto = await repo.getPrototypeFromSnapshotById(1);
+      const oldProto = await repo.getPrototypeFromSnapshotByPrototypeId(1);
       expect(oldProto?.prototypeNm).toBe('initial');
 
       await repo.refreshSnapshot();
 
-      const newProto = await repo.getPrototypeFromSnapshotById(2);
+      const newProto = await repo.getPrototypeFromSnapshotByPrototypeId(2);
       expect(newProto?.prototypeNm).toBe('recovered');
     });
   });
@@ -681,9 +681,9 @@ describe('createInMemoryRepositoryImpl', () => {
       stats = repo.getStats();
       expect(stats.size).toBe(1);
 
-      const old1 = await repo.getPrototypeFromSnapshotById(1);
-      const old2 = await repo.getPrototypeFromSnapshotById(2);
-      const newProto = await repo.getPrototypeFromSnapshotById(3);
+      const old1 = await repo.getPrototypeFromSnapshotByPrototypeId(1);
+      const old2 = await repo.getPrototypeFromSnapshotByPrototypeId(2);
+      const newProto = await repo.getPrototypeFromSnapshotByPrototypeId(3);
 
       expect(old1).toBeNull();
       expect(old2).toBeNull();
@@ -774,7 +774,7 @@ describe('createInMemoryRepositoryImpl', () => {
         prototypeId: 999,
       });
 
-      const proto = await repo.getPrototypeFromSnapshotById(999);
+      const proto = await repo.getPrototypeFromSnapshotByPrototypeId(999);
       expect(proto?.prototypeNm).toBe('specific');
     });
 
@@ -848,7 +848,7 @@ describe('createInMemoryRepositoryImpl', () => {
       const repo = createProtopediaInMemoryRepositoryImpl({}, {});
       await repo.setupSnapshot({});
 
-      const stored = await repo.getPrototypeFromSnapshotById(12345);
+      const stored = await repo.getPrototypeFromSnapshotByPrototypeId(12345);
 
       expect(stored).not.toBeNull();
       expect(stored?.id).toBe(12345);
@@ -874,7 +874,7 @@ describe('createInMemoryRepositoryImpl', () => {
       const repo = createProtopediaInMemoryRepositoryImpl({}, {});
       await repo.setupSnapshot({});
 
-      const stored = await repo.getPrototypeFromSnapshotById(1);
+      const stored = await repo.getPrototypeFromSnapshotByPrototypeId(1);
       expect(stored).not.toBeNull();
       expect(stored?.id).toBe(1);
     });
@@ -945,8 +945,8 @@ describe('createInMemoryRepositoryImpl', () => {
       const stats = repo.getStats();
       expect(stats.size).toBe(100);
 
-      const first = await repo.getPrototypeFromSnapshotById(1);
-      const last = await repo.getPrototypeFromSnapshotById(100);
+      const first = await repo.getPrototypeFromSnapshotByPrototypeId(1);
+      const last = await repo.getPrototypeFromSnapshotByPrototypeId(100);
 
       expect(first?.prototypeNm).toBe('proto-1');
       expect(last?.prototypeNm).toBe('proto-100');
@@ -967,8 +967,8 @@ describe('createInMemoryRepositoryImpl', () => {
       await repo.setupSnapshot({});
 
       const results = await Promise.all([
-        repo.getPrototypeFromSnapshotById(1),
-        repo.getPrototypeFromSnapshotById(2),
+        repo.getPrototypeFromSnapshotByPrototypeId(1),
+        repo.getPrototypeFromSnapshotByPrototypeId(2),
         repo.getRandomPrototypeFromSnapshot(),
         Promise.resolve(repo.getStats()),
       ]);
@@ -993,14 +993,14 @@ describe('createInMemoryRepositoryImpl', () => {
       const repo = createProtopediaInMemoryRepositoryImpl({}, {});
 
       await repo.setupSnapshot({ offset: 0 });
-      let proto = await repo.getPrototypeFromSnapshotById(1);
+      let proto = await repo.getPrototypeFromSnapshotByPrototypeId(1);
       expect(proto?.prototypeNm).toBe('first');
 
       await repo.setupSnapshot({ offset: 10 });
-      proto = await repo.getPrototypeFromSnapshotById(2);
+      proto = await repo.getPrototypeFromSnapshotByPrototypeId(2);
       expect(proto?.prototypeNm).toBe('second');
 
-      const missingOld = await repo.getPrototypeFromSnapshotById(1);
+      const missingOld = await repo.getPrototypeFromSnapshotByPrototypeId(1);
       expect(missingOld).toBeNull();
     });
   });
