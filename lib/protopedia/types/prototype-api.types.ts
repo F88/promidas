@@ -29,7 +29,7 @@
  *
  * @example
  * ```ts
- * // From ProtoPediaApiError (v2.0.0)
+ * // From ProtoPediaApiError (v2.0.0) - HTTP error with status
  * const failure: NetworkFailure = {
  *   status: 404,
  *   error: 'Prototype not found',
@@ -39,19 +39,24 @@
  *   }
  * };
  *
- * // From AbortError (timeout)
- * const timeout: NetworkFailure = {
- *   status: 504,
- *   error: 'Upstream request timed out',
- *   details: {}
+ * // Network error (ECONNREFUSED) - no status
+ * const networkError: NetworkFailure = {
+ *   error: 'connect ECONNREFUSED',
+ *   details: {
+ *     res: { code: 'ECONNREFUSED' }
+ *   }
  * };
  * ```
  */
 export type NetworkFailure = {
-  /** HTTP status code from the response (e.g., 404, 500, 504) */
-  status: number;
   /** Error message from Error.message or fallback string */
   error: unknown;
+  /**
+   * HTTP status code from server response (e.g., 404, 500).
+   * Undefined for network errors where no server response was received
+   * (e.g., ENOTFOUND, ECONNREFUSED, AbortError).
+   */
+  status?: number;
   /**
    * Additional error details from request and response.
    * Always present, but may be an empty object for errors without metadata.

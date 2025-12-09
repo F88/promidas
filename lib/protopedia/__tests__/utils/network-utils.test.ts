@@ -342,7 +342,7 @@ describe('network-utils', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 504,
+
           error: 'Upstream request timed out',
           details: {},
         });
@@ -354,7 +354,7 @@ describe('network-utils', () => {
 
         expect(result.ok).toBe(false);
         if (!result.ok) {
-          expect(result.status).toBe(504);
+          expect(result.status).toBeUndefined();
         }
       });
 
@@ -369,8 +369,8 @@ describe('network-utils', () => {
         expect(result1.ok).toBe(false);
         expect(result2.ok).toBe(false);
         if (!result1.ok && !result2.ok) {
-          expect(result1.status).toBe(504);
-          expect(result2.status).toBe(504);
+          expect(result1.status).toBeUndefined();
+          expect(result2.status).toBeUndefined();
         }
       });
     });
@@ -911,7 +911,7 @@ describe('network-utils', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 500,
+
           error: 'Unexpected crash',
           details: {},
         });
@@ -922,7 +922,7 @@ describe('network-utils', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 500,
+
           error: 'Failed to fetch prototypes',
           details: {},
         });
@@ -933,7 +933,6 @@ describe('network-utils', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 500,
           error: 'Failed to fetch prototypes',
           details: {},
         });
@@ -944,7 +943,6 @@ describe('network-utils', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 500,
           error: 'Failed to fetch prototypes',
           details: {},
         });
@@ -955,7 +953,6 @@ describe('network-utils', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 500,
           error: 'Failed to fetch prototypes',
           details: {},
         });
@@ -971,13 +968,103 @@ describe('network-utils', () => {
         }
       });
 
+      it('extracts code from error.code for network errors', () => {
+        const error = Object.assign(new Error('getaddrinfo ENOTFOUND'), {
+          code: 'ENOTFOUND',
+          errno: -3008,
+          syscall: 'getaddrinfo',
+        });
+
+        const result = handleApiError(error);
+
+        expect(result).toEqual({
+          ok: false,
+
+          error: 'getaddrinfo ENOTFOUND',
+          details: {
+            res: {
+              code: 'ENOTFOUND',
+            },
+          },
+        });
+      });
+
+      it('extracts code from error.cause.code for Node.js fetch errors', () => {
+        const error = Object.assign(new TypeError('fetch failed'), {
+          cause: Object.assign(new Error('getaddrinfo ENOTFOUND example.com'), {
+            code: 'ENOTFOUND',
+            errno: -3008,
+            syscall: 'getaddrinfo',
+            hostname: 'example.com',
+          }),
+        });
+
+        const result = handleApiError(error);
+
+        expect(result).toEqual({
+          ok: false,
+
+          error: 'fetch failed',
+          details: {
+            res: {
+              code: 'ENOTFOUND',
+            },
+          },
+        });
+      });
+
+      it('handles ECONNREFUSED error with code', () => {
+        const error = Object.assign(new Error('connect ECONNREFUSED'), {
+          code: 'ECONNREFUSED',
+          errno: -61,
+          syscall: 'connect',
+        });
+
+        const result = handleApiError(error);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.status).toBeUndefined();
+          expect(result.details?.res?.code).toBe('ECONNREFUSED');
+        }
+      });
+
+      it('handles ETIMEDOUT error with code', () => {
+        const error = Object.assign(new Error('connect ETIMEDOUT'), {
+          code: 'ETIMEDOUT',
+          errno: -60,
+          syscall: 'connect',
+        });
+
+        const result = handleApiError(error);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.status).toBeUndefined();
+          expect(result.details?.res?.code).toBe('ETIMEDOUT');
+        }
+      });
+
+      it('prioritizes error.code over error.cause.code', () => {
+        const error = Object.assign(new Error('Custom error'), {
+          code: 'CUSTOM_CODE',
+          cause: { code: 'CAUSE_CODE' },
+        });
+
+        const result = handleApiError(error);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.details?.res?.code).toBe('CUSTOM_CODE');
+        }
+      });
+
       it('handles TypeError with proper error message', () => {
         const error = new TypeError('Cannot read property of undefined');
         const result = handleApiError(error);
 
         expect(result).toEqual({
           ok: false,
-          status: 500,
           error: 'Cannot read property of undefined',
           details: {},
         });
@@ -989,7 +1076,7 @@ describe('network-utils', () => {
 
         expect(result.ok).toBe(false);
         if (!result.ok) {
-          expect(result.status).toBe(500);
+          expect(result.status).toBeUndefined();
           expect(result.error).toBe('Array length out of bounds');
         }
       });
@@ -1000,7 +1087,6 @@ describe('network-utils', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 500,
           error: '',
           details: {},
         });
@@ -1012,7 +1098,7 @@ describe('network-utils', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 500,
+
           error: 'Failed to fetch prototypes',
           details: {},
         });
@@ -1024,7 +1110,7 @@ describe('network-utils', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 500,
+
           error: 'Failed to fetch prototypes',
           details: {},
         });
@@ -1036,7 +1122,7 @@ describe('network-utils', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 500,
+
           error: 'Failed to fetch prototypes',
           details: {},
         });
@@ -1048,7 +1134,7 @@ describe('network-utils', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 500,
+
           error: 'Failed to fetch prototypes',
           details: {},
         });
@@ -1059,7 +1145,7 @@ describe('network-utils', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 500,
+
           error: 'Failed to fetch prototypes',
           details: {},
         });
@@ -1071,7 +1157,7 @@ describe('network-utils', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 500,
+
           error: 'Failed to fetch prototypes',
           details: {},
         });
@@ -1083,7 +1169,7 @@ describe('network-utils', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 500,
+
           error: 'Failed to fetch prototypes',
           details: {},
         });
@@ -1095,7 +1181,7 @@ describe('network-utils', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 500,
+
           error: 'Failed to fetch prototypes',
           details: {},
         });
@@ -1107,7 +1193,7 @@ describe('network-utils', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 500,
+
           error: 'Failed to fetch prototypes',
           details: {},
         });
@@ -1119,7 +1205,7 @@ describe('network-utils', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 500,
+
           error: 'Failed to fetch prototypes',
           details: {},
         });
@@ -1133,7 +1219,7 @@ describe('network-utils', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 500,
+
           error: 'Failed to fetch prototypes',
           details: {},
         });
@@ -1147,7 +1233,7 @@ describe('network-utils', () => {
 
         expect(result.ok).toBe(false);
         if (!result.ok) {
-          expect(result.status).toBe(500);
+          expect(result.status).toBeUndefined();
           expect(result.error).toBe('Invalid state');
         }
       });
@@ -1228,36 +1314,50 @@ describe('network-utils', () => {
         const result = handleApiError(error);
 
         expect(result).toHaveProperty('ok');
-        expect(result).toHaveProperty('status');
         expect(result).toHaveProperty('error');
         expect(result).toHaveProperty('details');
+        // status is optional for network errors
 
-        expect(Object.keys(result).sort()).toEqual([
-          'details',
-          'error',
-          'ok',
-          'status',
-        ]);
+        const keys = Object.keys(result).sort();
+        expect(keys).toContain('ok');
+        expect(keys).toContain('error');
+        expect(keys).toContain('details');
       });
 
-      it('status is always a number', () => {
+      it('status is a number when present', () => {
         const testCases = [
-          new DOMException('Aborted', 'AbortError'),
-          new ProtoPediaApiError({
-            message: 'API error',
-            req: { url: 'https://test.com', method: 'GET' },
-            status: 404,
-            statusText: 'Not Found',
-          }),
-          { status: 500, message: 'Server error' },
-          new Error('Unexpected'),
+          {
+            error: new ProtoPediaApiError({
+              message: 'API error',
+              req: { url: 'https://test.com', method: 'GET' },
+              status: 404,
+              statusText: 'Not Found',
+            }),
+            hasStatus: true,
+          },
+          {
+            error: { status: 500, message: 'Server error' },
+            hasStatus: true,
+          },
+          {
+            error: new DOMException('Aborted', 'AbortError'),
+            hasStatus: false,
+          },
+          {
+            error: new Error('Unexpected'),
+            hasStatus: false,
+          },
         ];
 
-        testCases.forEach((error) => {
+        testCases.forEach(({ error, hasStatus }) => {
           const result = handleApiError(error);
           expect(result.ok).toBe(false);
           if (!result.ok) {
-            expect(typeof result.status).toBe('number');
+            if (hasStatus) {
+              expect(typeof result.status).toBe('number');
+            } else {
+              expect(result.status).toBeUndefined();
+            }
           }
         });
       });
@@ -1369,15 +1469,16 @@ describe('network-utils', () => {
         results.forEach((result) => {
           expect(result.ok).toBe(false);
           if (!result.ok) {
-            expect(result).toHaveProperty('status');
             expect(result).toHaveProperty('error');
             expect(result).toHaveProperty('details');
           }
         });
 
         if (!results[0]!.ok && !results[1]!.ok && !results[2]!.ok) {
-          expect(results[0]!.status).toBe(504);
-          expect(results[1]!.status).toBe(500);
+          // AbortError and generic Error have no status
+          expect(results[0]!.status).toBeUndefined();
+          expect(results[1]!.status).toBeUndefined();
+          // HTTP error has status
           expect(results[2]!.status).toBe(404);
         }
       });
