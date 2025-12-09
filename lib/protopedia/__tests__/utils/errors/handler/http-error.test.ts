@@ -1,0 +1,402 @@
+/**
+ * @fileoverview Tests for handleApiError function - HTTP-like error handling
+ *
+ * This file is part of a test suite split by error type for better organization.
+ * The implementation remains unified in handler.ts (218 lines, single function),
+ * while tests are split across 4 files by input error type:
+ *
+ * - abort-error.test.ts - AbortError/timeout handling
+ * - api-error.test.ts - ProtoPediaApiError handling
+ * - http-error.test.ts - HTTP-like errors with status property
+ * - network-error.test.ts - Network errors and edge cases
+ *
+ * This split improves test maintainability without fragmenting the implementation.
+ */
+
+import { describe, expect, it, vi } from 'vitest';
+
+import { handleApiError } from '../../../../utils/errors/handler.js';
+
+vi.mock('../../../lib/logger', () => ({
+  createConsoleLogger: () => ({
+    warn: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+  }),
+}));
+
+describe('error-handler', () => {
+  describe('handleApiError', () => {
+    describe('HTTP-like error handling', () => {
+      it('normalizes HTTP error with all metadata fields', () => {
+        const httpError = Object.assign(new Error('Prototype not found'), {
+          status: 404,
+          statusText: 'Not Found',
+          code: 'RESOURCE_NOT_FOUND',
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+            method: 'GET',
+          },
+        });
+
+        const result = handleApiError(httpError);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 404,
+          error: 'Prototype not found',
+          details: {
+            req: {
+              url: 'https://protopedia.cc/api/prototypes',
+              method: 'GET',
+            },
+            res: {
+              statusText: 'Not Found',
+              code: 'RESOURCE_NOT_FOUND',
+            },
+          },
+        });
+      });
+
+      it('handles HTTP error with Error instance', () => {
+        const httpError = Object.assign(new Error('Authentication failed'), {
+          status: 401,
+          statusText: 'Unauthorized',
+        });
+
+        const result = handleApiError(httpError);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 401,
+          error: 'Authentication failed',
+          details: {
+            res: {
+              statusText: 'Unauthorized',
+            },
+          },
+        });
+      });
+
+      it('defaults to 500 when status is missing from HTTP-like error', () => {
+        const httpError = {
+          status: undefined,
+          message: 'Unknown error',
+        };
+
+        const result = handleApiError(httpError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.status).toBe(500);
+        }
+      });
+
+      it('handles HTTP error with partial metadata', () => {
+        const httpError = Object.assign(
+          new Error('Service temporarily unavailable'),
+          {
+            status: 503,
+            code: 'SERVICE_UNAVAILABLE',
+          },
+        );
+
+        const result = handleApiError(httpError);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 503,
+          error: 'Service temporarily unavailable',
+          details: {
+            res: {
+              code: 'SERVICE_UNAVAILABLE',
+            },
+          },
+        });
+      });
+
+      it('uses fallback message when HTTP-like error has no message', () => {
+        const httpError = {
+          status: 500,
+        };
+
+        const result = handleApiError(httpError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.error).toBe('Failed to fetch prototypes');
+        }
+      });
+
+      it('handles HTTP error with only req.url', () => {
+        const httpError = Object.assign(new Error('Request failed'), {
+          status: 400,
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+          },
+        });
+
+        const result = handleApiError(httpError);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 400,
+          error: 'Request failed',
+          details: {
+            req: {
+              url: 'https://protopedia.cc/api/prototypes',
+            },
+          },
+        });
+      });
+
+      it('handles HTTP error with only req.method', () => {
+        const httpError = Object.assign(new Error('Method not allowed'), {
+          status: 405,
+          req: {
+            method: 'DELETE',
+          },
+        });
+
+        const result = handleApiError(httpError);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 405,
+          error: 'Method not allowed',
+          details: {
+            req: {
+              method: 'DELETE',
+            },
+          },
+        });
+      });
+
+      it('does not create empty req object when no req fields present', () => {
+        const httpError = Object.assign(new Error('Server error'), {
+          status: 500,
+          statusText: 'Internal Server Error',
+        });
+
+        const result = handleApiError(httpError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.details?.req).toBeUndefined();
+          expect(result.details?.res).toBeDefined();
+        }
+      });
+
+      it('does not create empty res object when no res fields present', () => {
+        const httpError = Object.assign(new Error('Request failed'), {
+          status: 400,
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+            method: 'POST',
+          },
+        });
+
+        const result = handleApiError(httpError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.details?.req).toBeDefined();
+          expect(result.details?.res).toBeUndefined();
+        }
+      });
+
+      it('handles HTTP error with status as string number', () => {
+        const httpError = {
+          status: '404' as any,
+          message: 'Not found',
+        };
+
+        const result = handleApiError(httpError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.status).toBe(404);
+        }
+      });
+
+      it('handles HTTP error with very large status code', () => {
+        const httpError = Object.assign(new Error('Invalid status'), {
+          status: 999999,
+        });
+
+        const result = handleApiError(httpError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.status).toBe(999999);
+        }
+      });
+
+      it('handles HTTP error with all possible metadata', () => {
+        const httpError = Object.assign(new Error('Complete error'), {
+          status: 422,
+          statusText: 'Unprocessable Entity',
+          code: 'VALIDATION_ERROR',
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+            method: 'POST',
+          },
+        });
+
+        const result = handleApiError(httpError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.status).toBe(422);
+          expect(result.error).toBe('Complete error');
+          expect(result.details?.req?.url).toBe(
+            'https://protopedia.cc/api/prototypes',
+          );
+          expect(result.details?.req?.method).toBe('POST');
+          expect(result.details?.res?.statusText).toBe('Unprocessable Entity');
+          expect(result.details?.res?.code).toBe('VALIDATION_ERROR');
+        }
+      });
+
+      it('handles HTTP error with empty string req.url', () => {
+        const httpError = Object.assign(new Error('Empty URL'), {
+          status: 400,
+          req: {
+            url: '',
+            method: 'GET',
+          },
+        });
+
+        const result = handleApiError(httpError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.details?.req?.url).toBe('');
+        }
+      });
+
+      it('handles HTTP error with empty string req.method', () => {
+        const httpError = Object.assign(new Error('Empty method'), {
+          status: 400,
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+            method: '',
+          },
+        });
+
+        const result = handleApiError(httpError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.details?.req?.method).toBe('');
+        }
+      });
+
+      it('handles HTTP error with null status', () => {
+        const httpError = {
+          status: null as any,
+          message: 'Null status',
+        };
+
+        const result = handleApiError(httpError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.status).toBe(500); // status ?? 500
+        }
+      });
+
+      it('handles HTTP error with negative status', () => {
+        const httpError = Object.assign(new Error('Negative status'), {
+          status: -500,
+        });
+
+        const result = handleApiError(httpError);
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.status).toBe(-500);
+        }
+      });
+    });
+
+    describe('v2.0.0 error format compatibility', () => {
+      it('handles v2.0.0 error format with req.url', () => {
+        const v2Error = Object.assign(new Error('API request failed'), {
+          status: 404,
+          statusText: 'Not Found',
+          code: 'RESOURCE_NOT_FOUND',
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+            method: 'GET',
+          },
+        });
+
+        const result = handleApiError(v2Error);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 404,
+          error: 'API request failed',
+          details: {
+            req: {
+              url: 'https://protopedia.cc/api/prototypes',
+              method: 'GET',
+            },
+            res: {
+              statusText: 'Not Found',
+              code: 'RESOURCE_NOT_FOUND',
+            },
+          },
+        });
+      });
+
+      it('handles v2.0.0 error with req.url only', () => {
+        const v2Error = Object.assign(new Error('API request failed'), {
+          status: 500,
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+            method: 'POST',
+          },
+        });
+
+        const result = handleApiError(v2Error);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 500,
+          error: 'API request failed',
+          details: {
+            req: {
+              url: 'https://protopedia.cc/api/prototypes',
+              method: 'POST',
+            },
+          },
+        });
+      });
+
+      it('handles v2.0.0 error without method', () => {
+        const v2Error = Object.assign(new Error('API request failed'), {
+          status: 403,
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+          },
+        });
+
+        const result = handleApiError(v2Error);
+
+        expect(result).toEqual({
+          ok: false,
+          status: 403,
+          error: 'API request failed',
+          details: {
+            req: {
+              url: 'https://protopedia.cc/api/prototypes',
+            },
+          },
+        });
+      });
+    });
+  });
+});
