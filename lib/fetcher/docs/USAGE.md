@@ -90,15 +90,15 @@ client internally by providing the same options shape.
 
 ## Fetch Layer
 
-- The primary fetch helper is `getPrototypes` located in
+- The primary fetch helper is `fetchAndNormalizePrototypes` located in
   `lib/fetcher/fetch-prototypes.ts`.
-- It expects an instance of `ProtoPediaApiClient` from
-  `protopedia-api-v2-client` and uses `listPrototypes` under the hood.
+- It expects an object implementing `ListPrototypesClient` (like `ProtoPediaApiClient`)
+  and uses `listPrototypes` under the hood.
 - Request parameters are typed as `ListPrototypesParams` from
   `protopedia-api-v2-client`.
 - The result type is a discriminated union:
     - `FetchPrototypesResult` with shape `{ ok: true, data: NormalizedPrototype[] }`
-    - or an error branch with `{ ok: false, error: NetworkFailure }`.
+    - or an error branch with `{ ok: false, error: string, details: ... }`.
 - All fetch results are immediately passed through `normalizePrototype`
   to ensure consumers only handle `NormalizedPrototype` objects.
 
