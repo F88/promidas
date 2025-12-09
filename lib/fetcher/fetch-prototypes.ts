@@ -14,7 +14,7 @@
  * These helpers are intentionally decoupled from any particular
  * ProtoPedia SDK so that they can operate against any client that
  * implements {@link ListPrototypesClient}. Error handling is delegated
- * to {@link handleApiError} from `./utils/network-utils`, which
+ * to {@link handleApiError} from `./utils/errors/handler`, which
  * converts exceptions into structured failure results with appropriate
  * status codes and messages.
  *
