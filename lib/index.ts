@@ -6,6 +6,8 @@
  *
  * - {@link NormalizedPrototype} — the core normalized ProtoPedia
  *   prototype type used throughout the library.
+ * - {@link createProtopediaApiCustomClient} — a standalone API client
+ *   factory for fetching normalized prototypes.
  * - {@link PrototypeMapStore} — a low-level in-memory store for
  *   `NormalizedPrototype` snapshots.
  * - {@link PrototypeMapStoreConfig} — configuration options for
@@ -30,7 +32,7 @@
  *
  * @packageDocumentation
  */
-export type { NormalizedPrototype } from './protopedia/types/normalized-prototype.js';
+export * from './protopedia/index.js';
 export type {
   PrototypeMapStore,
   PrototypeMapStoreConfig,
