@@ -1,5 +1,5 @@
 /**
- * @module protopedia/utils/error-handler
+ * @module protopedia/utils/errors/handler
  *
  * Error handling utilities for ProtoPedia API calls.
  *
@@ -19,9 +19,9 @@
  */
 import { ProtoPediaApiError } from 'protopedia-api-v2-client';
 
-import { createConsoleLogger } from '../../lib/logger.js';
-import type { NetworkFailure } from '../types/prototype-api.types.js';
-import type { FetchPrototypesResult } from '../types/result.types.js';
+import { createConsoleLogger } from '../../../lib/logger.js';
+import type { NetworkFailure } from '../../types/prototype-api.types.js';
+import type { FetchPrototypesResult } from '../../types/result.types.js';
 
 const logger = createConsoleLogger('info');
 

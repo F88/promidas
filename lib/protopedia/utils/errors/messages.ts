@@ -1,12 +1,12 @@
 /**
- * @module protopedia/utils/error-messages
+ * @module protopedia/utils/errors/messages
  *
  * Message formatting utilities for ProtoPedia API errors.
  *
  * This module provides helpers to extract and format error messages
  * from various error types into user-friendly display strings.
  */
-import type { NetworkFailure } from '../types/prototype-api.types.js';
+import type { NetworkFailure } from '../../types/prototype-api.types.js';
 
 /**
  * Resolve an unknown error value into a readable string message.

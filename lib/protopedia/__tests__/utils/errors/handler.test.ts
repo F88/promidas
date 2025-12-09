@@ -1,7 +1,7 @@
 import { ProtoPediaApiError } from 'protopedia-api-v2-client';
 import { describe, expect, it, vi } from 'vitest';
 
-import { handleApiError } from '../../utils/error-handler.js';
+import { handleApiError } from '../../../utils/errors/handler.js';
 
 vi.mock('../../lib/logger', () => ({
   createConsoleLogger: () => ({

@@ -5,7 +5,7 @@ import {
   splitPipeSeparatedString,
   normalizePrototype,
   type UpstreamPrototype,
-} from '../../utils/utils.js';
+} from '../../utils/normalizers.js';
 
 describe('utils', () => {
   describe('splitPipeSeparatedString', () => {

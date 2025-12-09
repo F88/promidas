@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import type { NetworkFailure } from '../../types/prototype-api.types.js';
+import type { NetworkFailure } from '../../../types/prototype-api.types.js';
 import {
   constructDisplayMessage,
   resolveErrorMessage,
-} from '../../utils/error-messages.js';
+} from '../../../utils/errors/messages.js';
 
 describe('error-messages', () => {
   describe('resolveErrorMessage', () => {

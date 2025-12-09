@@ -5,11 +5,11 @@ import {
   fetchAndNormalizePrototypes,
   type ListPrototypesClient,
 } from '../fetch-prototypes.js';
-import * as errorHandler from '../utils/error-handler.js';
+import * as errorHandler from '../utils/errors/handler.js';
 
-vi.mock('../utils/error-handler', async () => {
+vi.mock('../utils/errors/handler', async () => {
   const actual = await vi.importActual<typeof errorHandler>(
-    '../utils/error-handler',
+    '../utils/errors/handler',
   );
   return {
     ...actual,

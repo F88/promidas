@@ -1,5 +1,5 @@
 /**
- * @module protopedia/utils/utils
+ * @module protopedia/utils/normalizers
  *
  * Normalization utilities for ProtoPedia API responses.
  *
