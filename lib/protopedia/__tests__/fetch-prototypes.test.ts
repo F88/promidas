@@ -53,10 +53,10 @@ describe('fetchAndNormalizePrototypes', () => {
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data).toHaveLength(2);
-        expect(result.data[0]!.id).toBe(1);
-        expect(result.data[0]!.prototypeNm).toBe('Test 1');
-        expect(result.data[1]!.id).toBe(2);
-        expect(result.data[1]!.prototypeNm).toBe('Test 2');
+expect(result.data[0]?.id).toBe(1);
+expect(result.data[0]?.prototypeNm).toBe('Test 1');
+expect(result.data[1]?.id).toBe(2);
+expect(result.data[1]?.prototypeNm).toBe('Test 2');
       }
 
       expect(mockClient.listPrototypes).toHaveBeenCalledWith(params);
