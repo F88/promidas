@@ -17,19 +17,6 @@
  *   {@link ProtopediaInMemoryRepository} instance, combining
  *   `PrototypeMapStore` with the official ProtoPedia API client.
  *
- * @example
- * ```typescript
- * import { createProtopediaInMemoryRepository } from '@f88/promidas';
- *
- * const repo = createProtopediaInMemoryRepository(
- *   { ttlMs: 30 * 60 * 1000 },
- *   { token: process.env.PROTOPEDIA_API_V2_TOKEN }
- * );
- *
- * await repo.setupSnapshot({ offset: 0, limit: 100 });
- * const random = repo.getRandomPrototypeFromSnapshot();
- * ```
- *
  * @packageDocumentation
  */
 
@@ -45,13 +32,13 @@ export {
 // Fetcher (API client and utilities)
 export {
   createProtopediaApiCustomClient,
-  type ProtopediaApiCustomClient,
   type ProtoPediaApiClientOptions,
+  type ProtopediaApiCustomClient,
 } from './fetcher/index.js';
 
 // Protopedia In-Memory Repository
 export type {
+  createProtopediaInMemoryRepository,
   ProtopediaInMemoryRepository,
   ProtopediaInMemoryRepositoryStats,
 } from './repository/index.js';
-export { createProtopediaInMemoryRepository } from './repository/index.js';
