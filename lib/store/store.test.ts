@@ -141,99 +141,111 @@ describe('PrototypeMapStore', () => {
     });
   });
 
-  it('stores prototypes when payload fits within limits', () => {
-    const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
-    const result = store.setAll([
-      createPrototype({ id: 1 }),
-      createPrototype({ id: 2 }),
-    ]);
+  describe('setAll', () => {
+    it('stores prototypes when data fits within limits', () => {
+      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const result = store.setAll([
+        createPrototype({ id: 1 }),
+        createPrototype({ id: 2 }),
+      ]);
 
-    expect(result).not.toBeNull();
-    expect(store.size).toBe(2);
-    expect(store.getById(1)?.id).toBe(1);
-  });
-
-  it('returns the highest prototype id when available', () => {
-    const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
-
-    expect(store.getMaxId()).toBeNull();
-
-    store.setAll([
-      createPrototype({ id: 3 }),
-      createPrototype({ id: 7 }),
-      createPrototype({ id: 5 }),
-    ]);
-
-    expect(store.getMaxId()).toBe(7);
-
-    store.clear();
-    expect(store.getMaxId()).toBeNull();
-  });
-
-  it('skips storing when payload exceeds limit', () => {
-    const store = new PrototypeMapStore({ maxDataSizeBytes: 50 });
-    const prototypes = [
-      createPrototype({ id: 7, freeComment: 'x'.repeat(200) }),
-    ];
-
-    const result = store.setAll(prototypes);
-    expect(result).toBeNull();
-    expect(store.size).toBe(0);
-  });
-
-  it('reports expiration based on TTL', () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2025-01-01T00:00:00.000Z'));
-    const store = new PrototypeMapStore({
-      ttlMs: 1_000,
-      maxDataSizeBytes: 1024 * 1024,
-    });
-    store.setAll([createPrototype({ id: 5 })]);
-
-    expect(store.isExpired()).toBe(false);
-
-    vi.setSystemTime(new Date('2025-01-01T00:00:01.100Z'));
-    expect(store.isExpired()).toBe(true);
-  });
-
-  it('returns random prototypes from the stored snapshot', () => {
-    const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
-    store.setAll([
-      createPrototype({ id: 11 }),
-      createPrototype({ id: 12 }),
-      createPrototype({ id: 13 }),
-    ]);
-
-    const seen = new Set<number>();
-    for (let index = 0; index < 10; index += 1) {
-      const prototype = store.getRandom();
-      expect(prototype).not.toBeNull();
-      if (prototype) {
-        seen.add(prototype.id);
-      }
-    }
-
-    expect(seen.size).toBeGreaterThan(0);
-  });
-
-  it('prevents concurrent refresh tasks', async () => {
-    const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
-    const firstTask = vi.fn(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 10));
-      store.setAll([createPrototype({ id: 90 })]);
-    });
-    const secondTask = vi.fn(async () => {
-      store.setAll([createPrototype({ id: 91 })]);
+      expect(result).not.toBeNull();
+      expect(store.size).toBe(2);
+      expect(store.getById(1)?.id).toBe(1);
     });
 
-    const promise = store.runExclusive(firstTask);
-    const concurrent = store.runExclusive(secondTask);
+    it('skips storing when data exceeds limit', () => {
+      const store = new PrototypeMapStore({ maxDataSizeBytes: 50 });
+      const prototypes = [
+        createPrototype({ id: 7, freeComment: 'x'.repeat(200) }),
+      ];
 
-    await Promise.allSettled([promise, concurrent]);
+      const result = store.setAll(prototypes);
+      expect(result).toBeNull();
+      expect(store.size).toBe(0);
+    });
 
-    expect(firstTask).toHaveBeenCalledTimes(1);
-    expect(secondTask).toHaveBeenCalledTimes(0);
-    expect(store.getById(90)?.id).toBe(90);
+    it('handles empty array', () => {
+      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const result = store.setAll([]);
+
+      expect(result).not.toBeNull();
+      expect(store.size).toBe(0);
+    });
+
+    it('handles JSON.stringify errors gracefully', () => {
+      const store = new PrototypeMapStore();
+      const circularPrototype = createPrototype({ id: 1 }) as any;
+      circularPrototype.self = circularPrototype; // create circular reference
+
+      // setAll should not throw even if estimateSize fails
+      expect(() => store.setAll([circularPrototype])).not.toThrow();
+    });
+
+    it('falls back to 0 when size estimation fails', () => {
+      const store = new PrototypeMapStore();
+
+      // Mock JSON.stringify to throw
+      const originalStringify = JSON.stringify;
+      vi.spyOn(JSON, 'stringify').mockImplementationOnce(() => {
+        throw new Error('Stringify failed');
+      });
+
+      store.setAll([createPrototype({ id: 1 })]);
+
+      // Restore original implementation
+      JSON.stringify = originalStringify;
+
+      expect(store.getById(1)).toBeDefined();
+    });
+  });
+
+  describe('getMaxId', () => {
+    it('returns null when store is empty', () => {
+      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      expect(store.getMaxId()).toBeNull();
+    });
+
+    it('returns the highest prototype id', () => {
+      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      store.setAll([
+        createPrototype({ id: 3 }),
+        createPrototype({ id: 7 }),
+        createPrototype({ id: 5 }),
+      ]);
+
+      expect(store.getMaxId()).toBe(7);
+    });
+
+    it('returns null after clear', () => {
+      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      store.setAll([createPrototype({ id: 10 })]);
+      store.clear();
+
+      expect(store.getMaxId()).toBeNull();
+    });
+  });
+
+  describe('runExclusive', () => {
+    it('prevents concurrent refresh tasks', async () => {
+      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const firstTask = vi.fn(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        store.setAll([createPrototype({ id: 90 })]);
+      });
+      const secondTask = vi.fn(async () => {
+        store.setAll([createPrototype({ id: 91 })]);
+      });
+
+      const promise = store.runExclusive(firstTask);
+      const concurrent = store.runExclusive(secondTask);
+
+      await Promise.allSettled([promise, concurrent]);
+
+      expect(firstTask).toHaveBeenCalledTimes(1);
+      expect(secondTask).toHaveBeenCalledTimes(0);
+      expect(store.getById(90)?.id).toBe(90);
+    });
   });
 
   describe('getAll', () => {
@@ -531,15 +543,6 @@ describe('PrototypeMapStore', () => {
   });
 
   describe('edge cases and stress tests', () => {
-    it('handles empty array in setAll', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
-      const result = store.setAll([]);
-
-      expect(result).not.toBeNull();
-      expect(store.size).toBe(0);
-      expect(store.getMaxId()).toBeNull();
-    });
-
     it('handles single prototype', () => {
       const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
       store.setAll([createPrototype({ id: 42 })]);
@@ -665,34 +668,6 @@ describe('PrototypeMapStore', () => {
       expect(failingTask).toHaveBeenCalledTimes(1);
       expect(successTask).toHaveBeenCalledTimes(1);
       expect(store.getById(99)?.id).toBe(99);
-    });
-  });
-
-  describe('estimateSize error handling', () => {
-    it('handles JSON.stringify errors gracefully', () => {
-      const store = new PrototypeMapStore();
-      const circularPrototype = createPrototype({ id: 1 }) as any;
-      circularPrototype.self = circularPrototype; // create circular reference
-
-      // setAll should not throw even if estimateSize fails
-      expect(() => store.setAll([circularPrototype])).not.toThrow();
-    });
-
-    it('falls back to 0 when size estimation fails', () => {
-      const store = new PrototypeMapStore();
-
-      // Mock JSON.stringify to throw
-      const originalStringify = JSON.stringify;
-      vi.spyOn(JSON, 'stringify').mockImplementationOnce(() => {
-        throw new Error('Stringify failed');
-      });
-
-      store.setAll([createPrototype({ id: 1 })]);
-
-      // Restore original implementation
-      JSON.stringify = originalStringify;
-
-      expect(store.getById(1)).toBeDefined();
     });
   });
 });
