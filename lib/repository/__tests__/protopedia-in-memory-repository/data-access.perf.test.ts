@@ -1,12 +1,30 @@
+/**
+ * Performance tests for ProtopediaInMemoryRepository data access operations.
+ *
+ * This test suite measures the performance characteristics of the
+ * ProtopediaInMemoryRepositoryImpl class with various dataset sizes
+ * to ensure acceptable response times and memory usage.
+ *
+ * @remarks
+ * These tests are designed to validate performance rather than correctness.
+ * They verify that operations remain efficient as the dataset grows,
+ * measuring:
+ * - Read operation latency (getByPrototypeId, getRandomPrototypeFromSnapshot)
+ * - Random sampling performance with different sizes
+ * - Memory footprint with large datasets
+ * - Algorithm efficiency comparisons (reduce vs for-loop)
+ *
+ * @module
+ */
 import type { ResultOfListPrototypesApiResponse } from 'protopedia-api-v2-client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createProtopediaApiCustomClient } from '../../fetcher/index.js';
-import { createProtopediaInMemoryRepositoryImpl } from '../protopedia-in-memory-repository.js';
+import { createProtopediaApiCustomClient } from '../../../fetcher/index.js';
+import { ProtopediaInMemoryRepositoryImpl } from '../../protopedia-in-memory-repository.js';
 
-vi.mock('../../fetcher/index', async (importOriginal) => {
+vi.mock('../../../fetcher/index', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../../fetcher/index.js')>();
+    await importOriginal<typeof import('../../../fetcher/index.js')>();
   return {
     ...actual,
     createProtopediaApiCustomClient: vi.fn(),
@@ -65,7 +83,7 @@ const getMemoryUsage = () => {
   return null;
 };
 
-describe('ProtopediaInMemoryRepository data access performance', () => {
+describe('ProtopediaInMemoryRepositoryImpl - data access performance', () => {
   const listPrototypesMock = vi.fn();
   const fetchPrototypesMock = vi.fn();
 
@@ -121,7 +139,7 @@ describe('ProtopediaInMemoryRepository data access performance', () => {
 
     fetchPrototypesMock.mockResolvedValueOnce({ ok: true, data });
 
-    const repo = createProtopediaInMemoryRepositoryImpl({}, {});
+    const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
 
     // Setup snapshot (excluded from perf measurement)
     await repo.setupSnapshot({});
@@ -206,7 +224,7 @@ describe('ProtopediaInMemoryRepository data access performance', () => {
     const sizes = [1_000, 5_000, 10_000];
 
     for (const count of sizes) {
-      // Setup repository with test data
+      // Setup ProtopediaInMemoryRepositoryImpl instance with test data
       const prototypes = Array.from({ length: count }, (_, index) =>
         makePrototype({ id: index + 1 }),
       );
@@ -222,26 +240,29 @@ describe('ProtopediaInMemoryRepository data access performance', () => {
         mockClient as any,
       );
 
-      const repo = createProtopediaInMemoryRepositoryImpl({
+      const repo = new ProtopediaInMemoryRepositoryImpl({
         maxDataSizeBytes: 30 * 1024 * 1024,
       });
 
       await repo.setupSnapshot({ limit: count });
 
-      // Access private methods via type assertion
-      const repoAny = repo as any;
+      // Get normalized prototypes from the repository
+      const normalizedPrototypes = await Promise.all(
+        Array.from({ length: count }, (_, i) =>
+          repo.getPrototypeFromSnapshotByPrototypeId(i + 1),
+        ),
+      ).then((results) => results.filter((p) => p !== null));
 
-      // Measure reduce implementation
-      const reduceStats = await measure(
-        () => repoAny.analyzePrototypesWithReduce(prototypes),
-        50,
-      );
+      // Measure public methods performance
+      // Note: analyzePrototypesWithReduce and analyzePrototypesWithForLoop
+      // are public methods exposed for testing and benchmarking purposes
+      const reduceStats = await measure(() => {
+        repo.analyzePrototypesWithReduce(normalizedPrototypes);
+      }, 50);
 
-      // Measure for-loop implementation
-      const forLoopStats = await measure(
-        () => repoAny.analyzePrototypesWithForLoop(prototypes),
-        50,
-      );
+      const forLoopStats = await measure(() => {
+        repo.analyzePrototypesWithForLoop(normalizedPrototypes);
+      }, 50);
 
       console.log(
         `Repository analyzePrototypes (${count.toLocaleString()} items):`,
@@ -252,9 +273,9 @@ describe('ProtopediaInMemoryRepository data access performance', () => {
         `  speedup:  ${(reduceStats.median / forLoopStats.median).toFixed(2)}x`,
       );
 
-      // Verify correctness
-      expect(repoAny.analyzePrototypesWithReduce(prototypes)).toEqual(
-        repoAny.analyzePrototypesWithForLoop(prototypes),
+      // Verify correctness - both methods should produce identical results
+      expect(repo.analyzePrototypesWithReduce(normalizedPrototypes)).toEqual(
+        repo.analyzePrototypesWithForLoop(normalizedPrototypes),
       );
     }
   });

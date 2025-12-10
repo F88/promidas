@@ -1,3 +1,23 @@
+/**
+ * Performance tests for PrototypeInMemoryStore operations.
+ *
+ * This test suite measures the performance characteristics of the in-memory
+ * store with various dataset sizes to ensure acceptable response times and
+ * memory usage.
+ *
+ * @remarks
+ * These tests are designed to validate performance rather than correctness.
+ * They verify that operations remain efficient as the dataset grows,
+ * measuring:
+ * - Store snapshot update latency (setAll)
+ * - Read operation latency (getByPrototypeId)
+ * - Memory footprint with large datasets (1k, 3k, 5k, 10k items)
+ *
+ * Test expectations are intentionally lenient to avoid flakiness on slower
+ * CI environments while still catching significant performance regressions.
+ *
+ * @module
+ */
 import { describe, expect, it } from 'vitest';
 
 import type { NormalizedPrototype } from '../../types/index.js';
