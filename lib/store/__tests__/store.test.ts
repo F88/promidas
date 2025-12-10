@@ -413,6 +413,26 @@ describe('PrototypeInMemoryStore', () => {
       expect(store.isExpired()).toBe(false);
       vi.useRealTimers();
     });
+
+    it('reports 0 remaining TTL for expired cache', () => {
+      vi.useFakeTimers();
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+        ttlMs: 1000,
+      });
+
+      store.setAll([createPrototype({ id: 1 })]);
+      const initialStats = store.getStats();
+      expect(initialStats.remainingTtlMs).toBeGreaterThan(0);
+
+      // Fast-forward beyond TTL
+      vi.advanceTimersByTime(2000);
+
+      const expiredStats = store.getStats();
+      expect(expiredStats.remainingTtlMs).toBe(0);
+
+      vi.useRealTimers();
+    });
   });
 
   describe('getSnapshot', () => {
@@ -685,6 +705,92 @@ describe('PrototypeInMemoryStore', () => {
       expect(failingTask).toHaveBeenCalledTimes(1);
       expect(successTask).toHaveBeenCalledTimes(1);
       expect(store.getByPrototypeId(99)?.id).toBe(99);
+    });
+  });
+
+  describe('getPrototypeIds', () => {
+    it('returns empty array when store is empty', () => {
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
+
+      const ids = store.getPrototypeIds();
+      expect(ids).toEqual([]);
+    });
+
+    it('returns all prototype IDs', () => {
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
+      store.setAll([
+        createPrototype({ id: 1 }),
+        createPrototype({ id: 5 }),
+        createPrototype({ id: 3 }),
+      ]);
+
+      const ids = store.getPrototypeIds();
+      expect(ids.length).toBe(3);
+      expect(ids).toContain(1);
+      expect(ids).toContain(5);
+      expect(ids).toContain(3);
+    });
+
+    it('returns IDs in insertion order', () => {
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
+      store.setAll([
+        createPrototype({ id: 10 }),
+        createPrototype({ id: 20 }),
+        createPrototype({ id: 30 }),
+      ]);
+
+      const ids = store.getPrototypeIds();
+      expect(Array.from(ids)).toEqual([10, 20, 30]);
+    });
+
+    it('handles negative and zero IDs', () => {
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
+      store.setAll([
+        createPrototype({ id: -5 }),
+        createPrototype({ id: 0 }),
+        createPrototype({ id: 10 }),
+      ]);
+
+      const ids = store.getPrototypeIds();
+      expect(ids.length).toBe(3);
+      expect(ids).toContain(-5);
+      expect(ids).toContain(0);
+      expect(ids).toContain(10);
+    });
+
+    it('returns updated IDs after setAll', () => {
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
+      store.setAll([createPrototype({ id: 1 }), createPrototype({ id: 2 })]);
+
+      let ids = store.getPrototypeIds();
+      expect(ids.length).toBe(2);
+
+      store.setAll([createPrototype({ id: 3 })]);
+      ids = store.getPrototypeIds();
+      expect(ids.length).toBe(1);
+      expect(ids).toContain(3);
+      expect(ids).not.toContain(1);
+    });
+
+    it('returns empty array after clear', () => {
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
+      store.setAll([createPrototype({ id: 1 }), createPrototype({ id: 2 })]);
+      store.clear();
+
+      const ids = store.getPrototypeIds();
+      expect(ids).toEqual([]);
     });
   });
 });
