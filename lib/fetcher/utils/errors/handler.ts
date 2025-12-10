@@ -19,9 +19,68 @@
  */
 import { ProtoPediaApiError } from 'protopedia-api-v2-client';
 
+/**
+ * Standard error names used in error detection.
+ */
+const ERROR_NAMES = {
+  ABORT: 'AbortError',
+} as const;
+
+/**
+ * Standard error messages for common failure scenarios.
+ */
+const ERROR_MESSAGES = {
+  TIMEOUT: 'Upstream request timed out',
+  UNKNOWN: 'Failed to fetch prototypes',
+} as const;
+
 import { type Logger, createConsoleLogger } from '../../../logger/index.js';
 import type { NetworkFailure } from '../../types/prototype-api.types.js';
 import type { FetchPrototypesResult } from '../../types/result.types.js';
+
+/**
+ * Type guard to check if an error is an AbortError.
+ *
+ * @param error - The error to check
+ * @returns True if the error is a DOMException with name 'AbortError'
+ */
+function isAbortError(error: unknown): error is DOMException {
+  return error instanceof DOMException && error.name === ERROR_NAMES.ABORT;
+}
+
+/**
+ * Type guard to check if an error object has a status property (may need parsing).
+ *
+ * @param error - The error to check
+ * @returns True if the error has a status property of any type
+ */
+function hasStatusProperty(error: unknown): error is { status: unknown } {
+  return error !== null && typeof error === 'object' && 'status' in error;
+}
+
+/**
+ * Type guard to check if an error has a code property.
+ *
+ * This intentionally uses a broad `error is object` type guard to handle
+ * nested error structures flexibly. Node.js native fetch wraps network
+ * error codes in `error.cause.code`:
+ *
+ * @example
+ * ```ts
+ * const error = new Error('fetch failed');
+ * error.cause = { code: 'ENOTFOUND' };
+ * // hasErrorCode(error) returns true, allowing us to check error.cause.code
+ * ```
+ *
+ * A more specific type guard like `error is { code: string }` would reject
+ * errors that only have `cause.code`, preventing extraction of nested codes.
+ *
+ * @param error - The error to check
+ * @returns True if the error is an object that might contain code information
+ */
+function hasErrorCode(error: unknown): error is object {
+  return error !== null && typeof error === 'object';
+}
 
 /**
  * Create a FetchPrototypesResult failure object.
@@ -118,8 +177,8 @@ export function handleApiError(
   logger: Logger = createConsoleLogger('info'),
 ): FetchPrototypesResult {
   // Handle AbortError (timeout) - network error, no status
-  if (error instanceof DOMException && error.name === 'AbortError') {
-    const result = createFailureResult('Upstream request timed out', {});
+  if (isAbortError(error)) {
+    const result = createFailureResult(ERROR_MESSAGES.TIMEOUT, {});
 
     logger.warn('Upstream request aborted (timeout)', result);
 
@@ -148,7 +207,7 @@ export function handleApiError(
   }
 
   // Handle HTTP-like errors with a `status` property
-  if (typeof error === 'object' && error !== null && 'status' in error) {
+  if (hasStatusProperty(error)) {
     const rawStatus = (error as { status?: unknown }).status;
     const parsedStatus =
       typeof rawStatus === 'number' ? rawStatus : Number(rawStatus);
@@ -197,12 +256,12 @@ export function handleApiError(
   // Handle unexpected errors (including network errors from fetch)
   // Network errors do not have HTTP status codes
   const message =
-    error instanceof Error ? error.message : 'Failed to fetch prototypes';
+    error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN;
 
   const details: NetworkFailure['details'] = {};
   // Extract network error code from error.code or error.cause.code
   // (Node.js native fetch wraps ENOTFOUND etc. in error.cause)
-  if (typeof error === 'object' && error !== null) {
+  if (hasErrorCode(error)) {
     const errorObj = error as {
       code?: string;
       cause?: { code?: string };

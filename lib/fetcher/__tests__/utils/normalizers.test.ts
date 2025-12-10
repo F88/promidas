@@ -7,7 +7,7 @@ import {
   type UpstreamPrototype,
 } from '../../utils/normalizers.js';
 
-describe('utils', () => {
+describe('normalizers', () => {
   describe('splitPipeSeparatedString', () => {
     it('splits pipe-separated string into array', () => {
       const result = splitPipeSeparatedString('tag1|tag2|tag3');
@@ -583,6 +583,65 @@ describe('utils', () => {
         expect(normalized.createDate).toBe('invalid-date-format');
         expect(normalized.updateDate).toBe('99999-13-45');
         expect(normalized.releaseDate).toBe('');
+      });
+    });
+
+    describe('field coverage validation', () => {
+      it('normalizes all upstream prototype fields', () => {
+        const upstream = createUpstreamPrototype();
+        const normalized = normalizePrototype(upstream);
+
+        // Fields that are intentionally excluded from normalization
+        // These are internal SDK fields not needed in the normalized output
+        const excludedFields: Array<keyof UpstreamPrototype> = [
+          'uuid', // Internal SDK identifier
+          'nid', // Internal SDK identifier
+          'slideMode', // Internal display mode flag
+        ];
+
+        // Get all keys from both objects
+        const upstreamKeys = Object.keys(upstream) as Array<
+          keyof UpstreamPrototype
+        >;
+        const normalizedKeys = Object.keys(normalized) as Array<
+          keyof NormalizedPrototype
+        >;
+
+        // Check that all upstream fields are handled (either copied, transformed, or excluded)
+        const missingFields = upstreamKeys.filter((key) => {
+          // Skip excluded fields
+          if (excludedFields.includes(key)) {
+            return false;
+          }
+          // Check if the field exists in normalized output
+          return !(key in normalized);
+        });
+
+        // If this test fails, it means upstream added new fields that aren't being normalized
+        expect(
+          missingFields,
+          `The following upstream fields are not being normalized: ${missingFields.join(', ')}. ` +
+            'Please update normalizePrototype() in lib/fetcher/utils/normalizers.ts',
+        ).toEqual([]);
+      });
+
+      it('does not add unexpected fields to normalized output', () => {
+        const upstream = createUpstreamPrototype();
+        const normalized = normalizePrototype(upstream);
+
+        const normalizedKeys = Object.keys(normalized);
+        const upstreamKeys = Object.keys(upstream);
+
+        // Check that normalized doesn't have fields that don't exist in upstream
+        const unexpectedFields = normalizedKeys.filter((key) => {
+          return !(key in upstream);
+        });
+
+        // This ensures we're not accidentally adding fields from nowhere
+        expect(
+          unexpectedFields,
+          `Unexpected fields found in normalized output: ${unexpectedFields.join(', ')}`,
+        ).toEqual([]);
       });
     });
   });
