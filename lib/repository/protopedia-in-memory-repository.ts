@@ -48,6 +48,19 @@ const DEFAULT_FETCH_PARAMS: ListPrototypesParams = {
 };
 
 /**
+ * Threshold ratio for choosing sampling strategy in getRandomSampleFromSnapshot.
+ *
+ * When requested sample size exceeds this ratio of total items,
+ * use "Fisher-Yates shuffle" instead of "Set-based random selection" for better performance.
+ *
+ * @example
+ * // With 100 items total:
+ * // - size=40 (40%) → Set-based random selection (O(size))
+ * // - size=60 (60%) → Fisher-Yates shuffle (O(n))
+ */
+const SAMPLE_SIZE_THRESHOLD_RATIO = 0.5;
+
+/**
  * Internal implementation of {@link ProtopediaInMemoryRepository}.
  *
  * This class:
@@ -236,7 +249,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
     const actualSize = Math.min(size, all.length);
 
     // For large samples (≥50% of total), use Fisher-Yates shuffle
-    if (actualSize > all.length * 0.5) {
+    if (actualSize > all.length * SAMPLE_SIZE_THRESHOLD_RATIO) {
       const shuffled = [...all];
       for (let i = shuffled.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
