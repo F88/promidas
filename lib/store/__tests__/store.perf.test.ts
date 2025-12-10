@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { NormalizedPrototype } from '../types/index.js';
-
-import { PrototypeInMemoryStore } from './store.js';
+import type { NormalizedPrototype } from '../../types/index.js';
+import { PrototypeInMemoryStore } from '../store.js';
 
 /**
  * Create a test prototype with realistic field values.
