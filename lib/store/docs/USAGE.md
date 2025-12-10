@@ -80,13 +80,9 @@ All methods live on `PrototypeInMemoryStore` in `lib/store/store.ts`.
 - `getByPrototypeId(id: number): DeepReadonly<NormalizedPrototype> | null`
     - O(1) lookup by numeric ID via the internal prototypeIdIndex.
 
-- `getMinPrototypeId(): number | null`
-    - Returns the lowest prototype ID in the snapshot, or `null` when
-      the store is empty.
-
-- `getMaxPrototypeId(): number | null`
-    - Returns the highest prototype ID in the snapshot, or `null` when
-      the store is empty.
+- `getPrototypeIds(): readonly number[]`
+    - Returns an array of all cached prototype IDs.
+    - Useful for ID-only operations without loading full objects.
 
 ### TTL and snapshot helpers
 
