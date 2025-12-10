@@ -7,8 +7,7 @@
  */
 import type { DeepReadonly } from 'ts-essentials';
 
-import { createConsoleLogger } from '../logger/index.js';
-import type { Logger } from '../logger/index.js';
+import { type Logger, createConsoleLogger } from '../logger/index.js';
 import type { NormalizedPrototype } from '../types/index.js';
 
 const DEFAULT_TTL_MS = 30 * 60 * 1_000; // 30 minutes
