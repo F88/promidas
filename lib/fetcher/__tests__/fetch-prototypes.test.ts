@@ -230,7 +230,7 @@ describe('fetchAndNormalizePrototypes', () => {
         limit: 10,
       });
 
-      expect(handleApiErrorMock).toHaveBeenCalledWith(mockError);
+      expect(handleApiErrorMock).toHaveBeenCalledWith(mockError, undefined);
       expect(result).toEqual(expectedResult);
     });
 
@@ -255,7 +255,7 @@ describe('fetchAndNormalizePrototypes', () => {
         limit: 10,
       });
 
-      expect(handleApiErrorMock).toHaveBeenCalledWith(customError);
+      expect(handleApiErrorMock).toHaveBeenCalledWith(customError, undefined);
       expect(result).toEqual(expectedResult);
     });
 

@@ -130,6 +130,7 @@ describe('createProtopediaApiCustomClient', () => {
       expect(fetchAndNormalizePrototypesMock).toHaveBeenCalledWith(
         clientInstance,
         params,
+        undefined,
       );
       expect(result).toBe(mockResult);
     });
@@ -358,6 +359,7 @@ describe('createProtopediaApiCustomClient', () => {
       expect(fetchAndNormalizePrototypesMock).toHaveBeenCalledWith(
         clientInstance,
         { offset: 0, limit: 10 },
+        undefined,
       );
     });
 
@@ -451,6 +453,7 @@ describe('createProtopediaApiCustomClient', () => {
       expect(fetchAndNormalizePrototypesMock).toHaveBeenCalledWith(
         clientInstance,
         { prototypeId: 123 },
+        undefined,
       );
     });
   });

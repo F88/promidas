@@ -22,6 +22,7 @@
  */
 import type { ListPrototypesParams } from 'protopedia-api-v2-client';
 
+import type { Logger } from '../logger/index.js';
 import type { NormalizedPrototype } from '../types/index.js';
 
 import type { FetchPrototypesResult } from './types/result.types.js';
@@ -71,6 +72,8 @@ export type ListPrototypesClient = {
  * @param client - A client capable of listing prototypes.
  * @param params - Query parameters for the upstream `listPrototypes`
  *   call (offset, limit, prototypeId).
+ * @param logger - Optional logger instance for error diagnostic output.
+ *   If not provided, handleApiError will use its default logger.
  * @returns A {@link FetchPrototypesResult} representing either a
  *   normalized data set or a failure description.
  *
@@ -89,6 +92,7 @@ export type ListPrototypesClient = {
 export const fetchAndNormalizePrototypes = async (
   client: ListPrototypesClient,
   params: ListPrototypesParams,
+  logger?: Logger,
 ): Promise<FetchPrototypesResult> => {
   try {
     const upstream = await client.listPrototypes(params);
@@ -99,6 +103,6 @@ export const fetchAndNormalizePrototypes = async (
 
     return { ok: true, data };
   } catch (error) {
-    return handleApiError(error);
+    return handleApiError(error, logger);
   }
 };

@@ -72,13 +72,17 @@ export type ProtopediaApiCustomClient = ProtoPediaApiClient & {
  * - Normalizes the upstream response into
  *   {@link FetchPrototypesResult}.
  * - Encodes network / API errors into a stable failure shape.
+ * - Uses the same logger instance for both SDK operations and error
+ *   handling, ensuring consistent diagnostic output.
  *
  * This is the primary entry point for code within this library that
  * needs a ready-to-use ProtoPedia client.
  *
  * @param config - Configuration options forwarded to the official
  *   SDK client factory. If omitted, an empty configuration object is
- *   used, and the SDK's own defaults apply.
+ *   used, and the SDK's own defaults apply. The `logger` property, if
+ *   provided, will be used by both the SDK client and this library's
+ *   error handler for consistent logging.
  * @returns A {@link ProtopediaApiCustomClient} instance that behaves
  *   like the official client but also exposes `fetchPrototypes`.
  */
@@ -86,12 +90,13 @@ export const createProtopediaApiCustomClient = (
   config: ProtoPediaApiClientOptions = {},
 ): ProtopediaApiCustomClient => {
   const protopediaApiClient = createProtoPediaClient(config);
+  const logger = config?.logger;
 
   const client: ProtopediaApiCustomClient = Object.assign(protopediaApiClient, {
     fetchPrototypes(
       params: ListPrototypesParams,
     ): Promise<FetchPrototypesResult> {
-      return fetchAndNormalizePrototypes(protopediaApiClient, params);
+      return fetchAndNormalizePrototypes(protopediaApiClient, params, logger);
     },
   });
 

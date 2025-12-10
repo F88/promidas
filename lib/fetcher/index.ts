@@ -12,6 +12,10 @@
  * - {@link constructDisplayMessage} — Helper to format error messages for display.
  * - {@link FetchPrototypesResult} — The result type for fetch operations.
  *
+ * Logger types are re-exported for convenience when configuring error handling:
+ * - {@link Logger} — Logger interface compatible with protopedia-api-v2-client.
+ * - {@link LogLevel} — Log level type for controlling logger verbosity.
+ *
  * @module
  */
 
@@ -29,3 +33,5 @@ export {
 export { constructDisplayMessage } from './utils/errors/messages.js';
 
 export type { FetchPrototypesResult } from './types/result.types.js';
+
+export type { Logger, LogLevel } from '../logger/index.js';
