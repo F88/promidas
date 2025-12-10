@@ -37,8 +37,12 @@ import { normalizeProtoPediaTimestamp } from './time.js';
  * - Normalization tests (may need new test cases)
  * - Helper functions (assignPipeSeparatedIfExists, assignIfDefined)
  *
- * When upgrading `protopedia-api-v2-client`, review the SDK's changelog
- * and verify that normalization logic remains compatible.
+ * **When upgrading `protopedia-api-v2-client`:**
+ * 1. Review the SDK's changelog for new or changed fields
+ * 2. Run tests - the field coverage test will fail if new fields are not normalized
+ * 3. Update {@link normalizePrototype} to handle new fields
+ * 4. Update {@link NormalizedPrototype} type if needed
+ * 5. Add test cases for new field transformations
  */
 export type UpstreamPrototype = ResultOfListPrototypesApiResponse;
 
