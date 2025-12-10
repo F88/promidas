@@ -1,7 +1,7 @@
 /**
- * Tests for ProtopediaInMemoryRepositoryImpl error handling and recovery.
+ * Tests for ProtopediaInMemoryRepositoryImpl fetch error handling and recovery.
  *
- * Covers error scenarios, snapshot replacement, and resilience.
+ * Covers API fetch error scenarios, snapshot replacement, and resilience.
  *
  * @module
  */
@@ -20,14 +20,14 @@ vi.mock('../../../fetcher/index', async (importOriginal) => {
 
 import { makePrototype, setupMocks } from './test-helpers.js';
 
-describe('ProtopediaInMemoryRepositoryImpl - error handling', () => {
+describe('ProtopediaInMemoryRepositoryImpl - fetch error handling', () => {
   const { fetchPrototypesMock, resetMocks } = setupMocks();
 
   beforeEach(() => {
     resetMocks();
   });
 
-  describe('error handling', () => {
+  describe('API fetch errors', () => {
     it('returns failure result with 404 status code details', async () => {
       fetchPrototypesMock.mockResolvedValueOnce({
         ok: false,

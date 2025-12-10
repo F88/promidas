@@ -7,6 +7,7 @@
  * @module
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ZodError } from 'zod';
 
 import { ProtopediaInMemoryRepositoryImpl } from '../../protopedia-in-memory-repository.js';
 
@@ -222,6 +223,22 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
       const ids = new Set(sample.map((p) => p.id));
       expect(ids.size).toBe(3); // All unique
     });
+
+    describe('parameter validation', () => {
+      it('throws ZodError when size is not an integer', async () => {
+        const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+        await expect(repo.getRandomSampleFromSnapshot(1.5)).rejects.toThrow(
+          ZodError,
+        );
+      });
+
+      it('throws ZodError when size is NaN', async () => {
+        const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+        await expect(repo.getRandomSampleFromSnapshot(NaN)).rejects.toThrow(
+          ZodError,
+        );
+      });
+    });
   });
 
   describe('getPrototypeIdsFromSnapshot', () => {
@@ -352,6 +369,78 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
       expect(proto2?.prototypeNm).toBe('second');
       expect(proto3?.prototypeNm).toBe('third');
       expect(missing).toBeNull();
+    });
+
+    describe('parameter validation', () => {
+      it('throws ZodError when prototypeId is not an integer', async () => {
+        const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+        await expect(
+          repo.getPrototypeFromSnapshotByPrototypeId(1.5),
+        ).rejects.toThrow(ZodError);
+      });
+
+      it('throws ZodError when prototypeId is zero', async () => {
+        const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+        await expect(
+          repo.getPrototypeFromSnapshotByPrototypeId(0),
+        ).rejects.toThrow(ZodError);
+      });
+
+      it('throws ZodError when prototypeId is negative', async () => {
+        const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+        await expect(
+          repo.getPrototypeFromSnapshotByPrototypeId(-1),
+        ).rejects.toThrow(ZodError);
+      });
+
+      it('throws ZodError when prototypeId is NaN', async () => {
+        const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+        await expect(
+          repo.getPrototypeFromSnapshotByPrototypeId(NaN),
+        ).rejects.toThrow(ZodError);
+      });
+    });
+  });
+
+  describe('getRandomSampleFromSnapshot - parameter validation', () => {
+    it('throws ZodError when size is not an integer', async () => {
+      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      await expect(repo.getRandomSampleFromSnapshot(1.5)).rejects.toThrow(
+        ZodError,
+      );
+    });
+
+    it('throws ZodError when size is NaN', async () => {
+      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      await expect(repo.getRandomSampleFromSnapshot(NaN)).rejects.toThrow(
+        ZodError,
+      );
+    });
+
+    it('accepts negative size and returns empty array', async () => {
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [makePrototype({ id: 1 }), makePrototype({ id: 2 })],
+      });
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      await repo.setupSnapshot({});
+
+      const sample = await repo.getRandomSampleFromSnapshot(-5);
+      expect(sample).toEqual([]);
+    });
+
+    it('accepts zero size and returns empty array', async () => {
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [makePrototype({ id: 1 }), makePrototype({ id: 2 })],
+      });
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      await repo.setupSnapshot({});
+
+      const sample = await repo.getRandomSampleFromSnapshot(0);
+      expect(sample).toEqual([]);
     });
   });
 });

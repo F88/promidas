@@ -35,6 +35,7 @@ import {
 } from '../store/index.js';
 import type { NormalizedPrototype } from '../types/index.js';
 
+import { prototypeIdSchema, sampleSizeSchema } from './schemas/validation.js';
 import type {
   PrototypeAnalysisResult,
   SnapshotOperationResult,
@@ -182,10 +183,15 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
   /**
    * Look up a prototype by id in the current snapshot.
    * Never performs HTTP requests.
+   *
+   * @param prototypeId - The prototype ID to look up. Must be a positive integer.
+   * @returns The prototype if found, null otherwise
+   * @throws {z.ZodError} If prototypeId is not a positive integer
    */
   async getPrototypeFromSnapshotByPrototypeId(
     prototypeId: number,
   ): Promise<DeepReadonly<NormalizedPrototype> | null> {
+    prototypeIdSchema.parse(prototypeId);
     return this.#store.getByPrototypeId(prototypeId);
   }
 
@@ -194,10 +200,9 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    * when the snapshot is empty. Never performs HTTP requests.
    *
    * @remarks
-   * **Implementation Note**: This method uses `store.getAll()` instead of
-   * `store.getPrototypeIds()` + `store.getByPrototypeId()` for performance.
-   * While it might seem wasteful to copy all objects just to select one,
-   * the alternative would require:
+   * **Implementation Note**: This method uses `store.size` for O(1) empty check,
+   * then `store.getAll()` to select a random element. While it might seem wasteful
+   * to copy all objects just to select one, the alternative would require:
    *
    * 1. Call `getPrototypeIds()` - O(n) to iterate Map keys
    * 2. Select random ID - O(1)
@@ -209,10 +214,10 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    * efficient.
    */
   async getRandomPrototypeFromSnapshot(): Promise<DeepReadonly<NormalizedPrototype> | null> {
-    const all = this.#store.getAll();
-    if (all.length === 0) {
+    if (this.#store.size === 0) {
       return null;
     }
+    const all = this.#store.getAll();
     const index = Math.floor(Math.random() * all.length);
     return all[index] ?? null;
   }
@@ -224,12 +229,14 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    * If `size` exceeds the available data, returns all prototypes in random order.
    * Never performs HTTP requests.
    *
-   * @param size - Maximum number of samples to return
+   * @param size - Maximum number of samples to return. Must be an integer.
    * @returns Array of random prototypes (empty array if size <= 0 or snapshot is empty)
+   * @throws {z.ZodError} If size is not an integer
    *
    * @remarks
    * **Implementation Note**: Uses a hybrid approach for optimal performance:
    *
+   * - `store.size` provides O(1) empty check
    * - `store.getAll()` is O(1) (returns reference to internal array)
    * - For small samples (< 50% of total): Set-based random selection, O(size)
    * - For large samples (≥ 50% of total): Fisher-Yates shuffle, O(n)
@@ -241,11 +248,13 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
   async getRandomSampleFromSnapshot(
     size: number,
   ): Promise<readonly DeepReadonly<NormalizedPrototype>[]> {
-    const all = this.#store.getAll();
-    if (size <= 0 || all.length === 0) {
+    sampleSizeSchema.parse(size);
+
+    if (size <= 0 || this.#store.size === 0) {
       return [];
     }
 
+    const all = this.#store.getAll();
     const actualSize = Math.min(size, all.length);
 
     // For large samples (≥50% of total), use Fisher-Yates shuffle
