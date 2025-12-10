@@ -24,27 +24,27 @@ This repository provides a modular toolset for managing ProtoPedia data, consist
     - Generic snapshot management with TTL support
     - O(1) lookups by ID via internal index
     - Independent of any specific API client
-    - [Documentation](lib/store/docs/USAGE.md)
+    - [Usage Guide](lib/store/docs/USAGE.md) | [Design Document](lib/store/docs/DESIGN.md)
 
 3. **`lib/fetcher`** - API Client Utilities (`ProtopediaApiCustomClient`)
     - Utilities to fetch and normalize ProtoPedia prototypes
     - Error handling and network helpers for `protopedia-api-v2-client`
     - Supports custom logger configuration for unified diagnostic output
     - Can be used independently to build custom data pipelines
-    - [Documentation](lib/fetcher/docs/USAGE.md)
+    - [Usage Guide](lib/fetcher/docs/USAGE.md) | [Design Document](lib/fetcher/docs/DESIGN.md)
 
 4. **`lib/logger`** - Logger Interface (`Logger`)
     - Type-safe logging interface compatible with `protopedia-api-v2-client`
     - Used internally by Store, Fetcher, and Repository
     - Can be replaced with custom logger (e.g., Winston, Pino)
     - No `level` property for SDK compatibility (level managed by factory functions)
-    - [Documentation](lib/logger/docs/LOGGER.md)
+    - [Usage Guide](lib/logger/docs/USAGE.md) | [Design Document](lib/logger/docs/DESIGN.md)
 
 5. **`lib/repository`** - Ready-to-use Repository (`ProtopediaInMemoryRepository`)
     - Integrates `lib/store` and `lib/fetcher` into a single easy-to-use package
     - Provides `createProtopediaInMemoryRepository` factory
     - Best for most use cases requiring caching and automatic refreshing
-    - [Documentation](lib/repository/docs/USAGE.md)
+    - [Usage Guide](lib/repository/docs/USAGE.md) | [Design Document](lib/repository/docs/DESIGN.md)
 
 This project extracts and generalizes the data-fetching and in-memory data management capabilities originally implemented in [F88/mugen-protopedia](https://github.com/F88/mugen-protopedia/), providing them as a standalone, reusable library for various applications.
 
