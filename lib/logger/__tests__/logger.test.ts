@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createConsoleLogger, createNoopLogger } from './logger.js';
-import type { LogLevel } from './logger.types.js';
+import { createConsoleLogger, createNoopLogger } from '../logger.js';
+import type { LogLevel } from '../logger.types.js';
 
 describe('logger', () => {
   describe('createConsoleLogger', () => {
