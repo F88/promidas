@@ -285,10 +285,15 @@ export const createProtopediaInMemoryRepositoryImpl = (
 
     const firstId = prototypes[0]!.id;
     const { min, max } = prototypes.reduce(
-      (acc, prototype) => ({
-        min: prototype.id < acc.min ? prototype.id : acc.min,
-        max: prototype.id > acc.max ? prototype.id : acc.max,
-      }),
+      (acc, prototype) => {
+        if (prototype.id < acc.min) {
+          acc.min = prototype.id;
+        }
+        if (prototype.id > acc.max) {
+          acc.max = prototype.id;
+        }
+        return acc;
+      },
       { min: firstId, max: firstId },
     );
 
