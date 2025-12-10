@@ -27,6 +27,8 @@ import type {
 import type { NormalizedPrototype } from '../types/index.js';
 
 import { createProtopediaInMemoryRepositoryImpl } from './protopedia-in-memory-repository.js';
+import type { PrototypeAnalysisResult } from './types.js';
+
 
 /**
  * Statistics about the current in-memory snapshot for ProtoPedia.
@@ -34,6 +36,11 @@ import { createProtopediaInMemoryRepositoryImpl } from './protopedia-in-memory-r
  * Re-exported from {@link PrototypeInMemoryStats} for convenience.
  */
 export type { PrototypeInMemoryStats as ProtopediaInMemoryRepositoryStats } from '../store/index.js';
+
+/**
+ * Result of analyzing prototypes to extract ID range.
+ */
+export type { PrototypeAnalysisResult } from './types.js';
 
 /**
  * In-memory, snapshot-based repository for ProtoPedia prototypes.
@@ -149,6 +156,25 @@ export interface ProtopediaInMemoryRepository {
    * ```
    */
   getPrototypeIdsFromSnapshot(): Promise<readonly number[]>;
+
+  /**
+   * Analyze prototypes from the current snapshot to extract ID range.
+   *
+   * Returns the minimum and maximum prototype IDs from the current snapshot.
+   * This method does NOT perform HTTP calls.
+   *
+   * @returns Object containing min and max IDs, or null values if snapshot is empty
+   *
+   * @example
+   * ```typescript
+   * const repo = createProtopediaInMemoryRepository({});
+   * await repo.setupSnapshot({ limit: 1000 });
+   *
+   * const { min, max } = await repo.analyzePrototypes();
+   * console.log(`ID range: ${min} - ${max}`);
+   * ```
+   */
+  analyzePrototypes(): Promise<{ min: number | null; max: number | null }>;
 
   /**
    * Stats for the current snapshot, including TTL-related information.

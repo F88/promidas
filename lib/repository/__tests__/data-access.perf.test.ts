@@ -201,4 +201,61 @@ describe('ProtopediaInMemoryRepository data access performance', () => {
       await runPerfCase(count);
     },
   );
+
+  it('compares reduce vs for-loop for analyzePrototypes', async () => {
+    const sizes = [1_000, 5_000, 10_000];
+
+    for (const count of sizes) {
+      // Setup repository with test data
+      const prototypes = Array.from({ length: count }, (_, index) =>
+        makePrototype({ id: index + 1 }),
+      );
+
+      const mockClient = {
+        fetchPrototypes: vi.fn().mockResolvedValue({
+          ok: true,
+          data: prototypes,
+        }),
+      };
+
+      vi.mocked(createProtopediaApiCustomClient).mockReturnValue(
+        mockClient as any,
+      );
+
+      const repo = createProtopediaInMemoryRepositoryImpl({
+        maxDataSizeBytes: 30 * 1024 * 1024,
+      });
+
+      await repo.setupSnapshot({ limit: count });
+
+      // Access private methods via type assertion
+      const repoAny = repo as any;
+
+      // Measure reduce implementation
+      const reduceStats = await measure(
+        () => repoAny.analyzePrototypesWithReduce(prototypes),
+        50,
+      );
+
+      // Measure for-loop implementation
+      const forLoopStats = await measure(
+        () => repoAny.analyzePrototypesWithForLoop(prototypes),
+        50,
+      );
+
+      console.log(
+        `Repository analyzePrototypes (${count.toLocaleString()} items):`,
+      );
+      console.log(`  reduce:   median=${reduceStats.median.toFixed(3)}ms`);
+      console.log(`  for-loop: median=${forLoopStats.median.toFixed(3)}ms`);
+      console.log(
+        `  speedup:  ${(reduceStats.median / forLoopStats.median).toFixed(2)}x`,
+      );
+
+      // Verify correctness
+      expect(repoAny.analyzePrototypesWithReduce(prototypes)).toEqual(
+        repoAny.analyzePrototypesWithForLoop(prototypes),
+      );
+    }
+  });
 });

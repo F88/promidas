@@ -34,6 +34,8 @@ import {
 } from '../store/index.js';
 import type { NormalizedPrototype } from '../types/index.js';
 
+import type { PrototypeAnalysisResult } from './types.js';
+
 import type { ProtopediaInMemoryRepository } from './index.js';
 
 const DEFAULT_FETCH_PARAMS: ListPrototypesParams = {
@@ -228,6 +230,75 @@ export const createProtopediaInMemoryRepositoryImpl = (
     return store.getPrototypeIds();
   };
 
+  /**
+   * Analyze prototypes to extract ID range (minimum and maximum).
+   *
+   * Uses a for-loop implementation for better performance with large datasets (5,000+ items).
+   * Single-pass algorithm with minimal memory allocations.
+   *
+   * @param prototypes - Array of prototypes to analyze
+   * @returns Object containing min and max IDs, or null values if array is empty
+   */
+  const analyzePrototypesWithForLoop = (
+    prototypes: readonly DeepReadonly<NormalizedPrototype>[],
+  ): PrototypeAnalysisResult => {
+    if (prototypes.length === 0) {
+      return { min: null, max: null };
+    }
+
+    let min = prototypes[0]!.id;
+    let max = prototypes[0]!.id;
+
+    for (let i = 1; i < prototypes.length; i++) {
+      const id = prototypes[i]!.id;
+      if (id < min) min = id;
+      if (id > max) max = id;
+    }
+
+    return { min, max };
+  };
+
+  /**
+   * Analyze prototypes to extract ID range (minimum and maximum).
+   *
+   * Uses a reduce implementation for more declarative code style.
+   * May perform better with small datasets (~1,000 items) due to JIT optimization.
+   *
+   * @param prototypes - Array of prototypes to analyze
+   * @returns Object containing min and max IDs, or null values if array is empty
+   */
+  const analyzePrototypesWithReduce = (
+    prototypes: readonly DeepReadonly<NormalizedPrototype>[],
+  ): PrototypeAnalysisResult => {
+    if (prototypes.length === 0) {
+      return { min: null, max: null };
+    }
+
+    const firstId = prototypes[0]!.id;
+    const { min, max } = prototypes.reduce(
+      (acc, prototype) => ({
+        min: prototype.id < acc.min ? prototype.id : acc.min,
+        max: prototype.id > acc.max ? prototype.id : acc.max,
+      }),
+      { min: firstId, max: firstId },
+    );
+
+    return { min, max };
+  };
+
+  /**
+   * Analyze prototypes from the current snapshot to extract ID range.
+   *
+   * Currently uses the for-loop implementation for optimal performance with typical dataset sizes.
+   * Never performs HTTP requests.
+   *
+   * @returns Object containing min and max IDs, or null values if snapshot is empty
+   */
+  const analyzePrototypes = async (): Promise<PrototypeAnalysisResult> => {
+    const all = store.getAll();
+    return analyzePrototypesWithForLoop(all);
+  };
+
   return {
     setupSnapshot,
     refreshSnapshot,
@@ -235,7 +306,11 @@ export const createProtopediaInMemoryRepositoryImpl = (
     getRandomPrototypeFromSnapshot,
     getRandomSampleFromSnapshot,
     getPrototypeIdsFromSnapshot,
+    analyzePrototypes,
     getStats,
     getConfig,
-  };
+    // Internal methods exposed for testing (not in public interface)
+    analyzePrototypesWithForLoop,
+    analyzePrototypesWithReduce,
+  } as ProtopediaInMemoryRepository;
 };
