@@ -83,6 +83,25 @@ export class PrototypeMapStore {
 
   private refreshPromise: Promise<void> | null = null;
 
+  /**
+   * Create a new PrototypeMapStore instance.
+   *
+   * Initializes an in-memory cache for normalized prototypes with configurable
+   * TTL and size limits. The store manages snapshot expiration, refresh state,
+   * and provides type-safe read-only access to cached data.
+   *
+   * @param config - Configuration options for the store
+   * @param config.ttlMs - Time-to-live in milliseconds for cached snapshots.
+   *   Defaults to 30 minutes (1,800,000ms). After this duration, the snapshot
+   *   is considered expired and should be refreshed.
+   * @param config.maxDataSizeBytes - Maximum allowed size for cached data in bytes.
+   *   Defaults to 10 MiB (10,485,760 bytes). Must not exceed 30 MiB.
+   *   If a snapshot exceeds this limit, setAll() will reject it.
+   * @param config.logger - Optional logger instance for store operations.
+   *   If not provided, a default console logger at 'info' level is created.
+   *
+   * @throws {Error} When maxDataSizeBytes exceeds MAX_DATA_SIZE_BYTES (30 MiB)
+   */
   constructor({
     ttlMs = DEFAULT_TTL_MS,
     maxDataSizeBytes = DEFAULT_DATA_SIZE_BYTES,
@@ -104,6 +123,137 @@ export class PrototypeMapStore {
       ttlMs: this.ttlMs,
       maxDataSizeBytes: this.maxDataSizeBytes,
     });
+  }
+
+  /**
+   * Retrieve the configuration used to initialize this store.
+   *
+   * Returns the resolved configuration values (TTL and max payload size) that were
+   * set during instantiation. These values are immutable after construction.
+   */
+  getConfig(): Omit<Required<PrototypeMapStoreConfig>, 'logger'> {
+    return {
+      ttlMs: this.ttlMs,
+      maxDataSizeBytes: this.maxDataSizeBytes,
+    };
+  }
+
+  /** Count of prototypes currently kept in the in-memory map. */
+  get size(): number {
+    return this.prototypeMap.size;
+  }
+
+  /** Timestamp representing when the snapshot was last refreshed. */
+  getCachedAt(): Date | null {
+    return this.cachedAt;
+  }
+
+  /**
+   * Calculate elapsed time in milliseconds since the snapshot was cached.
+   * Returns 0 if no data is cached.
+   */
+  private getElapsedTime(): number {
+    if (!this.cachedAt) {
+      return 0;
+    }
+    return Date.now() - this.cachedAt.getTime();
+  }
+
+  /**
+   * Calculate remaining time in milliseconds until expiration.
+   * Returns 0 if already expired or no data is cached.
+   */
+  private getRemainingTtl(): number {
+    if (!this.cachedAt) {
+      return 0;
+    }
+    const elapsed = this.getElapsedTime();
+    const remaining = this.ttlMs - elapsed;
+    return Math.max(0, remaining);
+  }
+
+  /** Determine whether the snapshot is stale based on the configured TTL. */
+  isExpired(): boolean {
+    if (!this.cachedAt) {
+      return true;
+    }
+    return this.getElapsedTime() > this.ttlMs;
+  }
+
+  /** Report whether a background refresh is currently in flight. */
+  isRefreshInFlight(): boolean {
+    return this.refreshPromise !== null;
+  }
+
+  /**
+   * Provide statistics describing cache health and runtime state.
+   *
+   * Returns metadata about the current snapshot including size, expiration status,
+   * and refresh state. For configuration values like TTL, use {@link getConfig}.
+   */
+  getStats(): PrototypeMapStats {
+    return {
+      size: this.prototypeMap.size,
+      cachedAt: this.cachedAt,
+      isExpired: this.isExpired(),
+      remainingTtlMs: this.getRemainingTtl(),
+      dataSizeBytes: this.dataSizeBytes,
+      refreshInFlight: this.isRefreshInFlight(),
+    };
+  }
+
+  /** Estimate JSON payload size for logging and guardrails. */
+  private estimateSize(data: NormalizedPrototype[]): number {
+    try {
+      const serialized = JSON.stringify(data);
+      if (typeof Buffer !== 'undefined') {
+        return Buffer.byteLength(serialized, 'utf8');
+      }
+      if (typeof TextEncoder !== 'undefined') {
+        return new TextEncoder().encode(serialized).length;
+      }
+    } catch (error) {
+      this.logger.warn('Failed to estimate payload size, defaulting to 0', {
+        error,
+      });
+    }
+    return 0;
+  }
+
+  /**
+   * Execute a refresh task while preventing concurrent execution.
+   *
+   * @returns Promise resolved when the task completes; callers may ignore it for background refreshes.
+   */
+  runExclusive(task: RefreshTask): Promise<void> {
+    if (this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    this.refreshPromise = (async () => {
+      try {
+        await task();
+      } catch (error) {
+        this.logger.error('PrototypeMapStore refresh task failed', { error });
+        throw error;
+      } finally {
+        this.refreshPromise = null;
+      }
+    })();
+
+    return this.refreshPromise;
+  }
+
+  /** Reset the store to an empty state and clear all metadata. */
+  clear(): void {
+    const previousSize = this.prototypeMap.size;
+    this.prototypeMap.clear();
+    this.prototypes = [];
+    this.cachedAt = null;
+    this.dataSizeBytes = 0;
+    this.minPrototypeId = null;
+    this.maxPrototypeId = null;
+    this.logger.info('PrototypeMapStore cleared', { previousSize });
   }
 
   /**
@@ -156,11 +306,6 @@ export class PrototypeMapStore {
     return { dataSizeBytes };
   }
 
-  /** Count of prototypes currently kept in the in-memory map. */
-  get size(): number {
-    return this.prototypeMap.size;
-  }
-
   /**
    * Retrieve the latest fetched prototypes in their original order.
    *
@@ -182,43 +327,6 @@ export class PrototypeMapStore {
     return prototype as DeepReadonly<NormalizedPrototype> | null;
   }
 
-  /** Timestamp representing when the snapshot was last refreshed. */
-  getCachedAt(): Date | null {
-    return this.cachedAt;
-  }
-
-  /**
-   * Calculate elapsed time in milliseconds since the snapshot was cached.
-   * Returns 0 if no data is cached.
-   */
-  private getElapsedTime(): number {
-    if (!this.cachedAt) {
-      return 0;
-    }
-    return Date.now() - this.cachedAt.getTime();
-  }
-
-  /**
-   * Calculate remaining time in milliseconds until expiration.
-   * Returns 0 if already expired or no data is cached.
-   */
-  private getRemainingTtl(): number {
-    if (!this.cachedAt) {
-      return 0;
-    }
-    const elapsed = this.getElapsedTime();
-    const remaining = this.ttlMs - elapsed;
-    return Math.max(0, remaining);
-  }
-
-  /** Determine whether the snapshot is stale based on the configured TTL. */
-  isExpired(): boolean {
-    if (!this.cachedAt) {
-      return true;
-    }
-    return this.getElapsedTime() > this.ttlMs;
-  }
-
   /**
    * Return a lightweight structure containing the cached data and metadata.
    *
@@ -232,17 +340,6 @@ export class PrototypeMapStore {
     };
   }
 
-  /** Reset the store to an empty state and clear all metadata. */
-  clear(): void {
-    const previousSize = this.prototypeMap.size;
-    this.prototypeMap.clear();
-    this.prototypes = [];
-    this.cachedAt = null;
-    this.dataSizeBytes = 0;
-    this.minPrototypeId = null;
-    this.maxPrototypeId = null;
-    this.logger.info('PrototypeMapStore cleared', { previousSize });
-  }
   /** Return the lowest prototype id cached in the store, or null when empty. */
   getMinPrototypeId(): number | null {
     return this.minPrototypeId;
@@ -251,82 +348,5 @@ export class PrototypeMapStore {
   /** Return the highest prototype id cached in the store, or null when empty. */
   getMaxPrototypeId(): number | null {
     return this.maxPrototypeId;
-  }
-
-  /**
-   * Execute a refresh task while preventing concurrent execution.
-   *
-   * @returns Promise resolved when the task completes; callers may ignore it for background refreshes.
-   */
-  runExclusive(task: RefreshTask): Promise<void> {
-    if (this.refreshPromise) {
-      return this.refreshPromise;
-    }
-
-    this.refreshPromise = (async () => {
-      try {
-        await task();
-      } catch (error) {
-        this.logger.error('PrototypeMapStore refresh task failed', { error });
-        throw error;
-      } finally {
-        this.refreshPromise = null;
-      }
-    })();
-
-    return this.refreshPromise;
-  }
-
-  /** Report whether a background refresh is currently in flight. */
-  isRefreshInFlight(): boolean {
-    return this.refreshPromise !== null;
-  }
-
-  /**
-   * Provide statistics describing cache health and runtime state.
-   *
-   * Returns metadata about the current snapshot including size, expiration status,
-   * and refresh state. For configuration values like TTL, use {@link getConfig}.
-   */
-  getStats(): PrototypeMapStats {
-    return {
-      size: this.prototypeMap.size,
-      cachedAt: this.cachedAt,
-      isExpired: this.isExpired(),
-      remainingTtlMs: this.getRemainingTtl(),
-      dataSizeBytes: this.dataSizeBytes,
-      refreshInFlight: this.isRefreshInFlight(),
-    };
-  }
-
-  /**
-   * Retrieve the configuration used to initialize this store.
-   *
-   * Returns the resolved configuration values (TTL and max payload size) that were
-   * set during instantiation. These values are immutable after construction.
-   */
-  getConfig(): Omit<Required<PrototypeMapStoreConfig>, 'logger'> {
-    return {
-      ttlMs: this.ttlMs,
-      maxDataSizeBytes: this.maxDataSizeBytes,
-    };
-  }
-
-  /** Estimate JSON payload size for logging and guardrails. */
-  private estimateSize(data: NormalizedPrototype[]): number {
-    try {
-      const serialized = JSON.stringify(data);
-      if (typeof Buffer !== 'undefined') {
-        return Buffer.byteLength(serialized, 'utf8');
-      }
-      if (typeof TextEncoder !== 'undefined') {
-        return new TextEncoder().encode(serialized).length;
-      }
-    } catch (error) {
-      this.logger.warn('Failed to estimate payload size, defaulting to 0', {
-        error,
-      });
-    }
-    return 0;
   }
 }
