@@ -306,11 +306,18 @@ export class PrototypeInMemoryStore {
   /**
    * Retrieve the latest fetched prototypes in their original order.
    *
-   * Returns type-level immutable reference to the prototypes array.
-   * DeepReadonly provides compile-time protection against mutations.
-   * No runtime overhead (no freezing or copying).
+   * Returns type-level readonly reference to the internal prototypes array.
+   * The readonly type provides compile-time safety but not runtime protection.
    *
-   * @returns Type-protected readonly array of prototypes
+   * @returns Type-level readonly array of prototypes
+   *
+   * @remarks
+   * **Type Safety**: This method returns a readonly-typed reference without
+   * runtime immutability enforcement (no Object.freeze or defensive copying).
+   * Callers must honor the readonly contract and not cast it away.
+   *
+   * **Performance**: Direct reference with zero overhead - suitable for
+   * high-frequency reads of large datasets.
    */
   getAll(): readonly DeepReadonly<NormalizedPrototype>[] {
     return this.prototypes as readonly DeepReadonly<NormalizedPrototype>[];
