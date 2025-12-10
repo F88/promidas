@@ -116,9 +116,7 @@ function assignIfDefined<
 >(target: NormalizedPrototype, source: UpstreamPrototype, key: K): void {
   const value = source[key];
   if (value !== undefined) {
-    // Use type assertion as the type system cannot guarantee compatibility
-    // between UpstreamPrototype[K] and NormalizedPrototype[K]
-    target[key] = value as never;
+    target[key] = value as unknown as NormalizedPrototype[K];
   }
 }
 
