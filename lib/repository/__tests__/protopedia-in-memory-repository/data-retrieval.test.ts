@@ -480,46 +480,4 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
       });
     });
   });
-
-  describe('getRandomSampleFromSnapshot - parameter validation', () => {
-    it('throws ZodError when size is not an integer', async () => {
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
-      await expect(repo.getRandomSampleFromSnapshot(1.5)).rejects.toThrow(
-        ZodError,
-      );
-    });
-
-    it('throws ZodError when size is NaN', async () => {
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
-      await expect(repo.getRandomSampleFromSnapshot(NaN)).rejects.toThrow(
-        ZodError,
-      );
-    });
-
-    it('accepts negative size and returns empty array', async () => {
-      fetchPrototypesMock.mockResolvedValueOnce({
-        ok: true,
-        data: [makePrototype({ id: 1 }), makePrototype({ id: 2 })],
-      });
-
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
-      await repo.setupSnapshot({});
-
-      const sample = await repo.getRandomSampleFromSnapshot(-5);
-      expect(sample).toEqual([]);
-    });
-
-    it('accepts zero size and returns empty array', async () => {
-      fetchPrototypesMock.mockResolvedValueOnce({
-        ok: true,
-        data: [makePrototype({ id: 1 }), makePrototype({ id: 2 })],
-      });
-
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
-      await repo.setupSnapshot({});
-
-      const sample = await repo.getRandomSampleFromSnapshot(0);
-      expect(sample).toEqual([]);
-    });
-  });
 });

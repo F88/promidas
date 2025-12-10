@@ -74,6 +74,18 @@ describe('ProtopediaInMemoryRepositoryImpl - analysis', () => {
   });
 
   describe('private methods (via public interface)', () => {
+    /**
+     * Tests analyzePrototypesWithForLoop by manually reconstructing the prototype array.
+     *
+     * This test intentionally uses the verbose pattern of:
+     * 1. getPrototypeIdsFromSnapshot() - get all IDs
+     * 2. map each ID to getPrototypeFromSnapshotByPrototypeId() - individual lookups
+     * 3. Promise.all() - wait for all lookups
+     *
+     * This validates that the individual lookup methods work correctly when composed,
+     * which is a different code path than getAllFromSnapshot().
+     * Do NOT simplify this to use getAllFromSnapshot() - that would bypass the test's purpose.
+     */
     it('analyzePrototypesWithForLoop works correctly', async () => {
       fetchPrototypesMock.mockResolvedValueOnce({
         ok: true,
@@ -102,6 +114,18 @@ describe('ProtopediaInMemoryRepositoryImpl - analysis', () => {
       expect(result.max).toBe(100);
     });
 
+    /**
+     * Tests analyzePrototypesWithReduce by manually reconstructing the prototype array.
+     *
+     * This test intentionally uses the verbose pattern of:
+     * 1. getPrototypeIdsFromSnapshot() - get all IDs
+     * 2. map each ID to getPrototypeFromSnapshotByPrototypeId() - individual lookups
+     * 3. Promise.all() - wait for all lookups
+     *
+     * This validates that the individual lookup methods work correctly when composed,
+     * which is a different code path than getAllFromSnapshot().
+     * Do NOT simplify this to use getAllFromSnapshot() - that would bypass the test's purpose.
+     */
     it('analyzePrototypesWithReduce works correctly', async () => {
       fetchPrototypesMock.mockResolvedValueOnce({
         ok: true,
