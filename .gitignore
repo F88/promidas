@@ -37,4 +37,7 @@ test-report.junit.xml
 
 # Misc
 *.log
+sample-data
 
+# Development
+scripts/sample-data/
