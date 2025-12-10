@@ -5,7 +5,7 @@
  *
  * - The official ProtoPedia API v2 client
  *   (`protopedia-api-v2-client`).
- * - The memorystore's {@link PrototypeMapStore}, which keeps a
+ * - The memorystore's {@link PrototypeInMemoryStore}, which keeps a
  *   snapshot of normalized prototypes in memory.
  * - A thin, higher-level repository interface
  *   ({@link ProtopediaInMemoryRepository}) that exposes
@@ -28,9 +28,9 @@ import {
   createProtopediaApiCustomClient,
 } from '../fetcher/index.js';
 import {
-  PrototypeMapStore,
-  type PrototypeMapStats,
-  type PrototypeMapStoreConfig,
+  PrototypeInMemoryStore,
+  type PrototypeInMemoryStats,
+  type PrototypeInMemoryStoreConfig,
 } from '../store/index.js';
 import type { NormalizedPrototype } from '../types/index.js';
 
@@ -45,8 +45,8 @@ const DEFAULT_FETCH_PARAMS: ListPrototypesParams = {
  * Internal implementation of {@link ProtopediaInMemoryRepository}.
  *
  * This function:
- * - Instantiates a {@link PrototypeMapStore} using the provided
- *   {@link PrototypeMapStoreConfig}.
+ * - Instantiates a {@link PrototypeInMemoryStore} using the provided
+ *   {@link PrototypeInMemoryStoreConfig}.
  * - Creates a ProtoPedia API client via
  *   {@link createProtopediaApiCustomClient}, using the provided
  *   {@link ProtoPediaApiClientOptions}.
@@ -60,7 +60,7 @@ const DEFAULT_FETCH_PARAMS: ListPrototypesParams = {
  * calling this function directly.
  *
  * @param storeConfig - Configuration for the underlying
- *   {@link PrototypeMapStore}. Defaults to an empty configuration.
+ *   {@link PrototypeInMemoryStore}. Defaults to an empty configuration.
  * @param apiClientOptions - Optional configuration forwarded to the
  *   official SDK's client factory (for example, `token`, `baseUrl`,
  *   custom `fetch`, `timeoutMs`, `logLevel`).
@@ -68,10 +68,10 @@ const DEFAULT_FETCH_PARAMS: ListPrototypesParams = {
  *   manages an in-memory snapshot of ProtoPedia prototypes.
  */
 export const createProtopediaInMemoryRepositoryImpl = (
-  storeConfig: PrototypeMapStoreConfig = {},
+  storeConfig: PrototypeInMemoryStoreConfig = {},
   apiClientOptions?: ProtoPediaApiClientOptions,
 ): ProtopediaInMemoryRepository => {
-  const store = new PrototypeMapStore(storeConfig);
+  const store = new PrototypeInMemoryStore(storeConfig);
   const apiClient = createProtopediaApiCustomClient(apiClientOptions);
 
   let lastFetchParams: ListPrototypesParams = { ...DEFAULT_FETCH_PARAMS };
@@ -177,14 +177,14 @@ export const createProtopediaInMemoryRepositoryImpl = (
   /**
    * Return stats for the current snapshot from the underlying store.
    */
-  const getStats = (): PrototypeMapStats => {
+  const getStats = (): PrototypeInMemoryStats => {
     return store.getStats();
   };
 
   /**
    * Return the configuration used to initialize the underlying store.
    */
-  const getConfig = (): Omit<Required<PrototypeMapStoreConfig>, 'logger'> => {
+  const getConfig = (): Omit<Required<PrototypeInMemoryStoreConfig>, 'logger'> => {
     return store.getConfig();
   };
 

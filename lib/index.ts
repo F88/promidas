@@ -11,14 +11,14 @@
  * - {@link fetchAndNormalizePrototypes} — a helper to fetch and normalize
  *   prototypes from any compatible client.
  * - {@link constructDisplayMessage} — a helper to format error messages for display.
- * - {@link PrototypeMapStore} — a low-level in-memory store for
+ * - {@link PrototypeInMemoryStore} — a low-level in-memory store for
  *   `NormalizedPrototype` snapshots.
- * - {@link PrototypeMapStoreConfig} — configuration options for
- *   `PrototypeMapStore`.
+ * - {@link PrototypeInMemoryStoreConfig} — configuration options for
+ *   `PrototypeInMemoryStore`.
  * - {@link createProtopediaInMemoryRepository} — a higher-level
  *   convenience factory that creates a
  *   {@link ProtopediaInMemoryRepository} instance, combining
- *   `PrototypeMapStore` with the official ProtoPedia API client.
+ *   `PrototypeInMemoryStore` with the official ProtoPedia API client.
  *
  * @packageDocumentation
  */
@@ -28,8 +28,8 @@ export type { NormalizedPrototype } from './types/index.js';
 
 // Simple Store for ProtoPedia
 export {
-  PrototypeMapStore,
-  type PrototypeMapStoreConfig,
+  PrototypeInMemoryStore,
+  type PrototypeInMemoryStoreConfig,
 } from './store/index.js';
 
 // Fetcher (API client and utilities)

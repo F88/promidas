@@ -15,7 +15,7 @@ instructions-for-ais:
 # ProtopediaInMemoryRepository Usage Guide
 
 This document describes how to use the ProtoPedia-specific in-memory
-repository built on top of the generic `PrototypeMapStore` core.
+repository built on top of the generic `PrototypeInMemoryStore` core.
 
 The main entry point is the `createProtopediaInMemoryRepository` factory
 exported from `lib/repository`.
@@ -83,10 +83,10 @@ export interface ProtopediaInMemoryRepository {
 The factory type is:
 
 ```ts
-import type { PrototypeMapStoreConfig } from '../store/index.js';
+import type { PrototypeInMemoryStoreConfig } from '../store/index.js';
 
 export type CreateProtopediaInMemoryRepository = (
-    storeConfig: PrototypeMapStoreConfig,
+    storeConfig: PrototypeInMemoryStoreConfig,
     protopediaApiClientOptions?: ProtopediaApiClientOptions,
 ) => ProtopediaInMemoryRepository;
 ```
@@ -104,7 +104,7 @@ import { createProtopediaInMemoryRepository } from 'in-memory-snapshot-manager-f
 
 const repo = createProtopediaInMemoryRepository(
     {
-        // PrototypeMapStoreConfig
+        // PrototypeInMemoryStoreConfig
         ttlMs: 30 * 60 * 1000, // 30 minutes
         maxPayloadSizeBytes: 30 * 1024 * 1024, // 30 MiB
     },
@@ -236,5 +236,5 @@ environments.
   strategy at the type level. Those decisions live in the concrete
   implementation and can evolve without changing the public API.
 - `isExpired` in `ProtopediaInMemoryRepositoryStats` comes from the
-  underlying `PrototypeMapStore` TTL logic. You can use it directly or
+  underlying `PrototypeInMemoryStore` TTL logic. You can use it directly or
   implement your own policy based on `cachedAt`.

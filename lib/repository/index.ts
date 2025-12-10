@@ -2,7 +2,7 @@
  * Simple in-memory repository for ProtoPedia prototypes.
  *
  * This module exposes a snapshot-based repository interface that is backed
- * by the generic {@link PrototypeMapStore}. It is designed to be
+ * by the generic {@link PrototypeInMemoryStore}. It is designed to be
  * easy to use from server-side or other long-lived processes that want to:
  *
  * - fetch prototypes from the ProtoPedia HTTP API,
@@ -21,8 +21,8 @@ import type {
 import type { DeepReadonly } from 'ts-essentials';
 
 import type {
-  PrototypeMapStats,
-  PrototypeMapStoreConfig,
+  PrototypeInMemoryStats,
+  PrototypeInMemoryStoreConfig,
 } from '../store/index.js';
 import type { NormalizedPrototype } from '../types/index.js';
 
@@ -31,9 +31,9 @@ import { createProtopediaInMemoryRepositoryImpl } from './protopedia-in-memory-r
 /**
  * Statistics about the current in-memory snapshot for ProtoPedia.
  *
- * Re-exported from {@link PrototypeMapStats} for convenience.
+ * Re-exported from {@link PrototypeInMemoryStats} for convenience.
  */
-export type { PrototypeMapStats as ProtopediaInMemoryRepositoryStats } from '../store/index.js';
+export type { PrototypeInMemoryStats as ProtopediaInMemoryRepositoryStats } from '../store/index.js';
 
 /**
  * In-memory, snapshot-based repository for ProtoPedia prototypes.
@@ -130,21 +130,21 @@ export interface ProtopediaInMemoryRepository {
    * This method never throws due to ProtoPedia API failures; it only
    * reports the current in-memory state.
    */
-  getStats(): PrototypeMapStats;
+  getStats(): PrototypeInMemoryStats;
 
   /**
    * Retrieve the configuration used to initialize the underlying store.
    *
    * Returns the TTL and maximum data size settings (logger is excluded).
    */
-  getConfig(): Omit<Required<PrototypeMapStoreConfig>, 'logger'>;
+  getConfig(): Omit<Required<PrototypeInMemoryStoreConfig>, 'logger'>;
 }
 
 /**
  * Create an in-memory repository for ProtoPedia prototypes.
  *
  * This factory wires together:
- * - a {@link PrototypeMapStoreConfig} for the underlying in-memory store
+ * - a {@link PrototypeInMemoryStoreConfig} for the underlying in-memory store
  *   (TTL, memory guard, etc.), and
  * - options for the ProtoPedia HTTP client used to fetch prototypes.
  *
@@ -156,7 +156,7 @@ export interface ProtopediaInMemoryRepository {
  * defines the public interface surface for consumers.
  */
 export type CreateProtopediaInMemoryRepository = (
-  storeConfig: PrototypeMapStoreConfig,
+  storeConfig: PrototypeInMemoryStoreConfig,
   protopediaApiClientOptions?: ProtoPediaApiClientOptions,
 ) => ProtopediaInMemoryRepository;
 

@@ -20,7 +20,7 @@ This repository provides a modular toolset for managing ProtoPedia data, consist
     - Consistent handling of dates, arrays, and optional fields
     - Shared across all layers of the library
 
-2. **`lib/store`** - Standalone In-memory Store (`PrototypeMapStore`)
+2. **`lib/store`** - Standalone In-memory Store (`PrototypeInMemoryStore`)
     - Generic snapshot management with TTL support
     - O(1) lookups by ID and efficient random selection
     - Independent of any specific API client

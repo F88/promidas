@@ -16,7 +16,7 @@ instructions-for-ais:
 # Memorystore Design Notes
 
 These notes capture how upstream ProtoPedia payload sizes influence the
-in-memory `PrototypeMapStore` design in this repository. In particular,
+in-memory `PrototypeInMemoryStore` design in this repository. In particular,
 they document:
 
 - How large the canonical `listPrototypes` responses get for different
@@ -48,7 +48,7 @@ the canonical `listPrototypes` payload grows roughly linearly with the
 number of items and reaches about 16.5 MB (≈20 MB including metadata)
 for 10,000 items.
 
-The in-memory `PrototypeMapStore` used in this repository:
+The in-memory `PrototypeInMemoryStore` used in this repository:
 
 - Keeps a single canonical snapshot of `NormalizedPrototype` objects.
 - Enforces a hard payload guard of 30 MiB using an approximate

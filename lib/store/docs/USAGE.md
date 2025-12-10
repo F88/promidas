@@ -1,8 +1,8 @@
 ---
 lang: en
-title: Usage of PrototypeMapStore
-title-en: Usage of PrototypeMapStore
-title-ja: PrototypeMapStoreの使用法
+title: Usage of PrototypeInMemoryStore
+title-en: Usage of PrototypeInMemoryStore
+title-ja: PrototypeInMemoryStoreの使用法
 related:
     - ../../../README.md "Project Overview"
     - DESIGN.md "Store Design"
@@ -15,7 +15,7 @@ instructions-for-ais:
 
 # Memorystore Usage Notes
 
-This document describes how to use the `PrototypeMapStore` defined in
+This document describes how to use the `PrototypeInMemoryStore` defined in
 `lib/store/store.ts`. It focuses on the public API, typical access
 patterns, and how to combine the store-wide TTL with background
 refresh.
@@ -25,7 +25,7 @@ For payload size and memory characteristics of the store, see
 
 ## Overview
 
-`PrototypeMapStore` is an in-memory snapshot store for
+`PrototypeInMemoryStore` is an in-memory snapshot store for
 `NormalizedPrototype[]` that provides:
 
 - O(1) lookups by numeric prototype ID.
@@ -42,11 +42,11 @@ The store is **snapshot-based**:
 
 ## Public API Summary
 
-All methods live on `PrototypeMapStore` in `lib/store/store.ts`.
+All methods live on `PrototypeInMemoryStore` in `lib/store/store.ts`.
 
 ### Construction
 
-- `constructor(config?: PrototypeMapStoreConfig)`
+- `constructor(config?: PrototypeInMemoryStoreConfig)`
     - `ttlMs?: number` – store-wide TTL in milliseconds.
     - `maxPayloadSizeBytes?: number` – maximum allowed payload size in
       bytes (default: 30 MiB). Values above 30 MiB are rejected.
@@ -130,10 +130,10 @@ A typical usage pattern is stale-while-revalidate:
 ### Example: Ensure Fresh Snapshot
 
 ```ts
-import { PrototypeMapStore } from '@f88/promidas';
+import { PrototypeInMemoryStore } from '@f88/promidas';
 
 async function ensureFreshSnapshot(
-    store: PrototypeMapStore,
+    store: PrototypeInMemoryStore,
     refresh: () => Promise<void>,
 ): Promise<void> {
     if (!store.isExpired()) {
@@ -149,7 +149,7 @@ async function ensureFreshSnapshot(
 
 ```ts
 async function getRandomPrototype(
-    store: PrototypeMapStore,
+    store: PrototypeInMemoryStore,
     refresh: () => Promise<void>,
 ) {
     await ensureFreshSnapshot(store, refresh);
@@ -168,7 +168,7 @@ outside the store.
 
 ```ts
 import type { ProtoPediaApiClient } from 'protopedia-api-v2-client';
-import { PrototypeMapStore } from './lib/store';
+import { PrototypeInMemoryStore } from './lib/store';
 
 async function fetchAllPrototypesNormalized(
     client: ProtoPediaApiClient,
@@ -178,7 +178,7 @@ async function fetchAllPrototypesNormalized(
 }
 
 async function refreshAll(
-    store: PrototypeMapStore,
+    store: PrototypeInMemoryStore,
     client: ProtoPediaApiClient,
 ): Promise<void> {
     const data = await fetchAllPrototypesNormalized(client);
@@ -189,7 +189,7 @@ async function refreshAll(
 In practice, you would wire these pieces together as follows:
 
 ```ts
-const store = new PrototypeMapStore();
+const store = new PrototypeInMemoryStore();
 
 async function refreshTask(client: ProtoPediaApiClient): Promise<void> {
     await refreshAll(store, client);

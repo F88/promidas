@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { NormalizedPrototype } from '../types/index.js';
 
-import { PrototypeMapStore } from './store.js';
+import { PrototypeInMemoryStore } from './store.js';
 
 const createPrototype = (
   overrides: Partial<NormalizedPrototype> = {},
@@ -27,21 +27,21 @@ const createPrototype = (
   ...overrides,
 });
 
-describe('PrototypeMapStore', () => {
+describe('PrototypeInMemoryStore', () => {
   afterEach(() => {
     vi.useRealTimers();
   });
 
   describe('constructor and configuration', () => {
     it('uses 30 minutes TTL by default', () => {
-      const store = new PrototypeMapStore();
+      const store = new PrototypeInMemoryStore();
       const config = store.getConfig();
 
       expect(config.ttlMs).toBe(30 * 60 * 1_000);
     });
 
     it('uses 10 MiB max data size by default', () => {
-      const store = new PrototypeMapStore();
+      const store = new PrototypeInMemoryStore();
       const config = store.getConfig();
 
       expect(config.maxDataSizeBytes).toBe(10 * 1024 * 1024);
@@ -49,9 +49,9 @@ describe('PrototypeMapStore', () => {
 
     it('throws when configuring data size larger than 30 MiB', () => {
       expect(
-        () => new PrototypeMapStore({ maxDataSizeBytes: 31 * 1024 * 1024 }),
+        () => new PrototypeInMemoryStore({ maxDataSizeBytes: 31 * 1024 * 1024 }),
       ).toThrow(
-        /PrototypeMapStore maxDataSizeBytes must be <= \d+ bytes \(\d+ MiB\) to prevent oversized data/,
+        /PrototypeInMemoryStore maxDataSizeBytes must be <= \d+ bytes \(\d+ MiB\) to prevent oversized data/,
       );
     });
   });
@@ -59,7 +59,7 @@ describe('PrototypeMapStore', () => {
   describe('configuration and statistics', () => {
     describe('getConfig', () => {
       it('returns configuration with default values', () => {
-        const store = new PrototypeMapStore();
+        const store = new PrototypeInMemoryStore();
         const config = store.getConfig();
 
         expect(config.ttlMs).toBe(30 * 60 * 1_000);
@@ -67,7 +67,7 @@ describe('PrototypeMapStore', () => {
       });
 
       it('returns configuration with custom values', () => {
-        const store = new PrototypeMapStore({
+        const store = new PrototypeInMemoryStore({
           ttlMs: 5000,
           maxDataSizeBytes: 1024 * 1024,
         });
@@ -78,7 +78,7 @@ describe('PrototypeMapStore', () => {
       });
 
       it('returns all required fields', () => {
-        const store = new PrototypeMapStore();
+        const store = new PrototypeInMemoryStore();
         const config = store.getConfig();
 
         expect(config).toHaveProperty('ttlMs');
@@ -89,7 +89,7 @@ describe('PrototypeMapStore', () => {
 
     describe('getStats', () => {
       it('returns all statistics', () => {
-        const store = new PrototypeMapStore({
+        const store = new PrototypeInMemoryStore({
           ttlMs: 10_000,
           maxDataSizeBytes: 1024 * 1024,
         });
@@ -104,7 +104,7 @@ describe('PrototypeMapStore', () => {
       });
 
       it('returns correct values when no data is stored', () => {
-        const store = new PrototypeMapStore({
+        const store = new PrototypeInMemoryStore({
           ttlMs: 10_000,
           maxDataSizeBytes: 1024 * 1024,
         });
@@ -123,7 +123,7 @@ describe('PrototypeMapStore', () => {
         const now = new Date('2025-01-01T00:00:00Z');
         vi.setSystemTime(now);
 
-        const store = new PrototypeMapStore({
+        const store = new PrototypeInMemoryStore({
           ttlMs: 5000,
           maxDataSizeBytes: 1024 * 1024,
         });
@@ -146,7 +146,7 @@ describe('PrototypeMapStore', () => {
         const now = new Date('2025-01-01T00:00:00Z');
         vi.setSystemTime(now);
 
-        const store = new PrototypeMapStore({
+        const store = new PrototypeInMemoryStore({
           ttlMs: 5000,
           maxDataSizeBytes: 1024 * 1024,
         });
@@ -166,7 +166,7 @@ describe('PrototypeMapStore', () => {
       it('reflects expired state', () => {
         vi.useFakeTimers();
         vi.setSystemTime(new Date('2025-01-01T00:00:00Z'));
-        const store = new PrototypeMapStore({
+        const store = new PrototypeInMemoryStore({
           ttlMs: 100,
           maxDataSizeBytes: 1024 * 1024,
         });
@@ -184,7 +184,7 @@ describe('PrototypeMapStore', () => {
 
   describe('setAll', () => {
     it('stores prototypes when data fits within limits', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       const result = store.setAll([
         createPrototype({ id: 1 }),
         createPrototype({ id: 2 }),
@@ -196,7 +196,7 @@ describe('PrototypeMapStore', () => {
     });
 
     it('skips storing when data exceeds limit', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 50 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 50 });
       const prototypes = [
         createPrototype({ id: 7, freeComment: 'x'.repeat(200) }),
       ];
@@ -207,7 +207,7 @@ describe('PrototypeMapStore', () => {
     });
 
     it('handles empty array', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       const result = store.setAll([]);
 
       expect(result).not.toBeNull();
@@ -215,7 +215,7 @@ describe('PrototypeMapStore', () => {
     });
 
     it('handles JSON.stringify errors gracefully', () => {
-      const store = new PrototypeMapStore();
+      const store = new PrototypeInMemoryStore();
       const circularPrototype = createPrototype({ id: 1 }) as any;
       circularPrototype.self = circularPrototype; // create circular reference
 
@@ -224,7 +224,7 @@ describe('PrototypeMapStore', () => {
     });
 
     it('falls back to 0 when size estimation fails', () => {
-      const store = new PrototypeMapStore();
+      const store = new PrototypeInMemoryStore();
 
       // Mock JSON.stringify to throw
       const originalStringify = JSON.stringify;
@@ -243,12 +243,12 @@ describe('PrototypeMapStore', () => {
 
   describe('getMaxId', () => {
     it('returns null when store is empty', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       expect(store.getMaxPrototypeId()).toBeNull();
     });
 
     it('returns the highest prototype id', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       store.setAll([
         createPrototype({ id: 3 }),
         createPrototype({ id: 7 }),
@@ -259,7 +259,7 @@ describe('PrototypeMapStore', () => {
     });
 
     it('returns null after clear', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       store.setAll([createPrototype({ id: 10 })]);
       store.clear();
 
@@ -269,12 +269,12 @@ describe('PrototypeMapStore', () => {
 
   describe('getMinId', () => {
     it('returns null when store is empty', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       expect(store.getMinPrototypeId()).toBeNull();
     });
 
     it('returns the lowest prototype id', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       store.setAll([
         createPrototype({ id: 3 }),
         createPrototype({ id: 7 }),
@@ -285,7 +285,7 @@ describe('PrototypeMapStore', () => {
     });
 
     it('returns null after clear', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       store.setAll([createPrototype({ id: 10 })]);
       store.clear();
 
@@ -295,7 +295,7 @@ describe('PrototypeMapStore', () => {
 
   describe('runExclusive', () => {
     it('prevents concurrent refresh tasks', async () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       const firstTask = vi.fn(async () => {
         await new Promise((resolve) => setTimeout(resolve, 10));
         store.setAll([createPrototype({ id: 90 })]);
@@ -317,7 +317,7 @@ describe('PrototypeMapStore', () => {
 
   describe('getAll', () => {
     it('returns all prototypes in original order', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       const prototypes = [
         createPrototype({ id: 3, prototypeNm: 'Third' }),
         createPrototype({ id: 1, prototypeNm: 'First' }),
@@ -334,21 +334,21 @@ describe('PrototypeMapStore', () => {
     });
 
     it('returns empty array when store is empty', () => {
-      const store = new PrototypeMapStore();
+      const store = new PrototypeInMemoryStore();
       expect(store.getAll()).toEqual([]);
     });
   });
 
   describe('getByPrototypeId', () => {
     it('returns undefined for non-existent id', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       store.setAll([createPrototype({ id: 1 })]);
 
       expect(store.getByPrototypeId(999)).toBeNull();
     });
 
     it('retrieves prototype by id in O(1) time', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       const prototypes = Array.from({ length: 100 }, (_, i) =>
         createPrototype({ id: i + 1 }),
       );
@@ -359,7 +359,7 @@ describe('PrototypeMapStore', () => {
     });
 
     it('returns undefined when store is cleared', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       store.setAll([createPrototype({ id: 42 })]);
       store.clear();
 
@@ -369,7 +369,7 @@ describe('PrototypeMapStore', () => {
 
   describe('getCachedAt', () => {
     it('returns null when no data has been cached', () => {
-      const store = new PrototypeMapStore();
+      const store = new PrototypeInMemoryStore();
       expect(store.getCachedAt()).toBeNull();
     });
 
@@ -378,7 +378,7 @@ describe('PrototypeMapStore', () => {
       const now = new Date('2025-12-01T12:00:00.000Z');
       vi.setSystemTime(now);
 
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       store.setAll([createPrototype({ id: 1 })]);
 
       expect(store.getCachedAt()?.getTime()).toBe(now.getTime());
@@ -387,7 +387,7 @@ describe('PrototypeMapStore', () => {
 
     it('updates timestamp on subsequent setAll calls', () => {
       vi.useFakeTimers();
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
 
       vi.setSystemTime(new Date('2025-01-01T00:00:00Z'));
       store.setAll([createPrototype({ id: 1 })]);
@@ -404,13 +404,13 @@ describe('PrototypeMapStore', () => {
 
   describe('isExpired', () => {
     it('returns true when no data is cached', () => {
-      const store = new PrototypeMapStore();
+      const store = new PrototypeInMemoryStore();
       expect(store.isExpired()).toBe(true);
     });
 
     it('returns false immediately after caching', () => {
       vi.useFakeTimers();
-      const store = new PrototypeMapStore({
+      const store = new PrototypeInMemoryStore({
         ttlMs: 5000,
         maxDataSizeBytes: 1024 * 1024,
       });
@@ -423,7 +423,7 @@ describe('PrototypeMapStore', () => {
     it('returns true after TTL expires', () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2025-01-01T00:00:00Z'));
-      const store = new PrototypeMapStore({
+      const store = new PrototypeInMemoryStore({
         ttlMs: 1000,
         maxDataSizeBytes: 1024 * 1024,
       });
@@ -437,7 +437,7 @@ describe('PrototypeMapStore', () => {
     it('returns false at exact TTL boundary', () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2025-01-01T00:00:00Z'));
-      const store = new PrototypeMapStore({
+      const store = new PrototypeInMemoryStore({
         ttlMs: 1000,
         maxDataSizeBytes: 1024 * 1024,
       });
@@ -455,7 +455,7 @@ describe('PrototypeMapStore', () => {
       const now = new Date('2025-12-01T12:00:00Z');
       vi.setSystemTime(now);
 
-      const store = new PrototypeMapStore({
+      const store = new PrototypeInMemoryStore({
         ttlMs: 5000,
         maxDataSizeBytes: 1024 * 1024,
       });
@@ -471,7 +471,7 @@ describe('PrototypeMapStore', () => {
     });
 
     it('returns empty snapshot when store is empty', () => {
-      const store = new PrototypeMapStore();
+      const store = new PrototypeInMemoryStore();
       const snapshot = store.getSnapshot();
 
       expect(snapshot.data).toEqual([]);
@@ -482,7 +482,7 @@ describe('PrototypeMapStore', () => {
     it('reflects expired state in snapshot', () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2025-01-01T00:00:00Z'));
-      const store = new PrototypeMapStore({
+      const store = new PrototypeInMemoryStore({
         ttlMs: 100,
         maxDataSizeBytes: 1024 * 1024,
       });
@@ -499,7 +499,7 @@ describe('PrototypeMapStore', () => {
 
   describe('clear', () => {
     it('resets size to 0', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       store.setAll([createPrototype({ id: 1 })]);
       store.clear();
 
@@ -507,7 +507,7 @@ describe('PrototypeMapStore', () => {
     });
 
     it('clears all prototypes', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       store.setAll([createPrototype({ id: 1 })]);
       store.clear();
 
@@ -515,7 +515,7 @@ describe('PrototypeMapStore', () => {
     });
 
     it('resets cachedAt to null', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       store.setAll([createPrototype({ id: 1 })]);
       store.clear();
 
@@ -523,7 +523,7 @@ describe('PrototypeMapStore', () => {
     });
 
     it('resets maxPrototypeId to null', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       store.setAll([createPrototype({ id: 100 })]);
       store.clear();
 
@@ -531,7 +531,7 @@ describe('PrototypeMapStore', () => {
     });
 
     it('can be called multiple times', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       store.setAll([createPrototype({ id: 1 })]);
       store.clear();
       store.clear();
@@ -542,12 +542,12 @@ describe('PrototypeMapStore', () => {
 
   describe('isRefreshInFlight', () => {
     it('returns false when no refresh is running', () => {
-      const store = new PrototypeMapStore();
+      const store = new PrototypeInMemoryStore();
       expect(store.isRefreshInFlight()).toBe(false);
     });
 
     it('returns true while refresh is running', async () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       const task = vi.fn(async () => {
         await new Promise((resolve) => setTimeout(resolve, 10));
       });
@@ -558,7 +558,7 @@ describe('PrototypeMapStore', () => {
     });
 
     it('returns false after refresh completes', async () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       const task = vi.fn(async () => {});
 
       await store.runExclusive(task);
@@ -568,7 +568,7 @@ describe('PrototypeMapStore', () => {
 
   describe('edge cases and stress tests', () => {
     it('handles single prototype', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       store.setAll([createPrototype({ id: 42 })]);
 
       expect(store.size).toBe(1);
@@ -578,7 +578,7 @@ describe('PrototypeMapStore', () => {
     });
 
     it('handles large number of prototypes', () => {
-      const store = new PrototypeMapStore({
+      const store = new PrototypeInMemoryStore({
         maxDataSizeBytes: 10 * 1024 * 1024,
       });
       const prototypes = Array.from({ length: 1000 }, (_, i) =>
@@ -594,7 +594,7 @@ describe('PrototypeMapStore', () => {
     });
 
     it('handles prototype with id 0', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       store.setAll([createPrototype({ id: 0 })]);
 
       expect(store.getByPrototypeId(0)?.id).toBe(0);
@@ -603,7 +603,7 @@ describe('PrototypeMapStore', () => {
     });
 
     it('handles negative prototype ids', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       store.setAll([
         createPrototype({ id: -1 }),
         createPrototype({ id: 5 }),
@@ -617,7 +617,7 @@ describe('PrototypeMapStore', () => {
     });
 
     it('preserves all prototype fields', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       const original = createPrototype({
         id: 123,
         prototypeNm: 'Test Name',
@@ -636,7 +636,7 @@ describe('PrototypeMapStore', () => {
     });
 
     it('handles multiple setAll calls with different data', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
 
       store.setAll([createPrototype({ id: 1 })]);
       expect(store.size).toBe(1);
@@ -648,7 +648,7 @@ describe('PrototypeMapStore', () => {
     });
 
     it('handles concurrent refresh tasks correctly', async () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       const task1 = vi.fn(async () => {
         await new Promise((resolve) => setTimeout(resolve, 50));
         store.setAll([createPrototype({ id: 1 })]);
@@ -672,7 +672,7 @@ describe('PrototypeMapStore', () => {
     });
 
     it('handles refresh task that throws error', async () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       const task = vi.fn(async () => {
         throw new Error('Task failed');
       });
@@ -682,7 +682,7 @@ describe('PrototypeMapStore', () => {
     });
 
     it('allows new refresh after failed refresh', async () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
       const failingTask = vi.fn(async () => {
         throw new Error('First task failed');
       });

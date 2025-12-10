@@ -5,7 +5,7 @@ import {
 
 import {
   createProtopediaInMemoryRepository,
-  type PrototypeMapStoreConfig,
+  type PrototypeInMemoryStoreConfig,
 } from '../lib/index.js';
 
 async function main() {
@@ -23,7 +23,7 @@ async function main() {
 
   // Test 1: Create repository with custom TTL (60 seconds)
   console.log('=== Test 1: Initialize repository with custom TTL ===');
-  const prototypeMapStoreConfig: PrototypeMapStoreConfig = {
+  const prototypeInMemoryStoreConfig: PrototypeInMemoryStoreConfig = {
     ttlMs: 60_000, // 60 seconds for testing
   };
   const protoPediaApiClientOptions: ProtoPediaApiClientOptions = {
@@ -31,7 +31,7 @@ async function main() {
     ...(logLevel && { logLevel }),
   };
   const repo = createProtopediaInMemoryRepository(
-    prototypeMapStoreConfig,
+    prototypeInMemoryStoreConfig,
     protoPediaApiClientOptions,
   );
   console.log('✓ Repository created with 60s TTL\n');

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { NormalizedPrototype } from '../types/index.js';
 
-import { PrototypeMapStore } from './store.js';
+import { PrototypeInMemoryStore } from './store.js';
 
 const createPrototype = (id: number): NormalizedPrototype => ({
   id,
@@ -24,13 +24,13 @@ const createPrototype = (id: number): NormalizedPrototype => ({
   thanksFlg: 0,
 });
 
-describe('PrototypeMapStore performance (non-strict)', () => {
+describe('PrototypeInMemoryStore performance (non-strict)', () => {
   const runPerfCase = (count: number): void => {
     const data = Array.from({ length: count }, (_, index) =>
       createPrototype(index + 1),
     );
 
-    const store = new PrototypeMapStore({
+    const store = new PrototypeInMemoryStore({
       maxDataSizeBytes: 30 * 1024 * 1024,
     });
 
@@ -56,7 +56,7 @@ describe('PrototypeMapStore performance (non-strict)', () => {
         ? globalThis.process.memoryUsage()
         : undefined;
 
-    console.log(`PrototypeMapStore perf (${count.toLocaleString()} items):`, {
+    console.log(`PrototypeInMemoryStore perf (${count.toLocaleString()} items):`, {
       setAllMs,
       getByIdMs,
       memory: usage
