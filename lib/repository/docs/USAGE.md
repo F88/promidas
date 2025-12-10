@@ -72,10 +72,15 @@ export interface ProtopediaInMemoryRepository {
      * in-memory snapshot is preserved.
      */
     refreshSnapshot(): Promise<void>;
-    getPrototypeFromSnapshotById(
-        id: number,
-    ): Promise<NormalizedPrototype | undefined>;
-    getRandomPrototypeFromSnapshot(): Promise<NormalizedPrototype | undefined>;
+    getPrototypeFromSnapshotByPrototypeId(
+        prototypeId: number,
+    ): Promise<DeepReadonly<NormalizedPrototype> | null>;
+    getRandomPrototypeFromSnapshot(): Promise<DeepReadonly<NormalizedPrototype> | null>;
+    getRandomSampleFromSnapshot(
+        size: number,
+    ): Promise<readonly DeepReadonly<NormalizedPrototype>[]>;
+    getPrototypeIdsFromSnapshot(): Promise<readonly number[]>;
+    analyzePrototypes(): Promise<{ min: number | null; max: number | null }>;
     getStats(): ProtopediaInMemoryRepositoryStats;
 }
 ```
@@ -134,7 +139,7 @@ all read methods will operate only on that snapshot.
 Get a specific prototype by id:
 
 ```ts
-const prototype = await repo.getPrototypeFromSnapshotById(123);
+const prototype = await repo.getPrototypeFromSnapshotByPrototypeId(123);
 
 if (!prototype) {
     // Not present in the current snapshot
@@ -148,6 +153,30 @@ const randomPrototype = await repo.getRandomPrototypeFromSnapshot();
 
 if (!randomPrototype) {
     // Snapshot is empty
+}
+```
+
+Get random samples (multiple prototypes without duplicates):
+
+```ts
+const samples = await repo.getRandomSampleFromSnapshot(5);
+// Returns up to 5 random prototypes
+// If snapshot has fewer than 5, returns all available
+```
+
+Get all prototype IDs from the snapshot:
+
+```ts
+const ids = await repo.getPrototypeIdsFromSnapshot();
+console.log(`Available prototype IDs: ${ids.join(', ')}`);
+```
+
+Analyze the ID range of prototypes in the snapshot:
+
+```ts
+const { min, max } = await repo.analyzePrototypes();
+if (min !== null && max !== null) {
+    console.log(`Prototype ID range: ${min} - ${max}`);
 }
 ```
 
@@ -205,7 +234,7 @@ environments.
 - **Detail view by id with in-memory cache**
     - When rendering a list, fill the repository with all
       prototypes from the list response.
-    - On a detail page or modal, first call `repo.getPrototypeFromSnapshotById(id)`.
+    - On a detail page or modal, first call `repo.getPrototypeFromSnapshotByPrototypeId(id)`.
     - If the prototype is not found in the store, fall back to a
       single-item fetch (using the client directly or extending the repository),
       insert it into the store, and then render it.

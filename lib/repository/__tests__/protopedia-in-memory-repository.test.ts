@@ -528,6 +528,73 @@ describe('createInMemoryRepositoryImpl', () => {
     });
   });
 
+  describe('getPrototypeIdsFromSnapshot', () => {
+    it('returns empty array when snapshot is empty', async () => {
+      const repo = createProtopediaInMemoryRepositoryImpl({}, {});
+      const ids = await repo.getPrototypeIdsFromSnapshot();
+      expect(ids).toEqual([]);
+    });
+
+    it('returns all prototype IDs from snapshot', async () => {
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [
+          makePrototype({ id: 1, prototypeNm: 'first' }),
+          makePrototype({ id: 5, prototypeNm: 'second' }),
+          makePrototype({ id: 10, prototypeNm: 'third' }),
+        ],
+      });
+
+      const repo = createProtopediaInMemoryRepositoryImpl({}, {});
+      await repo.setupSnapshot({});
+
+      const ids = await repo.getPrototypeIdsFromSnapshot();
+      expect(ids).toEqual([1, 5, 10]);
+    });
+
+    it('returns array of IDs in order', async () => {
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [
+          makePrototype({ id: 3 }),
+          makePrototype({ id: 1 }),
+          makePrototype({ id: 2 }),
+        ],
+      });
+
+      const repo = createProtopediaInMemoryRepositoryImpl({}, {});
+      await repo.setupSnapshot({});
+
+      const ids = await repo.getPrototypeIdsFromSnapshot();
+      expect(ids.length).toBe(3);
+      expect(ids).toContain(1);
+      expect(ids).toContain(2);
+      expect(ids).toContain(3);
+    });
+
+    it('updates after refreshSnapshot', async () => {
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [makePrototype({ id: 1 })],
+      });
+
+      const repo = createProtopediaInMemoryRepositoryImpl({}, {});
+      await repo.setupSnapshot({});
+
+      let ids = await repo.getPrototypeIdsFromSnapshot();
+      expect(ids).toEqual([1]);
+
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [makePrototype({ id: 2 }), makePrototype({ id: 3 })],
+      });
+
+      await repo.refreshSnapshot();
+      ids = await repo.getPrototypeIdsFromSnapshot();
+      expect(ids).toEqual([2, 3]);
+    });
+  });
+
   describe('getPrototypeFromSnapshotById', () => {
     it('returns null for unknown ids', async () => {
       fetchPrototypesMock.mockResolvedValueOnce({
