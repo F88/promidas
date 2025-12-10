@@ -121,6 +121,36 @@ export interface ProtopediaInMemoryRepository {
   ): Promise<readonly DeepReadonly<NormalizedPrototype>[]>;
 
   /**
+   * Get all prototype IDs from the current in-memory snapshot.
+   *
+   * Returns an array of all prototype IDs currently cached in the snapshot.
+   * Useful for operations that only need IDs, such as:
+   * - Exporting available prototype IDs to clients
+   * - ID-based filtering or statistics
+   * - Checking if specific IDs exist without loading full objects
+   *
+   * This method does NOT perform HTTP calls.
+   * It does not throw due to ProtoPedia API failures; it only reflects
+   * the current in-memory state of the snapshot.
+   *
+   * @returns Read-only array of prototype IDs
+   *
+   * @example
+   * ```typescript
+   * const repo = createProtopediaInMemoryRepository({});
+   * await repo.setupSnapshot({ limit: 100 });
+   *
+   * // Get all available IDs
+   * const ids = await repo.getPrototypeIdsFromSnapshot();
+   * console.log(`Available prototypes: ${ids.length}`);
+   *
+   * // Return to client
+   * return { availableIds: ids };
+   * ```
+   */
+  getPrototypeIdsFromSnapshot(): Promise<readonly number[]>;
+
+  /**
    * Stats for the current snapshot, including TTL-related information.
    *
    * Callers can use this to implement strategies such as:

@@ -147,6 +147,21 @@ export const createProtopediaInMemoryRepositoryImpl = (
   /**
    * Return a random prototype from the current snapshot, or null
    * when the snapshot is empty. Never performs HTTP requests.
+   *
+   * @remarks
+   * **Implementation Note**: This method uses `store.getAll()` instead of
+   * `store.getPrototypeIds()` + `store.getByPrototypeId()` for performance.
+   * While it might seem wasteful to copy all objects just to select one,
+   * the alternative would require:
+   *
+   * 1. Call `getPrototypeIds()` - O(n) to iterate Map keys
+   * 2. Select random ID - O(1)
+   * 3. Call `getByPrototypeId(id)` - O(1)
+   *
+   * This approach still costs O(n) for step 1, making it no better than
+   * `getAll()` in terms of time complexity, but with additional function
+   * call overhead. The current implementation is simpler and equally
+   * efficient.
    */
   const getRandomPrototypeFromSnapshot =
     async (): Promise<DeepReadonly<NormalizedPrototype> | null> => {
@@ -167,6 +182,20 @@ export const createProtopediaInMemoryRepositoryImpl = (
    *
    * @param size - Maximum number of samples to return
    * @returns Array of random prototypes (empty array if size <= 0 or snapshot is empty)
+   *
+   * @remarks
+   * **Implementation Note**: This method uses `store.getAll()` instead of
+   * `store.getPrototypeIds()` for performance reasons. While `getPrototypeIds()`
+   * might seem lighter (IDs only vs full objects), the random selection loop
+   * would need to call `store.getByPrototypeId()` for each selected ID,
+   * resulting in worse performance:
+   *
+   * - Current approach: 1× O(n) getAll() + size× O(1) array access
+   * - Alternative: 1× O(n) getPrototypeIds() + size× O(1) getByPrototypeId()
+   *
+   * Both have the same time complexity, but the current approach has better
+   * cache locality and fewer function calls, making it measurably faster in
+   * practice (especially for larger sample sizes).
    */
   const getRandomSampleFromSnapshot = async (
     size: number,
@@ -191,12 +220,21 @@ export const createProtopediaInMemoryRepositoryImpl = (
     return result;
   };
 
+  /**
+   * Return all prototype IDs from the current snapshot.
+   * Never performs HTTP requests.
+   */
+  const getPrototypeIdsFromSnapshot = async (): Promise<readonly number[]> => {
+    return store.getPrototypeIds();
+  };
+
   return {
     setupSnapshot,
     refreshSnapshot,
     getPrototypeFromSnapshotByPrototypeId,
     getRandomPrototypeFromSnapshot,
     getRandomSampleFromSnapshot,
+    getPrototypeIdsFromSnapshot,
     getStats,
     getConfig,
   };
