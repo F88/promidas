@@ -8,71 +8,48 @@ const shouldLog = (current: LogLevel, target: LogLevel): boolean => {
 
 const hasConsole = typeof console !== 'undefined';
 
-export const createConsoleLogger = (level: LogLevel = 'info'): Logger => {
-  const safeDebug =
-    hasConsole && typeof console.debug === 'function'
-      ? console.debug.bind(console)
-      : undefined;
-  const safeInfo =
-    hasConsole && typeof console.info === 'function'
-      ? console.info.bind(console)
-      : undefined;
-  const safeWarn =
-    hasConsole && typeof console.warn === 'function'
-      ? console.warn.bind(console)
-      : undefined;
-  const safeError =
-    hasConsole && typeof console.error === 'function'
-      ? console.error.bind(console)
-      : undefined;
+const createPayload = (
+  level: LogLevel,
+  meta: unknown,
+): Record<string, unknown> => {
+  return meta && typeof meta === 'object' && !Array.isArray(meta)
+    ? { level, ...(meta as Record<string, unknown>) }
+    : { level, meta };
+};
 
+const createLogMethod = (
+  currentLevel: LogLevel,
+  targetLevel: LogLevel,
+  consoleFn:
+    | ((message?: unknown, ...optionalParams: unknown[]) => void)
+    | undefined,
+) => {
+  return (message: string, meta?: unknown): void => {
+    if (!shouldLog(currentLevel, targetLevel) || !consoleFn) {
+      return;
+    }
+    consoleFn(message, createPayload(targetLevel, meta));
+  };
+};
+
+const getConsoleFn = (
+  method: 'debug' | 'info' | 'warn' | 'error',
+): ((message?: unknown, ...optionalParams: unknown[]) => void) | undefined => {
+  return hasConsole && typeof console[method] === 'function'
+    ? console[method].bind(console)
+    : undefined;
+};
+
+export const createConsoleLogger = (level: LogLevel = 'info'): Logger => {
   return {
-    level,
-    debug: (message, meta) => {
-      if (!shouldLog(level, 'debug') || !safeDebug) {
-        return;
-      }
-      const payload =
-        meta && typeof meta === 'object' && !Array.isArray(meta)
-          ? { level: 'debug', ...(meta as Record<string, unknown>) }
-          : { level: 'debug', meta };
-      safeDebug(message, payload);
-    },
-    info: (message, meta) => {
-      if (!shouldLog(level, 'info') || !safeInfo) {
-        return;
-      }
-      const payload =
-        meta && typeof meta === 'object'
-          ? { level: 'info', ...(meta as Record<string, unknown>) }
-          : { level: 'info', meta };
-      safeInfo(message, payload);
-    },
-    warn: (message, meta) => {
-      if (!shouldLog(level, 'warn') || !safeWarn) {
-        return;
-      }
-      const payload =
-        meta && typeof meta === 'object'
-          ? { level: 'warn', ...(meta as Record<string, unknown>) }
-          : { level: 'warn', meta };
-      safeWarn(message, payload);
-    },
-    error: (message, meta) => {
-      if (!shouldLog(level, 'error') || !safeError) {
-        return;
-      }
-      const payload =
-        meta && typeof meta === 'object'
-          ? { level: 'error', ...(meta as Record<string, unknown>) }
-          : { level: 'error', meta };
-      safeError(message, payload);
-    },
+    debug: createLogMethod(level, 'debug', getConsoleFn('debug')),
+    info: createLogMethod(level, 'info', getConsoleFn('info')),
+    warn: createLogMethod(level, 'warn', getConsoleFn('warn')),
+    error: createLogMethod(level, 'error', getConsoleFn('error')),
   };
 };
 
 export const createNoopLogger = (): Logger => ({
-  level: 'silent',
   debug: () => {
     // noop
   },

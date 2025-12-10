@@ -106,7 +106,44 @@ client internally by providing the same options shape.
 
 - Network-level failures are represented by the `NetworkFailure` type
   (see `lib/fetcher/types/prototype-api.types.ts`).
-- Fetch helpers like `getPrototypes` return discriminated unions so
-  callers must explicitly handle both success and failure cases.
+- Fetch helpers return discriminated unions (`FetchPrototypesResult`)
+  so callers must explicitly handle both success and failure cases.
+- Error handling is managed by `handleApiError` in
+  `lib/fetcher/utils/errors/handler.ts`, which converts all error
+  types (HTTP errors, timeouts, network errors) into consistent
+  failure results.
 - Application-level logic can choose to log, retry, or surface these
   failures depending on the runtime environment.
+
+## Logger Configuration
+
+The fetcher layer supports custom logger configuration for consistent
+diagnostic output. The logger is compatible with `protopedia-api-v2-client`'s
+Logger interface.
+
+### Using Custom Logger
+
+```ts
+import { createConsoleLogger } from '@f88/promidas/logger';
+import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+
+const logger = createConsoleLogger('debug');
+
+const client = createProtopediaApiCustomClient({
+    token: process.env.PROTOPEDIA_API_TOKEN ?? '',
+    logger, // Used by both SDK and error handler
+});
+
+const result = await client.fetchPrototypes({ limit: 10 });
+```
+
+### Logger Benefits
+
+- **Unified logging**: Same logger instance used for SDK operations
+  and error handling
+- **Custom implementations**: Winston, Pino, or any compatible logger
+- **Consistent output**: All diagnostic messages use the same logger
+- **SDK compatibility**: Fully compatible with protopedia-api-v2-client
+
+If no logger is provided, the error handler defaults to a console
+logger with 'info' level.

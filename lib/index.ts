@@ -7,18 +7,20 @@
  * - {@link NormalizedPrototype} — Core normalized prototype type
  *
  * **Logger:**
- * - {@link Logger} — Logger interface for custom logging
+ * - {@link Logger} — Logger interface compatible with protopedia-api-v2-client
  * - {@link LogLevel} — Log level type
+ * - Note: Logger interface does not include a `level` property for SDK compatibility
  *
  * **Store (In-memory snapshot management):**
  * - {@link PrototypeInMemoryStore} — In-memory store with TTL and efficient lookups
- * - {@link PrototypeInMemoryStoreConfig} — Store configuration options
+ * - {@link PrototypeInMemoryStoreConfig} — Store configuration options (includes logger)
  * - {@link PrototypeInMemoryStats} — Store statistics and metadata
  *
  * **Fetcher (API client and normalization):**
- * - {@link createProtopediaApiCustomClient} — Standalone API client factory
+ * - {@link createProtopediaApiCustomClient} — Standalone API client factory (supports logger)
  * - {@link fetchAndNormalizePrototypes} — Fetch and normalize helper
  * - {@link constructDisplayMessage} — Error message formatter
+ * - Supports custom logger via ProtoPediaApiClientOptions
  *
  * **Repository (High-level data management):**
  * - {@link createProtopediaInMemoryRepository} — Repository factory

@@ -19,11 +19,9 @@
  */
 import { ProtoPediaApiError } from 'protopedia-api-v2-client';
 
-import { createConsoleLogger } from '../../../logger/index.js';
+import { type Logger, createConsoleLogger } from '../../../logger/index.js';
 import type { NetworkFailure } from '../../types/prototype-api.types.js';
 import type { FetchPrototypesResult } from '../../types/result.types.js';
-
-const logger = createConsoleLogger('info');
 
 /**
  * Create a FetchPrototypesResult failure object.
@@ -72,6 +70,8 @@ function createFailureResult(
  * @param error - The error value thrown by an upstream API call. Can be
  *   a {@link ProtoPediaApiError}, a DOMException, an HTTP-like object
  *   with a `status` property, or any other value.
+ * @param logger - Optional logger instance for diagnostic output. Defaults
+ *   to console logger with 'info' level if not provided.
  * @returns A {@link FetchPrototypesResult} with `ok: false`, an error
  *   message, a `details` object, and optionally a `status` code (only
  *   present for HTTP errors, not network errors).
@@ -113,7 +113,10 @@ function createFailureResult(
  * // }
  * ```
  */
-export function handleApiError(error: unknown): FetchPrototypesResult {
+export function handleApiError(
+  error: unknown,
+  logger: Logger = createConsoleLogger('info'),
+): FetchPrototypesResult {
   // Handle AbortError (timeout) - network error, no status
   if (error instanceof DOMException && error.name === 'AbortError') {
     const result = createFailureResult('Upstream request timed out', {});

@@ -25,11 +25,6 @@ describe('logger', () => {
     });
 
     describe('default log level (info)', () => {
-      it('creates logger with info level by default', () => {
-        const logger = createConsoleLogger();
-        expect(logger.level).toBe('info');
-      });
-
       it('does not log debug messages', () => {
         const logger = createConsoleLogger();
         logger.debug('Debug message');
@@ -216,9 +211,7 @@ describe('logger', () => {
         logger.error('Error', [1, 2, 3]);
         expect(errorSpy).toHaveBeenCalledWith('Error', {
           level: 'error',
-          0: 1,
-          1: 2,
-          2: 3,
+          meta: [1, 2, 3],
         });
       });
     });
@@ -299,11 +292,6 @@ describe('logger', () => {
       errorSpy.mockRestore();
     });
 
-    it('has silent level', () => {
-      const logger = createNoopLogger();
-      expect(logger.level).toBe('silent');
-    });
-
     it('does not log any messages', () => {
       const logger = createNoopLogger();
       logger.debug('Debug');
@@ -365,8 +353,8 @@ describe('logger', () => {
       const consoleLogger = createConsoleLogger('warn');
       const noopLogger = createNoopLogger();
 
-      expect(consoleLogger.level).toBe('warn');
-      expect(noopLogger.level).toBe('silent');
+      expect(typeof consoleLogger.debug).toBe('function');
+      expect(typeof noopLogger.debug).toBe('function');
     });
   });
 
