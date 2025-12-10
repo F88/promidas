@@ -255,10 +255,17 @@ export class PrototypeInMemoryStore {
 
   /**
    * Store the provided snapshot if it fits within the configured payload limit.
+   * Creates a shallow copy of the input array to prevent external mutations.
    *
-   * @param prototypes - Array of normalized prototypes to store
+   * @param prototypes - Array of normalized prototypes to store (array will be copied)
    * @returns Metadata about the stored snapshot including the exact data size in bytes,
    *          or null when the payload exceeded the configured maximum size limit.
+   *
+   * @remarks
+   * The method creates a shallow copy of the input array to ensure the store's
+   * internal state cannot be corrupted by external mutations of the array.
+   * However, the prototype objects themselves are not cloned. Callers must not
+   * mutate the prototype objects after passing them to this method.
    */
   setAll(prototypes: NormalizedPrototype[]): { dataSizeBytes: number } | null {
     // Validate payload size before storing
@@ -273,13 +280,16 @@ export class PrototypeInMemoryStore {
       return null;
     }
 
+    // Create shallow copy to prevent external array mutations
+    const prototypesCopy = [...prototypes];
+
     // Build O(1) lookup index by prototype ID
     this.prototypeIdIndex = new Map(
-      prototypes.map((prototype) => [prototype.id, prototype]),
+      prototypesCopy.map((prototype) => [prototype.id, prototype]),
     );
 
-    // Store original array for ordered access
-    this.prototypes = prototypes;
+    // Store copied array for ordered access
+    this.prototypes = prototypesCopy;
 
     // Update cache metadata
     this.cachedAt = new Date();
