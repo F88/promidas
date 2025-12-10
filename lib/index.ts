@@ -6,6 +6,10 @@
  * **Types:**
  * - {@link NormalizedPrototype} — Core normalized prototype type
  *
+ * **Logger:**
+ * - {@link Logger} — Logger interface for custom logging
+ * - {@link LogLevel} — Log level type
+ *
  * **Store (In-memory snapshot management):**
  * - {@link PrototypeInMemoryStore} — In-memory store with TTL and efficient lookups
  * - {@link PrototypeInMemoryStoreConfig} — Store configuration options
@@ -26,13 +30,14 @@
 // types
 export type { NormalizedPrototype } from './types/index.js';
 
+// Logger
+export type { Logger, LogLevel } from './logger/index.js';
+
 // Simple Store for ProtoPedia
 export {
   PrototypeInMemoryStore,
   type PrototypeInMemoryStats,
   type PrototypeInMemoryStoreConfig,
-  type Logger,
-  type LogLevel,
 } from './store/index.js';
 
 // Fetcher (API client and utilities)

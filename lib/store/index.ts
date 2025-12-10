@@ -21,4 +21,4 @@ export {
   type PrototypeInMemoryStoreConfig,
 } from './store.js';
 
-export type { Logger, LogLevel } from '../lib/logger.types.js';
+export type { Logger, LogLevel } from '../logger/index.js';
