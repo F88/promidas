@@ -54,6 +54,17 @@ const makePrototype = (
   ...overrides,
 });
 
+// Helper: Get memory usage (environment agnostic)
+const getMemoryUsage = () => {
+  if (
+    typeof process !== 'undefined' &&
+    typeof process.memoryUsage === 'function'
+  ) {
+    return process.memoryUsage();
+  }
+  return null;
+};
+
 describe('ProtopediaInMemoryRepository data access performance', () => {
   const listPrototypesMock = vi.fn();
   const fetchPrototypesMock = vi.fn();
@@ -70,6 +81,39 @@ describe('ProtopediaInMemoryRepository data access performance', () => {
     });
   });
 
+  /**
+   * Helper to measure execution time with warm-up and multiple iterations.
+   * Supports both synchronous and asynchronous functions.
+   */
+  const measure = async (
+    fn: () => Promise<void> | void,
+    iterations: number = 5,
+  ) => {
+    // Warm-up (for JIT optimization)
+    await fn();
+
+    const durations: number[] = [];
+    for (let i = 0; i < iterations; i += 1) {
+      const start = performance.now();
+      await fn();
+      const end = performance.now();
+      durations.push(end - start);
+    }
+
+    // Calculate average and median
+    const sum = durations.reduce((a, b) => a + b, 0);
+    const avg = sum / durations.length;
+    const sorted = [...durations].sort((a, b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)] ?? 0;
+
+    return {
+      avg,
+      median,
+      min: sorted[0] ?? 0,
+      max: sorted[sorted.length - 1] ?? 0,
+    };
+  };
+
   const runPerfCase = async (count: number): Promise<void> => {
     const data = Array.from({ length: count }, (_, index) =>
       makePrototype({ id: index + 1, prototypeNm: `Prototype ${index + 1}` }),
@@ -82,71 +126,73 @@ describe('ProtopediaInMemoryRepository data access performance', () => {
     // Setup snapshot (excluded from perf measurement)
     await repo.setupSnapshot({});
 
-    // 1. getPrototypeFromSnapshotByPrototypeId performance
-    const startGetById = performance.now();
-    for (let id = 1; id <= count; id++) {
-      const prototype = await repo.getPrototypeFromSnapshotByPrototypeId(id);
-      if (!prototype) {
-        throw new Error(`Missing prototype id=${id} in performance test`);
+    // 1. Measure getPrototypeFromSnapshotByPrototypeId performance
+    const getByIdStats = await measure(async () => {
+      for (let id = 1; id <= count; id += 1) {
+        const prototype = await repo.getPrototypeFromSnapshotByPrototypeId(id);
+        if (!prototype) {
+          throw new Error(`Missing prototype id=${id} in performance test`);
+        }
       }
-    }
-    const endGetById = performance.now();
+    });
 
-    // 2. getRandomPrototypeFromSnapshot performance
-    const startRandom = performance.now();
-    for (let i = 0; i < count; i++) {
-      const prototype = await repo.getRandomPrototypeFromSnapshot();
-      if (!prototype) {
-        throw new Error('Missing random prototype in performance test');
+    // 2. Measure getRandomPrototypeFromSnapshot performance
+    const randomStats = await measure(async () => {
+      for (let i = 0; i < count; i += 1) {
+        const prototype = await repo.getRandomPrototypeFromSnapshot();
+        if (!prototype) {
+          throw new Error('Missing random prototype in performance test');
+        }
       }
-    }
-    const endRandom = performance.now();
+    });
 
-    // 3. getRandomSampleFromSnapshot performance
+    // 3. Measure getRandomSampleFromSnapshot performance
     const sampleSize = Math.min(10, count);
     const sampleIterations = 100;
-    const startSample = performance.now();
-    for (let i = 0; i < sampleIterations; i++) {
-      const samples = await repo.getRandomSampleFromSnapshot(sampleSize);
-      if (samples.length !== sampleSize) {
-        throw new Error(
-          `Expected ${sampleSize} samples, got ${samples.length}`,
-        );
+    const sampleStats = await measure(async () => {
+      for (let i = 0; i < sampleIterations; i += 1) {
+        const samples = await repo.getRandomSampleFromSnapshot(sampleSize);
+        if (samples.length !== sampleSize) {
+          throw new Error(
+            `Expected ${sampleSize} samples, got ${samples.length}`,
+          );
+        }
       }
-    }
-    const endSample = performance.now();
+    });
 
-    const getByIdMs = endGetById - startGetById;
-    const randomMs = endRandom - startRandom;
-    const sampleMs = endSample - startSample;
-
-    const usage =
-      typeof globalThis.process !== 'undefined' &&
-      typeof globalThis.process.memoryUsage === 'function'
-        ? globalThis.process.memoryUsage()
-        : undefined;
+    const memory = getMemoryUsage();
 
     console.log(
       `Repository data access perf (${count.toLocaleString()} items):`,
       {
-        getByIdMs: `${getByIdMs.toFixed(2)}ms (${(getByIdMs / count).toFixed(4)}ms/item)`,
-        randomMs: `${randomMs.toFixed(2)}ms (${(randomMs / count).toFixed(4)}ms/call)`,
-        sampleMs: `${sampleMs.toFixed(2)}ms (${(sampleMs / sampleIterations).toFixed(4)}ms/call, size=${sampleSize})`,
-        memory: usage
+        getByIdMs: {
+          avg: `${getByIdStats.avg.toFixed(2)}ms`,
+          median: `${getByIdStats.median.toFixed(2)}ms`,
+          perItem: `${(getByIdStats.median / count).toFixed(4)}ms`,
+        },
+        randomMs: {
+          avg: `${randomStats.avg.toFixed(2)}ms`,
+          median: `${randomStats.median.toFixed(2)}ms`,
+          perCall: `${(randomStats.median / count).toFixed(4)}ms`,
+        },
+        sampleMs: {
+          avg: `${sampleStats.avg.toFixed(2)}ms`,
+          median: `${sampleStats.median.toFixed(2)}ms`,
+          perCall: `${(sampleStats.median / sampleIterations).toFixed(4)}ms (size=${sampleSize})`,
+        },
+        memory: memory
           ? {
-              rss: usage.rss,
-              heapTotal: usage.heapTotal,
-              heapUsed: usage.heapUsed,
-              external: usage.external,
+              rssMB: Math.round(memory.rss / 1024 / 1024),
+              heapUsedMB: Math.round(memory.heapUsed / 1024 / 1024),
             }
-          : 'memoryUsage not available',
+          : 'N/A',
       },
     );
 
     // Loose thresholds to avoid flakiness across environments
-    expect(getByIdMs).toBeLessThan(1_000);
-    expect(randomMs).toBeLessThan(1_000);
-    expect(sampleMs).toBeLessThan(2_000);
+    expect(getByIdStats.median).toBeLessThan(1_000);
+    expect(randomStats.median).toBeLessThan(1_000);
+    expect(sampleStats.median).toBeLessThan(2_000);
   };
 
   it.each([1_000, 3_000, 5_000, 10_000])(
