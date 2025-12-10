@@ -102,6 +102,23 @@ export const createProtopediaInMemoryRepositoryImpl = (
   };
 
   /**
+   * Return the configuration used to initialize the underlying store.
+   */
+  const getConfig = (): Omit<
+    Required<PrototypeInMemoryStoreConfig>,
+    'logger'
+  > => {
+    return store.getConfig();
+  };
+
+  /**
+   * Return stats for the current snapshot from the underlying store.
+   */
+  const getStats = (): PrototypeInMemoryStats => {
+    return store.getStats();
+  };
+
+  /**
    * Initialize the in-memory snapshot using the provided fetch params.
    * Typically called once at startup or before the first read.
    */
@@ -172,23 +189,6 @@ export const createProtopediaInMemoryRepositoryImpl = (
     }
 
     return result;
-  };
-
-  /**
-   * Return stats for the current snapshot from the underlying store.
-   */
-  const getStats = (): PrototypeInMemoryStats => {
-    return store.getStats();
-  };
-
-  /**
-   * Return the configuration used to initialize the underlying store.
-   */
-  const getConfig = (): Omit<
-    Required<PrototypeInMemoryStoreConfig>,
-    'logger'
-  > => {
-    return store.getConfig();
   };
 
   return {
