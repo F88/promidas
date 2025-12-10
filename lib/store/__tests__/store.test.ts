@@ -318,7 +318,7 @@ describe('PrototypeInMemoryStore', () => {
       expect(result?.id).toBe(50);
     });
 
-    it('returns undefined when store is cleared', () => {
+    it('returns null when store is cleared', () => {
       const store = new PrototypeInMemoryStore({
         maxDataSizeBytes: 1024 * 1024,
       });
