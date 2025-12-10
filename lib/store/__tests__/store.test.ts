@@ -296,7 +296,7 @@ describe('PrototypeInMemoryStore', () => {
   });
 
   describe('getByPrototypeId', () => {
-    it('returns undefined for non-existent id', () => {
+    it('returns null for non-existent id', () => {
       const store = new PrototypeInMemoryStore({
         maxDataSizeBytes: 1024 * 1024,
       });
