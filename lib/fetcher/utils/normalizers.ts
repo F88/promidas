@@ -85,16 +85,19 @@ export const splitPipeSeparatedString = (value: string): string[] => {
  * @param key - The property key to process.
  * @param transform - Function to transform the string value into an array.
  */
-function assignPipeSeparatedIfExists(
+function assignPipeSeparatedIfExists<
+  K extends keyof NormalizedPrototype & keyof UpstreamPrototype,
+>(
   target: NormalizedPrototype,
   source: UpstreamPrototype,
-  key: keyof UpstreamPrototype & keyof NormalizedPrototype,
+  key: K,
   transform: (value: string) => string[],
 ): void {
   if (key in source) {
-    const value = source[key as keyof UpstreamPrototype];
-    (target as any)[key] =
-      value && typeof value === 'string' ? transform(value) : [];
+    const value = source[key];
+    target[key] = (
+      value && typeof value === 'string' ? transform(value) : []
+    ) as NormalizedPrototype[K];
   }
 }
 
@@ -108,14 +111,14 @@ function assignPipeSeparatedIfExists(
  * @param source - The source object to read from.
  * @param key - The property key to process.
  */
-function assignIfDefined(
-  target: NormalizedPrototype,
-  source: UpstreamPrototype,
-  key: keyof UpstreamPrototype & keyof NormalizedPrototype,
-): void {
-  const value = source[key as keyof UpstreamPrototype];
+function assignIfDefined<
+  K extends keyof NormalizedPrototype & keyof UpstreamPrototype,
+>(target: NormalizedPrototype, source: UpstreamPrototype, key: K): void {
+  const value = source[key];
   if (value !== undefined) {
-    (target as any)[key] = value;
+    // Use type assertion as the type system cannot guarantee compatibility
+    // between UpstreamPrototype[K] and NormalizedPrototype[K]
+    target[key] = value as never;
   }
 }
 
