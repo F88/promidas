@@ -49,7 +49,8 @@ describe('PrototypeInMemoryStore', () => {
 
     it('throws when configuring data size larger than 30 MiB', () => {
       expect(
-        () => new PrototypeInMemoryStore({ maxDataSizeBytes: 31 * 1024 * 1024 }),
+        () =>
+          new PrototypeInMemoryStore({ maxDataSizeBytes: 31 * 1024 * 1024 }),
       ).toThrow(
         /PrototypeInMemoryStore maxDataSizeBytes must be <= \d+ bytes \(\d+ MiB\) to prevent oversized data/,
       );
@@ -184,7 +185,9 @@ describe('PrototypeInMemoryStore', () => {
 
   describe('setAll', () => {
     it('stores prototypes when data fits within limits', () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       const result = store.setAll([
         createPrototype({ id: 1 }),
         createPrototype({ id: 2 }),
@@ -207,7 +210,9 @@ describe('PrototypeInMemoryStore', () => {
     });
 
     it('handles empty array', () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       const result = store.setAll([]);
 
       expect(result).not.toBeNull();
@@ -243,12 +248,16 @@ describe('PrototypeInMemoryStore', () => {
 
   describe('getMaxId', () => {
     it('returns null when store is empty', () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       expect(store.getMaxPrototypeId()).toBeNull();
     });
 
     it('returns the highest prototype id', () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       store.setAll([
         createPrototype({ id: 3 }),
         createPrototype({ id: 7 }),
@@ -259,7 +268,9 @@ describe('PrototypeInMemoryStore', () => {
     });
 
     it('returns null after clear', () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       store.setAll([createPrototype({ id: 10 })]);
       store.clear();
 
@@ -269,12 +280,16 @@ describe('PrototypeInMemoryStore', () => {
 
   describe('getMinId', () => {
     it('returns null when store is empty', () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       expect(store.getMinPrototypeId()).toBeNull();
     });
 
     it('returns the lowest prototype id', () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       store.setAll([
         createPrototype({ id: 3 }),
         createPrototype({ id: 7 }),
@@ -285,7 +300,9 @@ describe('PrototypeInMemoryStore', () => {
     });
 
     it('returns null after clear', () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       store.setAll([createPrototype({ id: 10 })]);
       store.clear();
 
@@ -295,7 +312,9 @@ describe('PrototypeInMemoryStore', () => {
 
   describe('runExclusive', () => {
     it('prevents concurrent refresh tasks', async () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       const firstTask = vi.fn(async () => {
         await new Promise((resolve) => setTimeout(resolve, 10));
         store.setAll([createPrototype({ id: 90 })]);
@@ -317,7 +336,9 @@ describe('PrototypeInMemoryStore', () => {
 
   describe('getAll', () => {
     it('returns all prototypes in original order', () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       const prototypes = [
         createPrototype({ id: 3, prototypeNm: 'Third' }),
         createPrototype({ id: 1, prototypeNm: 'First' }),
@@ -341,14 +362,18 @@ describe('PrototypeInMemoryStore', () => {
 
   describe('getByPrototypeId', () => {
     it('returns undefined for non-existent id', () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       store.setAll([createPrototype({ id: 1 })]);
 
       expect(store.getByPrototypeId(999)).toBeNull();
     });
 
     it('retrieves prototype by id in O(1) time', () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       const prototypes = Array.from({ length: 100 }, (_, i) =>
         createPrototype({ id: i + 1 }),
       );
@@ -359,7 +384,9 @@ describe('PrototypeInMemoryStore', () => {
     });
 
     it('returns undefined when store is cleared', () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       store.setAll([createPrototype({ id: 42 })]);
       store.clear();
 
@@ -378,7 +405,9 @@ describe('PrototypeInMemoryStore', () => {
       const now = new Date('2025-12-01T12:00:00.000Z');
       vi.setSystemTime(now);
 
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       store.setAll([createPrototype({ id: 1 })]);
 
       expect(store.getCachedAt()?.getTime()).toBe(now.getTime());
@@ -387,7 +416,9 @@ describe('PrototypeInMemoryStore', () => {
 
     it('updates timestamp on subsequent setAll calls', () => {
       vi.useFakeTimers();
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
 
       vi.setSystemTime(new Date('2025-01-01T00:00:00Z'));
       store.setAll([createPrototype({ id: 1 })]);
@@ -499,7 +530,9 @@ describe('PrototypeInMemoryStore', () => {
 
   describe('clear', () => {
     it('resets size to 0', () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       store.setAll([createPrototype({ id: 1 })]);
       store.clear();
 
@@ -507,7 +540,9 @@ describe('PrototypeInMemoryStore', () => {
     });
 
     it('clears all prototypes', () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       store.setAll([createPrototype({ id: 1 })]);
       store.clear();
 
@@ -515,7 +550,9 @@ describe('PrototypeInMemoryStore', () => {
     });
 
     it('resets cachedAt to null', () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       store.setAll([createPrototype({ id: 1 })]);
       store.clear();
 
@@ -523,7 +560,9 @@ describe('PrototypeInMemoryStore', () => {
     });
 
     it('resets maxPrototypeId to null', () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       store.setAll([createPrototype({ id: 100 })]);
       store.clear();
 
@@ -531,7 +570,9 @@ describe('PrototypeInMemoryStore', () => {
     });
 
     it('can be called multiple times', () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       store.setAll([createPrototype({ id: 1 })]);
       store.clear();
       store.clear();
@@ -547,7 +588,9 @@ describe('PrototypeInMemoryStore', () => {
     });
 
     it('returns true while refresh is running', async () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       const task = vi.fn(async () => {
         await new Promise((resolve) => setTimeout(resolve, 10));
       });
@@ -558,7 +601,9 @@ describe('PrototypeInMemoryStore', () => {
     });
 
     it('returns false after refresh completes', async () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       const task = vi.fn(async () => {});
 
       await store.runExclusive(task);
@@ -568,7 +613,9 @@ describe('PrototypeInMemoryStore', () => {
 
   describe('edge cases and stress tests', () => {
     it('handles single prototype', () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       store.setAll([createPrototype({ id: 42 })]);
 
       expect(store.size).toBe(1);
@@ -594,7 +641,9 @@ describe('PrototypeInMemoryStore', () => {
     });
 
     it('handles prototype with id 0', () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       store.setAll([createPrototype({ id: 0 })]);
 
       expect(store.getByPrototypeId(0)?.id).toBe(0);
@@ -603,7 +652,9 @@ describe('PrototypeInMemoryStore', () => {
     });
 
     it('handles negative prototype ids', () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       store.setAll([
         createPrototype({ id: -1 }),
         createPrototype({ id: 5 }),
@@ -617,7 +668,9 @@ describe('PrototypeInMemoryStore', () => {
     });
 
     it('preserves all prototype fields', () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       const original = createPrototype({
         id: 123,
         prototypeNm: 'Test Name',
@@ -636,7 +689,9 @@ describe('PrototypeInMemoryStore', () => {
     });
 
     it('handles multiple setAll calls with different data', () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
 
       store.setAll([createPrototype({ id: 1 })]);
       expect(store.size).toBe(1);
@@ -648,7 +703,9 @@ describe('PrototypeInMemoryStore', () => {
     });
 
     it('handles concurrent refresh tasks correctly', async () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       const task1 = vi.fn(async () => {
         await new Promise((resolve) => setTimeout(resolve, 50));
         store.setAll([createPrototype({ id: 1 })]);
@@ -672,7 +729,9 @@ describe('PrototypeInMemoryStore', () => {
     });
 
     it('handles refresh task that throws error', async () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       const task = vi.fn(async () => {
         throw new Error('Task failed');
       });
@@ -682,7 +741,9 @@ describe('PrototypeInMemoryStore', () => {
     });
 
     it('allows new refresh after failed refresh', async () => {
-      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 1024 * 1024 });
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 1024 * 1024,
+      });
       const failingTask = vi.fn(async () => {
         throw new Error('First task failed');
       });

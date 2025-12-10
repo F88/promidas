@@ -106,7 +106,7 @@ const repo = createProtopediaInMemoryRepository(
     {
         // PrototypeInMemoryStoreConfig
         ttlMs: 30 * 60 * 1000, // 30 minutes
-        maxPayloadSizeBytes: 30 * 1024 * 1024, // 30 MiB
+        maxDataSizeBytes: 10 * 1024 * 1024, // 10 MiB (default)
     },
     {
         // ProtopediaApiClientOptions
@@ -218,7 +218,7 @@ environments.
     - On each incoming request, first try to satisfy reads from the
       store (by id, or via random).
     - When the store is empty or past a configured TTL, refresh it via
-      `refreshSnapshot` and repopulate the map before serving results.
+      `refreshSnapshot` and repopulate the store before serving results.
 
 - **Batch or CLI processing of multiple prototypes**
     - From a CLI or batch script, use the repository to fetch multiple prototypes in a

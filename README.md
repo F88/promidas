@@ -22,7 +22,7 @@ This repository provides a modular toolset for managing ProtoPedia data, consist
 
 2. **`lib/store`** - Standalone In-memory Store (`PrototypeInMemoryStore`)
     - Generic snapshot management with TTL support
-    - O(1) lookups by ID and efficient random selection
+    - O(1) lookups by ID via internal index
     - Independent of any specific API client
     - [Documentation](lib/store/docs/USAGE.md)
 
@@ -71,7 +71,7 @@ import { createProtopediaInMemoryRepository } from '@f88/promidas';
 const repo = createProtopediaInMemoryRepository(
     {
         ttlMs: 30 * 60 * 1000, // 30 minutes TTL
-        maxPayloadSizeBytes: 30 * 1024 * 1024, // 30 MiB limit
+        maxDataSizeBytes: 10 * 1024 * 1024, // 10 MiB limit (default)
     },
     {
         token: process.env.PROTOPEDIA_API_V2_TOKEN,

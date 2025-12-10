@@ -28,8 +28,7 @@ For payload size and memory characteristics of the store, see
 `PrototypeInMemoryStore` is an in-memory snapshot store for
 `NormalizedPrototype[]` that provides:
 
-- O(1) lookups by numeric prototype ID.
-- Constant-time random selection from the current snapshot.
+- O(1) lookups by numeric prototype ID via an internal index.
 - A store-wide TTL to help decide when to refresh data.
 - A simple concurrency guard for refresh tasks.
 
@@ -47,17 +46,17 @@ All methods live on `PrototypeInMemoryStore` in `lib/store/store.ts`.
 ### Construction
 
 - `constructor(config?: PrototypeInMemoryStoreConfig)`
-    - `ttlMs?: number` – store-wide TTL in milliseconds.
-    - `maxPayloadSizeBytes?: number` – maximum allowed payload size in
-      bytes (default: 30 MiB). Values above 30 MiB are rejected.
+    - `ttlMs?: number` – store-wide TTL in milliseconds (default: 30 minutes).
+    - `maxDataSizeBytes?: number` – maximum allowed payload size in
+      bytes (default: 10 MiB). Values above 30 MiB are rejected.
 
 ### Write operations
 
-- `setAll(prototypes: NormalizedPrototype[]): { approxSizeBytes: number } | null`
+- `setAll(prototypes: NormalizedPrototype[]): { dataSizeBytes: number } | null`
     - Estimates the JSON payload size of `prototypes`.
-    - If the payload fits within `maxPayloadSizeBytes`, replaces the
-      internal map and ordered array, updates metadata, and returns
-      `{ approxSizeBytes }`.
+    - If the payload fits within `maxDataSizeBytes`, replaces the
+      internal index and ordered array, updates metadata, and returns
+      `{ dataSizeBytes }`.
     - If the payload exceeds the limit, leaves the store unchanged and
       returns `null`.
 
@@ -69,17 +68,18 @@ All methods live on `PrototypeInMemoryStore` in `lib/store/store.ts`.
 - `size: number`
     - The number of prototypes currently stored.
 
-- `getAll(): NormalizedPrototype[]`
-    - Returns the latest snapshot array in its original order.
+- `getAll(): readonly DeepReadonly<NormalizedPrototype>[]`
+    - Returns the latest snapshot array in its original order with
+      type-level immutability protection.
 
-- `getById(id: number): NormalizedPrototype | undefined`
-    - O(1) lookup by numeric ID.
+- `getByPrototypeId(id: number): DeepReadonly<NormalizedPrototype> | null`
+    - O(1) lookup by numeric ID via the internal prototypeIdIndex.
 
-- `getRandom(): NormalizedPrototype | null`
-    - Returns a random prototype from the current snapshot, or `null`
-      when the store is empty.
+- `getMinPrototypeId(): number | null`
+    - Returns the lowest prototype ID in the snapshot, or `null` when
+      the store is empty.
 
-- `getMaxId(): number | null`
+- `getMaxPrototypeId(): number | null`
     - Returns the highest prototype ID in the snapshot, or `null` when
       the store is empty.
 
@@ -95,7 +95,7 @@ All methods live on `PrototypeInMemoryStore` in `lib/store/store.ts`.
         - the duration since `cachedAt` exceeds `ttlMs`.
     - Expiry does **not** clear data; it is only a signal to refresh.
 
-- `getSnapshot(): { data: NormalizedPrototype[]; cachedAt: Date | null; isExpired: boolean }`
+- `getSnapshot(): { data: readonly DeepReadonly<NormalizedPrototype>[]; cachedAt: Date | null; isExpired: boolean }`
     - Returns a lightweight view of the snapshot and its expiry state.
 
 ### Refresh coordination and stats
@@ -109,8 +109,9 @@ All methods live on `PrototypeInMemoryStore` in `lib/store/store.ts`.
     - Returns `true` if a refresh task started via `runExclusive` is still
       running.
 
-- `getStats(): { size: number; cachedAt: Date | null; ttlMs: number; isExpired: boolean; approxSizeBytes: number; refreshInFlight: boolean }`
+- `getStats(): PrototypeInMemoryStats`
     - Returns a summary of the cache state and configuration.
+    - Includes: size, cachedAt, isExpired, remainingTtlMs, dataSizeBytes, refreshInFlight.
 
 ## TTL and Refresh Pattern
 
@@ -118,7 +119,7 @@ The TTL is applied to the snapshot as a whole:
 
 - There is no per-record expiry.
 - Even after `isExpired()` becomes `true`, callers can continue to read
-  data via `getById`, `getRandom`, and `getAll`.
+  data via `getByPrototypeId` and `getAll`.
 - Expiry is a **hint to refresh**, not an access control mechanism.
 
 A typical usage pattern is stale-while-revalidate:
@@ -148,15 +149,16 @@ async function ensureFreshSnapshot(
 ### Example: Read-Then-Refresh Flow
 
 ```ts
-async function getRandomPrototype(
+async function getPrototypeById(
     store: PrototypeInMemoryStore,
+    id: number,
     refresh: () => Promise<void>,
 ) {
     await ensureFreshSnapshot(store, refresh);
 
     // May still return stale data while the refresh is in flight.
     // This is usually acceptable for ProtoPedia-like use cases.
-    return store.getRandom();
+    return store.getByPrototypeId(id);
 }
 ```
 
@@ -197,13 +199,13 @@ async function refreshTask(client: ProtoPediaApiClient): Promise<void> {
 
 // Somewhere in your request handling or UI logic:
 await ensureFreshSnapshot(store, refreshTask);
-const prototype = store.getRandom();
+const prototype = store.getByPrototypeId(123);
 ```
 
 ## Notes
 
 - The default TTL is 30 minutes.
-- The default `maxPayloadSizeBytes` is 30 MiB; configuring larger limits
-  is rejected to avoid oversized payloads.
+- The default `maxDataSizeBytes` is 10 MiB; maximum allowed is 30 MiB.
+  Configuring larger limits is rejected to avoid oversized payloads.
 - For measured memory usage and payload sizes at 1,000–10,000 items,
-  see `STORE-DESIGN-NOTES.md` and `lib/store/store.perf.test.ts`.
+  see `DESIGN.md` and `lib/store/store.perf.test.ts`.

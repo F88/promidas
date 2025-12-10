@@ -56,18 +56,21 @@ describe('PrototypeInMemoryStore performance (non-strict)', () => {
         ? globalThis.process.memoryUsage()
         : undefined;
 
-    console.log(`PrototypeInMemoryStore perf (${count.toLocaleString()} items):`, {
-      setAllMs,
-      getByIdMs,
-      memory: usage
-        ? {
-            rss: usage.rss,
-            heapTotal: usage.heapTotal,
-            heapUsed: usage.heapUsed,
-            external: usage.external,
-          }
-        : 'memoryUsage not available',
-    });
+    console.log(
+      `PrototypeInMemoryStore perf (${count.toLocaleString()} items):`,
+      {
+        setAllMs,
+        getByIdMs,
+        memory: usage
+          ? {
+              rss: usage.rss,
+              heapTotal: usage.heapTotal,
+              heapUsed: usage.heapUsed,
+              external: usage.external,
+            }
+          : 'memoryUsage not available',
+      },
+    );
 
     // Loose thresholds to avoid flakiness across environments.
     expect(setAllMs).toBeLessThan(1_000);

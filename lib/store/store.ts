@@ -138,7 +138,7 @@ export class PrototypeInMemoryStore {
     };
   }
 
-  /** Count of prototypes currently kept in the in-memory map. */
+  /** Count of prototypes currently kept in the in-memory store. */
   get size(): number {
     return this.prototypeIdIndex.size;
   }
@@ -360,7 +360,7 @@ export class PrototypeInMemoryStore {
    * @performance
    * - Time complexity: O(1) - constant time regardless of cache size
    * - Measured: ~0.0002ms per lookup (10,000 items)
-   * - Memory overhead: ~40 bytes per entry (including Map metadata and hash table)
+   * - Memory overhead: ~40 bytes per entry (including index metadata and hash table)
    */
   getByPrototypeId(
     prototypeId: number,

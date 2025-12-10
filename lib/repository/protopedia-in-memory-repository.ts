@@ -184,7 +184,10 @@ export const createProtopediaInMemoryRepositoryImpl = (
   /**
    * Return the configuration used to initialize the underlying store.
    */
-  const getConfig = (): Omit<Required<PrototypeInMemoryStoreConfig>, 'logger'> => {
+  const getConfig = (): Omit<
+    Required<PrototypeInMemoryStoreConfig>,
+    'logger'
+  > => {
     return store.getConfig();
   };
 
