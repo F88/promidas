@@ -85,19 +85,31 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
   #lastFetchParams: ListPrototypesParams = { ...DEFAULT_FETCH_PARAMS };
 
   /**
-   * Create a new repository instance.
-   *
-   * @param storeConfig - Configuration for the underlying
-   *   {@link PrototypeInMemoryStore}. Defaults to an empty configuration.
-   * @param apiClientOptions - Optional configuration forwarded to the
-   *   official SDK's client factory (for example, `token`, `baseUrl`,
-   *   custom `fetch`, `timeoutMs`, `logLevel`).
-   */
-  /**
    * Creates a new ProtoPedia in-memory repository instance.
    *
-   * @param storeConfig - Configuration options for the underlying in-memory store
-   * @param protopediaApiClientOptions - Optional custom fetch options for API calls
+   * The repository coordinates between the in-memory store and the API client.
+   * Each component (store and API client) can have its own independent logger.
+   *
+   * @param storeConfig - Configuration options for the underlying in-memory store.
+   *   Use storeConfig.logger to configure logging for store operations.
+   * @param protopediaApiClientOptions - Optional configuration for the API client.
+   *   Use apiClientOptions.logger to configure logging for API operations.
+   *
+   * @example
+   * ```typescript
+   * // Use the same logger for both
+   * const logger = createConsoleLogger('debug');
+   * const repo = new ProtopediaInMemoryRepositoryImpl(
+   *   { logger },
+   *   { logger }
+   * );
+   *
+   * // Use different loggers
+   * const repo = new ProtopediaInMemoryRepositoryImpl(
+   *   { logger: storeLogger },
+   *   { logger: apiLogger }
+   * );
+   * ```
    */
   constructor(
     storeConfig: PrototypeInMemoryStoreConfig = {},
@@ -288,6 +300,16 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    */
   async getPrototypeIdsFromSnapshot(): Promise<readonly number[]> {
     return this.#store.getPrototypeIds();
+  }
+
+  /**
+   * Return all prototypes from the current snapshot.
+   * Never performs HTTP requests.
+   */
+  async getAllFromSnapshot(): Promise<
+    readonly DeepReadonly<NormalizedPrototype>[]
+  > {
+    return this.#store.getAll();
   }
 
   /**

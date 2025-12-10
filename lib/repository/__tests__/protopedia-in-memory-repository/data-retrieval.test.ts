@@ -308,6 +308,85 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
     });
   });
 
+  describe('getAllFromSnapshot', () => {
+    it('returns empty array when snapshot is empty', async () => {
+      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const prototypes = await repo.getAllFromSnapshot();
+      expect(prototypes).toEqual([]);
+    });
+
+    it('returns all prototypes when snapshot is populated', async () => {
+      const testData = [
+        makePrototype({ id: 1, prototypeNm: 'First' }),
+        makePrototype({ id: 2, prototypeNm: 'Second' }),
+        makePrototype({ id: 3, prototypeNm: 'Third' }),
+      ];
+
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: testData,
+      });
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      await repo.setupSnapshot({});
+
+      const prototypes = await repo.getAllFromSnapshot();
+
+      expect(prototypes).toHaveLength(3);
+      expect(prototypes[0]?.id).toBe(1);
+      expect(prototypes[0]?.prototypeNm).toBe('First');
+      expect(prototypes[1]?.id).toBe(2);
+      expect(prototypes[1]?.prototypeNm).toBe('Second');
+      expect(prototypes[2]?.id).toBe(3);
+      expect(prototypes[2]?.prototypeNm).toBe('Third');
+    });
+
+    it('returns read-only data', async () => {
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [makePrototype({ id: 1 })],
+      });
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      await repo.setupSnapshot({});
+
+      const prototypes = await repo.getAllFromSnapshot();
+
+      // The returned array is a type-cast reference, not frozen
+      // Store returns direct reference for performance (zero-copy)
+      expect(prototypes).toHaveLength(1);
+      expect(prototypes[0]?.id).toBe(1);
+    });
+
+    it('updates after refreshSnapshot', async () => {
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [makePrototype({ id: 1, prototypeNm: 'Old' })],
+      });
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      await repo.setupSnapshot({});
+
+      let prototypes = await repo.getAllFromSnapshot();
+      expect(prototypes).toHaveLength(1);
+      expect(prototypes[0]?.prototypeNm).toBe('Old');
+
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [
+          makePrototype({ id: 2, prototypeNm: 'New1' }),
+          makePrototype({ id: 3, prototypeNm: 'New2' }),
+        ],
+      });
+
+      await repo.refreshSnapshot();
+      prototypes = await repo.getAllFromSnapshot();
+      expect(prototypes).toHaveLength(2);
+      expect(prototypes[0]?.prototypeNm).toBe('New1');
+      expect(prototypes[1]?.prototypeNm).toBe('New2');
+    });
+  });
+
   describe('getPrototypeFromSnapshotByPrototypeId', () => {
     it('returns null for unknown ids', async () => {
       fetchPrototypesMock.mockResolvedValueOnce({
