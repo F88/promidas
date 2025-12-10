@@ -30,7 +30,7 @@
     "test:codecov": "vitest run --coverage --reporter=default --reporter=junit --outputFile.junit=test-report.junit.xml",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:perf": "vitest run lib/store/store.perf.test.ts lib/repository/__tests__/data-access.perf.test.ts",
+    "test:perf": "vitest run lib/store/__tests__/store.perf.test.ts lib/repository/__tests__/protopedia-in-memory-repository/data-access.perf.test.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint \"**/*.ts\"",

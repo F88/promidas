@@ -46,4 +46,13 @@ export type {
  * snapshot-based API: it uses the configured client to populate a snapshot
  * in memory, and then serves read operations from that snapshot only.
  */
-export { createProtopediaInMemoryRepository } from './protopedia-in-memory-repository.js';
+export { createProtopediaInMemoryRepository } from './factory.js';
+
+/**
+ * Implementation class for the in-memory repository.
+ *
+ * Exported for testing purposes and advanced use cases where direct
+ * instantiation is needed. For normal usage, prefer the factory function
+ * {@link createProtopediaInMemoryRepository}.
+ */
+export { ProtopediaInMemoryRepositoryImpl } from './protopedia-in-memory-repository.js';

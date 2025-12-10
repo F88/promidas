@@ -1,7 +1,10 @@
 /**
  * In-memory repository implementation for ProtoPedia prototypes.
  *
- * This module wires together three main pieces:
+ * This module provides the core implementation class for managing
+ * ProtoPedia prototypes in memory.
+ *
+ * The {@link ProtopediaInMemoryRepositoryImpl} class wires together:
  *
  * - The official ProtoPedia API v2 client
  *   (`protopedia-api-v2-client`).
@@ -11,11 +14,9 @@
  *   ({@link ProtopediaInMemoryRepository}) that exposes
  *   snapshot-oriented operations (setup, refresh, lookups, stats).
  *
- * Callers typically construct a repository via
- * {@link createProtopediaInMemoryRepositoryImpl} (indirectly through
- * {@link createProtopediaInMemoryRepository} from `./index`) and then use
- * its methods to keep a local snapshot of ProtoPedia data in sync with the
- * API.
+ * Callers typically construct a repository via the factory function
+ * {@link createProtopediaInMemoryRepository} exported from `./index`,
+ * which internally instantiates this class.
  */
 import type {
   ListPrototypesParams,
@@ -49,37 +50,48 @@ const DEFAULT_FETCH_PARAMS: ListPrototypesParams = {
 /**
  * Internal implementation of {@link ProtopediaInMemoryRepository}.
  *
- * This function:
+ * This class:
  * - Instantiates a {@link PrototypeInMemoryStore} using the provided
  *   {@link PrototypeInMemoryStoreConfig}.
  * - Creates a ProtoPedia API client via
  *   {@link createProtopediaApiCustomClient}, using the provided
  *   {@link ProtoPediaApiClientOptions}.
- * - Returns an object that exposes snapshot-oriented methods like
+ * - Exposes snapshot-oriented methods like
  *   {@link ProtopediaInMemoryRepository.setupSnapshot | setupSnapshot},
  *   {@link ProtopediaInMemoryRepository.refreshSnapshot | refreshSnapshot},
  *   and in-memory lookup helpers.
  *
  * In most cases you should use
  * {@link createProtopediaInMemoryRepository} from `./index` instead of
- * calling this function directly.
- *
- * @param storeConfig - Configuration for the underlying
- *   {@link PrototypeInMemoryStore}. Defaults to an empty configuration.
- * @param apiClientOptions - Optional configuration forwarded to the
- *   official SDK's client factory (for example, `token`, `baseUrl`,
- *   custom `fetch`, `timeoutMs`, `logLevel`).
- * @returns A {@link ProtopediaInMemoryRepository} instance that
- *   manages an in-memory snapshot of ProtoPedia prototypes.
+ * instantiating this class directly.
  */
-export const createProtopediaInMemoryRepositoryImpl = (
-  storeConfig: PrototypeInMemoryStoreConfig = {},
-  apiClientOptions?: ProtoPediaApiClientOptions,
-): ProtopediaInMemoryRepository => {
-  const store = new PrototypeInMemoryStore(storeConfig);
-  const apiClient = createProtopediaApiCustomClient(apiClientOptions);
+export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepository {
+  #store: PrototypeInMemoryStore;
+  #apiClient: ReturnType<typeof createProtopediaApiCustomClient>;
+  #lastFetchParams: ListPrototypesParams = { ...DEFAULT_FETCH_PARAMS };
 
-  let lastFetchParams: ListPrototypesParams = { ...DEFAULT_FETCH_PARAMS };
+  /**
+   * Create a new repository instance.
+   *
+   * @param storeConfig - Configuration for the underlying
+   *   {@link PrototypeInMemoryStore}. Defaults to an empty configuration.
+   * @param apiClientOptions - Optional configuration forwarded to the
+   *   official SDK's client factory (for example, `token`, `baseUrl`,
+   *   custom `fetch`, `timeoutMs`, `logLevel`).
+   */
+  /**
+   * Creates a new ProtoPedia in-memory repository instance.
+   *
+   * @param storeConfig - Configuration options for the underlying in-memory store
+   * @param protopediaApiClientOptions - Optional custom fetch options for API calls
+   */
+  constructor(
+    storeConfig: PrototypeInMemoryStoreConfig = {},
+    apiClientOptions?: ProtoPediaApiClientOptions,
+  ) {
+    this.#store = new PrototypeInMemoryStore(storeConfig);
+    this.#apiClient = createProtopediaApiCustomClient(apiClientOptions);
+  }
 
   /**
    * Fetch prototypes from ProtoPedia using the given params, normalize
@@ -87,16 +99,16 @@ export const createProtopediaInMemoryRepositoryImpl = (
    *
    * On failure, returns a Result with ok: false and leaves the previous snapshot intact.
    */
-  const fetchAndNormalize = async (
+  async #fetchAndNormalize(
     params: ListPrototypesParams,
-  ): Promise<SnapshotOperationResult> => {
+  ): Promise<SnapshotOperationResult> {
     const mergedParams: ListPrototypesParams = {
       ...DEFAULT_FETCH_PARAMS,
       ...params,
     };
 
     try {
-      const result = await apiClient.fetchPrototypes(mergedParams);
+      const result = await this.#apiClient.fetchPrototypes(mergedParams);
 
       if (!result.ok) {
         return {
@@ -107,12 +119,12 @@ export const createProtopediaInMemoryRepositoryImpl = (
         };
       }
 
-      store.setAll(result.data);
-      lastFetchParams = { ...mergedParams };
+      this.#store.setAll(result.data);
+      this.#lastFetchParams = { ...mergedParams };
 
       return {
         ok: true,
-        stats: store.getStats(),
+        stats: this.#store.getStats(),
       };
     } catch (error) {
       return {
@@ -120,52 +132,49 @@ export const createProtopediaInMemoryRepositoryImpl = (
         error: error instanceof Error ? error.message : String(error),
       };
     }
-  };
+  }
 
   /**
    * Return the configuration used to initialize the underlying store.
    */
-  const getConfig = (): Omit<
-    Required<PrototypeInMemoryStoreConfig>,
-    'logger'
-  > => {
-    return store.getConfig();
-  };
+  getConfig(): Omit<Required<PrototypeInMemoryStoreConfig>, 'logger'> {
+    return this.#store.getConfig();
+  }
 
   /**
    * Return stats for the current snapshot from the underlying store.
    */
-  const getStats = (): PrototypeInMemoryStats => {
-    return store.getStats();
-  };
+  getStats(): PrototypeInMemoryStats {
+    return this.#store.getStats();
+  }
 
   /**
    * Initialize the in-memory snapshot using the provided fetch params.
    * Typically called once at startup or before the first read.
    */
-  const setupSnapshot = async (
+  async setupSnapshot(
     params: ListPrototypesParams,
-  ): Promise<SnapshotOperationResult> => {
-    return fetchAndNormalize(params);
-  };
+  ): Promise<SnapshotOperationResult> {
+    return this.#fetchAndNormalize(params);
+  }
 
   /**
    * Refresh the in-memory snapshot using the last successful fetch params.
    * If no previous fetch exists, falls back to {@link DEFAULT_FETCH_PARAMS}.
    */
-  const refreshSnapshot = async (): Promise<SnapshotOperationResult> => {
-    return fetchAndNormalize(lastFetchParams);
-  };
+  async refreshSnapshot(): Promise<SnapshotOperationResult> {
+    return this.#fetchAndNormalize(this.#lastFetchParams);
+  }
 
   /**
    * Look up a prototype by id in the current snapshot.
    * Never performs HTTP requests.
    */
-  const getPrototypeFromSnapshotByPrototypeId = async (
+  async getPrototypeFromSnapshotByPrototypeId(
     prototypeId: number,
-  ): Promise<DeepReadonly<NormalizedPrototype> | null> => {
-    return store.getByPrototypeId(prototypeId);
-  };
+  ): Promise<DeepReadonly<NormalizedPrototype> | null> {
+    return this.#store.getByPrototypeId(prototypeId);
+  }
 
   /**
    * Return a random prototype from the current snapshot, or null
@@ -186,15 +195,14 @@ export const createProtopediaInMemoryRepositoryImpl = (
    * call overhead. The current implementation is simpler and equally
    * efficient.
    */
-  const getRandomPrototypeFromSnapshot =
-    async (): Promise<DeepReadonly<NormalizedPrototype> | null> => {
-      const all = store.getAll();
-      if (all.length === 0) {
-        return null;
-      }
-      const index = Math.floor(Math.random() * all.length);
-      return all[index] ?? null;
-    };
+  async getRandomPrototypeFromSnapshot(): Promise<DeepReadonly<NormalizedPrototype> | null> {
+    const all = this.#store.getAll();
+    if (all.length === 0) {
+      return null;
+    }
+    const index = Math.floor(Math.random() * all.length);
+    return all[index] ?? null;
+  }
 
   /**
    * Return random samples from the current snapshot.
@@ -217,10 +225,10 @@ export const createProtopediaInMemoryRepositoryImpl = (
    * much smaller than the total population, while avoiding performance
    * degradation when the sample size approaches the total size.
    */
-  const getRandomSampleFromSnapshot = async (
+  async getRandomSampleFromSnapshot(
     size: number,
-  ): Promise<readonly DeepReadonly<NormalizedPrototype>[]> => {
-    const all = store.getAll();
+  ): Promise<readonly DeepReadonly<NormalizedPrototype>[]> {
+    const all = this.#store.getAll();
     if (size <= 0 || all.length === 0) {
       return [];
     }
@@ -250,15 +258,15 @@ export const createProtopediaInMemoryRepositoryImpl = (
     }
 
     return result;
-  };
+  }
 
   /**
    * Return all prototype IDs from the current snapshot.
    * Never performs HTTP requests.
    */
-  const getPrototypeIdsFromSnapshot = async (): Promise<readonly number[]> => {
-    return store.getPrototypeIds();
-  };
+  async getPrototypeIdsFromSnapshot(): Promise<readonly number[]> {
+    return this.#store.getPrototypeIds();
+  }
 
   /**
    * Analyze prototypes to extract ID range (minimum and maximum).
@@ -269,9 +277,9 @@ export const createProtopediaInMemoryRepositoryImpl = (
    * @param prototypes - Array of prototypes to analyze
    * @returns Object containing min and max IDs, or null values if array is empty
    */
-  const analyzePrototypesWithForLoop = (
+  analyzePrototypesWithForLoop(
     prototypes: readonly DeepReadonly<NormalizedPrototype>[],
-  ): PrototypeAnalysisResult => {
+  ): PrototypeAnalysisResult {
     if (prototypes.length === 0) {
       return { min: null, max: null };
     }
@@ -286,7 +294,7 @@ export const createProtopediaInMemoryRepositoryImpl = (
     }
 
     return { min, max };
-  };
+  }
 
   /**
    * Analyze prototypes to extract ID range (minimum and maximum).
@@ -297,9 +305,9 @@ export const createProtopediaInMemoryRepositoryImpl = (
    * @param prototypes - Array of prototypes to analyze
    * @returns Object containing min and max IDs, or null values if array is empty
    */
-  const analyzePrototypesWithReduce = (
+  analyzePrototypesWithReduce(
     prototypes: readonly DeepReadonly<NormalizedPrototype>[],
-  ): PrototypeAnalysisResult => {
+  ): PrototypeAnalysisResult {
     if (prototypes.length === 0) {
       return { min: null, max: null };
     }
@@ -319,7 +327,7 @@ export const createProtopediaInMemoryRepositoryImpl = (
     );
 
     return { min, max };
-  };
+  }
 
   /**
    * Analyze prototypes from the current snapshot to extract ID range.
@@ -329,43 +337,8 @@ export const createProtopediaInMemoryRepositoryImpl = (
    *
    * @returns Object containing min and max IDs, or null values if snapshot is empty
    */
-  const analyzePrototypes = async (): Promise<PrototypeAnalysisResult> => {
-    const all = store.getAll();
-    return analyzePrototypesWithForLoop(all);
-  };
-
-  return {
-    setupSnapshot,
-    refreshSnapshot,
-    getPrototypeFromSnapshotByPrototypeId,
-    getRandomPrototypeFromSnapshot,
-    getRandomSampleFromSnapshot,
-    getPrototypeIdsFromSnapshot,
-    analyzePrototypes,
-    getStats,
-    getConfig,
-    // Internal methods exposed for testing (not in public interface)
-    analyzePrototypesWithForLoop,
-    analyzePrototypesWithReduce,
-  } as ProtopediaInMemoryRepository;
-};
-
-/**
- * Create an in-memory repository for ProtoPedia prototypes.
- *
- * This is the public factory function that creates a repository instance.
- * See {@link createProtopediaInMemoryRepositoryImpl} for implementation details.
- *
- * @param storeConfig - Configuration for the underlying in-memory store
- * @param protopediaApiClientOptions - Optional HTTP client configuration
- * @returns A configured repository instance
- */
-export const createProtopediaInMemoryRepository = (
-  storeConfig: PrototypeInMemoryStoreConfig,
-  protopediaApiClientOptions?: ProtoPediaApiClientOptions,
-): ProtopediaInMemoryRepository => {
-  return createProtopediaInMemoryRepositoryImpl(
-    storeConfig,
-    protopediaApiClientOptions,
-  );
-};
+  async analyzePrototypes(): Promise<PrototypeAnalysisResult> {
+    const all = this.#store.getAll();
+    return this.analyzePrototypesWithForLoop(all);
+  }
+}

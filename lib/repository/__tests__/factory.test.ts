@@ -1,0 +1,115 @@
+/**
+ * Test suite for the repository factory function.
+ *
+ * Verifies that createProtopediaInMemoryRepository correctly instantiates
+ * repository instances with proper configuration and dependencies.
+ */
+import { describe, expect, it, vi } from 'vitest';
+
+import { createProtopediaApiCustomClient } from '../../fetcher/index.js';
+import { createProtopediaInMemoryRepository } from '../factory.js';
+import { ProtopediaInMemoryRepositoryImpl } from '../protopedia-in-memory-repository.js';
+
+vi.mock('../../fetcher/index', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../fetcher/index.js')>();
+  return {
+    ...actual,
+    createProtopediaApiCustomClient: vi.fn(),
+  };
+});
+
+describe('createProtopediaInMemoryRepository', () => {
+  it('should create a repository instance', () => {
+    vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
+      listPrototypes: vi.fn(),
+    } as never);
+
+    const repository = createProtopediaInMemoryRepository({}, {});
+
+    expect(repository).toBeDefined();
+    expect(repository).toBeInstanceOf(ProtopediaInMemoryRepositoryImpl);
+  });
+
+  it('should create repository with store configuration', () => {
+    vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
+      listPrototypes: vi.fn(),
+    } as never);
+
+    const storeConfig = { maxDataSizeBytes: 5000 };
+    const repository = createProtopediaInMemoryRepository(storeConfig, {});
+
+    expect(repository).toBeDefined();
+    expect(repository.getConfig()).toEqual(
+      expect.objectContaining({
+        maxDataSizeBytes: 5000,
+      }),
+    );
+  });
+
+  it('should create repository with API client options', () => {
+    vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
+      listPrototypes: vi.fn(),
+    } as never);
+
+    const repository = createProtopediaInMemoryRepository({}, {});
+
+    expect(repository).toBeDefined();
+    expect(repository).toBeInstanceOf(ProtopediaInMemoryRepositoryImpl);
+  });
+
+  it('should create repository with both configurations', () => {
+    vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
+      listPrototypes: vi.fn(),
+    } as never);
+
+    const storeConfig = { maxDataSizeBytes: 3000 };
+    const repository = createProtopediaInMemoryRepository(storeConfig, {});
+
+    expect(repository).toBeDefined();
+    expect(repository.getConfig()).toEqual(
+      expect.objectContaining({
+        maxDataSizeBytes: 3000,
+      }),
+    );
+  });
+
+  it('should implement ProtopediaInMemoryRepository interface', () => {
+    vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
+      listPrototypes: vi.fn(),
+    } as never);
+
+    const repository = createProtopediaInMemoryRepository({}, {});
+
+    expect(repository.setupSnapshot).toBeTypeOf('function');
+    expect(repository.refreshSnapshot).toBeTypeOf('function');
+    expect(repository.getPrototypeFromSnapshotByPrototypeId).toBeTypeOf(
+      'function',
+    );
+    expect(repository.getRandomPrototypeFromSnapshot).toBeTypeOf('function');
+    expect(repository.getRandomSampleFromSnapshot).toBeTypeOf('function');
+    expect(repository.getPrototypeIdsFromSnapshot).toBeTypeOf('function');
+    expect(repository.analyzePrototypes).toBeTypeOf('function');
+    expect(repository.getStats).toBeTypeOf('function');
+    expect(repository.getConfig).toBeTypeOf('function');
+  });
+
+  it('should create independent instances', () => {
+    vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
+      listPrototypes: vi.fn(),
+    } as never);
+
+    const repo1 = createProtopediaInMemoryRepository(
+      { maxDataSizeBytes: 1000 },
+      {},
+    );
+    const repo2 = createProtopediaInMemoryRepository(
+      { maxDataSizeBytes: 2000 },
+      {},
+    );
+
+    expect(repo1).not.toBe(repo2);
+    expect(repo1.getConfig().maxDataSizeBytes).toBe(1000);
+    expect(repo2.getConfig().maxDataSizeBytes).toBe(2000);
+  });
+});
