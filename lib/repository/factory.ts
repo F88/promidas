@@ -13,7 +13,7 @@ import type { PrototypeInMemoryStoreConfig } from '../store/index.js';
 
 import { ProtopediaInMemoryRepositoryImpl } from './protopedia-in-memory-repository.js';
 
-import type { ProtopediaInMemoryRepository } from './index.js';
+import type { ProtopediaInMemoryRepository } from './types/index.js';
 
 /**
  * Create an in-memory repository for ProtoPedia prototypes.
