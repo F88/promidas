@@ -182,22 +182,6 @@ export class PrototypeMapStore {
     return prototype as DeepReadonly<NormalizedPrototype> | null;
   }
 
-  /**
-   * Select a random prototype from the cached snapshot.
-   *
-   * Returns null when the store is empty, allowing callers to fall back to
-   * alternative fetch paths.
-   */
-  getRandom(): DeepReadonly<NormalizedPrototype> | null {
-    if (this.prototypes.length === 0) {
-      return null;
-    }
-
-    const index = Math.floor(Math.random() * this.prototypes.length);
-    const prototype = this.prototypes[index] ?? null;
-    return prototype as DeepReadonly<NormalizedPrototype> | null;
-  }
-
   /** Timestamp representing when the snapshot was last refreshed. */
   getCachedAt(): Date | null {
     return this.cachedAt;

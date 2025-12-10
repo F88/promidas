@@ -367,49 +367,6 @@ describe('PrototypeMapStore', () => {
     });
   });
 
-  describe('getRandom', () => {
-    it('returns null when store is empty', () => {
-      const store = new PrototypeMapStore();
-      expect(store.getRandom()).toBeNull();
-    });
-
-    it('returns the only prototype when size is 1', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
-      const prototype = createPrototype({ id: 999 });
-      store.setAll([prototype]);
-
-      const result = store.getRandom();
-      expect(result?.id).toBe(999);
-    });
-
-    it('eventually samples all prototypes', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
-      store.setAll([
-        createPrototype({ id: 1 }),
-        createPrototype({ id: 2 }),
-        createPrototype({ id: 3 }),
-      ]);
-
-      const seen = new Set<number>();
-      for (let i = 0; i < 100; i++) {
-        const result = store.getRandom();
-        if (result) {
-          seen.add(result.id);
-        }
-      }
-
-      expect(seen.size).toBe(3);
-    });
-
-    it('returns null after clear', () => {
-      const store = new PrototypeMapStore({ maxDataSizeBytes: 1024 * 1024 });
-      store.setAll([createPrototype({ id: 1 })]);
-      store.clear();
-
-      expect(store.getRandom()).toBeNull();
-    });
-  });
-
   describe('getCachedAt', () => {
     it('returns null when no data has been cached', () => {
       const store = new PrototypeMapStore();

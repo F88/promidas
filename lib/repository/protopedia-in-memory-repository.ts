@@ -133,8 +133,46 @@ export const createProtopediaInMemoryRepositoryImpl = (
    */
   const getRandomPrototypeFromSnapshot =
     async (): Promise<DeepReadonly<NormalizedPrototype> | null> => {
-      return store.getRandom();
+      const all = store.getAll();
+      if (all.length === 0) {
+        return null;
+      }
+      const index = Math.floor(Math.random() * all.length);
+      return all[index] ?? null;
     };
+
+  /**
+   * Return random samples from the current snapshot.
+   *
+   * Returns up to `size` random prototypes without duplicates.
+   * If `size` exceeds the available data, returns all prototypes in random order.
+   * Never performs HTTP requests.
+   *
+   * @param size - Maximum number of samples to return
+   * @returns Array of random prototypes (empty array if size <= 0 or snapshot is empty)
+   */
+  const getRandomSampleFromSnapshot = async (
+    size: number,
+  ): Promise<readonly DeepReadonly<NormalizedPrototype>[]> => {
+    const all = store.getAll();
+    if (size <= 0 || all.length === 0) {
+      return [];
+    }
+
+    const actualSize = Math.min(size, all.length);
+    const result: (typeof all)[number][] = [];
+    const indices = new Set<number>();
+
+    while (result.length < actualSize) {
+      const index = Math.floor(Math.random() * all.length);
+      if (!indices.has(index)) {
+        indices.add(index);
+        result.push(all[index]!);
+      }
+    }
+
+    return result;
+  };
 
   /**
    * Return stats for the current snapshot from the underlying store.
@@ -155,6 +193,7 @@ export const createProtopediaInMemoryRepositoryImpl = (
     refreshSnapshot,
     getPrototypeFromSnapshotByPrototypeId,
     getRandomPrototypeFromSnapshot,
+    getRandomSampleFromSnapshot,
     getStats,
     getConfig,
   };

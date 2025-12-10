@@ -47,18 +47,8 @@ describe('PrototypeMapStore performance (non-strict)', () => {
     }
     const endGetById = performance.now();
 
-    const startRandom = performance.now();
-    for (let index = 0; index < count; index += 1) {
-      const prototype = store.getRandom();
-      if (!prototype) {
-        throw new Error('Missing random prototype in performance test');
-      }
-    }
-    const endRandom = performance.now();
-
     const setAllMs = endSetAll - startSetAll;
     const getByIdMs = endGetById - startGetById;
-    const randomMs = endRandom - startRandom;
 
     const usage =
       typeof globalThis.process !== 'undefined' &&
@@ -69,7 +59,6 @@ describe('PrototypeMapStore performance (non-strict)', () => {
     console.log(`PrototypeMapStore perf (${count.toLocaleString()} items):`, {
       setAllMs,
       getByIdMs,
-      randomMs,
       memory: usage
         ? {
             rss: usage.rss,
@@ -83,7 +72,6 @@ describe('PrototypeMapStore performance (non-strict)', () => {
     // Loose thresholds to avoid flakiness across environments.
     expect(setAllMs).toBeLessThan(1_000);
     expect(getByIdMs).toBeLessThan(1_000);
-    expect(randomMs).toBeLessThan(1_000);
   };
 
   it.each([1_000, 3_000, 5_000, 10_000])(

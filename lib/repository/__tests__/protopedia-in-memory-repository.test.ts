@@ -379,6 +379,119 @@ describe('createInMemoryRepositoryImpl', () => {
     });
   });
 
+  describe('getRandomSampleFromSnapshot', () => {
+    it('returns empty array when the store is empty', async () => {
+      const repo = createProtopediaInMemoryRepositoryImpl({}, {});
+
+      const sample = await repo.getRandomSampleFromSnapshot(5);
+      expect(sample).toEqual([]);
+    });
+
+    it('returns empty array when size is 0', async () => {
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [makePrototype({ id: 1 }), makePrototype({ id: 2 })],
+      });
+
+      const repo = createProtopediaInMemoryRepositoryImpl({}, {});
+      await repo.setupSnapshot({});
+
+      const sample = await repo.getRandomSampleFromSnapshot(0);
+      expect(sample).toEqual([]);
+    });
+
+    it('returns empty array when size is negative', async () => {
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [makePrototype({ id: 1 }), makePrototype({ id: 2 })],
+      });
+
+      const repo = createProtopediaInMemoryRepositoryImpl({}, {});
+      await repo.setupSnapshot({});
+
+      const sample = await repo.getRandomSampleFromSnapshot(-5);
+      expect(sample).toEqual([]);
+    });
+
+    it('returns requested number of samples when enough data exists', async () => {
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [
+          makePrototype({ id: 1 }),
+          makePrototype({ id: 2 }),
+          makePrototype({ id: 3 }),
+          makePrototype({ id: 4 }),
+          makePrototype({ id: 5 }),
+        ],
+      });
+
+      const repo = createProtopediaInMemoryRepositoryImpl({}, {});
+      await repo.setupSnapshot({});
+
+      const sample = await repo.getRandomSampleFromSnapshot(3);
+      expect(sample.length).toBe(3);
+    });
+
+    it('returns all data when size exceeds available prototypes', async () => {
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [makePrototype({ id: 1 }), makePrototype({ id: 2 })],
+      });
+
+      const repo = createProtopediaInMemoryRepositoryImpl({}, {});
+      await repo.setupSnapshot({});
+
+      const sample = await repo.getRandomSampleFromSnapshot(10);
+      expect(sample.length).toBe(2);
+    });
+
+    it('returns unique samples without duplicates', async () => {
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [
+          makePrototype({ id: 1 }),
+          makePrototype({ id: 2 }),
+          makePrototype({ id: 3 }),
+          makePrototype({ id: 4 }),
+          makePrototype({ id: 5 }),
+        ],
+      });
+
+      const repo = createProtopediaInMemoryRepositoryImpl({}, {});
+      await repo.setupSnapshot({});
+
+      const sample = await repo.getRandomSampleFromSnapshot(5);
+      const ids = sample.map((p) => p.id);
+      const uniqueIds = new Set(ids);
+      expect(uniqueIds.size).toBe(5);
+    });
+
+    it('eventually samples all prototypes over multiple calls', async () => {
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [
+          makePrototype({ id: 1 }),
+          makePrototype({ id: 2 }),
+          makePrototype({ id: 3 }),
+        ],
+      });
+
+      const repo = createProtopediaInMemoryRepositoryImpl({}, {});
+      await repo.setupSnapshot({});
+
+      const seen = new Set<number>();
+      for (let i = 0; i < 50; i++) {
+        const sample = await repo.getRandomSampleFromSnapshot(2);
+        sample.forEach((p) => seen.add(p.id));
+      }
+
+      expect(seen.size).toBe(3);
+      expect(seen.has(1)).toBe(true);
+      expect(seen.has(2)).toBe(true);
+      expect(seen.has(3)).toBe(true);
+    });
+  });
+
   describe('getPrototypeFromSnapshotById', () => {
     it('returns undefined for unknown ids', async () => {
       fetchPrototypesMock.mockResolvedValueOnce({

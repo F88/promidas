@@ -104,6 +104,23 @@ export interface ProtopediaInMemoryRepository {
   getRandomPrototypeFromSnapshot(): Promise<DeepReadonly<NormalizedPrototype> | null>;
 
   /**
+   * Get random samples from the current in-memory snapshot.
+   *
+   * Returns up to `size` random prototypes without duplicates.
+   * If `size` exceeds the available data, returns all prototypes in random order.
+   * Returns an empty array when `size <= 0` or when the snapshot is empty.
+   *
+   * This method does NOT perform HTTP calls.
+   * It does not throw due to ProtoPedia API failures; it only reflects
+   * the current in-memory state of the snapshot.
+   *
+   * @param size - Maximum number of random samples to return
+   */
+  getRandomSampleFromSnapshot(
+    size: number,
+  ): Promise<readonly DeepReadonly<NormalizedPrototype>[]>;
+
+  /**
    * Stats for the current snapshot, including TTL-related information.
    *
    * Callers can use this to implement strategies such as:
