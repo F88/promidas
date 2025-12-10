@@ -3,6 +3,22 @@
  *
  * Verifies that createProtopediaInMemoryRepository correctly instantiates
  * repository instances with proper configuration and dependencies.
+ *
+ * ## Test Design Philosophy
+ *
+ * Each test in this file intentionally includes its own mock setup rather than
+ * using a shared beforeEach block. This design choice prioritizes:
+ *
+ * 1. **Test Independence**: Each test is fully self-contained and can be read
+ *    in isolation without referring to setup code elsewhere.
+ * 2. **Clarity over DRY**: While the mock setup is duplicated, this makes each
+ *    test's preconditions immediately visible to reviewers and maintainers.
+ * 3. **Maintainability**: Future tests with different mock requirements won't
+ *    need to refactor shared setup logic.
+ *
+ * The mock duplication is minimal (3 lines) and acceptable given these benefits.
+ *
+ * @module
  */
 import { describe, expect, it, vi } from 'vitest';
 

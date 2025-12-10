@@ -12,7 +12,6 @@ import type { ProtoPediaApiClientOptions } from 'protopedia-api-v2-client';
 import type { PrototypeInMemoryStoreConfig } from '../store/index.js';
 
 import { ProtopediaInMemoryRepositoryImpl } from './protopedia-in-memory-repository.js';
-
 import type { ProtopediaInMemoryRepository } from './types/index.js';
 
 /**

@@ -99,6 +99,8 @@ describe('ProtopediaInMemoryRepositoryImpl - analysis', () => {
       const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
       await repo.setupSnapshot({});
 
+      // NOTE: Intentionally verbose pattern - DO NOT refactor to getAllFromSnapshot()
+      // This tests the composition of individual lookup methods (different code path)
       const result = repo.analyzePrototypesWithForLoop(
         await repo
           .getPrototypeIdsFromSnapshot()
@@ -139,6 +141,8 @@ describe('ProtopediaInMemoryRepositoryImpl - analysis', () => {
       const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
       await repo.setupSnapshot({});
 
+      // NOTE: Intentionally verbose pattern - DO NOT refactor to getAllFromSnapshot()
+      // This tests the composition of individual lookup methods (different code path)
       const result = repo.analyzePrototypesWithReduce(
         await repo
           .getPrototypeIdsFromSnapshot()
