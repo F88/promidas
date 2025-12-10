@@ -1,9 +1,42 @@
 /**
  * Tests for ProtopediaInMemoryRepositoryImpl configuration and statistics.
  *
- * Covers getConfig and getStats methods.
+ * This test suite validates configuration management and runtime statistics
+ * reporting for the in-memory repository.
+ *
+ * ## Test Coverage
+ *
+ * ### Configuration Tests (`getConfig`)
+ * - Custom TTL configuration retrieval
+ * - Custom memory limit configuration
+ * - Default value handling
+ * - Configuration immutability
+ *
+ * ### Statistics Tests (`getStats`)
+ * - Initial state (empty snapshot)
+ *   - `cachedAt` is null before first fetch
+ *   - `size` is 0 before population
+ * - Post-fetch state
+ *   - `cachedAt` timestamp is set
+ *   - `size` reflects actual data count
+ * - Snapshot updates
+ *   - `cachedAt` updates after refresh
+ *   - Timestamp ordering (newer > older)
+ * - TTL and expiration
+ *   - `isExpired` reflects current state
+ *   - Immediate post-setup is not expired
+ * - Consistency
+ *   - Multiple `getStats()` calls return consistent values
+ *   - Empty state consistency
+ *
+ * ## Implementation Notes
+ *
+ * Statistics are read from the underlying {@link PrototypeInMemoryStore}
+ * and represent the current snapshot state, not historical data.
  *
  * @module
+ * @see {@link ProtopediaInMemoryRepositoryImpl.getConfig} for configuration access
+ * @see {@link ProtopediaInMemoryRepositoryImpl.getStats} for statistics access
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 

@@ -1,10 +1,65 @@
 /**
  * Shared test helpers and utilities for ProtopediaInMemoryRepositoryImpl tests.
  *
- * Note: Each test file must include the vi.mock() call at the top level.
- * Import this file after setting up the mock in each test file.
+ * This module provides reusable test utilities for creating test data and
+ * configuring mocks across the repository test suite.
+ *
+ * ## Exports
+ *
+ * ### Data Builders
+ * - {@link makePrototype} - Create minimal valid prototype data with overrides
+ *
+ * ### Mock Management
+ * - {@link setupMocks} - Configure API client mocks with reset capability
+ *
+ * ## Usage Pattern
+ *
+ * **IMPORTANT**: Each test file must include the `vi.mock()` call at the top level
+ * before importing this module.
+ *
+ * @example
+ * ```typescript
+ * // Step 1: Mock at top level (before imports)
+ * vi.mock('../../../fetcher/index', async (importOriginal) => {
+ *   const actual = await importOriginal<typeof import('../../../fetcher/index.js')>();
+ *   return {
+ *     ...actual,
+ *     createProtopediaApiCustomClient: vi.fn(),
+ *   };
+ * });
+ *
+ * // Step 2: Import helpers after mock setup
+ * import { makePrototype, setupMocks } from './test-helpers.js';
+ *
+ * describe('My tests', () => {
+ *   const { fetchPrototypesMock, resetMocks } = setupMocks();
+ *
+ *   beforeEach(() => {
+ *     resetMocks();
+ *   });
+ *
+ *   it('should work', async () => {
+ *     fetchPrototypesMock.mockResolvedValueOnce({
+ *       ok: true,
+ *       data: [makePrototype({ id: 42 })],
+ *     });
+ *     // ... test code
+ *   });
+ * });
+ * ```
+ *
+ * ## Design Rationale
+ *
+ * ### makePrototype
+ * Provides minimal valid prototype data to satisfy the API contract while
+ * allowing selective override of specific fields for test scenarios.
+ *
+ * ### setupMocks
+ * Returns configured mock functions with a reset helper to ensure clean
+ * state between tests without shared beforeEach complexity.
  *
  * @module
+ * @see {@link ResultOfListPrototypesApiResponse} for the prototype data structure
  */
 import type { ResultOfListPrototypesApiResponse } from 'protopedia-api-v2-client';
 import { vi } from 'vitest';

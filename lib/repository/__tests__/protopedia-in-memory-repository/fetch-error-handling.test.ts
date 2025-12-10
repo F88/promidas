@@ -1,9 +1,53 @@
 /**
  * Tests for ProtopediaInMemoryRepositoryImpl fetch error handling and recovery.
  *
- * Covers API fetch error scenarios, snapshot replacement, and resilience.
+ * This test suite validates the repository's resilience to API failures,
+ * network errors, and ensures proper error propagation and recovery mechanisms.
+ *
+ * ## Test Coverage
+ *
+ * ### API Fetch Errors
+ * - **HTTP 404 (Not Found)**
+ *   - Returns failure result with status code
+ *   - Includes error details and code
+ * - **HTTP 401 (Unauthorized)**
+ *   - Returns failure result with auth error
+ *   - Preserves error context
+ * - **Network Exceptions**
+ *   - Connection refused (ECONNREFUSED)
+ *   - Returns failure with exception message
+ *   - Does not crash or throw
+ *
+ * ### Error Recovery
+ * - **Setup retry after failure**
+ *   - First attempt fails cleanly
+ *   - Subsequent attempt succeeds
+ *   - Snapshot populated correctly
+ * - **Refresh retry after failure**
+ *   - Temporary network issues
+ *   - Old snapshot preserved during failure
+ *   - Recovery on next successful refresh
+ *
+ * ### Snapshot Replacement
+ * - **Complete replacement on re-setup**
+ *   - Old data completely removed
+ *   - New data replaces old
+ *   - No data leakage between setups
+ *
+ * ## Error Handling Design
+ *
+ * The repository uses {@link SnapshotOperationResult} for error handling:
+ * - `{ ok: true, ... }` - Success with metadata
+ * - `{ ok: false, error, status?, code? }` - Failure with details
+ *
+ * This approach:
+ * - ✅ Avoids exception throwing for expected failures
+ * - ✅ Provides rich error context
+ * - ✅ Enables graceful degradation
+ * - ✅ Maintains type safety
  *
  * @module
+ * @see {@link SnapshotOperationResult} for the result type contract
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 

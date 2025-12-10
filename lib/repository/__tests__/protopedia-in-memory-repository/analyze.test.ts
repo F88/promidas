@@ -1,9 +1,38 @@
 /**
  * Tests for ProtopediaInMemoryRepositoryImpl analysis methods.
  *
- * Covers analyzePrototypes and related analysis functionality.
+ * This test suite validates the statistical analysis capabilities of the repository,
+ * focusing on prototype ID range analysis (min/max) and algorithm correctness.
+ *
+ * ## Test Coverage
+ *
+ * ### Public API Tests
+ * - `analyzePrototypes()` - Statistical analysis of prototype IDs
+ *   - Empty snapshot handling (null min/max)
+ *   - Single prototype analysis
+ *   - Multiple prototypes analysis (min/max detection)
+ *
+ * ### Private Method Tests (via public interface)
+ * - `analyzePrototypesWithForLoop()` - For-loop based analysis
+ * - `analyzePrototypesWithReduce()` - Reduce-based analysis
+ *
+ * ## Design Philosophy
+ *
+ * ### Intentional Test Patterns
+ * Tests for private methods (`analyzePrototypesWithForLoop`, `analyzePrototypesWithReduce`)
+ * intentionally use a **verbose data retrieval pattern**:
+ *
+ * 1. `getPrototypeIdsFromSnapshot()` - Fetch all IDs
+ * 2. Map each ID to `getPrototypeFromSnapshotByPrototypeId()` - Individual lookups
+ * 3. `Promise.all()` - Wait for all lookups
+ *
+ * This pattern validates that **individual lookup methods compose correctly**,
+ * which is a different code path than `getAllFromSnapshot()`.
+ *
+ * **Do NOT simplify these tests** - the verbosity is intentional and necessary.
  *
  * @module
+ * @see {@link ProtopediaInMemoryRepositoryImpl.analyzePrototypes} for the main analysis method
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 

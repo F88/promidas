@@ -1,24 +1,68 @@
 /**
  * Test suite for the repository factory function.
  *
- * Verifies that createProtopediaInMemoryRepository correctly instantiates
- * repository instances with proper configuration and dependencies.
+ * This test suite verifies that {@link createProtopediaInMemoryRepository}
+ * correctly instantiates repository instances with proper configuration,
+ * dependency injection, and interface compliance.
+ *
+ * ## Test Coverage
+ *
+ * ### 1. Basic Instantiation
+ * - Creates repository instance successfully
+ * - Returns correct implementation type ({@link ProtopediaInMemoryRepositoryImpl})
+ * - Implements the {@link ProtopediaInMemoryRepository} interface
+ *
+ * ### 2. Configuration Handling
+ * - Accepts and applies store configuration (TTL, memory limits)
+ * - Accepts and applies API client options
+ * - Handles both configurations simultaneously
+ *
+ * ### 3. Instance Independence
+ * - Creates separate instances with independent state
+ * - Ensures configurations don't leak between instances
+ *
+ * ### 4. Interface Compliance
+ * - Verifies all required methods are present
+ * - Checks method types (function, async function)
  *
  * ## Test Design Philosophy
  *
- * Each test in this file intentionally includes its own mock setup rather than
- * using a shared beforeEach block. This design choice prioritizes:
+ * ### Mock Setup Pattern
+ * Each test in this file **intentionally includes its own mock setup** rather
+ * than using a shared `beforeEach` block. This design choice prioritizes:
  *
  * 1. **Test Independence**: Each test is fully self-contained and can be read
  *    in isolation without referring to setup code elsewhere.
- * 2. **Clarity over DRY**: While the mock setup is duplicated, this makes each
- *    test's preconditions immediately visible to reviewers and maintainers.
- * 3. **Maintainability**: Future tests with different mock requirements won't
- *    need to refactor shared setup logic.
  *
- * The mock duplication is minimal (3 lines) and acceptable given these benefits.
+ * 2. **Clarity over DRY**: While the mock setup is duplicated (3 lines), this
+ *    makes each test's preconditions immediately visible to reviewers and
+ *    maintainers. No mental context-switching required.
+ *
+ * 3. **Maintainability**: Future tests with different mock requirements won't
+ *    need to refactor shared setup logic or add conditional setup code.
+ *
+ * 4. **Debugging Simplicity**: When a test fails, all context is in one place.
+ *    No need to trace through beforeEach blocks to understand state.
+ *
+ * ### Trade-offs
+ * - ✅ **Better readability** - Each test is a complete story
+ * - ✅ **Better maintainability** - No shared state complications
+ * - ✅ **Better debugging** - All context visible in failing test
+ * - ⚠️ **Some duplication** - 3 lines of mock setup per test (acceptable)
+ *
+ * The mock duplication is **minimal and intentional**. Do not refactor to
+ * beforeEach unless test requirements diverge significantly.
+ *
+ * ## Mocking Strategy
+ *
+ * We mock {@link createProtopediaApiCustomClient} to:
+ * - Avoid real network calls during testing
+ * - Control API client behavior deterministically
+ * - Focus tests on factory logic, not API implementation
  *
  * @module
+ * @see {@link createProtopediaInMemoryRepository} for the factory being tested
+ * @see {@link ProtopediaInMemoryRepository} for the interface contract
  */
 import { describe, expect, it, vi } from 'vitest';
 

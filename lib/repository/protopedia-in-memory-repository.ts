@@ -1,22 +1,56 @@
 /**
  * In-memory repository implementation for ProtoPedia prototypes.
  *
- * This module provides the core implementation class for managing
- * ProtoPedia prototypes in memory.
+ * This module contains the concrete implementation of the repository pattern
+ * for managing ProtoPedia prototype data in memory with snapshot-based access.
  *
- * The {@link ProtopediaInMemoryRepositoryImpl} class wires together:
+ * ## Architecture
  *
- * - The official ProtoPedia API v2 client
- *   (`protopedia-api-v2-client`).
- * - The memorystore's {@link PrototypeInMemoryStore}, which keeps a
- *   snapshot of normalized prototypes in memory.
- * - A thin, higher-level repository interface
- *   ({@link ProtopediaInMemoryRepository}) that exposes
- *   snapshot-oriented operations (setup, refresh, lookups, stats).
+ * The {@link ProtopediaInMemoryRepositoryImpl} class orchestrates:
  *
- * Callers typically construct a repository via the factory function
- * {@link createProtopediaInMemoryRepository} exported from `./index`,
- * which internally instantiates this class.
+ * - **API Client**: ProtoPedia API v2 client for fetching prototype data
+ * - **Memory Store**: {@link PrototypeInMemoryStore} for snapshot management
+ * - **Repository Interface**: {@link ProtopediaInMemoryRepository} for high-level operations
+ *
+ * ## Design Patterns
+ *
+ * ### Repository Pattern
+ * Abstracts data access behind a clean interface, isolating business logic
+ * from data fetching and storage mechanisms.
+ *
+ * ### Snapshot Isolation
+ * All read operations work against an immutable in-memory snapshot.
+ * Network I/O only occurs during explicit setup/refresh operations.
+ *
+ * ### Private Fields
+ * Uses ECMAScript private fields (#) for proper encapsulation:
+ * - `#store` - Internal memory store instance
+ * - `#apiClient` - HTTP client for ProtoPedia API
+ * - `#lastFetchParams` - Cache of last fetch parameters
+ *
+ * ## Performance Optimizations
+ *
+ * 1. **O(1) Lookups**: Direct Map access by prototype ID
+ * 2. **Hybrid Sampling**: Adaptive algorithm based on sample size ratio
+ *    - Small samples (< 50%): Set-based random selection
+ *    - Large samples (≥ 50%): Fisher-Yates shuffle
+ * 3. **Efficient Checks**: Use `store.size` instead of array operations
+ * 4. **Parameter Validation**: Zod schemas for runtime type safety
+ *
+ * ## Usage Recommendation
+ *
+ * **Use the factory function** {@link createProtopediaInMemoryRepository}
+ * instead of direct instantiation. The factory provides better dependency
+ * injection and configuration management.
+ *
+ * Direct instantiation is only recommended for:
+ * - Testing scenarios
+ * - Advanced customization needs
+ * - Framework integration
+ *
+ * @module
+ * @see {@link createProtopediaInMemoryRepository} for the factory function
+ * @see {@link ProtopediaInMemoryRepository} for the public interface
  */
 import type {
   ListPrototypesParams,
@@ -62,22 +96,65 @@ const DEFAULT_FETCH_PARAMS: ListPrototypesParams = {
 const SAMPLE_SIZE_THRESHOLD_RATIO = 0.5;
 
 /**
- * Internal implementation of {@link ProtopediaInMemoryRepository}.
+ * Implementation class for the ProtoPedia in-memory repository.
  *
- * This class:
- * - Instantiates a {@link PrototypeInMemoryStore} using the provided
- *   {@link PrototypeInMemoryStoreConfig}.
- * - Creates a ProtoPedia API client via
- *   {@link createProtopediaApiCustomClient}, using the provided
- *   {@link ProtoPediaApiClientOptions}.
- * - Exposes snapshot-oriented methods like
- *   {@link ProtopediaInMemoryRepository.setupSnapshot | setupSnapshot},
- *   {@link ProtopediaInMemoryRepository.refreshSnapshot | refreshSnapshot},
- *   and in-memory lookup helpers.
+ * This class provides the concrete implementation of {@link ProtopediaInMemoryRepository}
+ * with full encapsulation using ECMAScript private fields.
  *
- * In most cases you should use
- * {@link createProtopediaInMemoryRepository} from `./index` instead of
- * instantiating this class directly.
+ * ## Responsibilities
+ *
+ * 1. **Dependency Management**
+ *    - Instantiates {@link PrototypeInMemoryStore} with provided config
+ *    - Creates ProtoPedia API client via {@link createProtopediaApiCustomClient}
+ *    - Maintains internal state for fetch parameters
+ *
+ * 2. **Snapshot Operations**
+ *    - {@link setupSnapshot} - Initial data fetch and population
+ *    - {@link refreshSnapshot} - Update snapshot with fresh API data
+ *
+ * 3. **Data Access**
+ *    - {@link getAllFromSnapshot} - Retrieve all prototypes
+ *    - {@link getPrototypeFromSnapshotByPrototypeId} - Fast ID lookup
+ *    - {@link getRandomPrototypeFromSnapshot} - Single random sample
+ *    - {@link getRandomSampleFromSnapshot} - Multiple random samples
+ *    - {@link getPrototypeIdsFromSnapshot} - Get all IDs efficiently
+ *
+ * 4. **Analysis & Metadata**
+ *    - {@link analyzePrototypes} - Statistical analysis (min/max)
+ *    - {@link getStats} - Snapshot statistics and TTL info
+ *    - {@link getConfig} - Store configuration details
+ *
+ * ## Implementation Details
+ *
+ * ### Validation
+ * All public methods validate their parameters using Zod schemas:
+ * - {@link prototypeIdSchema} - Ensures valid prototype IDs
+ * - {@link sampleSizeSchema} - Ensures valid sample sizes
+ *
+ * ### Error Handling
+ * Network operations return {@link SnapshotOperationResult}:
+ * - `{ ok: true, ... }` - Success with metadata
+ * - `{ ok: false, error: string }` - Failure with error message
+ *
+ * ### Performance
+ * - Uses `store.size` for O(1) empty checks
+ * - Implements hybrid sampling algorithm (see {@link SAMPLE_SIZE_THRESHOLD_RATIO})
+ * - Returns read-only data to prevent accidental mutations
+ *
+ * ## Usage
+ *
+ * **Recommended**: Use {@link createProtopediaInMemoryRepository} factory
+ *
+ * **Direct instantiation** (advanced):
+ * ```typescript
+ * const repo = new ProtopediaInMemoryRepositoryImpl(
+ *   { ttlSeconds: 3600, maxDataSizeBytes: 10485760 },
+ *   { baseURL: 'https://protopedia.example.com' }
+ * );
+ * ```
+ *
+ * @see {@link ProtopediaInMemoryRepository} for the public interface contract
+ * @see {@link createProtopediaInMemoryRepository} for the recommended factory
  */
 export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepository {
   #store: PrototypeInMemoryStore;
@@ -87,29 +164,57 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
   /**
    * Creates a new ProtoPedia in-memory repository instance.
    *
-   * The repository coordinates between the in-memory store and the API client.
-   * Each component (store and API client) can have its own independent logger.
+   * Initializes the repository with configured store and API client.
+   * Each component can have independent logger configuration for granular observability.
    *
-   * @param storeConfig - Configuration options for the underlying in-memory store.
-   *   Use storeConfig.logger to configure logging for store operations.
-   * @param protopediaApiClientOptions - Optional configuration for the API client.
-   *   Use apiClientOptions.logger to configure logging for API operations.
+   * @param storeConfig - Configuration for the underlying in-memory store
+   *   - `ttlSeconds` - Time-to-live for snapshot expiration (optional)
+   *   - `maxDataSizeBytes` - Memory guard to prevent excessive data (optional)
+   *   - `logger` - Custom logger for store operations (optional)
+   *
+   * @param protopediaApiClientOptions - Configuration for the ProtoPedia HTTP client
+   *   - `baseURL` - API endpoint URL (optional, uses default if omitted)
+   *   - `logger` - Custom logger for API operations (optional)
+   *   - Additional client-specific options
+   *
+   * @remarks
+   * **Logger Independence**: Store and API client loggers are independent.
+   * This allows fine-grained control over logging verbosity for different concerns.
    *
    * @example
    * ```typescript
-   * // Use the same logger for both
+   * // Minimal setup with defaults
+   * const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+   *
+   * // Production setup with TTL and memory limits
+   * const repo = new ProtopediaInMemoryRepositoryImpl(
+   *   {
+   *     ttlSeconds: 3600,           // 1 hour
+   *     maxDataSizeBytes: 10485760, // 10MB
+   *   },
+   *   {
+   *     baseURL: 'https://protopedia.example.com',
+   *   }
+   * );
+   *
+   * // Shared logger for both components
    * const logger = createConsoleLogger('debug');
    * const repo = new ProtopediaInMemoryRepositoryImpl(
    *   { logger },
    *   { logger }
    * );
    *
-   * // Use different loggers
+   * // Independent loggers for granular control
+   * const storeLogger = createLogger({ minLevel: 'debug', prefix: '[Store]' });
+   * const apiLogger = createLogger({ minLevel: 'info', prefix: '[API]' });
    * const repo = new ProtopediaInMemoryRepositoryImpl(
    *   { logger: storeLogger },
    *   { logger: apiLogger }
    * );
    * ```
+   *
+   * @see {@link PrototypeInMemoryStoreConfig} for store configuration details
+   * @see {@link ProtoPediaApiClientOptions} for API client configuration
    */
   constructor(
     storeConfig: PrototypeInMemoryStoreConfig = {},
