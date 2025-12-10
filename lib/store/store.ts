@@ -73,10 +73,6 @@ export class PrototypeInMemoryStore {
 
   private prototypes: NormalizedPrototype[] = [];
 
-  private minPrototypeId: number | null = null;
-
-  private maxPrototypeId: number | null = null;
-
   private cachedAt: Date | null = null;
 
   private dataSizeBytes = 0;
@@ -117,6 +113,7 @@ export class PrototypeInMemoryStore {
 
     this.ttlMs = ttlMs;
     this.maxDataSizeBytes = maxDataSizeBytes;
+
     this.logger = logger ?? createConsoleLogger('info');
 
     this.logger.info('PrototypeInMemoryStore initialized', {
@@ -253,8 +250,6 @@ export class PrototypeInMemoryStore {
     this.prototypes = [];
     this.cachedAt = null;
     this.dataSizeBytes = 0;
-    this.minPrototypeId = null;
-    this.maxPrototypeId = null;
     this.logger.info('PrototypeInMemoryStore cleared', { previousSize });
   }
 
@@ -266,6 +261,7 @@ export class PrototypeInMemoryStore {
    *          or null when the payload exceeded the configured maximum size limit.
    */
   setAll(prototypes: NormalizedPrototype[]): { dataSizeBytes: number } | null {
+    // Validate payload size before storing
     const dataSizeBytes = this.estimateSize(prototypes);
 
     if (dataSizeBytes > this.maxDataSizeBytes) {
@@ -277,28 +273,17 @@ export class PrototypeInMemoryStore {
       return null;
     }
 
+    // Build O(1) lookup index by prototype ID
     this.prototypeIdIndex = new Map(
       prototypes.map((prototype) => [prototype.id, prototype]),
     );
+
+    // Store original array for ordered access
     this.prototypes = prototypes;
+
+    // Update cache metadata
     this.cachedAt = new Date();
     this.dataSizeBytes = dataSizeBytes;
-
-    if (prototypes.length > 0) {
-      const firstId = prototypes[0]!.id;
-      const { min, max } = prototypes.reduce(
-        (acc, prototype) => ({
-          min: prototype.id < acc.min ? prototype.id : acc.min,
-          max: prototype.id > acc.max ? prototype.id : acc.max,
-        }),
-        { min: firstId, max: firstId },
-      );
-      this.minPrototypeId = min;
-      this.maxPrototypeId = max;
-    } else {
-      this.minPrototypeId = null;
-      this.maxPrototypeId = null;
-    }
 
     this.logger.info('PrototypeInMemoryStore snapshot updated', {
       count: this.prototypeIdIndex.size,
@@ -414,15 +399,5 @@ export class PrototypeInMemoryStore {
    */
   getPrototypeIds(): readonly number[] {
     return Array.from(this.prototypeIdIndex.keys());
-  }
-
-  /** Return the lowest prototype id cached in the store, or null when empty. */
-  getMinPrototypeId(): number | null {
-    return this.minPrototypeId;
-  }
-
-  /** Return the highest prototype id cached in the store, or null when empty. */
-  getMaxPrototypeId(): number | null {
-    return this.maxPrototypeId;
   }
 }

@@ -245,70 +245,6 @@ describe('PrototypeInMemoryStore', () => {
     });
   });
 
-  describe('getMaxId', () => {
-    it('returns null when store is empty', () => {
-      const store = new PrototypeInMemoryStore({
-        maxDataSizeBytes: 1024 * 1024,
-      });
-      expect(store.getMaxPrototypeId()).toBeNull();
-    });
-
-    it('returns the highest prototype id', () => {
-      const store = new PrototypeInMemoryStore({
-        maxDataSizeBytes: 1024 * 1024,
-      });
-      store.setAll([
-        createPrototype({ id: 3 }),
-        createPrototype({ id: 7 }),
-        createPrototype({ id: 5 }),
-      ]);
-
-      expect(store.getMaxPrototypeId()).toBe(7);
-    });
-
-    it('returns null after clear', () => {
-      const store = new PrototypeInMemoryStore({
-        maxDataSizeBytes: 1024 * 1024,
-      });
-      store.setAll([createPrototype({ id: 10 })]);
-      store.clear();
-
-      expect(store.getMaxPrototypeId()).toBeNull();
-    });
-  });
-
-  describe('getMinId', () => {
-    it('returns null when store is empty', () => {
-      const store = new PrototypeInMemoryStore({
-        maxDataSizeBytes: 1024 * 1024,
-      });
-      expect(store.getMinPrototypeId()).toBeNull();
-    });
-
-    it('returns the lowest prototype id', () => {
-      const store = new PrototypeInMemoryStore({
-        maxDataSizeBytes: 1024 * 1024,
-      });
-      store.setAll([
-        createPrototype({ id: 3 }),
-        createPrototype({ id: 7 }),
-        createPrototype({ id: 5 }),
-      ]);
-
-      expect(store.getMinPrototypeId()).toBe(3);
-    });
-
-    it('returns null after clear', () => {
-      const store = new PrototypeInMemoryStore({
-        maxDataSizeBytes: 1024 * 1024,
-      });
-      store.setAll([createPrototype({ id: 10 })]);
-      store.clear();
-
-      expect(store.getMinPrototypeId()).toBeNull();
-    });
-  });
-
   describe('runExclusive', () => {
     it('prevents concurrent refresh tasks', async () => {
       const store = new PrototypeInMemoryStore({
@@ -565,7 +501,8 @@ describe('PrototypeInMemoryStore', () => {
       store.setAll([createPrototype({ id: 100 })]);
       store.clear();
 
-      expect(store.getMaxPrototypeId()).toBeNull();
+      // Just verify clear worked - no need to check maxPrototypeId anymore
+      expect(store.size).toBe(0);
     });
 
     it('can be called multiple times', () => {
@@ -618,8 +555,6 @@ describe('PrototypeInMemoryStore', () => {
       store.setAll([createPrototype({ id: 42 })]);
 
       expect(store.size).toBe(1);
-      expect(store.getMinPrototypeId()).toBe(42);
-      expect(store.getMaxPrototypeId()).toBe(42);
       expect(store.getByPrototypeId(42)?.id).toBe(42);
     });
 
@@ -635,8 +570,6 @@ describe('PrototypeInMemoryStore', () => {
 
       expect(result).not.toBeNull();
       expect(store.size).toBe(1000);
-      expect(store.getMinPrototypeId()).toBe(1);
-      expect(store.getMaxPrototypeId()).toBe(1000);
     });
 
     it('handles prototype with id 0', () => {
@@ -646,8 +579,6 @@ describe('PrototypeInMemoryStore', () => {
       store.setAll([createPrototype({ id: 0 })]);
 
       expect(store.getByPrototypeId(0)?.id).toBe(0);
-      expect(store.getMinPrototypeId()).toBe(0);
-      expect(store.getMaxPrototypeId()).toBe(0);
     });
 
     it('handles negative prototype ids', () => {
@@ -662,8 +593,6 @@ describe('PrototypeInMemoryStore', () => {
 
       expect(store.getByPrototypeId(-1)?.id).toBe(-1);
       expect(store.getByPrototypeId(-10)?.id).toBe(-10);
-      expect(store.getMinPrototypeId()).toBe(-10);
-      expect(store.getMaxPrototypeId()).toBe(5);
     });
 
     it('preserves all prototype fields', () => {
