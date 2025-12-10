@@ -20,9 +20,9 @@ This repository provides a modular toolset for managing ProtoPedia data, consist
     - Consistent handling of dates, arrays, and optional fields
     - Shared across all layers of the library
 
-2. **`lib/store`** - Standalone In-memory Store (`PrototypeMapStore`)
+2. **`lib/store`** - Standalone In-memory Store (`PrototypeInMemoryStore`)
     - Generic snapshot management with TTL support
-    - O(1) lookups by ID and efficient random selection
+    - O(1) lookups by ID via internal index
     - Independent of any specific API client
     - [Documentation](lib/store/docs/USAGE.md)
 
@@ -32,7 +32,13 @@ This repository provides a modular toolset for managing ProtoPedia data, consist
     - Can be used independently to build custom data pipelines
     - [Documentation](lib/fetcher/docs/USAGE.md)
 
-4. **`lib/repository`** - Ready-to-use Repository (`ProtopediaInMemoryRepository`)
+4. **`lib/logger`** - Logger Interface (`Logger`)
+    - Type-safe logging interface for custom implementations
+    - Used internally by Store, Fetcher, and Repository
+    - Can be replaced with custom logger (e.g., Winston, Pino)
+    - [Documentation](lib/logger/docs/LOGGER.md)
+
+5. **`lib/repository`** - Ready-to-use Repository (`ProtopediaInMemoryRepository`)
     - Integrates `lib/store` and `lib/fetcher` into a single easy-to-use package
     - Provides `createProtopediaInMemoryRepository` factory
     - Best for most use cases requiring caching and automatic refreshing
@@ -71,7 +77,7 @@ import { createProtopediaInMemoryRepository } from '@f88/promidas';
 const repo = createProtopediaInMemoryRepository(
     {
         ttlMs: 30 * 60 * 1000, // 30 minutes TTL
-        maxPayloadSizeBytes: 30 * 1024 * 1024, // 30 MiB limit
+        maxDataSizeBytes: 10 * 1024 * 1024, // 10 MiB limit (default)
     },
     {
         token: process.env.PROTOPEDIA_API_V2_TOKEN,

@@ -15,9 +15,9 @@
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { handleApiError } from '../../../../utils/errors/handler.js';
+import { handleApiError } from '../../../../../fetcher/utils/errors/handler.js';
 
-vi.mock('../../../lib/logger', () => ({
+vi.mock('../../../logger', () => ({
   createConsoleLogger: () => ({
     warn: vi.fn(),
     error: vi.fn(),

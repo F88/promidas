@@ -2,7 +2,7 @@
  * Simple in-memory repository for ProtoPedia prototypes.
  *
  * This module exposes a snapshot-based repository interface that is backed
- * by the generic {@link PrototypeMapStore}. It is designed to be
+ * by the generic {@link PrototypeInMemoryStore}. It is designed to be
  * easy to use from server-side or other long-lived processes that want to:
  *
  * - fetch prototypes from the ProtoPedia HTTP API,
@@ -18,34 +18,28 @@ import type {
   ListPrototypesParams,
   ProtoPediaApiClientOptions,
 } from 'protopedia-api-v2-client';
+import type { DeepReadonly } from 'ts-essentials';
 
-import type { PrototypeMapStoreConfig } from '../store/index.js';
+import type {
+  PrototypeInMemoryStats,
+  PrototypeInMemoryStoreConfig,
+} from '../store/index.js';
 import type { NormalizedPrototype } from '../types/index.js';
 
 import { createProtopediaInMemoryRepositoryImpl } from './protopedia-in-memory-repository.js';
+import type { PrototypeAnalysisResult } from './types.js';
 
 /**
- * Basic statistics about the current in-memory snapshot for ProtoPedia.
+ * Statistics about the current in-memory snapshot for ProtoPedia.
  *
- * These values are derived from the underlying PrototypeMapStore and are
- * useful to drive TTL-based refresh policies.
+ * Re-exported from {@link PrototypeInMemoryStats} for convenience.
  */
-export interface ProtopediaInMemoryRepositoryStats {
-  /** Number of prototypes currently in the in-memory snapshot. */
-  size: number;
+export type { PrototypeInMemoryStats as ProtopediaInMemoryRepositoryStats } from '../store/index.js';
 
-  /**
-   * When the current snapshot was fetched, in milliseconds since epoch.
-   * Null means the snapshot has never been populated.
-   */
-  cachedAt: number | null;
-
-  /**
-   * Whether the underlying store considers the snapshot expired according
-   * to its TTL configuration.
-   */
-  isExpired: boolean;
-}
+/**
+ * Result of analyzing prototypes to extract ID range.
+ */
+export type { PrototypeAnalysisResult } from './types.js';
 
 /**
  * In-memory, snapshot-based repository for ProtoPedia prototypes.
@@ -92,30 +86,94 @@ export interface ProtopediaInMemoryRepository {
   /**
    * Get a prototype from the current in-memory snapshot by id.
    *
-   * Returns:
-   * - the prototype when it exists in the snapshot, or
-   * - `undefined` when the id is not present in the current snapshot.
+   * Returns the prototype when it exists in the snapshot, or null when
+   * the id is not present in the current snapshot.
    *
    * This method does NOT perform HTTP calls.
    * It does not throw due to ProtoPedia API failures; it only reflects
    * the current in-memory state of the snapshot.
    */
-  getPrototypeFromSnapshotById(
-    id: number,
-  ): Promise<NormalizedPrototype | undefined>;
+  getPrototypeFromSnapshotByPrototypeId(
+    prototypeId: number,
+  ): Promise<DeepReadonly<NormalizedPrototype> | null>;
 
   /**
    * Get a random prototype from the current in-memory snapshot.
    *
-   * Returns:
-   * - a random prototype when the snapshot is not empty, or
-   * - `undefined` when the snapshot is empty.
+   * Returns a random prototype when the snapshot is not empty, or null
+   * when the snapshot is empty.
    *
    * This method does NOT perform HTTP calls.
    * It does not throw due to ProtoPedia API failures; it only reflects
    * the current in-memory state of the snapshot.
    */
-  getRandomPrototypeFromSnapshot(): Promise<NormalizedPrototype | undefined>;
+  getRandomPrototypeFromSnapshot(): Promise<DeepReadonly<NormalizedPrototype> | null>;
+
+  /**
+   * Get random samples from the current in-memory snapshot.
+   *
+   * Returns up to `size` random prototypes without duplicates.
+   * If `size` exceeds the available data, returns all prototypes in random order.
+   * Returns an empty array when `size <= 0` or when the snapshot is empty.
+   *
+   * This method does NOT perform HTTP calls.
+   * It does not throw due to ProtoPedia API failures; it only reflects
+   * the current in-memory state of the snapshot.
+   *
+   * @param size - Maximum number of random samples to return
+   */
+  getRandomSampleFromSnapshot(
+    size: number,
+  ): Promise<readonly DeepReadonly<NormalizedPrototype>[]>;
+
+  /**
+   * Get all prototype IDs from the current in-memory snapshot.
+   *
+   * Returns an array of all prototype IDs currently cached in the snapshot.
+   * Useful for operations that only need IDs, such as:
+   * - Exporting available prototype IDs to clients
+   * - ID-based filtering or statistics
+   * - Checking if specific IDs exist without loading full objects
+   *
+   * This method does NOT perform HTTP calls.
+   * It does not throw due to ProtoPedia API failures; it only reflects
+   * the current in-memory state of the snapshot.
+   *
+   * @returns Read-only array of prototype IDs
+   *
+   * @example
+   * ```typescript
+   * const repo = createProtopediaInMemoryRepository({});
+   * await repo.setupSnapshot({ limit: 100 });
+   *
+   * // Get all available IDs
+   * const ids = await repo.getPrototypeIdsFromSnapshot();
+   * console.log(`Available prototypes: ${ids.length}`);
+   *
+   * // Return to client
+   * return { availableIds: ids };
+   * ```
+   */
+  getPrototypeIdsFromSnapshot(): Promise<readonly number[]>;
+
+  /**
+   * Analyze prototypes from the current snapshot to extract ID range.
+   *
+   * Returns the minimum and maximum prototype IDs from the current snapshot.
+   * This method does NOT perform HTTP calls.
+   *
+   * @returns Object containing min and max IDs, or null values if snapshot is empty
+   *
+   * @example
+   * ```typescript
+   * const repo = createProtopediaInMemoryRepository({});
+   * await repo.setupSnapshot({ limit: 1000 });
+   *
+   * const { min, max } = await repo.analyzePrototypes();
+   * console.log(`ID range: ${min} - ${max}`);
+   * ```
+   */
+  analyzePrototypes(): Promise<{ min: number | null; max: number | null }>;
 
   /**
    * Stats for the current snapshot, including TTL-related information.
@@ -127,14 +185,21 @@ export interface ProtopediaInMemoryRepository {
    * This method never throws due to ProtoPedia API failures; it only
    * reports the current in-memory state.
    */
-  getStats(): ProtopediaInMemoryRepositoryStats;
+  getStats(): PrototypeInMemoryStats;
+
+  /**
+   * Retrieve the configuration used to initialize the underlying store.
+   *
+   * Returns the TTL and maximum data size settings (logger is excluded).
+   */
+  getConfig(): Omit<Required<PrototypeInMemoryStoreConfig>, 'logger'>;
 }
 
 /**
  * Create an in-memory repository for ProtoPedia prototypes.
  *
  * This factory wires together:
- * - a {@link PrototypeMapStoreConfig} for the underlying in-memory store
+ * - a {@link PrototypeInMemoryStoreConfig} for the underlying in-memory store
  *   (TTL, memory guard, etc.), and
  * - options for the ProtoPedia HTTP client used to fetch prototypes.
  *
@@ -146,7 +211,7 @@ export interface ProtopediaInMemoryRepository {
  * defines the public interface surface for consumers.
  */
 export type CreateProtopediaInMemoryRepository = (
-  storeConfig: PrototypeMapStoreConfig,
+  storeConfig: PrototypeInMemoryStoreConfig,
   protopediaApiClientOptions?: ProtoPediaApiClientOptions,
 ) => ProtopediaInMemoryRepository;
 

@@ -121,7 +121,7 @@ describe('createInMemoryRepositoryImpl', () => {
         limit: 25,
       });
 
-      const found = await repo.getPrototypeFromSnapshotById(100);
+      const found = await repo.getPrototypeFromSnapshotByPrototypeId(100);
       expect(found?.prototypeNm).toBe('override test');
     });
 
@@ -191,7 +191,7 @@ describe('createInMemoryRepositoryImpl', () => {
       expect(stats.cachedAt).not.toBeNull();
 
       const random = await repo.getRandomPrototypeFromSnapshot();
-      expect(random).toBeUndefined();
+      expect(random).toBeNull();
     });
   });
 
@@ -229,7 +229,7 @@ describe('createInMemoryRepositoryImpl', () => {
         limit: 10,
       });
 
-      let prototype = await repo.getPrototypeFromSnapshotById(1);
+      let prototype = await repo.getPrototypeFromSnapshotByPrototypeId(1);
       expect(prototype?.id).toBe(1);
 
       await repo.refreshSnapshot();
@@ -239,7 +239,7 @@ describe('createInMemoryRepositoryImpl', () => {
         limit: 10,
       });
 
-      prototype = await repo.getPrototypeFromSnapshotById(2);
+      prototype = await repo.getPrototypeFromSnapshotByPrototypeId(2);
       expect(prototype?.id).toBe(2);
     });
 
@@ -297,7 +297,7 @@ describe('createInMemoryRepositoryImpl', () => {
       expect(afterStats.size).toBe(1);
 
       const random = await repo.getRandomPrototypeFromSnapshot();
-      expect(random).toBeDefined();
+      expect(random).not.toBeNull();
       expect(random?.id).toBe(1);
     });
 
@@ -319,15 +319,15 @@ describe('createInMemoryRepositoryImpl', () => {
       const repo = createProtopediaInMemoryRepositoryImpl({}, {});
 
       await repo.refreshSnapshot();
-      let proto = await repo.getPrototypeFromSnapshotById(1);
+      let proto = await repo.getPrototypeFromSnapshotByPrototypeId(1);
       expect(proto?.prototypeNm).toBe('first');
 
       await repo.refreshSnapshot();
-      proto = await repo.getPrototypeFromSnapshotById(2);
+      proto = await repo.getPrototypeFromSnapshotByPrototypeId(2);
       expect(proto?.prototypeNm).toBe('second');
 
       await repo.refreshSnapshot();
-      proto = await repo.getPrototypeFromSnapshotById(3);
+      proto = await repo.getPrototypeFromSnapshotByPrototypeId(3);
       expect(proto?.prototypeNm).toBe('third');
     });
   });
@@ -337,7 +337,7 @@ describe('createInMemoryRepositoryImpl', () => {
       const repo = createProtopediaInMemoryRepositoryImpl({}, {});
 
       const random = await repo.getRandomPrototypeFromSnapshot();
-      expect(random).toBeUndefined();
+      expect(random).toBeNull();
     });
 
     it('returns a prototype when the snapshot is populated', async () => {
@@ -355,7 +355,7 @@ describe('createInMemoryRepositoryImpl', () => {
       await repo.setupSnapshot({});
 
       const random = await repo.getRandomPrototypeFromSnapshot();
-      expect(random).toBeDefined();
+      expect(random).not.toBeNull();
       expect(random?.id).toBe(42);
     });
 
@@ -373,14 +373,163 @@ describe('createInMemoryRepositoryImpl', () => {
       await repo.setupSnapshot({});
 
       const random = await repo.getRandomPrototypeFromSnapshot();
-      expect(random).toBeDefined();
+      expect(random).not.toBeNull();
       expect([1, 2, 3]).toContain(random?.id);
       expect(['alpha', 'beta', 'gamma']).toContain(random?.prototypeNm);
     });
   });
 
+  describe('getRandomSampleFromSnapshot', () => {
+    it('returns empty array when the store is empty', async () => {
+      const repo = createProtopediaInMemoryRepositoryImpl({}, {});
+
+      const sample = await repo.getRandomSampleFromSnapshot(5);
+      expect(sample).toEqual([]);
+    });
+
+    it('returns empty array when size is 0', async () => {
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [makePrototype({ id: 1 }), makePrototype({ id: 2 })],
+      });
+
+      const repo = createProtopediaInMemoryRepositoryImpl({}, {});
+      await repo.setupSnapshot({});
+
+      const sample = await repo.getRandomSampleFromSnapshot(0);
+      expect(sample).toEqual([]);
+    });
+
+    it('returns empty array when size is negative', async () => {
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [makePrototype({ id: 1 }), makePrototype({ id: 2 })],
+      });
+
+      const repo = createProtopediaInMemoryRepositoryImpl({}, {});
+      await repo.setupSnapshot({});
+
+      const sample = await repo.getRandomSampleFromSnapshot(-5);
+      expect(sample).toEqual([]);
+    });
+
+    it('returns requested number of samples when enough data exists', async () => {
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [
+          makePrototype({ id: 1 }),
+          makePrototype({ id: 2 }),
+          makePrototype({ id: 3 }),
+          makePrototype({ id: 4 }),
+          makePrototype({ id: 5 }),
+        ],
+      });
+
+      const repo = createProtopediaInMemoryRepositoryImpl({}, {});
+      await repo.setupSnapshot({});
+
+      const sample = await repo.getRandomSampleFromSnapshot(3);
+      expect(sample.length).toBe(3);
+    });
+
+    it('returns all data when size exceeds available prototypes', async () => {
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [makePrototype({ id: 1 }), makePrototype({ id: 2 })],
+      });
+
+      const repo = createProtopediaInMemoryRepositoryImpl({}, {});
+      await repo.setupSnapshot({});
+
+      const sample = await repo.getRandomSampleFromSnapshot(10);
+      expect(sample.length).toBe(2);
+    });
+
+    it('returns unique samples without duplicates', async () => {
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [
+          makePrototype({ id: 1 }),
+          makePrototype({ id: 2 }),
+          makePrototype({ id: 3 }),
+          makePrototype({ id: 4 }),
+          makePrototype({ id: 5 }),
+        ],
+      });
+
+      const repo = createProtopediaInMemoryRepositoryImpl({}, {});
+      await repo.setupSnapshot({});
+
+      const sample = await repo.getRandomSampleFromSnapshot(5);
+      const ids = sample.map((p) => p.id);
+      const uniqueIds = new Set(ids);
+      expect(uniqueIds.size).toBe(5);
+    });
+
+    it('eventually samples all prototypes over multiple calls', async () => {
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [
+          makePrototype({ id: 1 }),
+          makePrototype({ id: 2 }),
+          makePrototype({ id: 3 }),
+        ],
+      });
+
+      const repo = createProtopediaInMemoryRepositoryImpl({}, {});
+      await repo.setupSnapshot({});
+
+      const seen = new Set<number>();
+      for (let i = 0; i < 50; i++) {
+        const sample = await repo.getRandomSampleFromSnapshot(2);
+        sample.forEach((p) => seen.add(p.id));
+      }
+
+      expect(seen.size).toBe(3);
+      expect(seen.has(1)).toBe(true);
+      expect(seen.has(2)).toBe(true);
+      expect(seen.has(3)).toBe(true);
+    });
+
+    it('handles large sample sizes efficiently (>50% of total)', async () => {
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: Array.from({ length: 10 }, (_, i) =>
+          makePrototype({ id: i + 1 }),
+        ),
+      });
+
+      const repo = createProtopediaInMemoryRepositoryImpl({}, {});
+      await repo.setupSnapshot({});
+
+      const sample = await repo.getRandomSampleFromSnapshot(6);
+
+      expect(sample.length).toBe(6);
+      const ids = new Set(sample.map((p) => p.id));
+      expect(ids.size).toBe(6); // All unique
+    });
+
+    it('handles small sample sizes efficiently (<50% of total)', async () => {
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: Array.from({ length: 10 }, (_, i) =>
+          makePrototype({ id: i + 1 }),
+        ),
+      });
+
+      const repo = createProtopediaInMemoryRepositoryImpl({}, {});
+      await repo.setupSnapshot({});
+
+      const sample = await repo.getRandomSampleFromSnapshot(3);
+
+      expect(sample.length).toBe(3);
+      const ids = new Set(sample.map((p) => p.id));
+      expect(ids.size).toBe(3); // All unique
+    });
+  });
+
   describe('getPrototypeFromSnapshotById', () => {
-    it('returns undefined for unknown ids', async () => {
+    it('returns null for unknown ids', async () => {
       fetchPrototypesMock.mockResolvedValueOnce({
         ok: true,
         data: [
@@ -394,8 +543,8 @@ describe('createInMemoryRepositoryImpl', () => {
       const repo = createProtopediaInMemoryRepositoryImpl({}, {});
       await repo.setupSnapshot({});
 
-      const missing = await repo.getPrototypeFromSnapshotById(1234);
-      expect(missing).toBeUndefined();
+      const missing = await repo.getPrototypeFromSnapshotByPrototypeId(1234);
+      expect(missing).toBeNull();
     });
 
     it('returns the correct prototype for a known id', async () => {
@@ -412,8 +561,8 @@ describe('createInMemoryRepositoryImpl', () => {
       const repo = createProtopediaInMemoryRepositoryImpl({}, {});
       await repo.setupSnapshot({});
 
-      const found = await repo.getPrototypeFromSnapshotById(9);
-      expect(found).toBeDefined();
+      const found = await repo.getPrototypeFromSnapshotByPrototypeId(9);
+      expect(found).not.toBeNull();
       expect(found?.id).toBe(9);
       expect(found?.prototypeNm).toBe('known entry');
     });
@@ -431,15 +580,15 @@ describe('createInMemoryRepositoryImpl', () => {
       const repo = createProtopediaInMemoryRepositoryImpl({}, {});
       await repo.setupSnapshot({});
 
-      const proto1 = await repo.getPrototypeFromSnapshotById(1);
-      const proto2 = await repo.getPrototypeFromSnapshotById(2);
-      const proto3 = await repo.getPrototypeFromSnapshotById(3);
-      const missing = await repo.getPrototypeFromSnapshotById(999);
+      const proto1 = await repo.getPrototypeFromSnapshotByPrototypeId(1);
+      const proto2 = await repo.getPrototypeFromSnapshotByPrototypeId(2);
+      const proto3 = await repo.getPrototypeFromSnapshotByPrototypeId(3);
+      const missing = await repo.getPrototypeFromSnapshotByPrototypeId(999);
 
       expect(proto1?.prototypeNm).toBe('first');
       expect(proto2?.prototypeNm).toBe('second');
       expect(proto3?.prototypeNm).toBe('third');
-      expect(missing).toBeUndefined();
+      expect(missing).toBeNull();
     });
   });
 
@@ -466,7 +615,7 @@ describe('createInMemoryRepositoryImpl', () => {
       await repo.setupSnapshot({});
 
       const stats = repo.getStats();
-      expect(typeof stats.cachedAt).toBe('number');
+      expect(stats.cachedAt).toBeInstanceOf(Date);
       expect(stats.cachedAt).not.toBeNull();
       expect(stats.size).toBe(1);
     });
@@ -515,8 +664,11 @@ describe('createInMemoryRepositoryImpl', () => {
       const stats2 = repo.getStats();
       const secondCachedAt = stats2.cachedAt;
 
+      expect(firstCachedAt).not.toBeNull();
       expect(secondCachedAt).not.toBeNull();
-      expect(secondCachedAt).toBeGreaterThan(firstCachedAt!);
+      expect(secondCachedAt!.getTime()).toBeGreaterThan(
+        firstCachedAt!.getTime(),
+      );
     });
 
     it('reports isExpired as false immediately after setup with short TTL', async () => {
@@ -619,7 +771,7 @@ describe('createInMemoryRepositoryImpl', () => {
       stats = repo.getStats();
       expect(stats.size).toBe(1);
 
-      const proto = await repo.getPrototypeFromSnapshotById(1);
+      const proto = await repo.getPrototypeFromSnapshotByPrototypeId(1);
       expect(proto?.prototypeNm).toBe('success');
     });
 
@@ -642,12 +794,12 @@ describe('createInMemoryRepositoryImpl', () => {
         'Temporary network issue',
       );
 
-      const oldProto = await repo.getPrototypeFromSnapshotById(1);
+      const oldProto = await repo.getPrototypeFromSnapshotByPrototypeId(1);
       expect(oldProto?.prototypeNm).toBe('initial');
 
       await repo.refreshSnapshot();
 
-      const newProto = await repo.getPrototypeFromSnapshotById(2);
+      const newProto = await repo.getPrototypeFromSnapshotByPrototypeId(2);
       expect(newProto?.prototypeNm).toBe('recovered');
     });
   });
@@ -678,12 +830,12 @@ describe('createInMemoryRepositoryImpl', () => {
       stats = repo.getStats();
       expect(stats.size).toBe(1);
 
-      const old1 = await repo.getPrototypeFromSnapshotById(1);
-      const old2 = await repo.getPrototypeFromSnapshotById(2);
-      const newProto = await repo.getPrototypeFromSnapshotById(3);
+      const old1 = await repo.getPrototypeFromSnapshotByPrototypeId(1);
+      const old2 = await repo.getPrototypeFromSnapshotByPrototypeId(2);
+      const newProto = await repo.getPrototypeFromSnapshotByPrototypeId(3);
 
-      expect(old1).toBeUndefined();
-      expect(old2).toBeUndefined();
+      expect(old1).toBeNull();
+      expect(old2).toBeNull();
       expect(newProto?.prototypeNm).toBe('new');
     });
   });
@@ -771,7 +923,7 @@ describe('createInMemoryRepositoryImpl', () => {
         prototypeId: 999,
       });
 
-      const proto = await repo.getPrototypeFromSnapshotById(999);
+      const proto = await repo.getPrototypeFromSnapshotByPrototypeId(999);
       expect(proto?.prototypeNm).toBe('specific');
     });
 
@@ -845,9 +997,9 @@ describe('createInMemoryRepositoryImpl', () => {
       const repo = createProtopediaInMemoryRepositoryImpl({}, {});
       await repo.setupSnapshot({});
 
-      const stored = await repo.getPrototypeFromSnapshotById(12345);
+      const stored = await repo.getPrototypeFromSnapshotByPrototypeId(12345);
 
-      expect(stored).toBeDefined();
+      expect(stored).not.toBeNull();
       expect(stored?.id).toBe(12345);
       expect(stored?.prototypeNm).toBe('Test Prototype');
       expect(stored?.teamNm).toBe('Test Team');
@@ -871,8 +1023,8 @@ describe('createInMemoryRepositoryImpl', () => {
       const repo = createProtopediaInMemoryRepositoryImpl({}, {});
       await repo.setupSnapshot({});
 
-      const stored = await repo.getPrototypeFromSnapshotById(1);
-      expect(stored).toBeDefined();
+      const stored = await repo.getPrototypeFromSnapshotByPrototypeId(1);
+      expect(stored).not.toBeNull();
       expect(stored?.id).toBe(1);
     });
   });
@@ -942,8 +1094,8 @@ describe('createInMemoryRepositoryImpl', () => {
       const stats = repo.getStats();
       expect(stats.size).toBe(100);
 
-      const first = await repo.getPrototypeFromSnapshotById(1);
-      const last = await repo.getPrototypeFromSnapshotById(100);
+      const first = await repo.getPrototypeFromSnapshotByPrototypeId(1);
+      const last = await repo.getPrototypeFromSnapshotByPrototypeId(100);
 
       expect(first?.prototypeNm).toBe('proto-1');
       expect(last?.prototypeNm).toBe('proto-100');
@@ -964,15 +1116,15 @@ describe('createInMemoryRepositoryImpl', () => {
       await repo.setupSnapshot({});
 
       const results = await Promise.all([
-        repo.getPrototypeFromSnapshotById(1),
-        repo.getPrototypeFromSnapshotById(2),
+        repo.getPrototypeFromSnapshotByPrototypeId(1),
+        repo.getPrototypeFromSnapshotByPrototypeId(2),
         repo.getRandomPrototypeFromSnapshot(),
-        repo.getStats(),
+        Promise.resolve(repo.getStats()),
       ]);
 
       expect(results[0]?.prototypeNm).toBe('one');
       expect(results[1]?.prototypeNm).toBe('two');
-      expect(results[2]).toBeDefined();
+      expect(results[2]).not.toBeNull();
       expect(results[3].size).toBe(2);
     });
 
@@ -990,15 +1142,15 @@ describe('createInMemoryRepositoryImpl', () => {
       const repo = createProtopediaInMemoryRepositoryImpl({}, {});
 
       await repo.setupSnapshot({ offset: 0 });
-      let proto = await repo.getPrototypeFromSnapshotById(1);
+      let proto = await repo.getPrototypeFromSnapshotByPrototypeId(1);
       expect(proto?.prototypeNm).toBe('first');
 
       await repo.setupSnapshot({ offset: 10 });
-      proto = await repo.getPrototypeFromSnapshotById(2);
+      proto = await repo.getPrototypeFromSnapshotByPrototypeId(2);
       expect(proto?.prototypeNm).toBe('second');
 
-      const missingOld = await repo.getPrototypeFromSnapshotById(1);
-      expect(missingOld).toBeUndefined();
+      const missingOld = await repo.getPrototypeFromSnapshotByPrototypeId(1);
+      expect(missingOld).toBeNull();
     });
   });
 

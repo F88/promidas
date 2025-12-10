@@ -5,7 +5,7 @@
  *
  * - The official ProtoPedia API v2 client
  *   (`protopedia-api-v2-client`).
- * - The memorystore's {@link PrototypeMapStore}, which keeps a
+ * - The memorystore's {@link PrototypeInMemoryStore}, which keeps a
  *   snapshot of normalized prototypes in memory.
  * - A thin, higher-level repository interface
  *   ({@link ProtopediaInMemoryRepository}) that exposes
@@ -21,21 +21,22 @@ import type {
   ListPrototypesParams,
   ProtoPediaApiClientOptions,
 } from 'protopedia-api-v2-client';
+import type { DeepReadonly } from 'ts-essentials';
 
 import {
   constructDisplayMessage,
   createProtopediaApiCustomClient,
 } from '../fetcher/index.js';
 import {
-  PrototypeMapStore,
-  type PrototypeMapStoreConfig,
+  PrototypeInMemoryStore,
+  type PrototypeInMemoryStats,
+  type PrototypeInMemoryStoreConfig,
 } from '../store/index.js';
 import type { NormalizedPrototype } from '../types/index.js';
 
-import type {
-  ProtopediaInMemoryRepository,
-  ProtopediaInMemoryRepositoryStats,
-} from './index.js';
+import type { PrototypeAnalysisResult } from './types.js';
+
+import type { ProtopediaInMemoryRepository } from './index.js';
 
 const DEFAULT_FETCH_PARAMS: ListPrototypesParams = {
   offset: 0,
@@ -46,8 +47,8 @@ const DEFAULT_FETCH_PARAMS: ListPrototypesParams = {
  * Internal implementation of {@link ProtopediaInMemoryRepository}.
  *
  * This function:
- * - Instantiates a {@link PrototypeMapStore} using the provided
- *   {@link PrototypeMapStoreConfig}.
+ * - Instantiates a {@link PrototypeInMemoryStore} using the provided
+ *   {@link PrototypeInMemoryStoreConfig}.
  * - Creates a ProtoPedia API client via
  *   {@link createProtopediaApiCustomClient}, using the provided
  *   {@link ProtoPediaApiClientOptions}.
@@ -61,7 +62,7 @@ const DEFAULT_FETCH_PARAMS: ListPrototypesParams = {
  * calling this function directly.
  *
  * @param storeConfig - Configuration for the underlying
- *   {@link PrototypeMapStore}. Defaults to an empty configuration.
+ *   {@link PrototypeInMemoryStore}. Defaults to an empty configuration.
  * @param apiClientOptions - Optional configuration forwarded to the
  *   official SDK's client factory (for example, `token`, `baseUrl`,
  *   custom `fetch`, `timeoutMs`, `logLevel`).
@@ -69,10 +70,10 @@ const DEFAULT_FETCH_PARAMS: ListPrototypesParams = {
  *   manages an in-memory snapshot of ProtoPedia prototypes.
  */
 export const createProtopediaInMemoryRepositoryImpl = (
-  storeConfig: PrototypeMapStoreConfig = {},
+  storeConfig: PrototypeInMemoryStoreConfig = {},
   apiClientOptions?: ProtoPediaApiClientOptions,
 ): ProtopediaInMemoryRepository => {
-  const store = new PrototypeMapStore(storeConfig);
+  const store = new PrototypeInMemoryStore(storeConfig);
   const apiClient = createProtopediaApiCustomClient(apiClientOptions);
 
   let lastFetchParams: ListPrototypesParams = { ...DEFAULT_FETCH_PARAMS };
@@ -103,6 +104,23 @@ export const createProtopediaInMemoryRepositoryImpl = (
   };
 
   /**
+   * Return the configuration used to initialize the underlying store.
+   */
+  const getConfig = (): Omit<
+    Required<PrototypeInMemoryStoreConfig>,
+    'logger'
+  > => {
+    return store.getConfig();
+  };
+
+  /**
+   * Return stats for the current snapshot from the underlying store.
+   */
+  const getStats = (): PrototypeInMemoryStats => {
+    return store.getStats();
+  };
+
+  /**
    * Initialize the in-memory snapshot using the provided fetch params.
    * Typically called once at startup or before the first read.
    */
@@ -122,44 +140,191 @@ export const createProtopediaInMemoryRepositoryImpl = (
    * Look up a prototype by id in the current snapshot.
    * Never performs HTTP requests.
    */
-  const getPrototypeFromSnapshotById = async (
-    id: number,
-  ): Promise<NormalizedPrototype | undefined> => {
-    return store.getById(id);
+  const getPrototypeFromSnapshotByPrototypeId = async (
+    prototypeId: number,
+  ): Promise<DeepReadonly<NormalizedPrototype> | null> => {
+    return store.getByPrototypeId(prototypeId);
   };
 
   /**
-   * Return a random prototype from the current snapshot, or `undefined`
+   * Return a random prototype from the current snapshot, or null
    * when the snapshot is empty. Never performs HTTP requests.
+   *
+   * @remarks
+   * **Implementation Note**: This method uses `store.getAll()` instead of
+   * `store.getPrototypeIds()` + `store.getByPrototypeId()` for performance.
+   * While it might seem wasteful to copy all objects just to select one,
+   * the alternative would require:
+   *
+   * 1. Call `getPrototypeIds()` - O(n) to iterate Map keys
+   * 2. Select random ID - O(1)
+   * 3. Call `getByPrototypeId(id)` - O(1)
+   *
+   * This approach still costs O(n) for step 1, making it no better than
+   * `getAll()` in terms of time complexity, but with additional function
+   * call overhead. The current implementation is simpler and equally
+   * efficient.
    */
-  const getRandomPrototypeFromSnapshot = async (): Promise<
-    NormalizedPrototype | undefined
-  > => {
-    const value = store.getRandom();
-    return value === null ? undefined : value;
+  const getRandomPrototypeFromSnapshot =
+    async (): Promise<DeepReadonly<NormalizedPrototype> | null> => {
+      const all = store.getAll();
+      if (all.length === 0) {
+        return null;
+      }
+      const index = Math.floor(Math.random() * all.length);
+      return all[index] ?? null;
+    };
+
+  /**
+   * Return random samples from the current snapshot.
+   *
+   * Returns up to `size` random prototypes without duplicates.
+   * If `size` exceeds the available data, returns all prototypes in random order.
+   * Never performs HTTP requests.
+   *
+   * @param size - Maximum number of samples to return
+   * @returns Array of random prototypes (empty array if size <= 0 or snapshot is empty)
+   *
+   * @remarks
+   * **Implementation Note**: Uses a hybrid approach for optimal performance:
+   *
+   * - `store.getAll()` is O(1) (returns reference to internal array)
+   * - For small samples (< 50% of total): Set-based random selection, O(size)
+   * - For large samples (≥ 50% of total): Fisher-Yates shuffle, O(n)
+   *
+   * This hybrid approach optimizes for the common case where sample size is
+   * much smaller than the total population, while avoiding performance
+   * degradation when the sample size approaches the total size.
+   */
+  const getRandomSampleFromSnapshot = async (
+    size: number,
+  ): Promise<readonly DeepReadonly<NormalizedPrototype>[]> => {
+    const all = store.getAll();
+    if (size <= 0 || all.length === 0) {
+      return [];
+    }
+
+    const actualSize = Math.min(size, all.length);
+
+    // For large samples (≥50% of total), use Fisher-Yates shuffle
+    if (actualSize > all.length * 0.5) {
+      const shuffled = [...all];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j]!, shuffled[i]!];
+      }
+      return shuffled.slice(0, actualSize);
+    }
+
+    // For small samples, use Set-based collision avoidance
+    const result: (typeof all)[number][] = [];
+    const indices = new Set<number>();
+
+    while (result.length < actualSize) {
+      const index = Math.floor(Math.random() * all.length);
+      if (!indices.has(index)) {
+        indices.add(index);
+        result.push(all[index]!);
+      }
+    }
+
+    return result;
   };
 
   /**
-   * Derive stats for the current snapshot from the underlying store.
-   * Converts Date-based `cachedAt` into a millisecond timestamp.
+   * Return all prototype IDs from the current snapshot.
+   * Never performs HTTP requests.
    */
-  const getStats = (): ProtopediaInMemoryRepositoryStats => {
-    const snapshotStats = store.getStats();
-    return {
-      size: snapshotStats.size,
-      cachedAt:
-        snapshotStats.cachedAt instanceof Date
-          ? snapshotStats.cachedAt.getTime()
-          : null,
-      isExpired: snapshotStats.isExpired ?? false,
-    };
+  const getPrototypeIdsFromSnapshot = async (): Promise<readonly number[]> => {
+    return store.getPrototypeIds();
+  };
+
+  /**
+   * Analyze prototypes to extract ID range (minimum and maximum).
+   *
+   * Uses a for-loop implementation for better performance with large datasets (5,000+ items).
+   * Single-pass algorithm with minimal memory allocations.
+   *
+   * @param prototypes - Array of prototypes to analyze
+   * @returns Object containing min and max IDs, or null values if array is empty
+   */
+  const analyzePrototypesWithForLoop = (
+    prototypes: readonly DeepReadonly<NormalizedPrototype>[],
+  ): PrototypeAnalysisResult => {
+    if (prototypes.length === 0) {
+      return { min: null, max: null };
+    }
+
+    let min = prototypes[0]!.id;
+    let max = prototypes[0]!.id;
+
+    for (let i = 1; i < prototypes.length; i++) {
+      const id = prototypes[i]!.id;
+      if (id < min) min = id;
+      if (id > max) max = id;
+    }
+
+    return { min, max };
+  };
+
+  /**
+   * Analyze prototypes to extract ID range (minimum and maximum).
+   *
+   * Uses a reduce implementation for more declarative code style.
+   * May perform better with small datasets (~1,000 items) due to JIT optimization.
+   *
+   * @param prototypes - Array of prototypes to analyze
+   * @returns Object containing min and max IDs, or null values if array is empty
+   */
+  const analyzePrototypesWithReduce = (
+    prototypes: readonly DeepReadonly<NormalizedPrototype>[],
+  ): PrototypeAnalysisResult => {
+    if (prototypes.length === 0) {
+      return { min: null, max: null };
+    }
+
+    const firstId = prototypes[0]!.id;
+    const { min, max } = prototypes.reduce(
+      (acc, prototype) => {
+        if (prototype.id < acc.min) {
+          acc.min = prototype.id;
+        }
+        if (prototype.id > acc.max) {
+          acc.max = prototype.id;
+        }
+        return acc;
+      },
+      { min: firstId, max: firstId },
+    );
+
+    return { min, max };
+  };
+
+  /**
+   * Analyze prototypes from the current snapshot to extract ID range.
+   *
+   * Currently uses the for-loop implementation for optimal performance with typical dataset sizes.
+   * Never performs HTTP requests.
+   *
+   * @returns Object containing min and max IDs, or null values if snapshot is empty
+   */
+  const analyzePrototypes = async (): Promise<PrototypeAnalysisResult> => {
+    const all = store.getAll();
+    return analyzePrototypesWithForLoop(all);
   };
 
   return {
     setupSnapshot,
     refreshSnapshot,
-    getPrototypeFromSnapshotById,
+    getPrototypeFromSnapshotByPrototypeId,
     getRandomPrototypeFromSnapshot,
+    getRandomSampleFromSnapshot,
+    getPrototypeIdsFromSnapshot,
+    analyzePrototypes,
     getStats,
-  };
+    getConfig,
+    // Internal methods exposed for testing (not in public interface)
+    analyzePrototypesWithForLoop,
+    analyzePrototypesWithReduce,
+  } as ProtopediaInMemoryRepository;
 };

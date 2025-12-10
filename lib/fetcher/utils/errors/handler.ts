@@ -19,7 +19,7 @@
  */
 import { ProtoPediaApiError } from 'protopedia-api-v2-client';
 
-import { createConsoleLogger } from '../../../lib/logger.js';
+import { createConsoleLogger } from '../../../logger/index.js';
 import type { NetworkFailure } from '../../types/prototype-api.types.js';
 import type { FetchPrototypesResult } from '../../types/result.types.js';
 

@@ -15,7 +15,7 @@ instructions-for-ais:
 # ProtopediaInMemoryRepository Usage Guide
 
 This document describes how to use the ProtoPedia-specific in-memory
-repository built on top of the generic `PrototypeMapStore` core.
+repository built on top of the generic `PrototypeInMemoryStore` core.
 
 The main entry point is the `createProtopediaInMemoryRepository` factory
 exported from `lib/repository`.
@@ -83,10 +83,10 @@ export interface ProtopediaInMemoryRepository {
 The factory type is:
 
 ```ts
-import type { PrototypeMapStoreConfig } from '../store/index.js';
+import type { PrototypeInMemoryStoreConfig } from '../store/index.js';
 
 export type CreateProtopediaInMemoryRepository = (
-    storeConfig: PrototypeMapStoreConfig,
+    storeConfig: PrototypeInMemoryStoreConfig,
     protopediaApiClientOptions?: ProtopediaApiClientOptions,
 ) => ProtopediaInMemoryRepository;
 ```
@@ -104,9 +104,9 @@ import { createProtopediaInMemoryRepository } from 'in-memory-snapshot-manager-f
 
 const repo = createProtopediaInMemoryRepository(
     {
-        // PrototypeMapStoreConfig
+        // PrototypeInMemoryStoreConfig
         ttlMs: 30 * 60 * 1000, // 30 minutes
-        maxPayloadSizeBytes: 30 * 1024 * 1024, // 30 MiB
+        maxDataSizeBytes: 10 * 1024 * 1024, // 10 MiB (default)
     },
     {
         // ProtopediaApiClientOptions
@@ -218,7 +218,7 @@ environments.
     - On each incoming request, first try to satisfy reads from the
       store (by id, or via random).
     - When the store is empty or past a configured TTL, refresh it via
-      `refreshSnapshot` and repopulate the map before serving results.
+      `refreshSnapshot` and repopulate the store before serving results.
 
 - **Batch or CLI processing of multiple prototypes**
     - From a CLI or batch script, use the repository to fetch multiple prototypes in a
@@ -236,5 +236,5 @@ environments.
   strategy at the type level. Those decisions live in the concrete
   implementation and can evolve without changing the public API.
 - `isExpired` in `ProtopediaInMemoryRepositoryStats` comes from the
-  underlying `PrototypeMapStore` TTL logic. You can use it directly or
+  underlying `PrototypeInMemoryStore` TTL logic. You can use it directly or
   implement your own policy based on `cachedAt`.

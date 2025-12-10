@@ -1,8 +1,8 @@
 ---
 lang: en
-title: Usage of PrototypeMapStore
-title-en: Usage of PrototypeMapStore
-title-ja: PrototypeMapStoreの使用法
+title: Usage of PrototypeInMemoryStore
+title-en: Usage of PrototypeInMemoryStore
+title-ja: PrototypeInMemoryStoreの使用法
 related:
     - ../../../README.md "Project Overview"
     - DESIGN.md "Store Design"
@@ -15,7 +15,7 @@ instructions-for-ais:
 
 # Memorystore Usage Notes
 
-This document describes how to use the `PrototypeMapStore` defined in
+This document describes how to use the `PrototypeInMemoryStore` defined in
 `lib/store/store.ts`. It focuses on the public API, typical access
 patterns, and how to combine the store-wide TTL with background
 refresh.
@@ -25,11 +25,10 @@ For payload size and memory characteristics of the store, see
 
 ## Overview
 
-`PrototypeMapStore` is an in-memory snapshot store for
+`PrototypeInMemoryStore` is an in-memory snapshot store for
 `NormalizedPrototype[]` that provides:
 
-- O(1) lookups by numeric prototype ID.
-- Constant-time random selection from the current snapshot.
+- O(1) lookups by numeric prototype ID via an internal index.
 - A store-wide TTL to help decide when to refresh data.
 - A simple concurrency guard for refresh tasks.
 
@@ -42,22 +41,27 @@ The store is **snapshot-based**:
 
 ## Public API Summary
 
-All methods live on `PrototypeMapStore` in `lib/store/store.ts`.
+All methods live on `PrototypeInMemoryStore` in `lib/store/store.ts`.
 
 ### Construction
 
-- `constructor(config?: PrototypeMapStoreConfig)`
-    - `ttlMs?: number` – store-wide TTL in milliseconds.
-    - `maxPayloadSizeBytes?: number` – maximum allowed payload size in
-      bytes (default: 30 MiB). Values above 30 MiB are rejected.
+- `constructor(config?: PrototypeInMemoryStoreConfig)`
+    - `ttlMs?: number` – store-wide TTL in milliseconds (default: 30 minutes).
+    - `maxDataSizeBytes?: number` – maximum allowed payload size in
+      bytes (default: 10 MiB). Values above 30 MiB are rejected.
+    - `logger?: Logger` – custom logger instance. Defaults to console logger with 'info' level.
+
+- `getConfig(): Omit<Required<PrototypeInMemoryStoreConfig>, 'logger'>`
+    - Returns the resolved configuration values (TTL and max data size) that were
+      set during instantiation.
 
 ### Write operations
 
-- `setAll(prototypes: NormalizedPrototype[]): { approxSizeBytes: number } | null`
+- `setAll(prototypes: NormalizedPrototype[]): { dataSizeBytes: number } | null`
     - Estimates the JSON payload size of `prototypes`.
-    - If the payload fits within `maxPayloadSizeBytes`, replaces the
-      internal map and ordered array, updates metadata, and returns
-      `{ approxSizeBytes }`.
+    - If the payload fits within `maxDataSizeBytes`, replaces the
+      internal index and ordered array, updates metadata, and returns
+      `{ dataSizeBytes }`.
     - If the payload exceeds the limit, leaves the store unchanged and
       returns `null`.
 
@@ -69,19 +73,16 @@ All methods live on `PrototypeMapStore` in `lib/store/store.ts`.
 - `size: number`
     - The number of prototypes currently stored.
 
-- `getAll(): NormalizedPrototype[]`
-    - Returns the latest snapshot array in its original order.
+- `getAll(): readonly DeepReadonly<NormalizedPrototype>[]`
+    - Returns the latest snapshot array in its original order with
+      type-level immutability protection.
 
-- `getById(id: number): NormalizedPrototype | undefined`
-    - O(1) lookup by numeric ID.
+- `getByPrototypeId(id: number): DeepReadonly<NormalizedPrototype> | null`
+    - O(1) lookup by numeric ID via the internal prototypeIdIndex.
 
-- `getRandom(): NormalizedPrototype | null`
-    - Returns a random prototype from the current snapshot, or `null`
-      when the store is empty.
-
-- `getMaxId(): number | null`
-    - Returns the highest prototype ID in the snapshot, or `null` when
-      the store is empty.
+- `getPrototypeIds(): readonly number[]`
+    - Returns an array of all cached prototype IDs.
+    - Useful for ID-only operations without loading full objects.
 
 ### TTL and snapshot helpers
 
@@ -95,7 +96,7 @@ All methods live on `PrototypeMapStore` in `lib/store/store.ts`.
         - the duration since `cachedAt` exceeds `ttlMs`.
     - Expiry does **not** clear data; it is only a signal to refresh.
 
-- `getSnapshot(): { data: NormalizedPrototype[]; cachedAt: Date | null; isExpired: boolean }`
+- `getSnapshot(): { data: readonly DeepReadonly<NormalizedPrototype>[]; cachedAt: Date | null; isExpired: boolean }`
     - Returns a lightweight view of the snapshot and its expiry state.
 
 ### Refresh coordination and stats
@@ -109,8 +110,9 @@ All methods live on `PrototypeMapStore` in `lib/store/store.ts`.
     - Returns `true` if a refresh task started via `runExclusive` is still
       running.
 
-- `getStats(): { size: number; cachedAt: Date | null; ttlMs: number; isExpired: boolean; approxSizeBytes: number; refreshInFlight: boolean }`
+- `getStats(): PrototypeInMemoryStats`
     - Returns a summary of the cache state and configuration.
+    - Includes: size, cachedAt, isExpired, remainingTtlMs, dataSizeBytes, refreshInFlight.
 
 ## TTL and Refresh Pattern
 
@@ -118,7 +120,7 @@ The TTL is applied to the snapshot as a whole:
 
 - There is no per-record expiry.
 - Even after `isExpired()` becomes `true`, callers can continue to read
-  data via `getById`, `getRandom`, and `getAll`.
+  data via `getByPrototypeId` and `getAll`.
 - Expiry is a **hint to refresh**, not an access control mechanism.
 
 A typical usage pattern is stale-while-revalidate:
@@ -130,10 +132,10 @@ A typical usage pattern is stale-while-revalidate:
 ### Example: Ensure Fresh Snapshot
 
 ```ts
-import { PrototypeMapStore } from '@f88/promidas';
+import { PrototypeInMemoryStore } from '@f88/promidas';
 
 async function ensureFreshSnapshot(
-    store: PrototypeMapStore,
+    store: PrototypeInMemoryStore,
     refresh: () => Promise<void>,
 ): Promise<void> {
     if (!store.isExpired()) {
@@ -148,15 +150,16 @@ async function ensureFreshSnapshot(
 ### Example: Read-Then-Refresh Flow
 
 ```ts
-async function getRandomPrototype(
-    store: PrototypeMapStore,
+async function getPrototypeById(
+    store: PrototypeInMemoryStore,
+    id: number,
     refresh: () => Promise<void>,
 ) {
     await ensureFreshSnapshot(store, refresh);
 
     // May still return stale data while the refresh is in flight.
     // This is usually acceptable for ProtoPedia-like use cases.
-    return store.getRandom();
+    return store.getByPrototypeId(id);
 }
 ```
 
@@ -168,7 +171,7 @@ outside the store.
 
 ```ts
 import type { ProtoPediaApiClient } from 'protopedia-api-v2-client';
-import { PrototypeMapStore } from './lib/store';
+import { PrototypeInMemoryStore } from './lib/store';
 
 async function fetchAllPrototypesNormalized(
     client: ProtoPediaApiClient,
@@ -178,7 +181,7 @@ async function fetchAllPrototypesNormalized(
 }
 
 async function refreshAll(
-    store: PrototypeMapStore,
+    store: PrototypeInMemoryStore,
     client: ProtoPediaApiClient,
 ): Promise<void> {
     const data = await fetchAllPrototypesNormalized(client);
@@ -189,7 +192,7 @@ async function refreshAll(
 In practice, you would wire these pieces together as follows:
 
 ```ts
-const store = new PrototypeMapStore();
+const store = new PrototypeInMemoryStore();
 
 async function refreshTask(client: ProtoPediaApiClient): Promise<void> {
     await refreshAll(store, client);
@@ -197,13 +200,13 @@ async function refreshTask(client: ProtoPediaApiClient): Promise<void> {
 
 // Somewhere in your request handling or UI logic:
 await ensureFreshSnapshot(store, refreshTask);
-const prototype = store.getRandom();
+const prototype = store.getByPrototypeId(123);
 ```
 
 ## Notes
 
 - The default TTL is 30 minutes.
-- The default `maxPayloadSizeBytes` is 30 MiB; configuring larger limits
-  is rejected to avoid oversized payloads.
+- The default `maxDataSizeBytes` is 10 MiB; maximum allowed is 30 MiB.
+  Configuring larger limits is rejected to avoid oversized payloads.
 - For measured memory usage and payload sizes at 1,000–10,000 items,
-  see `STORE-DESIGN-NOTES.md` and `lib/store/store.perf.test.ts`.
+  see `DESIGN.md` and `lib/store/store.perf.test.ts`.
