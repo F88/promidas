@@ -59,7 +59,21 @@ function hasStatusProperty(error: unknown): error is { status: unknown } {
 }
 
 /**
- * Type guard to check if an error might have code properties.
+ * Type guard to check if an error has a code property.
+ *
+ * This intentionally uses a broad `error is object` type guard to handle
+ * nested error structures flexibly. Node.js native fetch wraps network
+ * error codes in `error.cause.code`:
+ *
+ * @example
+ * ```ts
+ * const error = new Error('fetch failed');
+ * error.cause = { code: 'ENOTFOUND' };
+ * // hasErrorCode(error) returns true, allowing us to check error.cause.code
+ * ```
+ *
+ * A more specific type guard like `error is { code: string }` would reject
+ * errors that only have `cause.code`, preventing extraction of nested codes.
  *
  * @param error - The error to check
  * @returns True if the error is an object that might contain code information
