@@ -29,13 +29,15 @@ This repository provides a modular toolset for managing ProtoPedia data, consist
 3. **`lib/fetcher`** - API Client Utilities (`ProtopediaApiCustomClient`)
     - Utilities to fetch and normalize ProtoPedia prototypes
     - Error handling and network helpers for `protopedia-api-v2-client`
+    - Supports custom logger configuration for unified diagnostic output
     - Can be used independently to build custom data pipelines
     - [Documentation](lib/fetcher/docs/USAGE.md)
 
 4. **`lib/logger`** - Logger Interface (`Logger`)
-    - Type-safe logging interface for custom implementations
+    - Type-safe logging interface compatible with `protopedia-api-v2-client`
     - Used internally by Store, Fetcher, and Repository
     - Can be replaced with custom logger (e.g., Winston, Pino)
+    - No `level` property for SDK compatibility (level managed by factory functions)
     - [Documentation](lib/logger/docs/LOGGER.md)
 
 5. **`lib/repository`** - Ready-to-use Repository (`ProtopediaInMemoryRepository`)

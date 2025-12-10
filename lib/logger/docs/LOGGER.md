@@ -14,16 +14,87 @@ instructions-for-ais:
 
 # Logger Usage
 
-- The library ships with a minimal, dependency-free logger interface
-  defined in `lib/lib/logger.types.ts`.
-- A default implementation is provided via `createConsoleLogger` in
-  `lib/lib/logger.ts`.
-- Log levels:
-    - `debug`, `info`, `warn`, `error`, `silent`.
-- The `Logger` interface exposes the following methods:
-    - `debug(message: string, meta?: unknown)`
-    - `info(message: string, meta?: unknown)`
-    - `warn(message: string, meta?: unknown)`
-    - `error(message: string, meta?: unknown)`
-- In environments where logging is not desired, `createNoopLogger`
-  returns a logger that discards all messages.
+## Overview
+
+The library provides a minimal, dependency-free logger interface that is
+fully compatible with `protopedia-api-v2-client`'s Logger interface.
+
+## Logger Interface
+
+The `Logger` interface is defined in `lib/logger/logger.types.ts`:
+
+```typescript
+export type Logger = {
+    debug: (message: string, meta?: unknown) => void;
+    info: (message: string, meta?: unknown) => void;
+    warn: (message: string, meta?: unknown) => void;
+    error: (message: string, meta?: unknown) => void;
+};
+```
+
+**Note:** The `Logger` interface does not include a `level` property.
+Log level filtering is managed internally by factory functions like
+`createConsoleLogger(level)`.
+
+## Implementations
+
+### Console Logger
+
+`createConsoleLogger(level?: LogLevel)` creates a logger that outputs to
+the console with configurable log level filtering:
+
+```typescript
+import { createConsoleLogger } from '@f88/promidas/logger';
+
+const logger = createConsoleLogger('debug'); // 'debug' | 'info' | 'warn' | 'error' | 'silent'
+logger.debug('Debug message', { key: 'value' });
+```
+
+### No-op Logger
+
+`createNoopLogger()` returns a logger that discards all messages:
+
+```typescript
+import { createNoopLogger } from '@f88/promidas/logger';
+
+const logger = createNoopLogger();
+logger.info('This is ignored');
+```
+
+## Compatibility
+
+The `Logger` interface is structurally identical to the Logger interface
+from `protopedia-api-v2-client`, enabling seamless logger sharing between
+this library and the SDK:
+
+```typescript
+import { createConsoleLogger } from '@f88/promidas/logger';
+import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+
+const logger = createConsoleLogger('info');
+
+const client = createProtopediaApiCustomClient({
+    token: 'my-token',
+    logger, // Used by both SDK and this library's error handler
+});
+```
+
+## Custom Logger Implementation
+
+You can provide custom logger implementations (e.g., Winston, Pino):
+
+```typescript
+import type { Logger } from '@f88/promidas/logger';
+import winston from 'winston';
+
+const winstonLogger = winston.createLogger({
+    /* config */
+});
+
+const logger: Logger = {
+    debug: (msg, meta) => winstonLogger.debug(msg, meta),
+    info: (msg, meta) => winstonLogger.info(msg, meta),
+    warn: (msg, meta) => winstonLogger.warn(msg, meta),
+    error: (msg, meta) => winstonLogger.error(msg, meta),
+};
+```
