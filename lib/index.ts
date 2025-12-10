@@ -1,24 +1,24 @@
 /**
  * Public entrypoint for the @f88/promidas library.
  *
- * This module re-exports the primary types and factories that most
- * consumers need:
+ * This module re-exports the primary types and factories:
  *
- * - {@link NormalizedPrototype} — the core normalized ProtoPedia
- *   prototype type used throughout the library.
- * - {@link createProtopediaApiCustomClient} — a standalone API client
- *   factory for fetching normalized prototypes.
- * - {@link fetchAndNormalizePrototypes} — a helper to fetch and normalize
- *   prototypes from any compatible client.
- * - {@link constructDisplayMessage} — a helper to format error messages for display.
- * - {@link PrototypeInMemoryStore} — a low-level in-memory store for
- *   `NormalizedPrototype` snapshots.
- * - {@link PrototypeInMemoryStoreConfig} — configuration options for
- *   `PrototypeInMemoryStore`.
- * - {@link createProtopediaInMemoryRepository} — a higher-level
- *   convenience factory that creates a
- *   {@link ProtopediaInMemoryRepository} instance, combining
- *   `PrototypeInMemoryStore` with the official ProtoPedia API client.
+ * **Types:**
+ * - {@link NormalizedPrototype} — Core normalized prototype type
+ *
+ * **Store (In-memory snapshot management):**
+ * - {@link PrototypeInMemoryStore} — In-memory store with TTL and efficient lookups
+ * - {@link PrototypeInMemoryStoreConfig} — Store configuration options
+ * - {@link PrototypeInMemoryStats} — Store statistics and metadata
+ *
+ * **Fetcher (API client and normalization):**
+ * - {@link createProtopediaApiCustomClient} — Standalone API client factory
+ * - {@link fetchAndNormalizePrototypes} — Fetch and normalize helper
+ * - {@link constructDisplayMessage} — Error message formatter
+ *
+ * **Repository (High-level data management):**
+ * - {@link createProtopediaInMemoryRepository} — Repository factory
+ * - {@link ProtopediaInMemoryRepository} — Repository interface
  *
  * @packageDocumentation
  */
@@ -29,7 +29,10 @@ export type { NormalizedPrototype } from './types/index.js';
 // Simple Store for ProtoPedia
 export {
   PrototypeInMemoryStore,
+  type PrototypeInMemoryStats,
   type PrototypeInMemoryStoreConfig,
+  type Logger,
+  type LogLevel,
 } from './store/index.js';
 
 // Fetcher (API client and utilities)

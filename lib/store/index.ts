@@ -4,9 +4,9 @@
  * This module provides the generic storage engine used by the repository:
  *
  * - {@link PrototypeInMemoryStore} — The main store class handling in-memory snapshots,
- *   TTL expiration, and efficient lookups.
+ *   TTL expiration, and efficient ID-based lookups.
  * - {@link PrototypeInMemoryStoreConfig} — Configuration options for the store
- *   (TTL, max payload size).
+ *   (TTL, max data size).
  * - {@link PrototypeInMemoryStats} — Statistics and metadata about the current state
  *   of the store, returned by `getStats()`.
  * - {@link Logger} — Logger interface for custom logging implementations.
