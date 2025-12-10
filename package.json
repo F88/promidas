@@ -81,5 +81,8 @@
     "registry": "https://npm.pkg.github.com/",
     "@f88:registry": "https://npm.pkg.github.com/",
     "access": "restricted"
+  },
+  "dependencies": {
+    "zod": "^4.1.13"
   }
 }
