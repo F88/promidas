@@ -49,6 +49,11 @@ All methods live on `PrototypeInMemoryStore` in `lib/store/store.ts`.
     - `ttlMs?: number` – store-wide TTL in milliseconds (default: 30 minutes).
     - `maxDataSizeBytes?: number` – maximum allowed payload size in
       bytes (default: 10 MiB). Values above 30 MiB are rejected.
+    - `logger?: Logger` – custom logger instance. Defaults to console logger with 'info' level.
+
+- `getConfig(): Omit<Required<PrototypeInMemoryStoreConfig>, 'logger'>`
+    - Returns the resolved configuration values (TTL and max data size) that were
+      set during instantiation.
 
 ### Write operations
 

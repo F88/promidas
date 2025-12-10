@@ -9,6 +9,8 @@
  *   (TTL, max data size).
  * - {@link PrototypeInMemoryStats} — Statistics and metadata about the current state
  *   of the store, returned by `getStats()`.
+ *
+ * Logger types are re-exported for convenience when configuring the store:
  * - {@link Logger} — Logger interface for custom logging implementations.
  * - {@link LogLevel} — Log level type for controlling logger verbosity.
  *
