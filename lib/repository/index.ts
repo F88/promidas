@@ -29,7 +29,6 @@ import type { NormalizedPrototype } from '../types/index.js';
 import { createProtopediaInMemoryRepositoryImpl } from './protopedia-in-memory-repository.js';
 import type { PrototypeAnalysisResult } from './types.js';
 
-
 /**
  * Statistics about the current in-memory snapshot for ProtoPedia.
  *

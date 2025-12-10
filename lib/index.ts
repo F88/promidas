@@ -22,7 +22,8 @@
  *
  * **Repository (High-level data management):**
  * - {@link createProtopediaInMemoryRepository} — Repository factory
- * - {@link ProtopediaInMemoryRepository} — Repository interface
+ * - {@link ProtopediaInMemoryRepository} — Repository interface with analysis methods
+ * - {@link PrototypeAnalysisResult} — Result type for prototype ID range analysis
  *
  * @packageDocumentation
  */
@@ -56,4 +57,5 @@ export {
   createProtopediaInMemoryRepository,
   type ProtopediaInMemoryRepository,
   type ProtopediaInMemoryRepositoryStats,
+  type PrototypeAnalysisResult,
 } from './repository/index.js';
