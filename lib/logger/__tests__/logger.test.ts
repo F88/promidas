@@ -211,9 +211,7 @@ describe('logger', () => {
         logger.error('Error', [1, 2, 3]);
         expect(errorSpy).toHaveBeenCalledWith('Error', {
           level: 'error',
-          0: 1,
-          1: 2,
-          2: 3,
+          meta: [1, 2, 3],
         });
       });
     });

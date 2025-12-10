@@ -42,7 +42,7 @@ export const createConsoleLogger = (level: LogLevel = 'info'): Logger => {
         return;
       }
       const payload =
-        meta && typeof meta === 'object'
+        meta && typeof meta === 'object' && !Array.isArray(meta)
           ? { level: 'info', ...(meta as Record<string, unknown>) }
           : { level: 'info', meta };
       safeInfo(message, payload);
@@ -52,7 +52,7 @@ export const createConsoleLogger = (level: LogLevel = 'info'): Logger => {
         return;
       }
       const payload =
-        meta && typeof meta === 'object'
+        meta && typeof meta === 'object' && !Array.isArray(meta)
           ? { level: 'warn', ...(meta as Record<string, unknown>) }
           : { level: 'warn', meta };
       safeWarn(message, payload);
@@ -62,7 +62,7 @@ export const createConsoleLogger = (level: LogLevel = 'info'): Logger => {
         return;
       }
       const payload =
-        meta && typeof meta === 'object'
+        meta && typeof meta === 'object' && !Array.isArray(meta)
           ? { level: 'error', ...(meta as Record<string, unknown>) }
           : { level: 'error', meta };
       safeError(message, payload);
