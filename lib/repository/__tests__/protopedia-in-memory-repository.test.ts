@@ -490,10 +490,46 @@ describe('createInMemoryRepositoryImpl', () => {
       expect(seen.has(2)).toBe(true);
       expect(seen.has(3)).toBe(true);
     });
+
+    it('handles large sample sizes efficiently (>50% of total)', async () => {
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: Array.from({ length: 10 }, (_, i) =>
+          makePrototype({ id: i + 1 }),
+        ),
+      });
+
+      const repo = createProtopediaInMemoryRepositoryImpl({}, {});
+      await repo.setupSnapshot({});
+
+      const sample = await repo.getRandomSampleFromSnapshot(6);
+
+      expect(sample.length).toBe(6);
+      const ids = new Set(sample.map((p) => p.id));
+      expect(ids.size).toBe(6); // All unique
+    });
+
+    it('handles small sample sizes efficiently (<50% of total)', async () => {
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: Array.from({ length: 10 }, (_, i) =>
+          makePrototype({ id: i + 1 }),
+        ),
+      });
+
+      const repo = createProtopediaInMemoryRepositoryImpl({}, {});
+      await repo.setupSnapshot({});
+
+      const sample = await repo.getRandomSampleFromSnapshot(3);
+
+      expect(sample.length).toBe(3);
+      const ids = new Set(sample.map((p) => p.id));
+      expect(ids.size).toBe(3); // All unique
+    });
   });
 
   describe('getPrototypeFromSnapshotById', () => {
-    it('returns undefined for unknown ids', async () => {
+    it('returns null for unknown ids', async () => {
       fetchPrototypesMock.mockResolvedValueOnce({
         ok: true,
         data: [

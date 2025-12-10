@@ -186,18 +186,15 @@ export const createProtopediaInMemoryRepositoryImpl = (
    * @returns Array of random prototypes (empty array if size <= 0 or snapshot is empty)
    *
    * @remarks
-   * **Implementation Note**: This method uses `store.getAll()` instead of
-   * `store.getPrototypeIds()` for performance reasons. While `getPrototypeIds()`
-   * might seem lighter (IDs only vs full objects), the random selection loop
-   * would need to call `store.getByPrototypeId()` for each selected ID,
-   * resulting in worse performance:
+   * **Implementation Note**: Uses a hybrid approach for optimal performance:
    *
-   * - Current approach: 1× O(n) getAll() + size× O(1) array access
-   * - Alternative: 1× O(n) getPrototypeIds() + size× O(1) getByPrototypeId()
+   * - `store.getAll()` is O(1) (returns reference to internal array)
+   * - For small samples (< 50% of total): Set-based random selection, O(size)
+   * - For large samples (≥ 50% of total): Fisher-Yates shuffle, O(n)
    *
-   * Both have the same time complexity, but the current approach has better
-   * cache locality and fewer function calls, making it measurably faster in
-   * practice (especially for larger sample sizes).
+   * This hybrid approach optimizes for the common case where sample size is
+   * much smaller than the total population, while avoiding performance
+   * degradation when the sample size approaches the total size.
    */
   const getRandomSampleFromSnapshot = async (
     size: number,
@@ -208,6 +205,18 @@ export const createProtopediaInMemoryRepositoryImpl = (
     }
 
     const actualSize = Math.min(size, all.length);
+
+    // For large samples (≥50% of total), use Fisher-Yates shuffle
+    if (actualSize > all.length * 0.5) {
+      const shuffled = [...all];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j]!, shuffled[i]!];
+      }
+      return shuffled.slice(0, actualSize);
+    }
+
+    // For small samples, use Set-based collision avoidance
     const result: (typeof all)[number][] = [];
     const indices = new Set<number>();
 
