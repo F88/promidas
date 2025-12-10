@@ -244,7 +244,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
       if (!result.ok) {
         return {
           ok: false,
-          error: String(result.error),
+          error: result.error,
           status: result.status,
           code: result.details?.res?.code,
         };
