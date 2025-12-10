@@ -369,6 +369,53 @@ export class PrototypeInMemoryStore {
     return prototype as DeepReadonly<NormalizedPrototype> | null;
   }
 
+  /**
+   * Return an array of all cached prototype IDs.
+   *
+   * This method provides efficient access to prototype IDs without copying the
+   * entire prototype objects. Useful for operations that only need IDs, such as
+   * ID-based filtering, statistics, or exporting ID lists.
+   *
+   * @returns Read-only array of prototype IDs in insertion order
+   *
+   * @performance
+   * - Time complexity: O(n) - must iterate through all Map keys
+   * - Memory: Creates a new array of numbers (~40 bytes per ID)
+   * - Lighter than getAll() which copies full objects (~300+ bytes each)
+   *
+   * @example
+   * ```typescript
+   * // ✅ Good: Call once and reuse
+   * const ids = store.getPrototypeIds();
+   * const count = ids.length;
+   * const maxId = Math.max(...ids);
+   *
+   * // ✅ Good: Single-use cases
+   * return { availableIds: store.getPrototypeIds() };
+   *
+   * // ❌ Bad: Repeated calls in loops
+   * for (let i = 0; i < 1000; i++) {
+   *   const ids = store.getPrototypeIds();  // O(n) × 1000 = very slow!
+   *   const id = ids[Math.floor(Math.random() * ids.length)];
+   * }
+   *
+   * // ✅ Better: Use getAll() once for repeated access
+   * const all = store.getAll();
+   * for (let i = 0; i < 1000; i++) {
+   *   const item = all[Math.floor(Math.random() * all.length)];
+   * }
+   * ```
+   *
+   * @remarks
+   * **Performance Warning**: This method creates a new array on every call.
+   * For high-frequency operations (loops, repeated random access), prefer
+   * calling {@link getAll} once and reusing the result. The O(n) cost per
+   * call makes this unsuitable for tight loops.
+   */
+  getPrototypeIds(): readonly number[] {
+    return Array.from(this.prototypeIdIndex.keys());
+  }
+
   /** Return the lowest prototype id cached in the store, or null when empty. */
   getMinPrototypeId(): number | null {
     return this.minPrototypeId;
