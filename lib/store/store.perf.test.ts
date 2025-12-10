@@ -30,6 +30,17 @@ const createPrototype = (id: number): NormalizedPrototype => ({
   thanksFlg: 0,
 });
 
+// Helper: Get memory usage (environment agnostic)
+const getMemoryUsage = () => {
+  if (
+    typeof process !== 'undefined' &&
+    typeof process.memoryUsage === 'function'
+  ) {
+    return process.memoryUsage();
+  }
+  return null;
+};
+
 /**
  * Performance test suite for PrototypeInMemoryStore.
  *
@@ -46,6 +57,35 @@ const createPrototype = (id: number): NormalizedPrototype => ({
  * much better (see console output for real measurements).
  */
 describe('PrototypeInMemoryStore performance (non-strict)', () => {
+  /**
+   * Helper to measure execution time with warm-up and multiple iterations.
+   */
+  const measure = (fn: () => void, iterations: number = 5) => {
+    // Warm-up (for JIT optimization)
+    fn();
+
+    const durations: number[] = [];
+    for (let i = 0; i < iterations; i += 1) {
+      const start = performance.now();
+      fn();
+      const end = performance.now();
+      durations.push(end - start);
+    }
+
+    // Calculate average and median
+    const sum = durations.reduce((a, b) => a + b, 0);
+    const avg = sum / durations.length;
+    const sorted = [...durations].sort((a, b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)] ?? 0;
+
+    return {
+      avg,
+      median,
+      min: sorted[0] ?? 0,
+      max: sorted[sorted.length - 1] ?? 0,
+    };
+  };
+
   /**
    * Run a performance test case with a specific number of items.
    *
@@ -65,50 +105,46 @@ describe('PrototypeInMemoryStore performance (non-strict)', () => {
       maxDataSizeBytes: 30 * 1024 * 1024,
     });
 
-    const startSetAll = performance.now();
-    store.setAll(data);
-    const endSetAll = performance.now();
+    // Measure setAll
+    const setAllStats = measure(() => store.setAll(data));
 
-    const startGetById = performance.now();
-    for (let id = 1; id <= count; id += 1) {
-      const prototype = store.getByPrototypeId(id);
-      if (!prototype) {
-        throw new Error('Missing prototype in performance test');
+    // Measure getByPrototypeId (lookup all items)
+    const getByIdStats = measure(() => {
+      for (let id = 1; id <= count; id += 1) {
+        const prototype = store.getByPrototypeId(id);
+        if (!prototype) {
+          throw new Error('Missing prototype in performance test');
+        }
       }
-    }
-    const endGetById = performance.now();
+    });
 
-    const setAllMs = endSetAll - startSetAll;
-    const getByIdMs = endGetById - startGetById;
-
-    // Collect memory metrics in Node.js environments
-    const usage =
-      typeof globalThis.process !== 'undefined' &&
-      typeof globalThis.process.memoryUsage === 'function'
-        ? globalThis.process.memoryUsage()
-        : undefined;
+    const memory = getMemoryUsage();
 
     // Log actual measurements for documentation and regression detection
     console.log(
       `PrototypeInMemoryStore perf (${count.toLocaleString()} items):`,
       {
-        setAllMs,
-        getByIdMs,
-        memory: usage
+        setAllMs: {
+          avg: setAllStats.avg.toFixed(2),
+          median: setAllStats.median.toFixed(2),
+        },
+        getByIdMs: {
+          avg: getByIdStats.avg.toFixed(2),
+          median: getByIdStats.median.toFixed(2),
+        },
+        memory: memory
           ? {
-              rss: usage.rss,
-              heapTotal: usage.heapTotal,
-              heapUsed: usage.heapUsed,
-              external: usage.external,
+              rssMB: Math.round(memory.rss / 1024 / 1024),
+              heapUsedMB: Math.round(memory.heapUsed / 1024 / 1024),
             }
-          : 'memoryUsage not available',
+          : 'N/A',
       },
     );
 
     // Loose thresholds to avoid flakiness across environments
-    // Actual performance is typically 5-50ms for setAll, <1ms for getById
-    expect(setAllMs).toBeLessThan(1_000);
-    expect(getByIdMs).toBeLessThan(1_000);
+    // Using median to be robust against outliers
+    expect(setAllStats.median).toBeLessThan(1_000);
+    expect(getByIdStats.median).toBeLessThan(1_000);
   };
 
   it.each([1_000, 3_000, 5_000, 10_000])(
