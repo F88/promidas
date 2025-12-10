@@ -27,7 +27,6 @@ export const createConsoleLogger = (level: LogLevel = 'info'): Logger => {
       : undefined;
 
   return {
-    level,
     debug: (message, meta) => {
       if (!shouldLog(level, 'debug') || !safeDebug) {
         return;
@@ -72,7 +71,6 @@ export const createConsoleLogger = (level: LogLevel = 'info'): Logger => {
 };
 
 export const createNoopLogger = (): Logger => ({
-  level: 'silent',
   debug: () => {
     // noop
   },
