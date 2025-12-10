@@ -54,24 +54,28 @@ export interface ProtopediaInMemoryRepository {
      *
      * Only this method and `refreshSnapshot` perform HTTP calls.
      *
-     * @throws {Error} When the underlying ProtoPedia API call fails
-     * (for example, due to network issues, invalid credentials, or
-     * unexpected upstream errors). In case of failure, any existing
-     * in-memory snapshot remains unchanged.
+     * Returns a Result type indicating success with stats or failure with error details.
+     * In case of failure, any existing in-memory snapshot remains unchanged.
+     *
+     * @returns SnapshotOperationResult with ok: true and stats on success,
+     *          or ok: false with error details on failure
      */
-    setupSnapshot(params: ListPrototypesParams): Promise<void>;
+    setupSnapshot(
+        params: ListPrototypesParams,
+    ): Promise<SnapshotOperationResult>;
 
     /**
      * Refresh the snapshot using the same strategy as the last
      * `setupSnapshot` call, or a reasonable default when it has not
      * been called yet.
      *
-     * @throws {Error} When the underlying ProtoPedia API call fails
-     * (for example, due to network issues, invalid credentials, or
-     * unexpected upstream errors). In case of failure, the current
-     * in-memory snapshot is preserved.
+     * Returns a Result type indicating success with stats or failure with error details.
+     * In case of failure, the current in-memory snapshot is preserved.
+     *
+     * @returns SnapshotOperationResult with ok: true and stats on success,
+     *          or ok: false with error details on failure
      */
-    refreshSnapshot(): Promise<void>;
+    refreshSnapshot(): Promise<SnapshotOperationResult>;
     getPrototypeFromSnapshotByPrototypeId(
         prototypeId: number,
     ): Promise<DeepReadonly<NormalizedPrototype> | null>;
@@ -128,10 +132,17 @@ concrete fetch strategy (all prototypes vs a subset, page size, etc.) is
 an implementation detail of the repository.
 
 ```ts
-await repo.setupSnapshot({ offset: 0, limit: 10 });
+const result = await repo.setupSnapshot({ offset: 0, limit: 10 });
+
+if (result.ok) {
+    console.log('Setup successful, cached:', result.stats.size);
+} else {
+    console.error('Setup failed:', result.error, result.status);
+    // Handle error appropriately
+}
 ```
 
-At this point, the underlying store holds a snapshot of prototypes, and
+At this point (if successful), the underlying store holds a snapshot of prototypes, and
 all read methods will operate only on that snapshot.
 
 ### 3. Read from the snapshot
@@ -203,13 +214,20 @@ async function ensureFreshSnapshot(
 
     // If no snapshot exists, set up initial one
     if (stats.cachedAt === null) {
-        await repo.setupSnapshot({ offset: 0, limit: 100 });
+        const result = await repo.setupSnapshot({ offset: 0, limit: 100 });
+        if (!result.ok) {
+            throw new Error(`Setup failed: ${result.error}`);
+        }
         return;
     }
 
     // If snapshot is expired based on TTL, refresh it
     if (stats.isExpired) {
-        await repo.refreshSnapshot();
+        const result = await repo.refreshSnapshot();
+        if (!result.ok) {
+            console.warn(`Refresh failed: ${result.error}, using stale data`);
+            // Decide whether to throw or use stale data
+        }
     }
 }
 ```

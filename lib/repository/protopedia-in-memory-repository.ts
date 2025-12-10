@@ -34,7 +34,10 @@ import {
 } from '../store/index.js';
 import type { NormalizedPrototype } from '../types/index.js';
 
-import type { PrototypeAnalysisResult } from './types.js';
+import type {
+  PrototypeAnalysisResult,
+  SnapshotOperationResult,
+} from './types/index.js';
 
 import type { ProtopediaInMemoryRepository } from './index.js';
 
@@ -82,25 +85,41 @@ export const createProtopediaInMemoryRepositoryImpl = (
    * Fetch prototypes from ProtoPedia using the given params, normalize
    * them, and replace the entire in-memory snapshot.
    *
-   * On failure, throws an Error and leaves the previous snapshot intact.
+   * On failure, returns a Result with ok: false and leaves the previous snapshot intact.
    */
   const fetchAndNormalize = async (
     params: ListPrototypesParams,
-  ): Promise<void> => {
+  ): Promise<SnapshotOperationResult> => {
     const mergedParams: ListPrototypesParams = {
       ...DEFAULT_FETCH_PARAMS,
       ...params,
     };
 
-    const result = await apiClient.fetchPrototypes(mergedParams);
+    try {
+      const result = await apiClient.fetchPrototypes(mergedParams);
 
-    if (!result.ok) {
-      const message = constructDisplayMessage(result);
-      throw new Error(message);
+      if (!result.ok) {
+        return {
+          ok: false,
+          error: String(result.error),
+          status: result.status,
+          code: result.details?.res?.code,
+        };
+      }
+
+      store.setAll(result.data);
+      lastFetchParams = { ...mergedParams };
+
+      return {
+        ok: true,
+        stats: store.getStats(),
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
     }
-
-    store.setAll(result.data);
-    lastFetchParams = { ...mergedParams };
   };
 
   /**
@@ -124,16 +143,18 @@ export const createProtopediaInMemoryRepositoryImpl = (
    * Initialize the in-memory snapshot using the provided fetch params.
    * Typically called once at startup or before the first read.
    */
-  const setupSnapshot = async (params: ListPrototypesParams): Promise<void> => {
-    await fetchAndNormalize(params);
+  const setupSnapshot = async (
+    params: ListPrototypesParams,
+  ): Promise<SnapshotOperationResult> => {
+    return fetchAndNormalize(params);
   };
 
   /**
    * Refresh the in-memory snapshot using the last successful fetch params.
    * If no previous fetch exists, falls back to {@link DEFAULT_FETCH_PARAMS}.
    */
-  const refreshSnapshot = async (): Promise<void> => {
-    await fetchAndNormalize(lastFetchParams);
+  const refreshSnapshot = async (): Promise<SnapshotOperationResult> => {
+    return fetchAndNormalize(lastFetchParams);
   };
 
   /**
@@ -327,4 +348,24 @@ export const createProtopediaInMemoryRepositoryImpl = (
     analyzePrototypesWithForLoop,
     analyzePrototypesWithReduce,
   } as ProtopediaInMemoryRepository;
+};
+
+/**
+ * Create an in-memory repository for ProtoPedia prototypes.
+ *
+ * This is the public factory function that creates a repository instance.
+ * See {@link createProtopediaInMemoryRepositoryImpl} for implementation details.
+ *
+ * @param storeConfig - Configuration for the underlying in-memory store
+ * @param protopediaApiClientOptions - Optional HTTP client configuration
+ * @returns A configured repository instance
+ */
+export const createProtopediaInMemoryRepository = (
+  storeConfig: PrototypeInMemoryStoreConfig,
+  protopediaApiClientOptions?: ProtoPediaApiClientOptions,
+): ProtopediaInMemoryRepository => {
+  return createProtopediaInMemoryRepositoryImpl(
+    storeConfig,
+    protopediaApiClientOptions,
+  );
 };

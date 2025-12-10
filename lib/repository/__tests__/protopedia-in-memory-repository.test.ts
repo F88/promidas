@@ -125,13 +125,14 @@ describe('createInMemoryRepositoryImpl', () => {
       expect(found?.prototypeNm).toBe('override test');
     });
 
-    it('throws a normalized error message when fetchPrototypes returns ok: false', async () => {
+    it('returns failure result when fetchPrototypes returns ok: false', async () => {
       fetchPrototypesMock.mockResolvedValueOnce({
         ok: false,
         status: 500,
-        errorCode: 'INTERNAL_ERROR',
-        errorDetails: 'Upstream failure',
-        errorMessage: 'Internal server error',
+        error: 'Internal server error',
+        details: {
+          res: { code: 'INTERNAL_ERROR' },
+        },
       });
 
       const repo = createProtopediaInMemoryRepositoryImpl(
@@ -139,9 +140,14 @@ describe('createInMemoryRepositoryImpl', () => {
         {},
       );
 
-      await expect(repo.setupSnapshot({})).rejects.toThrow(
-        'Unknown error occurred. (500)',
-      );
+      const result = await repo.setupSnapshot({});
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toBe('Internal server error');
+        expect(result.status).toBe(500);
+        expect(result.code).toBe('INTERNAL_ERROR');
+      }
 
       const stats = repo.getStats();
       expect(stats.size).toBe(0);
@@ -291,7 +297,12 @@ describe('createInMemoryRepositoryImpl', () => {
       const beforeStats = repo.getStats();
       expect(beforeStats.size).toBe(1);
 
-      await expect(repo.refreshSnapshot()).rejects.toThrow('network failure');
+      const result = await repo.refreshSnapshot();
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toBe('network failure');
+      }
 
       const afterStats = repo.getStats();
       expect(afterStats.size).toBe(1);
@@ -772,48 +783,63 @@ describe('createInMemoryRepositoryImpl', () => {
   });
 
   describe('error handling', () => {
-    it('throws error with 404 status code details', async () => {
+    it('returns failure result with 404 status code details', async () => {
       fetchPrototypesMock.mockResolvedValueOnce({
         ok: false,
         status: 404,
-        errorCode: 'NOT_FOUND',
-        errorDetails: 'Resource not found',
-        errorMessage: 'Not found',
+        error: 'Not found',
+        details: {
+          res: { code: 'NOT_FOUND' },
+        },
       });
 
       const repo = createProtopediaInMemoryRepositoryImpl({}, {});
 
-      await expect(repo.setupSnapshot({})).rejects.toThrow(
-        'Unknown error occurred. (404)',
-      );
+      const result = await repo.setupSnapshot({});
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toBe('Not found');
+        expect(result.status).toBe(404);
+        expect(result.code).toBe('NOT_FOUND');
+      }
     });
 
-    it('throws error with 401 status code details', async () => {
+    it('returns failure result with 401 status code details', async () => {
       fetchPrototypesMock.mockResolvedValueOnce({
         ok: false,
         status: 401,
-        errorCode: 'UNAUTHORIZED',
-        errorDetails: 'Invalid credentials',
-        errorMessage: 'Unauthorized',
+        error: 'Unauthorized',
+        details: {
+          res: { code: 'UNAUTHORIZED' },
+        },
       });
 
       const repo = createProtopediaInMemoryRepositoryImpl({}, {});
 
-      await expect(repo.setupSnapshot({})).rejects.toThrow(
-        'Unknown error occurred. (401)',
-      );
+      const result = await repo.setupSnapshot({});
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toBe('Unauthorized');
+        expect(result.status).toBe(401);
+        expect(result.code).toBe('UNAUTHORIZED');
+      }
     });
 
-    it('handles network exceptions during setupSnapshot', async () => {
+    it('returns failure result for network exceptions during setupSnapshot', async () => {
       fetchPrototypesMock.mockRejectedValueOnce(
         new Error('ECONNREFUSED: Connection refused'),
       );
 
       const repo = createProtopediaInMemoryRepositoryImpl({}, {});
 
-      await expect(repo.setupSnapshot({})).rejects.toThrow(
-        'ECONNREFUSED: Connection refused',
-      );
+      const result = await repo.setupSnapshot({});
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toBe('ECONNREFUSED: Connection refused');
+      }
     });
 
     it('allows successful setup after a failed attempt', async () => {
@@ -826,14 +852,17 @@ describe('createInMemoryRepositoryImpl', () => {
 
       const repo = createProtopediaInMemoryRepositoryImpl({}, {});
 
-      await expect(repo.setupSnapshot({})).rejects.toThrow(
-        'First attempt failed',
-      );
+      const failResult = await repo.setupSnapshot({});
+      expect(failResult.ok).toBe(false);
+      if (!failResult.ok) {
+        expect(failResult.error).toBe('First attempt failed');
+      }
 
       let stats = repo.getStats();
       expect(stats.size).toBe(0);
 
-      await repo.setupSnapshot({});
+      const successResult = await repo.setupSnapshot({});
+      expect(successResult.ok).toBe(true);
 
       stats = repo.getStats();
       expect(stats.size).toBe(1);
@@ -857,14 +886,17 @@ describe('createInMemoryRepositoryImpl', () => {
       const repo = createProtopediaInMemoryRepositoryImpl({}, {});
       await repo.setupSnapshot({});
 
-      await expect(repo.refreshSnapshot()).rejects.toThrow(
-        'Temporary network issue',
-      );
+      const failResult = await repo.refreshSnapshot();
+      expect(failResult.ok).toBe(false);
+      if (!failResult.ok) {
+        expect(failResult.error).toBe('Temporary network issue');
+      }
 
       const oldProto = await repo.getPrototypeFromSnapshotByPrototypeId(1);
       expect(oldProto?.prototypeNm).toBe('initial');
 
-      await repo.refreshSnapshot();
+      const successResult = await repo.refreshSnapshot();
+      expect(successResult.ok).toBe(true);
 
       const newProto = await repo.getPrototypeFromSnapshotByPrototypeId(2);
       expect(newProto?.prototypeNm).toBe('recovered');
