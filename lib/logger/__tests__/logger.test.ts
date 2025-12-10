@@ -349,7 +349,7 @@ describe('logger', () => {
       expect(typeof noopLogger.error).toBe('function');
     });
 
-    it('both logger types have level property', () => {
+    it('both logger types have same method signatures', () => {
       const consoleLogger = createConsoleLogger('warn');
       const noopLogger = createNoopLogger();
 
