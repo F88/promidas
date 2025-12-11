@@ -89,7 +89,7 @@ export function parseAsProtoPediaTimestamp(value: string): string | undefined {
  * @param value - String to parse
  * @returns UTC ISO string if valid, undefined otherwise
  */
-export function parseDateString(value: string): string | undefined {
+export function parseDateTimeString(value: string): string | undefined {
   if (!value) {
     return undefined;
   }
@@ -112,7 +112,7 @@ export function parseDateString(value: string): string | undefined {
  *    - Timezone: Always treated as JST (UTC+9)
  *    - Returns UTC ISO string with JST offset subtracted
  *
- * 2. **Flexible date strings** (`parseDateString`):
+ * 2. **Flexible date strings** (`parseDateTimeString`):
  *    - Accepts any format parseable by JavaScript's `Date` constructor
  *    - Includes ISO 8601 with timezone (Z or ±HH:MM), local time, etc.
  *    - Returns UTC ISO string based on the parsed result
@@ -129,7 +129,7 @@ export function parseDateString(value: string): string | undefined {
  * **Testing note**:
  * This function is primarily tested through integration scenarios.
  * Detailed format validation and edge cases are covered by unit tests
- * for `parseAsProtoPediaTimestamp` and `parseDateString`.
+ * for `parseAsProtoPediaTimestamp` and `parseDateTimeString`.
  *
  * @param value - Timestamp string, null, or undefined from API response
  * @returns UTC ISO string, null, undefined, or original value
@@ -170,7 +170,7 @@ export function normalizeProtoPediaTimestamp(
   }
 
   // Fall back to flexible date parsing (handles ISO 8601, local time, etc.)
-  const dateStringResult = parseDateString(value);
+  const dateStringResult = parseDateTimeString(value);
   if (dateStringResult !== undefined) {
     return dateStringResult;
   }
