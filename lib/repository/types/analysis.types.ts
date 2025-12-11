@@ -57,7 +57,7 @@ export type TagCount = {
  * Extended statistics from analyzing prototypes in the snapshot.
  *
  * All statistics are based on the current snapshot data only.
- * Does not represent全 ProtoPedia data.
+ * Does not represent 全 ProtoPedia data.
  *
  * @example
  * ```typescript
