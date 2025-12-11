@@ -343,12 +343,87 @@ function analyzeFieldPresence(data: Array<Record<string, unknown>>): void {
     }
   }
 
+  // Type definition recommendations
+  console.log('\n## Type Definition Recommendations');
+
+  // Required vs Optional fields
+  const requiredFields = sortedStats.filter((s) => s.presenceRate === 100);
+  const optionalFields = sortedStats.filter((s) => s.presenceRate < 100);
+
+  console.log(`\nRequired fields (100% present): ${requiredFields.length}`);
+  console.log(`  ${requiredFields.map((s) => s.field).join(', ')}`);
+
+  console.log(`\nOptional fields (<100% present): ${optionalFields.length}`);
+  const criticalOptional = optionalFields.filter((s) => s.presenceRate >= 90);
+  if (criticalOptional.length > 0) {
+    console.log(
+      `  Critical (90-99%, consider required): ${criticalOptional.map((s) => `${s.field} (${s.presenceRate}%)`).join(', ')}`,
+    );
+  }
+
+  // Type mapping suggestions
+  console.log('\n## Type Mapping Suggestions');
+  const typeGroups = new Map<string, FieldStats[]>();
+  for (const stat of sortedStats) {
+    const key = stat.isPipeSeparated ? 'pipe-separated' : stat.type;
+    if (!typeGroups.has(key)) {
+      typeGroups.set(key, []);
+    }
+    typeGroups.get(key)!.push(stat);
+  }
+
+  for (const [type, fields] of typeGroups) {
+    if (fields.length > 0) {
+      console.log(`\n${type} (${fields.length} fields):`);
+      if (type === 'string') {
+        console.log(
+          `  Max length observed: ${Math.max(...fields.map((f) => f.max || 0))}`,
+        );
+        console.log(`  Fields: ${fields.map((f) => f.field).join(', ')}`);
+      } else if (type === 'pipe-separated') {
+        console.log(
+          `  Max elements: ${Math.max(...fields.map((f) => f.max || 0))}`,
+        );
+        console.log(`  Normalized to: string[] (after splitting by '|')`);
+        console.log(`  Fields: ${fields.map((f) => f.field).join(', ')}`);
+      } else if (type === 'number') {
+        console.log(
+          `  Range: ${Math.min(...fields.map((f) => f.min || 0))} to ${Math.max(...fields.map((f) => f.max || 0))}`,
+        );
+        console.log(`  Fields: ${fields.map((f) => f.field).join(', ')}`);
+      } else {
+        console.log(`  Fields: ${fields.map((f) => f.field).join(', ')}`);
+      }
+    }
+  }
+
+  // Data quality issues
+  console.log('\n## Data Quality Issues');
+  const emptyStringFields = sortedStats.filter((s) => s.emptyString > 0);
+  if (emptyStringFields.length > 0) {
+    console.log('\nFields with empty strings:');
+    for (const stat of emptyStringFields) {
+      const emptyRate = Math.round((stat.emptyString / total) * 10000) / 100;
+      console.log(`  ${stat.field}: ${stat.emptyString} (${emptyRate}%)`);
+    }
+  }
+
+  const highMissingRate = sortedStats.filter(
+    (s) => s.missing > 0 && s.presenceRate < 50,
+  );
+  if (highMissingRate.length > 0) {
+    console.log('\nFields with high missing rate (>50%):');
+    for (const stat of highMissingRate) {
+      console.log(`  ${stat.field}: ${100 - stat.presenceRate}% missing`);
+    }
+  }
+
   // Additional fields section
   if (additionalFields.length > 0) {
     console.log('\n## Additional Fields (not in NormalizedPrototype)');
     for (const field of additionalFields) {
       const stat = stats.get(field)!;
-      console.log(`  ${field}: ${stat.presenceRate}%`);
+      console.log(`  ${field}: ${stat.presenceRate}% (type: ${stat.type})`);
     }
   }
 }
