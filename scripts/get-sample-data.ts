@@ -5,8 +5,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createProtoPediaClient } from 'protopedia-api-v2-client';
 
 const PROTOTYPE_SAMPLE_OFFSET = 0;
-// const PROTOTYPE_SAMPLE_COUNT = 100;
-const PROTOTYPE_SAMPLE_COUNT = 10_000;
+const PROTOTYPE_SAMPLE_COUNT = 100;
+// const PROTOTYPE_SAMPLE_COUNT = 10_000;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -31,8 +31,12 @@ const durationFormatter = new Intl.NumberFormat(undefined, {
 const formatDurationMs = (durationMs: number) =>
   durationFormatter.format(Math.round(durationMs));
 
-const buildOutputPath = (timestamp: string, extension: 'json' | 'tsv') => {
-  const filename = `${timestamp}-prototypes-${PROTOTYPE_SAMPLE_COUNT}.${extension}`;
+const buildOutputPath = (
+  timestamp: string,
+  count: number,
+  extension: 'json' | 'tsv',
+) => {
+  const filename = `${timestamp}-prototypes-${count}.${extension}`;
   const absolutePath = join(SAMPLE_DATA_DIR, filename);
   const relativePath = relative(process.cwd(), absolutePath);
   return { absolutePath, relativePath };
@@ -87,7 +91,11 @@ export async function savePrototypesJsonToFile({
   );
 
   const timestamp = formatTimestamp(new Date());
-  const { absolutePath, relativePath } = buildOutputPath(timestamp, 'json');
+  const { absolutePath, relativePath } = buildOutputPath(
+    timestamp,
+    limit,
+    'json',
+  );
 
   await mkdir(dirname(absolutePath), { recursive: true });
   await writeFile(absolutePath, jsonPayload, 'utf8');
@@ -112,7 +120,11 @@ export async function savePrototypesTSVToFile({
   );
 
   const timestamp = formatTimestamp(new Date());
-  const { absolutePath, relativePath } = buildOutputPath(timestamp, 'tsv');
+  const { absolutePath, relativePath } = buildOutputPath(
+    timestamp,
+    limit,
+    'tsv',
+  );
 
   await mkdir(dirname(absolutePath), { recursive: true });
   await writeFile(absolutePath, res, 'utf8');
