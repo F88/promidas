@@ -43,6 +43,23 @@ type SavePrototypesOptions = {
   offset?: number;
 };
 
+function getApiClient() {
+  const token = process.env.PROTOPEDIA_API_V2_TOKEN;
+  if (!token || token === 'your_token_here') {
+    throw new Error('PROTOPEDIA_API_V2_TOKEN is required to fetch prototypes.');
+  }
+
+  const baseApiUrl = (
+    process.env.PROTOPEDIA_API_V2_BASE_URL ?? 'https://protopedia.net/v2/api'
+  ).replace(/\/+$/, '');
+
+  return createProtoPediaClient({
+    token: token,
+    baseUrl: baseApiUrl,
+    // logLevel: 'debug',
+  });
+}
+
 /**
  * Fetch prototypes(JSON) and persist them as JSON for local inspection.
  */
@@ -53,20 +70,7 @@ export async function savePrototypesJsonToFile({
   // Next.js を利用せずCLIから直接実行するため、既存のfetcherは利用しない。
   // const prototypes = await getPrototypes({ limit, offset });
 
-  const token = process.env.PROTOPEDIA_API_V2_TOKEN;
-  if (!token || token === 'your_token_here') {
-    throw new Error('PROTOPEDIA_API_V2_TOKEN is required to fetch prototypes.');
-  }
-
-  const baseApiUrl = (
-    process.env.PROTOPEDIA_API_V2_BASE_URL ?? 'https://protopedia.net/v2/api'
-  ).replace(/\/+$/, '');
-
-  const protopedia = createProtoPediaClient({
-    token: token,
-    baseUrl: baseApiUrl,
-    // logLevel: 'debug',
-  });
+  const protopedia = getApiClient();
 
   console.info(
     `Fetching up to ${limit} prototypes (JSON) starting at offset ${offset}...`,
@@ -94,20 +98,7 @@ export async function savePrototypesTSVToFile({
   limit = PROTOTYPE_SAMPLE_COUNT,
   offset = PROTOTYPE_SAMPLE_OFFSET,
 }: SavePrototypesOptions = {}) {
-  const token = process.env.PROTOPEDIA_API_V2_TOKEN;
-  if (!token || token === 'your_token_here') {
-    throw new Error('PROTOPEDIA_API_V2_TOKEN is required to fetch prototypes.');
-  }
-
-  const baseApiUrl = (
-    process.env.PROTOPEDIA_API_V2_BASE_URL ?? 'https://protopedia.net/v2/api'
-  ).replace(/\/+$/, '');
-
-  const protopedia = createProtoPediaClient({
-    token: token,
-    baseUrl: baseApiUrl,
-    // logLevel: 'debug',
-  });
+  const protopedia = getApiClient();
 
   console.info(
     `Fetching up to ${limit} prototypes (TSV) starting at offset ${offset}...`,
