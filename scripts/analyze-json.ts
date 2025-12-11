@@ -200,7 +200,7 @@ function analyzeFieldPresence(data: Array<Record<string, unknown>>): void {
           // Pipe-separated field: count elements
           stat.type = 'string';
           stat.isPipeSeparated = true;
-          const elements = value.split('|').filter((v) => v.trim() !== '');
+          const elements = value.split('|');
           values.push(elements.length);
         } else if (typeof value === 'string') {
           stat.type = 'string';
