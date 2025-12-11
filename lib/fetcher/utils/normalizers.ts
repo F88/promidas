@@ -74,53 +74,6 @@ export const splitPipeSeparatedString = (value: string): string[] => {
 };
 
 /**
- * Assign a pipe-separated field to the target if it exists in the source.
- *
- * Helper function to reduce repetition when normalizing optional
- * pipe-separated fields. Checks if the field exists in the source object,
- * and if so, transforms it using the provided transform function.
- *
- * @param target - The target object to assign to.
- * @param source - The source object to read from.
- * @param key - The property key to process.
- * @param transform - Function to transform the string value into an array.
- */
-function assignPipeSeparatedIfExists<
-  K extends keyof NormalizedPrototype & keyof UpstreamPrototype,
->(
-  target: NormalizedPrototype,
-  source: UpstreamPrototype,
-  key: K,
-  transform: (value: string) => string[],
-): void {
-  if (key in source) {
-    const value = source[key];
-    target[key] = (
-      value && typeof value === 'string' ? transform(value) : []
-    ) as NormalizedPrototype[K];
-  }
-}
-
-/**
- * Assign a field to the target if it is defined in the source.
- *
- * Helper function to reduce repetition when normalizing optional fields.
- * Only assigns the field if its value is not `undefined`.
- *
- * @param target - The target object to assign to.
- * @param source - The source object to read from.
- * @param key - The property key to process.
- */
-function assignIfDefined<
-  K extends keyof NormalizedPrototype & keyof UpstreamPrototype,
->(target: NormalizedPrototype, source: UpstreamPrototype, key: K): void {
-  const value = source[key];
-  if (value !== undefined) {
-    target[key] = value as unknown as NormalizedPrototype[K];
-  }
-}
-
-/**
  * Transform an upstream prototype object into the normalized shape.
  *
  * This function maps all fields from {@link UpstreamPrototype} to
@@ -154,71 +107,62 @@ function assignIfDefined<
  * // normalized.createDate => Date or original string
  * ```
  */
-export function normalizePrototype(
-  prototype: UpstreamPrototype,
-): NormalizedPrototype {
-  const normalized: NormalizedPrototype = {
-    id: prototype.id,
-    prototypeNm: prototype.prototypeNm,
-    teamNm: prototype.teamNm,
-    users: prototype.users ? splitPipeSeparatedString(prototype.users) : [],
-    status: prototype.status,
-    releaseFlg: prototype.releaseFlg,
-    createDate:
-      normalizeProtoPediaTimestamp(prototype.createDate) ??
-      prototype.createDate,
-    updateDate:
-      normalizeProtoPediaTimestamp(prototype.updateDate) ??
-      prototype.updateDate,
-    releaseDate:
-      normalizeProtoPediaTimestamp(prototype.releaseDate) ??
-      prototype.releaseDate,
-    revision: prototype.revision,
-    freeComment: prototype.freeComment,
-    viewCount: prototype.viewCount,
-    goodCount: prototype.goodCount,
-    commentCount: prototype.commentCount,
-    mainUrl: prototype.mainUrl,
-    licenseType: prototype.licenseType,
-    thanksFlg: prototype.thanksFlg,
-  };
+export function normalizePrototype(p: UpstreamPrototype): NormalizedPrototype {
+  const normalized = {
+    /* ID */
+    id: p.id,
 
-  // Optional fields - only set if defined or explicitly set to empty/null
-  assignPipeSeparatedIfExists(
-    normalized,
-    prototype,
-    'tags',
-    splitPipeSeparatedString,
-  );
-  assignIfDefined(normalized, prototype, 'summary');
-  assignIfDefined(normalized, prototype, 'createId');
-  assignIfDefined(normalized, prototype, 'updateId');
-  assignPipeSeparatedIfExists(
-    normalized,
-    prototype,
-    'awards',
-    splitPipeSeparatedString,
-  );
-  assignIfDefined(normalized, prototype, 'systemDescription');
-  assignIfDefined(normalized, prototype, 'videoUrl');
-  assignIfDefined(normalized, prototype, 'relatedLink');
-  assignIfDefined(normalized, prototype, 'relatedLink2');
-  assignIfDefined(normalized, prototype, 'relatedLink3');
-  assignIfDefined(normalized, prototype, 'relatedLink4');
-  assignIfDefined(normalized, prototype, 'relatedLink5');
-  assignPipeSeparatedIfExists(
-    normalized,
-    prototype,
-    'events',
-    splitPipeSeparatedString,
-  );
-  assignIfDefined(normalized, prototype, 'officialLink');
-  assignPipeSeparatedIfExists(
-    normalized,
-    prototype,
-    'materials',
-    splitPipeSeparatedString,
-  );
+    /* Editorial information  */
+    // Always ProtoPedia format → UTC ISO string
+    createDate: normalizeProtoPediaTimestamp(p.createDate) ?? p.createDate,
+    // Always ProtoPedia format → UTC ISO string
+    updateDate: normalizeProtoPediaTimestamp(p.updateDate) ?? p.updateDate,
+    // ProtoPedia format → UTC ISO string, null or undefined → undefined
+    releaseDate: normalizeProtoPediaTimestamp(p.releaseDate) ?? undefined,
+    createId: p.createId,
+    updateId: p.updateId,
+    releaseFlg: p.releaseFlg ?? 2 /* Default to 'Released' */,
+
+    /* Basic information */
+    status: p.status,
+    prototypeNm: p.prototypeNm,
+    summary: p.summary ?? '',
+    freeComment: p.freeComment ?? '',
+    systemDescription: p.systemDescription ?? '',
+
+    /** Users and Team */
+    users: p.users ? splitPipeSeparatedString(p.users) : [],
+    teamNm: p.teamNm ?? '',
+
+    /** Tags, Materials, Events, and Awards */
+    tags: p.tags ? splitPipeSeparatedString(p.tags) : [],
+    materials: p.materials ? splitPipeSeparatedString(p.materials) : [],
+    events: p.events ? splitPipeSeparatedString(p.events) : [],
+    awards: p.awards ? splitPipeSeparatedString(p.awards) : [],
+
+    /* URLs */
+    officialLink: p.officialLink,
+    videoUrl: p.videoUrl,
+    mainUrl: p.mainUrl,
+    relatedLink: p.relatedLink,
+    relatedLink2: p.relatedLink2,
+    relatedLink3: p.relatedLink3,
+    relatedLink4: p.relatedLink4,
+    relatedLink5: p.relatedLink5,
+
+    /* counts */
+    viewCount: p.viewCount,
+    goodCount: p.goodCount,
+    commentCount: p.commentCount,
+
+    /* Others */
+    uuid: p.uuid,
+    nid: p.nid,
+    revision: p.revision ?? 0,
+    licenseType: p.licenseType ?? 1,
+    thanksFlg: p.thanksFlg ?? 0,
+    slideMode: p.slideMode,
+  } satisfies NormalizedPrototype;
 
   return normalized;
 }
