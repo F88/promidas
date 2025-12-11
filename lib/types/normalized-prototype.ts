@@ -7,10 +7,10 @@ export type NormalizedPrototype = {
 
   /* Editorial information  */
   createDate: string;
-  updateDate?: string;
-  releaseDate?: string;
-  createId?: number;
-  updateId?: number;
+  updateDate?: undefined | string;
+  releaseDate?: undefined | string;
+  createId?: undefined | number;
+  updateId?: undefined | number;
   releaseFlg: number;
 
   /* Basic information */
@@ -32,28 +32,27 @@ export type NormalizedPrototype = {
 
   /* URLs */
   // URL of official site (if any)
-  officialLink?: string;
+  officialLink?: undefined | string;
   // URL of YouTube or Vimeo video (if any)
-  videoUrl?: string;
+  videoUrl?: undefined | string;
   // URL of eyecatch image
   mainUrl: string;
   // URLs of related link
-  relatedLink?: string;
-  relatedLink2?: string;
-  relatedLink3?: string;
-  relatedLink4?: string;
-  relatedLink5?: string;
-
+  relatedLink?: undefined | string;
+  relatedLink2?: undefined | string;
+  relatedLink3?: undefined | string;
+  relatedLink4?: undefined | string;
+  relatedLink5?: undefined | string;
   /* counts */
   viewCount: number;
   goodCount: number;
   commentCount: number;
 
   /* Others */
-  uuid?: string;
-  nid?: string;
-  revision?: number;
-  licenseType?: number;
-  thanksFlg?: number;
-  slideMode?: number;
+  uuid?: undefined | string;
+  nid?: undefined | string;
+  revision?: undefined | number;
+  licenseType?: undefined | number;
+  thanksFlg?: undefined | number;
+  slideMode?: undefined | number;
 };
