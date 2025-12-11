@@ -58,7 +58,7 @@ Please refer to the API documentation for details:
 
 ## Full Supported API Client
 
-This library fully supports [protopedia-api-v2-client](https://www.npmjs.com/package/protopedia-api-v2-client).
+This library fully supports [protopedia-api-v2-client](https://www.npmjs.com/package/protopedia-api-v2-client) v3.0.0 and later.
 
 For details on how to integrate with `protopedia-api-v2-client` and use custom fetchers (e.g. for Next.js), please refer to [`lib/fetcher/docs/USAGE.md`](lib/fetcher/docs/USAGE.md).
 

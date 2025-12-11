@@ -84,6 +84,8 @@ export const splitPipeSeparatedString = (value: string): string[] => {
  * - Date fields (createDate, updateDate, releaseDate) are normalized
  *   using {@link normalizeProtoPediaTimestamp}, falling back to the
  *   original string if normalization fails.
+ * - Optional fields (introduced in protopedia-api-v2-client v3.0.0)
+ *   are assigned appropriate default values when missing or null.
  * - All other fields are copied as-is.
  *
  * @param prototype - The raw prototype object from the ProtoPedia API.
@@ -97,14 +99,14 @@ export const splitPipeSeparatedString = (value: string): string[] => {
  *   prototypeNm: 'My Project',
  *   tags: 'IoT|AI|Robotics',
  *   users: 'user1|user2',
- *   createDate: '2024-01-01T00:00:00Z',
+ *   createDate: '2024-01-01 00:00:00',
  *   // ...other fields
  * };
  *
  * const normalized = normalizePrototype(upstream);
  * // normalized.tags => ['IoT', 'AI', 'Robotics']
  * // normalized.users => ['user1', 'user2']
- * // normalized.createDate => Date or original string
+ * // normalized.createDate => '2023-12-31T15:00:00.000Z' (JST → UTC)
  * ```
  */
 export function normalizePrototype(p: UpstreamPrototype): NormalizedPrototype {
