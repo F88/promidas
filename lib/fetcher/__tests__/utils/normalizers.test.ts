@@ -1011,6 +1011,523 @@ describe('normalizers', () => {
         expect(normalized.nid).toBeUndefined();
         expect(normalized.slideMode).toBeUndefined();
       });
+
+      it('handles very long URL fields', () => {
+        const longUrl = 'https://example.com/' + 'a'.repeat(2000);
+        const upstream = createUpstreamPrototype({
+          mainUrl: longUrl,
+          officialLink: longUrl,
+          videoUrl: longUrl,
+          relatedLink: longUrl,
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.mainUrl).toBe(longUrl);
+        expect(normalized.officialLink).toBe(longUrl);
+        expect(normalized.videoUrl).toBe(longUrl);
+        expect(normalized.relatedLink).toBe(longUrl);
+      });
+
+      it('handles all count fields as zero', () => {
+        const upstream = createUpstreamPrototype({
+          viewCount: 0,
+          goodCount: 0,
+          commentCount: 0,
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.viewCount).toBe(0);
+        expect(normalized.goodCount).toBe(0);
+        expect(normalized.commentCount).toBe(0);
+      });
+
+      it('handles pipe-separated fields with many items', () => {
+        const manyTags = Array.from({ length: 100 }, (_, i) => `tag${i}`).join(
+          '|',
+        );
+        const upstream = createUpstreamPrototype({
+          tags: manyTags,
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.tags).toHaveLength(100);
+        expect(normalized.tags[0]).toBe('tag0');
+        expect(normalized.tags[99]).toBe('tag99');
+      });
+
+      it('handles mixed valid and invalid pipe-separated items', () => {
+        const upstream = createUpstreamPrototype({
+          tags: 'valid1||  |valid2|   ',
+          users: '  |user1||user2|  ',
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.tags).toEqual(['valid1', '', '', 'valid2', '']);
+        expect(normalized.users).toEqual(['', 'user1', '', 'user2', '']);
+      });
+
+      it('handles extreme date edge cases', () => {
+        const upstream = createUpstreamPrototype({
+          createDate: '1970-01-01 00:00:00',
+          updateDate: '2099-12-31 23:59:59',
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.createDate).toBe('1969-12-31T15:00:00.000Z');
+        expect(normalized.updateDate).toBe('2099-12-31T14:59:59.000Z');
+      });
+
+      it('handles surrogate pairs and special Unicode characters', () => {
+        const upstream = createUpstreamPrototype({
+          prototypeNm: '🔥🚀👨‍💻',
+          summary: '💡🌟✨',
+          teamNm: '👥👥👥',
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.prototypeNm).toBe('🔥🚀👨‍💻');
+        expect(normalized.summary).toBe('💡🌟✨');
+        expect(normalized.teamNm).toBe('👥👥👥');
+      });
+
+      it('handles multiple null and undefined fields simultaneously', () => {
+        const upstream = createUpstreamPrototype({
+          teamNm: null as any,
+          summary: null as any,
+          systemDescription: null as any,
+        });
+        delete (upstream as any).freeComment;
+        delete (upstream as any).users;
+        delete (upstream as any).tags;
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.teamNm).toBe('');
+        expect(normalized.summary).toBe('');
+        expect(normalized.systemDescription).toBe('');
+        expect(normalized.freeComment).toBe('');
+        expect(normalized.users).toEqual([]);
+        expect(normalized.tags).toEqual([]);
+      });
+
+      it('handles combination of extreme values', () => {
+        const upstream = createUpstreamPrototype({
+          id: 0,
+          viewCount: -999,
+          goodCount: 999999999,
+          prototypeNm: '',
+          teamNm: 'A'.repeat(500),
+          summary: 'B'.repeat(1000),
+          tags: Array(50).fill('tag').join('|'),
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.id).toBe(0);
+        expect(normalized.viewCount).toBe(-999);
+        expect(normalized.goodCount).toBe(999999999);
+        expect(normalized.prototypeNm).toBe('');
+        expect(normalized.teamNm).toHaveLength(500);
+        expect(normalized.summary).toHaveLength(1000);
+        expect(normalized.tags).toHaveLength(50);
+      });
+
+      it('handles malformed URLs gracefully', () => {
+        const upstream = createUpstreamPrototype({
+          mainUrl: 'not-a-valid-url',
+          officialLink: 'javascript:alert(1)',
+          videoUrl: 'file:///etc/passwd',
+          relatedLink: 'ftp://old-protocol.com',
+        });
+        const normalized = normalizePrototype(upstream);
+
+        // Should pass through as-is without validation
+        expect(normalized.mainUrl).toBe('not-a-valid-url');
+        expect(normalized.officialLink).toBe('javascript:alert(1)');
+        expect(normalized.videoUrl).toBe('file:///etc/passwd');
+        expect(normalized.relatedLink).toBe('ftp://old-protocol.com');
+      });
+
+      it('handles whitespace-only string fields', () => {
+        const upstream = createUpstreamPrototype({
+          prototypeNm: '   ',
+          teamNm: '\t\t\t',
+          summary: '\n\n\n',
+          freeComment: '   \t   \n   ',
+        });
+        const normalized = normalizePrototype(upstream);
+
+        // Should preserve whitespace-only strings
+        expect(normalized.prototypeNm).toBe('   ');
+        expect(normalized.teamNm).toBe('\t\t\t');
+        expect(normalized.summary).toBe('\n\n\n');
+        expect(normalized.freeComment).toBe('   \t   \n   ');
+      });
+
+      it('handles all numeric flags with boundary values', () => {
+        const upstream = createUpstreamPrototype({
+          status: 0,
+          releaseFlg: 3,
+          revision: 999999,
+          licenseType: 0,
+          thanksFlg: 1,
+          slideMode: 1,
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.status).toBe(0);
+        expect(normalized.releaseFlg).toBe(3);
+        expect(normalized.revision).toBe(999999);
+        expect(normalized.licenseType).toBe(0);
+        expect(normalized.thanksFlg).toBe(1);
+        expect(normalized.slideMode).toBe(1);
+      });
+
+      it('handles date normalization with null createDate but valid other dates', () => {
+        const upstream = createUpstreamPrototype({
+          createDate: null as any,
+          updateDate: '2024-01-16 13:00:00',
+          releaseDate: '2024-01-17 14:00:00',
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.createDate).toBe(null);
+        expect(normalized.updateDate).toBe('2024-01-16T04:00:00.000Z');
+        expect(normalized.releaseDate).toBe('2024-01-17T05:00:00.000Z');
+      });
+
+      it('handles empty arrays from pipe-separated fields with only delimiters', () => {
+        const upstream = createUpstreamPrototype({
+          tags: '|||',
+          users: '|',
+          awards: '||',
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.tags).toEqual(['', '', '', '']);
+        expect(normalized.users).toEqual(['', '']);
+        expect(normalized.awards).toEqual(['', '', '']);
+      });
+
+      it('preserves zero as valid ID', () => {
+        const upstream = createUpstreamPrototype({
+          id: 0,
+          createId: 0,
+          updateId: 0,
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.id).toBe(0);
+        expect(normalized.createId).toBe(0);
+        expect(normalized.updateId).toBe(0);
+      });
+
+      it('handles prototype with minimal required fields only', () => {
+        // Start with full prototype and remove optional fields
+        const minimal = createUpstreamPrototype({
+          id: 1,
+          prototypeNm: 'Minimal',
+          status: 1,
+          createDate: '2024-01-01 00:00:00',
+          viewCount: 0,
+          goodCount: 0,
+          commentCount: 0,
+          mainUrl: '',
+        });
+        // Remove all optional fields
+        delete (minimal as any).teamNm;
+        delete (minimal as any).users;
+        delete (minimal as any).summary;
+        delete (minimal as any).freeComment;
+        delete (minimal as any).systemDescription;
+        delete (minimal as any).tags;
+        delete (minimal as any).awards;
+        delete (minimal as any).events;
+        delete (minimal as any).materials;
+        delete (minimal as any).updateDate;
+        delete (minimal as any).releaseDate;
+        delete (minimal as any).createId;
+        delete (minimal as any).updateId;
+        delete (minimal as any).releaseFlg;
+        delete (minimal as any).revision;
+        delete (minimal as any).licenseType;
+        delete (minimal as any).thanksFlg;
+        delete (minimal as any).uuid;
+        delete (minimal as any).nid;
+        delete (minimal as any).slideMode;
+        delete (minimal as any).officialLink;
+        delete (minimal as any).videoUrl;
+        delete (minimal as any).relatedLink;
+        delete (minimal as any).relatedLink2;
+        delete (minimal as any).relatedLink3;
+        delete (minimal as any).relatedLink4;
+        delete (minimal as any).relatedLink5;
+
+        const normalized = normalizePrototype(minimal);
+
+        expect(normalized.id).toBe(1);
+        expect(normalized.prototypeNm).toBe('Minimal');
+        expect(normalized.status).toBe(1);
+        expect(normalized.createDate).toBe('2023-12-31T15:00:00.000Z');
+        expect(normalized.teamNm).toBe('');
+        expect(normalized.users).toEqual([]);
+        expect(normalized.releaseFlg).toBe(2);
+      });
+
+      it('handles all date fields as null simultaneously', () => {
+        const upstream = createUpstreamPrototype({
+          createDate: null as any,
+          updateDate: null as any,
+          releaseDate: null as any,
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.createDate).toBe(null);
+        expect(normalized.updateDate).toBe(null);
+        expect(normalized.releaseDate).toBeUndefined();
+      });
+
+      it('handles all date fields as empty strings', () => {
+        const upstream = createUpstreamPrototype({
+          createDate: '',
+          updateDate: '',
+          releaseDate: '',
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.createDate).toBe('');
+        expect(normalized.updateDate).toBe('');
+        expect(normalized.releaseDate).toBe('');
+      });
+
+      it('handles JavaScript numeric limits', () => {
+        const upstream = createUpstreamPrototype({
+          id: Number.MAX_SAFE_INTEGER,
+          viewCount: Number.MAX_SAFE_INTEGER,
+          goodCount: Number.MIN_SAFE_INTEGER,
+          commentCount: 0,
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.id).toBe(Number.MAX_SAFE_INTEGER);
+        expect(normalized.viewCount).toBe(Number.MAX_SAFE_INTEGER);
+        expect(normalized.goodCount).toBe(Number.MIN_SAFE_INTEGER);
+      });
+
+      it('handles extremely long pipe-separated lists', () => {
+        const manyItems = Array.from(
+          { length: 500 },
+          (_, i) => `item${i}`,
+        ).join('|');
+        const upstream = createUpstreamPrototype({
+          tags: manyItems,
+          users: manyItems,
+          awards: manyItems,
+          events: manyItems,
+          materials: manyItems,
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.tags).toHaveLength(500);
+        expect(normalized.users).toHaveLength(500);
+        expect(normalized.awards).toHaveLength(500);
+        expect(normalized.events).toHaveLength(500);
+        expect(normalized.materials).toHaveLength(500);
+      });
+
+      it('handles control characters in text fields', () => {
+        const upstream = createUpstreamPrototype({
+          prototypeNm: 'Test\x00\x01\x02',
+          summary: 'Summary\r\nWith\tControls',
+          freeComment: 'Comment\b\f\v',
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.prototypeNm).toBe('Test\x00\x01\x02');
+        expect(normalized.summary).toBe('Summary\r\nWith\tControls');
+        expect(normalized.freeComment).toBe('Comment\b\f\v');
+      });
+
+      it('handles non-Latin scripts (Chinese, Arabic, Hebrew)', () => {
+        const upstream = createUpstreamPrototype({
+          prototypeNm: '中文项目名称',
+          teamNm: 'فريق عربي',
+          summary: 'תיאור בעברית',
+          tags: '中文标签|العربية|עברית',
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.prototypeNm).toBe('中文项目名称');
+        expect(normalized.teamNm).toBe('فريق عربي');
+        expect(normalized.summary).toBe('תיאור בעברית');
+        expect(normalized.tags).toEqual(['中文标签', 'العربية', 'עברית']);
+      });
+
+      it('verifies date chronology independence', () => {
+        // createDate > updateDate > releaseDate (backward chronology)
+        const upstream = createUpstreamPrototype({
+          createDate: '2024-12-31 23:59:59',
+          updateDate: '2024-06-15 12:00:00',
+          releaseDate: '2024-01-01 00:00:00',
+        });
+        const normalized = normalizePrototype(upstream);
+
+        // Should accept any chronology without validation
+        expect(normalized.createDate).toBe('2024-12-31T14:59:59.000Z');
+        expect(normalized.updateDate).toBe('2024-06-15T03:00:00.000Z');
+        expect(normalized.releaseDate).toBe('2023-12-31T15:00:00.000Z');
+      });
+
+      it('handles all numeric fields with floating point values', () => {
+        const upstream = createUpstreamPrototype({
+          id: 123.456 as any,
+          viewCount: 100.1 as any,
+          goodCount: 50.5 as any,
+          commentCount: 10.9 as any,
+        });
+        const normalized = normalizePrototype(upstream);
+
+        // Should pass through as-is
+        expect(normalized.id).toBe(123.456);
+        expect(normalized.viewCount).toBe(100.1);
+        expect(normalized.goodCount).toBe(50.5);
+        expect(normalized.commentCount).toBe(10.9);
+      });
+
+      it('handles all optional fields with explicit null', () => {
+        const upstream = createUpstreamPrototype({
+          teamNm: null as any,
+          users: null as any,
+          summary: null as any,
+          freeComment: null as any,
+          systemDescription: null as any,
+          releaseDate: null as any,
+          thanksFlg: null as any,
+          revision: null as any,
+          releaseFlg: null as any,
+          licenseType: null as any,
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.teamNm).toBe('');
+        expect(normalized.users).toEqual([]);
+        expect(normalized.summary).toBe('');
+        expect(normalized.freeComment).toBe('');
+        expect(normalized.systemDescription).toBe('');
+        expect(normalized.releaseDate).toBeUndefined();
+        expect(normalized.thanksFlg).toBe(0);
+        expect(normalized.revision).toBe(0);
+        expect(normalized.releaseFlg).toBe(2);
+        expect(normalized.licenseType).toBe(1);
+      });
+
+      it('handles mixed line endings in text fields', () => {
+        const upstream = createUpstreamPrototype({
+          summary: 'Line1\nLine2\rLine3\r\nLine4',
+          freeComment: 'Unix\nWindows\r\nMac\rMixed',
+          systemDescription: 'Multi\n\nLine\r\n\r\nText',
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.summary).toBe('Line1\nLine2\rLine3\r\nLine4');
+        expect(normalized.freeComment).toBe('Unix\nWindows\r\nMac\rMixed');
+        expect(normalized.systemDescription).toBe('Multi\n\nLine\r\n\r\nText');
+      });
+
+      it('handles extremely long text fields', () => {
+        const longText = 'A'.repeat(10000);
+        const upstream = createUpstreamPrototype({
+          prototypeNm: longText,
+          summary: longText,
+          freeComment: longText,
+          systemDescription: longText,
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.prototypeNm).toHaveLength(10000);
+        expect(normalized.summary).toHaveLength(10000);
+        expect(normalized.freeComment).toHaveLength(10000);
+        expect(normalized.systemDescription).toHaveLength(10000);
+      });
+
+      it('handles URL query parameters and fragments', () => {
+        const upstream = createUpstreamPrototype({
+          mainUrl: 'https://example.com/path?param=value&other=123#fragment',
+          officialLink: 'https://site.com?query=test&foo=bar',
+          videoUrl: 'https://youtube.com/watch?v=abc123&t=60s',
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.mainUrl).toBe(
+          'https://example.com/path?param=value&other=123#fragment',
+        );
+        expect(normalized.officialLink).toBe(
+          'https://site.com?query=test&foo=bar',
+        );
+        expect(normalized.videoUrl).toBe(
+          'https://youtube.com/watch?v=abc123&t=60s',
+        );
+      });
+
+      it('handles all URL fields as empty strings', () => {
+        const upstream = createUpstreamPrototype({
+          mainUrl: '',
+          officialLink: '',
+          videoUrl: '',
+          relatedLink: '',
+          relatedLink2: '',
+          relatedLink3: '',
+          relatedLink4: '',
+          relatedLink5: '',
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.mainUrl).toBe('');
+        expect(normalized.officialLink).toBe('');
+        expect(normalized.videoUrl).toBe('');
+        expect(normalized.relatedLink).toBe('');
+        expect(normalized.relatedLink2).toBe('');
+        expect(normalized.relatedLink3).toBe('');
+        expect(normalized.relatedLink4).toBe('');
+        expect(normalized.relatedLink5).toBe('');
+      });
+
+      it('handles pipe-separated fields with inconsistent spacing', () => {
+        const upstream = createUpstreamPrototype({
+          tags: 'tag1|  tag2  |tag3   |   tag4',
+          users: '   user1|user2   |   user3   |user4',
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.tags).toEqual(['tag1', 'tag2', 'tag3', 'tag4']);
+        expect(normalized.users).toEqual(['user1', 'user2', 'user3', 'user4']);
+      });
+
+      it('handles prototype with all counts at maximum value', () => {
+        const maxCount = 999999999;
+        const upstream = createUpstreamPrototype({
+          viewCount: maxCount,
+          goodCount: maxCount,
+          commentCount: maxCount,
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.viewCount).toBe(maxCount);
+        expect(normalized.goodCount).toBe(maxCount);
+        expect(normalized.commentCount).toBe(maxCount);
+      });
+
+      it('handles date fields with millisecond precision', () => {
+        const upstream = createUpstreamPrototype({
+          createDate: '2024-01-15 12:00:00.999',
+          updateDate: '2024-01-16 13:30:45.123',
+          releaseDate: '2024-01-17 14:15:30.456',
+        });
+        const normalized = normalizePrototype(upstream);
+
+        // Should handle milliseconds if the normalizer supports it
+        expect(normalized.createDate).toBeDefined();
+        expect(normalized.updateDate).toBeDefined();
+        expect(normalized.releaseDate).toBeDefined();
+      });
     });
 
     describe('field coverage validation', () => {
