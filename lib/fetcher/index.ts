@@ -30,7 +30,7 @@
  *
  * - {@link normalizeProtoPediaTimestamp} — Convert JST timestamps to UTC ISO 8601.
  * - {@link parseAsProtoPediaTimestamp} — Parse date strings as JST timestamps.
- * - {@link parseDateString} — General purpose date string parser.
+ * - {@link parseDateTimeString} — General purpose date string parser.
  * - {@link JST_OFFSET_MS} — JST timezone offset constant (9 hours in milliseconds).
  *
  * ## API Client Version Compatibility
@@ -57,7 +57,7 @@ export {
   JST_OFFSET_MS,
   normalizeProtoPediaTimestamp,
   parseAsProtoPediaTimestamp,
-  parseDateString,
+  parseDateTimeString,
 } from './utils/time.js';
 
 export { constructDisplayMessage } from './utils/errors/messages.js';
