@@ -63,6 +63,7 @@ import { resolve } from 'node:path';
 interface FieldStats {
   field: string;
   type: string;
+  isPipeSeparated: boolean;
   present: number;
   missing: number;
   emptyString: number;
@@ -160,6 +161,7 @@ function analyzeFieldPresence(data: Array<Record<string, unknown>>): void {
     stats.set(field, {
       field,
       type: 'unknown',
+      isPipeSeparated: false,
       present: 0,
       missing: 0,
       emptyString: 0,
@@ -196,7 +198,8 @@ function analyzeFieldPresence(data: Array<Record<string, unknown>>): void {
         // Determine type and collect values
         if (pipeSeparatedFields.has(field) && typeof value === 'string') {
           // Pipe-separated field: count elements
-          stat.type = 'pipe-separated';
+          stat.type = 'string';
+          stat.isPipeSeparated = true;
           const elements = value.split('|').filter((v) => v.trim() !== '');
           values.push(elements.length);
         } else if (typeof value === 'string') {
@@ -238,27 +241,32 @@ function analyzeFieldPresence(data: Array<Record<string, unknown>>): void {
 
   // Output results
   console.log('\n=== Field Presence Analysis ===');
-  console.log(`Total records: ${total}\n`);
+  console.log(`Total records: ${total}`);
+  console.log(`Data source: ${process.argv[2] || 'unknown'}`);
+  console.log();
 
   console.log(
     'Field'.padEnd(20) +
       'Type'.padStart(10) +
+      'Pipe'.padStart(6) +
       'Present'.padStart(10) +
       'Rate'.padStart(8) +
       'Min'.padStart(10) +
       'Max'.padStart(10) +
       'Avg'.padStart(10),
   );
-  console.log('-'.repeat(88));
+  console.log('-'.repeat(92));
 
   for (const stat of sortedStats) {
     const minStr = stat.min !== null ? stat.min.toString() : '-';
     const maxStr = stat.max !== null ? stat.max.toString() : '-';
     const avgStr = stat.avg !== null ? stat.avg.toString() : '-';
+    const pipeStr = stat.isPipeSeparated ? 'yes' : '-';
 
     console.log(
       stat.field.padEnd(20) +
         stat.type.padStart(10) +
+        pipeStr.padStart(6) +
         stat.present.toString().padStart(10) +
         `${stat.presenceRate}%`.padStart(8) +
         minStr.padStart(10) +
@@ -269,12 +277,15 @@ function analyzeFieldPresence(data: Array<Record<string, unknown>>): void {
 
   // Summary
   console.log('\n=== Summary ===');
+
+  // Field presence report
   const fullyPresent = sortedStats.filter((s) => s.presenceRate === 100);
   const partiallyPresent = sortedStats.filter(
     (s) => s.presenceRate > 0 && s.presenceRate < 100,
   );
   const neverPresent = sortedStats.filter((s) => s.presenceRate === 0);
 
+  console.log('## Field Presence Report');
   console.log(`Fully present (100%): ${fullyPresent.length} fields`);
   if (fullyPresent.length > 0) {
     console.log(`  ${fullyPresent.map((s) => s.field).join(', ')}`);
@@ -284,8 +295,32 @@ function analyzeFieldPresence(data: Array<Record<string, unknown>>): void {
     `\nPartially present (0-100%): ${partiallyPresent.length} fields`,
   );
   if (partiallyPresent.length > 0) {
-    for (const stat of partiallyPresent) {
-      console.log(`  ${stat.field}: ${stat.presenceRate}%`);
+    // Group by presence rate ranges
+    const high = partiallyPresent.filter((s) => s.presenceRate >= 90);
+    const medium = partiallyPresent.filter(
+      (s) => s.presenceRate >= 50 && s.presenceRate < 90,
+    );
+    const low = partiallyPresent.filter((s) => s.presenceRate < 50);
+
+    if (high.length > 0) {
+      console.log(`  High (90-99%): ${high.length} fields`);
+      for (const stat of high) {
+        console.log(`    ${stat.field}: ${stat.presenceRate}%`);
+      }
+    }
+
+    if (medium.length > 0) {
+      console.log(`  Medium (50-89%): ${medium.length} fields`);
+      for (const stat of medium) {
+        console.log(`    ${stat.field}: ${stat.presenceRate}%`);
+      }
+    }
+
+    if (low.length > 0) {
+      console.log(`  Low (<50%): ${low.length} fields`);
+      for (const stat of low) {
+        console.log(`    ${stat.field}: ${stat.presenceRate}%`);
+      }
     }
   }
 
@@ -294,9 +329,23 @@ function analyzeFieldPresence(data: Array<Record<string, unknown>>): void {
     console.log(`  ${neverPresent.map((s) => s.field).join(', ')}`);
   }
 
+  // Pipe-separated fields report
+  const pipeSeparatedStats = sortedStats.filter((s) => s.isPipeSeparated);
+  if (pipeSeparatedStats.length > 0) {
+    console.log('\n## Pipe-Separated Fields Report');
+    console.log(`Total: ${pipeSeparatedStats.length} fields`);
+    console.log();
+    for (const stat of pipeSeparatedStats) {
+      console.log(
+        `  ${stat.field.padEnd(15)} Present: ${stat.presenceRate.toString().padStart(6)}%  ` +
+          `Elements: min=${stat.min}, max=${stat.max}, avg=${stat.avg}`,
+      );
+    }
+  }
+
   // Additional fields section
   if (additionalFields.length > 0) {
-    console.log('\n=== Additional Fields (not in NormalizedPrototype) ===');
+    console.log('\n## Additional Fields (not in NormalizedPrototype)');
     for (const field of additionalFields) {
       const stat = stats.get(field)!;
       console.log(`  ${field}: ${stat.presenceRate}%`);
