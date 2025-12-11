@@ -433,7 +433,7 @@ const args = process.argv.slice(2);
 if (args.length === 0) {
   console.error('Error: Please provide a path to the JSON file');
   console.error(
-    'Usage: tsx scripts/analyze-all-field-presence.ts <path-to-json-file>',
+    'Usage: tsx scripts/analyze-json.ts <path-to-json-file>',
   );
   process.exit(1);
 }
