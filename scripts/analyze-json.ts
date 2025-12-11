@@ -40,10 +40,10 @@
  *
  * ```bash
  * # Analyze prototype data
- * tsx scripts/analyze-all-field-presence.ts <path-to-json-file>
+ * tsx scripts/analyze-json.ts <path-to-json-file>
  *
  * # Example
- * tsx scripts/analyze-all-field-presence.ts scripts/sample-data/20251210-232338-prototypes-10000.json
+ * tsx scripts/analyze-json.ts scripts/sample-data/20251210-232338-prototypes-10000.json
  * ```
  *
  * ## Use Cases
