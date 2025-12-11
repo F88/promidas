@@ -90,7 +90,7 @@ export function parseAsProtoPediaTimestamp(value: string): string | undefined {
  * @returns UTC ISO string if valid, undefined otherwise
  */
 export function parseDateTimeString(value: string): string | undefined {
-  if (!value) {
+  if (typeof value !== 'string' || value.trim() === '') {
     return undefined;
   }
 
