@@ -290,6 +290,25 @@ describe('normalizers', () => {
         expect(normalized.releaseDate).toBe('2024-01-17T05:00:00.000Z');
       });
 
+      it('normalizes all three date fields independently', () => {
+        const upstream = createUpstreamPrototype({
+          createDate: '2024-01-15 12:00:00',
+          updateDate: '2024-01-16 13:00:00',
+          releaseDate: '2024-01-17 14:00:00',
+        });
+        const normalized = normalizePrototype(upstream);
+
+        // Each date field should be normalized independently
+        expect(normalized.createDate).toBe('2024-01-15T03:00:00.000Z');
+        expect(normalized.updateDate).toBe('2024-01-16T04:00:00.000Z');
+        expect(normalized.releaseDate).toBe('2024-01-17T05:00:00.000Z');
+
+        // Verify they are all different (regression test for releaseDate bug)
+        expect(normalized.createDate).not.toBe(normalized.updateDate);
+        expect(normalized.updateDate).not.toBe(normalized.releaseDate);
+        expect(normalized.createDate).not.toBe(normalized.releaseDate);
+      });
+
       it('falls back to original string when date normalization fails', () => {
         const upstream = createUpstreamPrototype({
           createDate: 'invalid-date',
@@ -315,6 +334,25 @@ describe('normalizers', () => {
         const normalized = normalizePrototype(upstream);
 
         expect(normalized.createDate).toBe('');
+      });
+
+      it('normalizes all three date fields independently with different values', () => {
+        const upstream = createUpstreamPrototype({
+          createDate: '2024-01-15 12:00:00',
+          updateDate: '2024-02-20 15:30:00',
+          releaseDate: '2024-03-25 18:45:00',
+        });
+        const normalized = normalizePrototype(upstream);
+
+        // Each field should have its own distinct normalized value
+        expect(normalized.createDate).toBe('2024-01-15T03:00:00.000Z');
+        expect(normalized.updateDate).toBe('2024-02-20T06:30:00.000Z');
+        expect(normalized.releaseDate).toBe('2024-03-25T09:45:00.000Z');
+
+        // Verify they are all different (catch copy-paste bugs)
+        expect(normalized.createDate).not.toBe(normalized.updateDate);
+        expect(normalized.updateDate).not.toBe(normalized.releaseDate);
+        expect(normalized.createDate).not.toBe(normalized.releaseDate);
       });
     });
 
