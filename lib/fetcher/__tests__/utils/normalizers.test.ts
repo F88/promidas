@@ -624,6 +624,395 @@ describe('normalizers', () => {
       });
     });
 
+    describe('v3.0.0 optional fields handling', () => {
+      it('handles missing teamNm with default empty string', () => {
+        const upstream = createUpstreamPrototype();
+        delete (upstream as any).teamNm;
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.teamNm).toBe('');
+      });
+
+      it('handles missing users with default empty array', () => {
+        const upstream = createUpstreamPrototype();
+        delete (upstream as any).users;
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.users).toEqual([]);
+      });
+
+      it('handles missing freeComment with default empty string', () => {
+        const upstream = createUpstreamPrototype();
+        delete (upstream as any).freeComment;
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.freeComment).toBe('');
+      });
+
+      it('handles missing releaseDate with default undefined', () => {
+        const upstream = createUpstreamPrototype();
+        delete (upstream as any).releaseDate;
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.releaseDate).toBeUndefined();
+      });
+
+      it('handles missing thanksFlg with default 0', () => {
+        const upstream = createUpstreamPrototype();
+        delete (upstream as any).thanksFlg;
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.thanksFlg).toBe(0);
+      });
+
+      it('handles missing uuid as-is (undefined)', () => {
+        const upstream = createUpstreamPrototype();
+        delete (upstream as any).uuid;
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.uuid).toBeUndefined();
+      });
+
+      it('handles missing revision with default 0', () => {
+        const upstream = createUpstreamPrototype();
+        delete (upstream as any).revision;
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.revision).toBe(0);
+      });
+
+      it('handles missing releaseFlg with default 2 (Released)', () => {
+        const upstream = createUpstreamPrototype();
+        delete (upstream as any).releaseFlg;
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.releaseFlg).toBe(2);
+      });
+
+      it('handles missing licenseType with default 1', () => {
+        const upstream = createUpstreamPrototype();
+        delete (upstream as any).licenseType;
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.licenseType).toBe(1);
+      });
+
+      it('handles all v3.0.0 optional fields as missing simultaneously', () => {
+        const upstream = createUpstreamPrototype();
+        delete (upstream as any).teamNm;
+        delete (upstream as any).users;
+        delete (upstream as any).freeComment;
+        delete (upstream as any).releaseDate;
+        delete (upstream as any).thanksFlg;
+        delete (upstream as any).uuid;
+        delete (upstream as any).revision;
+        delete (upstream as any).releaseFlg;
+        delete (upstream as any).licenseType;
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.teamNm).toBe('');
+        expect(normalized.users).toEqual([]);
+        expect(normalized.freeComment).toBe('');
+        expect(normalized.releaseDate).toBeUndefined();
+        expect(normalized.thanksFlg).toBe(0);
+        expect(normalized.uuid).toBeUndefined();
+        expect(normalized.revision).toBe(0);
+        expect(normalized.releaseFlg).toBe(2);
+        expect(normalized.licenseType).toBe(1);
+      });
+
+      it('preserves defined values even when they are falsy', () => {
+        const upstream = createUpstreamPrototype({
+          teamNm: '',
+          users: '',
+          freeComment: '',
+          thanksFlg: 0,
+          revision: 0,
+          releaseFlg: 0,
+          licenseType: 0,
+        });
+        const normalized = normalizePrototype(upstream);
+
+        // Empty strings should remain as-is
+        expect(normalized.teamNm).toBe('');
+        expect(normalized.users).toEqual([]);
+        expect(normalized.freeComment).toBe('');
+        // Zeros should remain as-is (not replaced with defaults)
+        expect(normalized.thanksFlg).toBe(0);
+        expect(normalized.revision).toBe(0);
+        expect(normalized.releaseFlg).toBe(0);
+        expect(normalized.licenseType).toBe(0);
+      });
+
+      it('handles null values for v3.0.0 optional string fields', () => {
+        const upstream = createUpstreamPrototype({
+          teamNm: null as any,
+          users: null as any,
+          freeComment: null as any,
+          releaseDate: null as any,
+        });
+        const normalized = normalizePrototype(upstream);
+
+        // Null should be coalesced to default values
+        expect(normalized.teamNm).toBe('');
+        expect(normalized.users).toEqual([]);
+        expect(normalized.freeComment).toBe('');
+        expect(normalized.releaseDate).toBeUndefined();
+      });
+
+      it('handles null values for v3.0.0 optional number fields', () => {
+        const upstream = createUpstreamPrototype({
+          thanksFlg: null as any,
+          revision: null as any,
+          releaseFlg: null as any,
+          licenseType: null as any,
+        });
+        const normalized = normalizePrototype(upstream);
+
+        // Null should be coalesced to default values
+        expect(normalized.thanksFlg).toBe(0);
+        expect(normalized.revision).toBe(0);
+        expect(normalized.releaseFlg).toBe(2);
+        expect(normalized.licenseType).toBe(1);
+      });
+
+      it('handles mix of missing and null optional fields', () => {
+        const upstream = createUpstreamPrototype({
+          teamNm: null as any,
+          freeComment: null as any,
+        });
+        delete (upstream as any).users;
+        delete (upstream as any).releaseDate;
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.teamNm).toBe('');
+        expect(normalized.users).toEqual([]);
+        expect(normalized.freeComment).toBe('');
+        expect(normalized.releaseDate).toBeUndefined();
+      });
+
+      it('handles missing summary with default empty string', () => {
+        const upstream = createUpstreamPrototype();
+        delete (upstream as any).summary;
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.summary).toBe('');
+      });
+
+      it('handles missing systemDescription with default empty string', () => {
+        const upstream = createUpstreamPrototype();
+        delete (upstream as any).systemDescription;
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.systemDescription).toBe('');
+      });
+
+      it('handles null summary with default empty string', () => {
+        const upstream = createUpstreamPrototype({
+          summary: null as any,
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.summary).toBe('');
+      });
+
+      it('handles null systemDescription with default empty string', () => {
+        const upstream = createUpstreamPrototype({
+          systemDescription: null as any,
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.systemDescription).toBe('');
+      });
+
+      it('handles missing createId as-is (undefined)', () => {
+        const upstream = createUpstreamPrototype();
+        delete (upstream as any).createId;
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.createId).toBeUndefined();
+      });
+
+      it('handles missing updateId as-is (undefined)', () => {
+        const upstream = createUpstreamPrototype();
+        delete (upstream as any).updateId;
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.updateId).toBeUndefined();
+      });
+
+      it('handles missing updateDate as-is (undefined)', () => {
+        const upstream = createUpstreamPrototype();
+        delete (upstream as any).updateDate;
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.updateDate).toBeUndefined();
+      });
+
+      it('handles missing slideMode as-is (undefined)', () => {
+        const upstream = createUpstreamPrototype();
+        delete (upstream as any).slideMode;
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.slideMode).toBeUndefined();
+      });
+
+      it('handles missing optional URL fields as-is (undefined)', () => {
+        const upstream = createUpstreamPrototype();
+        delete (upstream as any).officialLink;
+        delete (upstream as any).videoUrl;
+        delete (upstream as any).relatedLink;
+        delete (upstream as any).relatedLink2;
+        delete (upstream as any).relatedLink3;
+        delete (upstream as any).relatedLink4;
+        delete (upstream as any).relatedLink5;
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.officialLink).toBeUndefined();
+        expect(normalized.videoUrl).toBeUndefined();
+        expect(normalized.relatedLink).toBeUndefined();
+        expect(normalized.relatedLink2).toBeUndefined();
+        expect(normalized.relatedLink3).toBeUndefined();
+        expect(normalized.relatedLink4).toBeUndefined();
+        expect(normalized.relatedLink5).toBeUndefined();
+      });
+
+      it('preserves empty string URL fields', () => {
+        const upstream = createUpstreamPrototype({
+          officialLink: '',
+          videoUrl: '',
+          relatedLink: '',
+          relatedLink2: '',
+          relatedLink3: '',
+          relatedLink4: '',
+          relatedLink5: '',
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.officialLink).toBe('');
+        expect(normalized.videoUrl).toBe('');
+        expect(normalized.relatedLink).toBe('');
+        expect(normalized.relatedLink2).toBe('');
+        expect(normalized.relatedLink3).toBe('');
+        expect(normalized.relatedLink4).toBe('');
+        expect(normalized.relatedLink5).toBe('');
+      });
+
+      it('handles prototype with all optional fields missing', () => {
+        const upstream = createUpstreamPrototype();
+        // Remove all optional fields
+        delete (upstream as any).teamNm;
+        delete (upstream as any).users;
+        delete (upstream as any).summary;
+        delete (upstream as any).freeComment;
+        delete (upstream as any).systemDescription;
+        delete (upstream as any).releaseDate;
+        delete (upstream as any).createId;
+        delete (upstream as any).updateId;
+        delete (upstream as any).updateDate;
+        delete (upstream as any).tags;
+        delete (upstream as any).awards;
+        delete (upstream as any).events;
+        delete (upstream as any).materials;
+        delete (upstream as any).thanksFlg;
+        delete (upstream as any).uuid;
+        delete (upstream as any).nid;
+        delete (upstream as any).revision;
+        delete (upstream as any).releaseFlg;
+        delete (upstream as any).licenseType;
+        delete (upstream as any).slideMode;
+        delete (upstream as any).officialLink;
+        delete (upstream as any).videoUrl;
+        delete (upstream as any).relatedLink;
+        delete (upstream as any).relatedLink2;
+        delete (upstream as any).relatedLink3;
+        delete (upstream as any).relatedLink4;
+        delete (upstream as any).relatedLink5;
+
+        const normalized = normalizePrototype(upstream);
+
+        // Should still be valid with all defaults applied
+        expect(normalized.id).toBe(123);
+        expect(normalized.prototypeNm).toBe('Test Prototype');
+        expect(normalized.teamNm).toBe('');
+        expect(normalized.users).toEqual([]);
+        expect(normalized.summary).toBe('');
+        expect(normalized.freeComment).toBe('');
+        expect(normalized.systemDescription).toBe('');
+        expect(normalized.tags).toEqual([]);
+        expect(normalized.awards).toEqual([]);
+        expect(normalized.events).toEqual([]);
+        expect(normalized.materials).toEqual([]);
+        expect(normalized.thanksFlg).toBe(0);
+        expect(normalized.revision).toBe(0);
+        expect(normalized.releaseFlg).toBe(2);
+        expect(normalized.licenseType).toBe(1);
+      });
+
+      it('handles nid field correctly', () => {
+        const upstream = createUpstreamPrototype({
+          nid: 'test-nid-value',
+        });
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.nid).toBe('test-nid-value');
+      });
+
+      it('handles missing nid as-is (undefined)', () => {
+        const upstream = createUpstreamPrototype();
+        delete (upstream as any).nid;
+        const normalized = normalizePrototype(upstream);
+
+        expect(normalized.nid).toBeUndefined();
+      });
+
+      it('handles real-world data with sparse optional fields', () => {
+        const upstream = createUpstreamPrototype({
+          // Only provide required fields and some optional ones
+          teamNm: 'Real Team',
+          users: 'maker1|maker2',
+          summary: 'A real project',
+          // Missing: freeComment, systemDescription, awards, events, materials
+          // Missing: officialLink, videoUrl, relatedLinks
+          // Missing: uuid, nid, slideMode
+        });
+        delete (upstream as any).freeComment;
+        delete (upstream as any).systemDescription;
+        delete (upstream as any).awards;
+        delete (upstream as any).events;
+        delete (upstream as any).materials;
+        delete (upstream as any).officialLink;
+        delete (upstream as any).videoUrl;
+        delete (upstream as any).relatedLink;
+        delete (upstream as any).relatedLink2;
+        delete (upstream as any).relatedLink3;
+        delete (upstream as any).relatedLink4;
+        delete (upstream as any).relatedLink5;
+        delete (upstream as any).uuid;
+        delete (upstream as any).nid;
+        delete (upstream as any).slideMode;
+
+        const normalized = normalizePrototype(upstream);
+
+        // Provided fields
+        expect(normalized.teamNm).toBe('Real Team');
+        expect(normalized.users).toEqual(['maker1', 'maker2']);
+        expect(normalized.summary).toBe('A real project');
+
+        // Default values for missing fields
+        expect(normalized.freeComment).toBe('');
+        expect(normalized.systemDescription).toBe('');
+        expect(normalized.awards).toEqual([]);
+        expect(normalized.events).toEqual([]);
+        expect(normalized.materials).toEqual([]);
+        expect(normalized.officialLink).toBeUndefined();
+        expect(normalized.videoUrl).toBeUndefined();
+        expect(normalized.uuid).toBeUndefined();
+        expect(normalized.nid).toBeUndefined();
+        expect(normalized.slideMode).toBeUndefined();
+      });
+    });
+
     describe('field coverage validation', () => {
       it('normalizes all upstream prototype fields', () => {
         const upstream = createUpstreamPrototype();
