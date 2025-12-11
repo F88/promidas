@@ -3,268 +3,231 @@ import { describe, expect, it } from 'vitest';
 import {
   JST_OFFSET_MS,
   normalizeProtoPediaTimestamp,
+  parseDateString,
+  parseAsProtoPediaTimestamp,
 } from '../../utils/time.js';
 
-describe('time utilities', () => {
-  describe('JST_OFFSET_MS', () => {
-    it('has correct JST offset value (UTC+9)', () => {
-      expect(JST_OFFSET_MS).toBe(9 * 60 * 60 * 1000);
-      expect(JST_OFFSET_MS).toBe(32400000);
+const HOURS_9_IN_MS = 9 * 60 * 60 * 1000;
+
+describe('Time utilities', () => {
+  describe('parseAsProtoPediaTimestamp', () => {
+    it('returns undefined for null', () => {
+      expect(parseAsProtoPediaTimestamp(null as never)).toBeUndefined();
+    });
+
+    it('returns undefined for undefined', () => {
+      expect(parseAsProtoPediaTimestamp(undefined as never)).toBeUndefined();
+    });
+
+    it('parses valid JST timestamp to UTC', () => {
+      expect(parseAsProtoPediaTimestamp('2025-11-14 12:03:07.0')).toBe(
+        '2025-11-14T03:03:07.000Z',
+      );
+    });
+
+    it('returns undefined for invalid format', () => {
+      expect(parseAsProtoPediaTimestamp('invalid')).toBeUndefined();
+    });
+
+    it('returns undefined for ISO 8601 with offset', () => {
+      expect(
+        parseAsProtoPediaTimestamp('2025-11-14T12:03:07Z'),
+      ).toBeUndefined();
+    });
+
+    it('returns undefined for empty string', () => {
+      expect(parseAsProtoPediaTimestamp('')).toBeUndefined();
+    });
+
+    it('returns undefined for timestamp without fractional seconds', () => {
+      expect(parseAsProtoPediaTimestamp('2025-11-14 12:03:07')).toBeUndefined();
+    });
+
+    it('returns undefined for T separator', () => {
+      expect(
+        parseAsProtoPediaTimestamp('2025-11-14T12:03:07.0'),
+      ).toBeUndefined();
+    });
+
+    it('handles fractional seconds with various precision', () => {
+      // 1 digit - pad to 3
+      expect(parseAsProtoPediaTimestamp('2025-03-05 10:02:03.5')).toBe(
+        '2025-03-05T01:02:03.500Z',
+      );
+      // 2 digits - pad to 3
+      expect(parseAsProtoPediaTimestamp('2025-03-05 10:02:03.05')).toBe(
+        '2025-03-05T01:02:03.050Z',
+      );
+      // 3 digits - use as-is
+      expect(parseAsProtoPediaTimestamp('2025-03-05 10:02:03.007')).toBe(
+        '2025-03-05T01:02:03.007Z',
+      );
+      // 4+ digits - truncate to 3
+      expect(parseAsProtoPediaTimestamp('2025-03-05 10:02:03.4567')).toBe(
+        '2025-03-05T01:02:03.456Z',
+      );
+      expect(parseAsProtoPediaTimestamp('2025-03-05 10:02:03.123456789')).toBe(
+        '2025-03-05T01:02:03.123Z',
+      );
+    });
+
+    it('subtracts JST_OFFSET_MS (9 hours) correctly', () => {
+      // 12:00 JST → 03:00 UTC (same day)
+      expect(parseAsProtoPediaTimestamp('2025-11-14 12:00:00.0')).toBe(
+        '2025-11-14T03:00:00.000Z',
+      );
+      // 09:00 JST → 00:00 UTC (same day, at midnight)
+      expect(parseAsProtoPediaTimestamp('2025-11-14 09:00:00.0')).toBe(
+        '2025-11-14T00:00:00.000Z',
+      );
+      // 08:59 JST → 23:59 UTC (previous day)
+      expect(parseAsProtoPediaTimestamp('2025-11-14 08:59:59.0')).toBe(
+        '2025-11-13T23:59:59.000Z',
+      );
+      // 00:00 JST → 15:00 UTC (previous day)
+      expect(parseAsProtoPediaTimestamp('2025-11-14 00:00:00.0')).toBe(
+        '2025-11-13T15:00:00.000Z',
+      );
+    });
+
+    it('handles date crossing at midnight JST', () => {
+      // JST midnight crosses to previous day in UTC
+      expect(parseAsProtoPediaTimestamp('2025-01-01 00:00:00.0')).toBe(
+        '2024-12-31T15:00:00.000Z',
+      );
+      expect(parseAsProtoPediaTimestamp('2025-12-31 23:59:59.999')).toBe(
+        '2025-12-31T14:59:59.999Z',
+      );
+    });
+
+    it('handles leap year dates correctly', () => {
+      // Valid leap year date
+      expect(parseAsProtoPediaTimestamp('2024-02-29 12:00:00.0')).toBe(
+        '2024-02-29T03:00:00.000Z',
+      );
+    });
+
+    it('handles extreme year values', () => {
+      // Unix epoch in JST
+      expect(parseAsProtoPediaTimestamp('1970-01-01 09:00:00.0')).toBe(
+        '1970-01-01T00:00:00.000Z',
+      );
+      // Far future
+      expect(parseAsProtoPediaTimestamp('2099-12-31 23:59:59.999')).toBe(
+        '2099-12-31T14:59:59.999Z',
+      );
+      // Early date
+      expect(parseAsProtoPediaTimestamp('1900-01-01 09:00:00.0')).toBe(
+        '1900-01-01T00:00:00.000Z',
+      );
+    });
+
+    it('returns undefined for malformed formats', () => {
+      // Wrong separators
+      expect(
+        parseAsProtoPediaTimestamp('2025/11/14 12:03:07.0'),
+      ).toBeUndefined();
+      expect(
+        parseAsProtoPediaTimestamp('2025-11-14_12:03:07.0'),
+      ).toBeUndefined();
+      // Missing components
+      expect(parseAsProtoPediaTimestamp('2025-11-14')).toBeUndefined();
+      expect(parseAsProtoPediaTimestamp('12:03:07.0')).toBeUndefined();
+      // Wrong padding
+      expect(
+        parseAsProtoPediaTimestamp('2025-1-14 12:03:07.0'),
+      ).toBeUndefined();
+      expect(
+        parseAsProtoPediaTimestamp('2025-11-4 12:03:07.0'),
+      ).toBeUndefined();
+      expect(
+        parseAsProtoPediaTimestamp('2025-11-14 2:03:07.0'),
+      ).toBeUndefined();
+    });
+  });
+
+  describe('parseDateString', () => {
+    it('returns undefined for null', () => {
+      // @ts-expect-error Testing runtime behavior
+      expect(parseDateString(null)).toBeUndefined();
+    });
+
+    it('returns undefined for undefined', () => {
+      // @ts-expect-error Testing runtime behavior
+      expect(parseDateString(undefined)).toBeUndefined();
+    });
+
+    it('parses UTC timestamp with Z suffix', () => {
+      expect(parseDateString('2025-11-14T03:03:07Z')).toBe(
+        '2025-11-14T03:03:07.000Z',
+      );
+    });
+
+    it('parses timestamp with positive offset', () => {
+      expect(parseDateString('2025-11-14T12:03:07+09:00')).toBe(
+        '2025-11-14T03:03:07.000Z',
+      );
+    });
+
+    it('parses timestamp with negative offset', () => {
+      expect(parseDateString('2025-11-14T12:03:07-05:00')).toBe(
+        '2025-11-14T17:03:07.000Z',
+      );
+    });
+
+    it('parses timestamp without offset as local time', () => {
+      // This will be interpreted as local timezone (browser-dependent)
+      const result = parseDateString('2025-11-14T12:03:07');
+      expect(result).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
     });
   });
 
   describe('normalizeProtoPediaTimestamp', () => {
-    describe('null and empty value handling', () => {
+    describe('JST_OFFSET_MS', () => {
+      it('matches a nine-hour offset in milliseconds', () => {
+        expect(JST_OFFSET_MS).toBe(HOURS_9_IN_MS);
+      });
+
+      it('equals 32400000 milliseconds', () => {
+        expect(JST_OFFSET_MS).toBe(32400000);
+      });
+    });
+
+    describe('Integration scenarios', () => {
       it('returns null for null input', () => {
         expect(normalizeProtoPediaTimestamp(null)).toBeNull();
       });
 
-      it('returns null for undefined input', () => {
-        expect(normalizeProtoPediaTimestamp(undefined)).toBeNull();
+      it('returns undefined for undefined input', () => {
+        expect(normalizeProtoPediaTimestamp(undefined)).toBeUndefined();
       });
 
-      it('returns null for empty string', () => {
-        expect(normalizeProtoPediaTimestamp('')).toBeNull();
-      });
-
-      it('returns null for whitespace-only string', () => {
-        expect(normalizeProtoPediaTimestamp('   ')).toBeNull();
-      });
-    });
-
-    describe('JST timestamp without offset (current ProtoPedia format)', () => {
-      it('converts JST timestamp with space separator to UTC', () => {
-        const result = normalizeProtoPediaTimestamp('2024-01-15 12:34:56');
-        expect(result).toBe('2024-01-15T03:34:56.000Z');
-      });
-
-      it('converts JST timestamp with T separator to UTC', () => {
-        const result = normalizeProtoPediaTimestamp('2024-01-15T12:34:56');
-        expect(result).toBe('2024-01-15T03:34:56.000Z');
-      });
-
-      it('handles JST midnight correctly', () => {
-        const result = normalizeProtoPediaTimestamp('2024-01-15 00:00:00');
-        expect(result).toBe('2024-01-14T15:00:00.000Z');
-      });
-
-      it('handles JST timestamp with fractional seconds', () => {
-        const result = normalizeProtoPediaTimestamp('2024-01-15 12:34:56.789');
-        expect(result).toBe('2024-01-15T03:34:56.789Z');
-      });
-
-      it('handles JST timestamp with single-digit fractional seconds', () => {
-        const result = normalizeProtoPediaTimestamp('2024-01-15 12:34:56.1');
-        expect(result).toBe('2024-01-15T03:34:56.100Z');
-      });
-
-      it('handles JST timestamp with two-digit fractional seconds', () => {
-        const result = normalizeProtoPediaTimestamp('2024-01-15 12:34:56.12');
-        expect(result).toBe('2024-01-15T03:34:56.120Z');
-      });
-
-      it('handles JST timestamp with more than 3 fractional digits', () => {
-        const result = normalizeProtoPediaTimestamp(
-          '2024-01-15 12:34:56.123456',
+      it('converts ProtoPedia format to UTC', () => {
+        expect(normalizeProtoPediaTimestamp('2025-11-14 12:03:07.0')).toBe(
+          '2025-11-14T03:03:07.000Z',
         );
-        expect(result).toBe('2024-01-15T03:34:56.123Z');
-      });
-
-      it('converts JST new year to previous year in UTC', () => {
-        const result = normalizeProtoPediaTimestamp('2024-01-01 08:00:00');
-        expect(result).toBe('2023-12-31T23:00:00.000Z');
-      });
-
-      it('handles leap year correctly', () => {
-        const result = normalizeProtoPediaTimestamp('2024-02-29 12:00:00');
-        expect(result).toBe('2024-02-29T03:00:00.000Z');
-      });
-
-      it('handles month boundaries correctly', () => {
-        const result = normalizeProtoPediaTimestamp('2024-03-01 01:00:00');
-        expect(result).toBe('2024-02-29T16:00:00.000Z');
-      });
-    });
-
-    describe('timestamp with explicit offset (future-proof)', () => {
-      it('handles UTC timestamp (ending with Z)', () => {
-        const result = normalizeProtoPediaTimestamp('2024-01-15T03:34:56Z');
-        expect(result).toBe('2024-01-15T03:34:56.000Z');
-      });
-
-      it('handles UTC timestamp with fractional seconds', () => {
-        const result = normalizeProtoPediaTimestamp('2024-01-15T03:34:56.789Z');
-        expect(result).toBe('2024-01-15T03:34:56.789Z');
-      });
-
-      it('handles timestamp with +09:00 offset (JST)', () => {
-        const result = normalizeProtoPediaTimestamp(
-          '2024-01-15T12:34:56+09:00',
+        expect(normalizeProtoPediaTimestamp('2025-11-14 08:59:59.0')).toBe(
+          '2025-11-13T23:59:59.000Z',
         );
-        expect(result).toBe('2024-01-15T03:34:56.000Z');
       });
 
-      it('handles timestamp with +0900 offset (no colon)', () => {
-        const result = normalizeProtoPediaTimestamp('2024-01-15T12:34:56+0900');
-        expect(result).toBe('2024-01-15T03:34:56.000Z');
-      });
-
-      it('handles timestamp with negative offset', () => {
-        const result = normalizeProtoPediaTimestamp(
-          '2024-01-15T03:34:56-05:00',
+      it('falls back to parseDateString for ISO 8601 formats', () => {
+        expect(normalizeProtoPediaTimestamp('2025-11-14T12:03:07+09:00')).toBe(
+          '2025-11-14T03:03:07.000Z',
         );
-        expect(result).toBe('2024-01-15T08:34:56.000Z');
-      });
-
-      it('handles timestamp with +00:00 offset', () => {
-        const result = normalizeProtoPediaTimestamp(
-          '2024-01-15T03:34:56+00:00',
+        expect(normalizeProtoPediaTimestamp('2025-11-14T03:03:07Z')).toBe(
+          '2025-11-14T03:03:07.000Z',
         );
-        expect(result).toBe('2024-01-15T03:34:56.000Z');
       });
     });
 
-    describe('edge cases and invalid input', () => {
-      it('returns null for invalid date format', () => {
-        expect(normalizeProtoPediaTimestamp('2024/01/15 12:34:56')).toBeNull();
-      });
-
-      it('returns null for incomplete date', () => {
-        expect(normalizeProtoPediaTimestamp('2024-01-15')).toBeNull();
-      });
-
-      it('returns null for incomplete time', () => {
-        expect(normalizeProtoPediaTimestamp('2024-01-15 12:34')).toBeNull();
-      });
-
-      it('returns null for non-numeric components', () => {
-        expect(normalizeProtoPediaTimestamp('2024-AA-15 12:34:56')).toBeNull();
-      });
-
-      it('returns null for random text', () => {
-        expect(normalizeProtoPediaTimestamp('invalid timestamp')).toBeNull();
-      });
-
-      it('handles timestamp with leading/trailing whitespace', () => {
-        const result = normalizeProtoPediaTimestamp('  2024-01-15 12:34:56  ');
-        expect(result).toBe('2024-01-15T03:34:56.000Z');
-      });
-
-      it('returns null for extremely large year value that causes infinite date', () => {
-        const result = normalizeProtoPediaTimestamp('999999-01-01 00:00:00');
-        expect(result).toBeNull();
-      });
-
-      it('returns null for date that exceeds Date.UTC range', () => {
-        const result = normalizeProtoPediaTimestamp('300000-12-31 23:59:59');
-        expect(result).toBeNull();
-      });
-
-      it('returns null for extremely large values', () => {
-        expect(
-          normalizeProtoPediaTimestamp('9999999-01-01 00:00:00'),
-        ).toBeNull();
-        expect(
-          normalizeProtoPediaTimestamp('999999999-12-31 23:59:59'),
-        ).toBeNull();
-      });
-
-      it('returns null for negative year values', () => {
-        const result = normalizeProtoPediaTimestamp('-0001-01-01 00:00:00');
-        expect(result).toBeNull();
-      });
-    });
-
-    describe('boundary values', () => {
-      it('handles minimum date (year 0001)', () => {
-        const result = normalizeProtoPediaTimestamp('0001-01-01 00:00:00');
-        expect(result).not.toBeNull();
-        expect(result).toMatch(/Z$/);
-      });
-
-      it('handles year 9999', () => {
-        const result = normalizeProtoPediaTimestamp('9999-12-31 23:59:59');
-        expect(result).not.toBeNull();
-        expect(result).toMatch(/Z$/);
-      });
-
-      it('handles January 1st (month boundary)', () => {
-        const result = normalizeProtoPediaTimestamp('2024-01-01 12:34:56');
-        expect(result).toBe('2024-01-01T03:34:56.000Z');
-      });
-
-      it('handles December 31st (month boundary)', () => {
-        const result = normalizeProtoPediaTimestamp('2024-12-31 12:34:56');
-        expect(result).toBe('2024-12-31T03:34:56.000Z');
-      });
-
-      it('handles 00:00:00 (start of day)', () => {
-        const result = normalizeProtoPediaTimestamp('2024-06-15 00:00:00');
-        expect(result).toBe('2024-06-14T15:00:00.000Z');
-      });
-
-      it('handles 23:59:59 (end of day)', () => {
-        const result = normalizeProtoPediaTimestamp('2024-06-15 23:59:59');
-        expect(result).toBe('2024-06-15T14:59:59.000Z');
-      });
-    });
-
-    describe('consistency and stability', () => {
-      it('produces consistent results for same input', () => {
-        const input = '2024-01-15 12:34:56';
-        const result1 = normalizeProtoPediaTimestamp(input);
-        const result2 = normalizeProtoPediaTimestamp(input);
-        expect(result1).toBe(result2);
-      });
-
-      it('always returns UTC format (ending with Z)', () => {
-        const inputs = [
-          '2024-01-15 12:34:56',
-          '2024-06-20T08:00:00',
-          '2024-12-31 23:59:59',
-        ];
-
-        inputs.forEach((input) => {
-          const result = normalizeProtoPediaTimestamp(input);
-          expect(result).toMatch(/Z$/);
-        });
-      });
-
-      it('always returns ISO 8601 format', () => {
-        const result = normalizeProtoPediaTimestamp('2024-01-15 12:34:56');
-        expect(result).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
-      });
-
-      it('preserves millisecond precision', () => {
-        const result = normalizeProtoPediaTimestamp('2024-01-15 12:34:56.789');
-        expect(result).toContain('.789Z');
-      });
-    });
-
-    describe('real-world scenarios', () => {
-      it('handles typical createDate from ProtoPedia', () => {
-        const result = normalizeProtoPediaTimestamp('2023-05-20 14:30:00');
-        expect(result).toBe('2023-05-20T05:30:00.000Z');
-      });
-
-      it('handles typical updateDate from ProtoPedia', () => {
-        const result = normalizeProtoPediaTimestamp('2024-11-15 09:45:30');
-        expect(result).toBe('2024-11-15T00:45:30.000Z');
-      });
-
-      it('handles typical releaseDate from ProtoPedia', () => {
-        const result = normalizeProtoPediaTimestamp('2024-03-10 18:00:00');
-        expect(result).toBe('2024-03-10T09:00:00.000Z');
-      });
-
-      it('handles early morning JST time', () => {
-        const result = normalizeProtoPediaTimestamp('2024-01-15 01:00:00');
-        expect(result).toBe('2024-01-14T16:00:00.000Z');
-      });
-
-      it('handles late evening JST time', () => {
-        const result = normalizeProtoPediaTimestamp('2024-01-15 22:30:00');
-        expect(result).toBe('2024-01-15T13:30:00.000Z');
+    describe('Passthrough behavior', () => {
+      it('returns unparseable strings as-is', () => {
+        expect(normalizeProtoPediaTimestamp('')).toBe('');
+        expect(normalizeProtoPediaTimestamp('invalid')).toBe('invalid');
+        expect(normalizeProtoPediaTimestamp('2025-11-14 12:03:07.abc')).toBe(
+          '2025-11-14 12:03:07.abc',
+        );
       });
     });
   });
