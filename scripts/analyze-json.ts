@@ -83,6 +83,14 @@ function analyzeFieldPresence(data: Array<Record<string, unknown>>): void {
     // ID
     'id',
 
+    // Editorial Info
+    'createDate',
+    'updateDate',
+    'releaseDate',
+    'createId',
+    'updateId',
+    'releaseFlg',
+
     // Basic Info
     'status',
     'prototypeNm',
@@ -93,24 +101,12 @@ function analyzeFieldPresence(data: Array<Record<string, unknown>>): void {
     // Tag/Material/Award/Event Info
     'tags',
     'materials',
-    'awards',
     'events',
+    'awards',
 
     // Team/User Info
-    'teamNm',
     'users',
-
-    // Editorial Info
-    'createId',
-    'createDate',
-    'updateId',
-    'updateDate',
-    'releaseDate',
-
-    // Count
-    'viewCount',
-    'goodCount',
-    'commentCount',
+    'teamNm',
 
     // Link
     'officialLink',
@@ -122,11 +118,15 @@ function analyzeFieldPresence(data: Array<Record<string, unknown>>): void {
     'relatedLink4',
     'relatedLink5',
 
+    // Count
+    'viewCount',
+    'goodCount',
+    'commentCount',
+
     // Others
     'uuid',
     'nid',
     'revision',
-    'releaseFlg',
     'licenseType',
     'thanksFlg',
     'slideMode',
