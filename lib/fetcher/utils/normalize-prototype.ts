@@ -86,13 +86,13 @@ export function normalizePrototype(p: UpstreamPrototype): NormalizedPrototype {
     /* Basic information */
     status: p.status,
     prototypeNm: p.prototypeNm,
-    summary: p.summary ?? '',
-    freeComment: p.freeComment ?? '',
-    systemDescription: p.systemDescription ?? '',
+    summary: p.summary ?? '' /* Default to empty string */,
+    freeComment: p.freeComment ?? '' /* Default to empty string */,
+    systemDescription: p.systemDescription ?? '' /* Default to empty string */,
 
     /** Users and Team */
     users: splitPipeSeparatedString(p.users),
-    teamNm: p.teamNm ?? '',
+    teamNm: p.teamNm ?? '' /* Default to empty string */,
 
     /** Tags, Materials, Events, and Awards */
     tags: splitPipeSeparatedString(p.tags),
@@ -118,9 +118,9 @@ export function normalizePrototype(p: UpstreamPrototype): NormalizedPrototype {
     /* Others */
     uuid: p.uuid,
     nid: p.nid,
-    revision: p.revision ?? 0,
-    licenseType: p.licenseType ?? 1,
-    thanksFlg: p.thanksFlg ?? 0,
+    revision: p.revision ?? 0 /* Default to 0 */,
+    licenseType: p.licenseType ?? 1 /* Default to 1(表示(CC:BY)) */,
+    thanksFlg: p.thanksFlg ?? 0 /* Default to 0(Message not yet shown) */,
     slideMode: p.slideMode,
   } satisfies NormalizedPrototype;
   return normalized;
