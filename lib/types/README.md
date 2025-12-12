@@ -21,6 +21,14 @@ instructions-for-ais:
 ProtoPediaのデータを型安全に扱うための型定義を提供します。
 全てのモジュール(Fetcher、Store、Repository)で共通して使用される標準的なデータ構造を定義しています。
 
+## 📥 インストールと使い方
+
+このモジュールは単体でも使用できます:
+
+```typescript
+import type { NormalizedPrototype, StatusCode } from '@f88/promidas/types';
+```
+
 ## 🚀 使い方
 
 ```typescript

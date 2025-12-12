@@ -23,6 +23,24 @@ ProtoPedia のプロトタイプデータをメモリに保存し、高速に検
 API から取得したプロトタイプ情報をメモリに保存して、素早くアクセスできるようにします。
 データベースを使わずに、メモリ上でデータを管理します。
 
+## 📥 インストールと使い方
+
+このモジュールは単体でも使用できます:
+
+```typescript
+import {
+  createProtopediaInMemoryRepository,
+  type NormalizedPrototype,
+  type Logger
+} from '@f88/promidas/repository';
+```
+
+または、ルートからもインポートできます:
+
+```typescript
+import { createProtopediaInMemoryRepository } from '@f88/promidas';
+```
+
 ## 🚀 簡単な使い方
 
 ```typescript

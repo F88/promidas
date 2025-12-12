@@ -26,6 +26,15 @@ ProtoPedia API から取得したデータを扱いやすくするための便�
 - **Time Utilities**: 日時を扱う関数 (例: JST の日時を UTC に変換)
 - **Types**: TypeScript の型定義
 
+## 📥 インストールと使い方
+
+このモジュールは単体でも使用できます:
+
+```typescript
+import { parseProtoPediaTimestamp, getPrototypeStatusLabel } from '@f88/promidas/utils';
+import type { StatusCode } from '@f88/promidas/utils';
+```
+
 ## 🚀 簡単な使い方
 
 ### データ変換の例

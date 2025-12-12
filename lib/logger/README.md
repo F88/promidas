@@ -23,6 +23,15 @@ instructions-for-ais:
 プログラムの動作状況をログに記録するための仕組みです。
 開発中のデバッグや、本番環境での問題調査に役立ちます。
 
+## 📥 インストールと使い方
+
+このモジュールは単体でも使用できます:
+
+```typescript
+import { createConsoleLogger, createNoopLogger } from '@f88/promidas/logger';
+import type { Logger, LogLevel } from '@f88/promidas/logger';
+```
+
 ## 🚀 簡単な使い方
 
 ### 基本的な使い方

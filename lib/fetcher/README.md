@@ -23,6 +23,18 @@ ProtoPedia API からデータを取得し、使いやすい形に整えるモ�
 ProtoPedia の Web API にアクセスして、プロトタイプ情報を取得します。
 取得したデータは自動的に使いやすい形式に変換されます。
 
+## 📥 インストールと使い方
+
+このモジュールは単体でも使用できます:
+
+```typescript
+import {
+  createProtopediaApiCustomClient,
+  fetchAndNormalizePrototypes,
+  type NormalizedPrototype
+} from '@f88/promidas/fetcher';
+```
+
 ## 🚀 簡単な使い方
 
 ```typescript

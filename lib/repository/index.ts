@@ -91,6 +91,30 @@
 export type { NormalizedPrototype } from '../types/index.js';
 
 /**
+ * Logger types for custom logger configuration.
+ *
+ * Re-exported from logger module for convenience when configuring the repository.
+ *
+ * @example
+ * ```typescript
+ * import { createProtopediaInMemoryRepository, type Logger } from '@f88/promidas/repository';
+ *
+ * const customLogger: Logger = {
+ *   debug: (msg) => console.debug(msg),
+ *   info: (msg) => console.info(msg),
+ *   warn: (msg) => console.warn(msg),
+ *   error: (msg) => console.error(msg),
+ * };
+ *
+ * const repo = createProtopediaInMemoryRepository(
+ *   { logger: customLogger },
+ *   { token: 'xxx' }
+ * );
+ * ```
+ */
+export type { Logger, LogLevel } from '../logger/index.js';
+
+/**
  * Statistics about the current in-memory snapshot.
  *
  * Provides metadata about the snapshot including size, creation time,

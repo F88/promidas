@@ -23,6 +23,14 @@ instructions-for-ais:
 プロトタイプのデータを配列としてメモリに保存します。
 **通常は Repository モジュールを使ってください。** このモジュールは Repository の内部で使われています。
 
+## 📥 インストールと使い方
+
+このモジュールは単体でも使用できます:
+
+```typescript
+import { PrototypeInMemoryStore, type NormalizedPrototype } from '@f88/promidas/store';
+```
+
 ## 🚀 簡単な使い方
 
 ```typescript

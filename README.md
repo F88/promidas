@@ -115,6 +115,40 @@ if (stats.isExpired) {
 }
 ```
 
+## Subpath Exports
+
+Each module can be imported independently using subpath exports:
+
+```typescript
+// Type definitions
+import type { NormalizedPrototype, StatusCode } from '@f88/promidas/types';
+
+// Utility functions
+import { parseProtoPediaTimestamp, getPrototypeStatusLabel } from '@f88/promidas/utils';
+
+// Logger
+import { createConsoleLogger, type Logger } from '@f88/promidas/logger';
+
+// API client and fetcher
+import { createProtopediaApiCustomClient, fetchAndNormalizePrototypes } from '@f88/promidas/fetcher';
+
+// In-memory store
+import { PrototypeInMemoryStore, type NormalizedPrototype } from '@f88/promidas/store';
+
+// Repository (same as root import)
+import { createProtopediaInMemoryRepository } from '@f88/promidas/repository';
+```
+
+**Available subpath exports:**
+
+- `@f88/promidas` — High-level repository (recommended for most use cases)
+- `@f88/promidas/types` — Type definitions
+- `@f88/promidas/utils` — Utility functions and converters
+- `@f88/promidas/logger` — Logger interface and implementations
+- `@f88/promidas/fetcher` — API client and data fetching
+- `@f88/promidas/store` — In-memory store
+- `@f88/promidas/repository` — Repository factory (same as root)
+
 ### Example Script
 
 See `scripts/try-protopedia-repository.ts` for a complete example that demonstrates:
