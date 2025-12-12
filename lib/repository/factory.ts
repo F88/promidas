@@ -39,7 +39,7 @@
  * ```typescript
  * const repo = createProtopediaInMemoryRepository({
  *   storeConfig: {
- *     ttlSeconds: 3600,           // 1 hour TTL
+ *     ttlMs: 60 * 60 * 1000,      // 1 hour TTL
  *     maxDataSizeBytes: 10485760, // 10MB limit
  *   },
  *   apiClientOptions: {
@@ -77,7 +77,7 @@ export interface CreateProtopediaInMemoryRepositoryOptions {
   /**
    * Configuration for the underlying in-memory store.
    *
-   * - `ttlSeconds` - Time-to-live for automatic snapshot expiration (optional)
+   * - `ttlMs` - Time-to-live for automatic snapshot expiration (optional)
    * - `maxDataSizeBytes` - Memory guard to prevent excessive data storage (optional)
    * - `logger` - Custom logger instance for store operations (optional)
    * - Defaults to `{}` for sensible defaults
@@ -132,7 +132,7 @@ export interface CreateProtopediaInMemoryRepositoryOptions {
  * ```typescript
  * const repo = createProtopediaInMemoryRepository({
  *   storeConfig: {
- *     ttlSeconds: 3600,           // Expire after 1 hour
+ *     ttlMs: 60 * 60 * 1000,      // Expire after 1 hour
  *     maxDataSizeBytes: 10485760, // Max 10MB in memory
  *   },
  *   apiClientOptions: {
@@ -185,7 +185,7 @@ export interface CreateProtopediaInMemoryRepositoryOptions {
  * ```typescript
  * const repo = createProtopediaInMemoryRepository({
  *   storeConfig: {
- *     ttlSeconds: 7200,              // 2 hours
+ *     ttlMs: 2 * 60 * 60 * 1000,     // 2 hours
  *     maxDataSizeBytes: 52428800,    // 50MB
  *     logger: productionStoreLogger,
  *   },
