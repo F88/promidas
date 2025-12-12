@@ -6,6 +6,7 @@ title-ja: コントリビューティングガイド
 related:
     - ./README.md "Project Overview"
     - ./DEVELOPMENT.md "Development Guide"
+    - ./RELEASE.md "Release Guide"
 instructions-for-ais:
     - This document should be written in English for AI readability.
     - Content within code fences may be written in languages other than English.
@@ -15,132 +16,13 @@ instructions-for-ais:
 
 # Contributing Guide
 
-This document provides release procedures and contribution guidelines.
+This document provides contribution guidelines for this project.
+
+**Package Distribution:** This package is published to [GitHub Packages](https://github.com/F88/promidas/packages) (`@f88/promidas`).
 
 For development environment setup and daily development workflow, see [DEVELOPMENT.md](./DEVELOPMENT.md).
 
-## Release Procedures
-
-### 1. Pre-Release Checklist
-
-Execute all of the following checks before releasing:
-
-#### a. Run All Tests
-
-```bash
-# Standard tests
-npm test
-
-# Tests with coverage
-npm run test:coverage
-```
-
-Ensure all tests pass.
-
-#### b. Validate Subpath Exports
-
-```bash
-npm run test:exports
-```
-
-Ensure there are no export validation errors. See [DEVELOPMENT.md](./DEVELOPMENT.md#subpath-exports-validation) for details.
-
-#### c. Run Performance Tests
-
-```bash
-npm run test:perf
-```
-
-Ensure there are no performance regressions. See [DEVELOPMENT.md](./DEVELOPMENT.md#performance-tests) for requirements.
-
-#### d. Code Quality Checks
-
-```bash
-# Linter
-npm run lint
-
-# Formatting
-npm run format:check
-
-# Type checking
-npm run typecheck
-```
-
-Ensure all checks pass.
-
-#### e. Verify Build
-
-```bash
-npm run build
-```
-
-Ensure there are no build errors.
-
-### 2. Version Update
-
-#### Update package.json Version
-
-Update the version following Semantic Versioning:
-
-- **MAJOR** (x.0.0): Breaking changes
-- **MINOR** (0.x.0): New features (backward compatible)
-- **PATCH** (0.0.x): Bug fixes
-
-```json
-{
-    "version": "0.5.0" // Example: 0.5.0 → 0.6.0
-}
-```
-
-### 3. Update CHANGELOG.md
-
-Document the changes in `CHANGELOG.md`:
-
-```markdown
-## [0.6.0] - 2025-12-12
-
-### Added
-
-- Description of new features
-
-### Changed
-
-- Description of changes
-
-### Fixed
-
-- Description of bug fixes
-
-### Breaking Changes
-
-- Description of breaking changes (if any)
-```
-
-### 4. Commit and Create Tag
-
-```bash
-# Commit changes
-git add package.json CHANGELOG.md
-git commit -m "chore(release): x.y.z"
-
-# Create tag
-git tag -a vx.y.z -m "Release vx.y.z"
-
-# Push commits and tags
-git push origin main
-git push origin vx.y.z
-```
-
-### 5. Create GitHub Release
-
-1. Navigate to the GitHub repository page
-2. Go to "Releases" → "Draft a new release"
-3. Select tag: `vx.y.z`
-4. Enter release title: `vx.y.z`
-5. Copy the relevant version content from CHANGELOG.md
-6. Click "Publish release"
-
-**Note:** When the release is published, the GitHub Actions workflow will automatically build and publish the package to GitHub Packages.
+For release procedures (maintainers only), see [RELEASE.md](./RELEASE.md).
 
 ## Pull Request Guidelines
 
