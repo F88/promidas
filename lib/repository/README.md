@@ -29,9 +29,9 @@ API から取得したプロトタイプ情報をメモリに保存して、素�
 
 ```typescript
 import {
-  createProtopediaInMemoryRepository,
-  type NormalizedPrototype,
-  type Logger
+    createProtopediaInMemoryRepository,
+    type NormalizedPrototype,
+    type Logger,
 } from '@f88/promidas/repository';
 ```
 

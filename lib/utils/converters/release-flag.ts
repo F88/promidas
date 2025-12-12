@@ -8,7 +8,7 @@
  * @module utils/converters/release-flag
  */
 
-import type { ReleaseFlagCode } from '../types/index.js';
+import type { ReleaseFlagCode } from '../../types/codes.js';
 
 /**
  * Release flag labels mapping.

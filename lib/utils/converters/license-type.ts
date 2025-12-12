@@ -6,7 +6,7 @@
  * @module utils/converters/license-type
  */
 
-import type { LicenseTypeCode } from '../types/index.js';
+import type { LicenseTypeCode } from '../../types/codes.js';
 
 /**
  * License type labels mapping.

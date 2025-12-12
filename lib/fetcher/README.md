@@ -29,9 +29,9 @@ ProtoPedia の Web API にアクセスして、プロトタイプ情報を取得
 
 ```typescript
 import {
-  createProtopediaApiCustomClient,
-  fetchAndNormalizePrototypes,
-  type NormalizedPrototype
+    createProtopediaApiCustomClient,
+    fetchAndNormalizePrototypes,
+    type NormalizedPrototype,
 } from '@f88/promidas/fetcher';
 ```
 

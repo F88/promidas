@@ -124,16 +124,25 @@ Each module can be imported independently using subpath exports:
 import type { NormalizedPrototype, StatusCode } from '@f88/promidas/types';
 
 // Utility functions
-import { parseProtoPediaTimestamp, getPrototypeStatusLabel } from '@f88/promidas/utils';
+import {
+    parseProtoPediaTimestamp,
+    getPrototypeStatusLabel,
+} from '@f88/promidas/utils';
 
 // Logger
 import { createConsoleLogger, type Logger } from '@f88/promidas/logger';
 
 // API client and fetcher
-import { createProtopediaApiCustomClient, fetchAndNormalizePrototypes } from '@f88/promidas/fetcher';
+import {
+    createProtopediaApiCustomClient,
+    fetchAndNormalizePrototypes,
+} from '@f88/promidas/fetcher';
 
 // In-memory store
-import { PrototypeInMemoryStore, type NormalizedPrototype } from '@f88/promidas/store';
+import {
+    PrototypeInMemoryStore,
+    type NormalizedPrototype,
+} from '@f88/promidas/store';
 
 // Repository (same as root import)
 import { createProtopediaInMemoryRepository } from '@f88/promidas/repository';

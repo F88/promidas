@@ -8,7 +8,7 @@
  * @module utils/converters/thanks-flag
  */
 
-import type { ThanksFlagCode } from '../types/index.js';
+import type { ThanksFlagCode } from '../../types/codes.js';
 
 /**
  * Thanks flag labels mapping.

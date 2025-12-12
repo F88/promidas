@@ -28,7 +28,10 @@ instructions-for-ais:
 このモジュールは単体でも使用できます:
 
 ```typescript
-import { PrototypeInMemoryStore, type NormalizedPrototype } from '@f88/promidas/store';
+import {
+    PrototypeInMemoryStore,
+    type NormalizedPrototype,
+} from '@f88/promidas/store';
 ```
 
 ## 🚀 簡単な使い方

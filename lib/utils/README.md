@@ -31,8 +31,16 @@ ProtoPedia API から取得したデータを扱いやすくするための便�
 このモジュールは単体でも使用できます:
 
 ```typescript
-import { parseProtoPediaTimestamp, getPrototypeStatusLabel } from '@f88/promidas/utils';
-import type { StatusCode } from '@f88/promidas/utils';
+import {
+    parseProtoPediaTimestamp,
+    getPrototypeStatusLabel,
+} from '@f88/promidas/utils';
+```
+
+型定義が必要な場合は、[Typesモジュール](../types/README.md)から import してください:
+
+```typescript
+import type { StatusCode, NormalizedPrototype } from '@f88/promidas/types';
 ```
 
 ## 🚀 簡単な使い方
@@ -90,19 +98,6 @@ import {
     JST_OFFSET_MS, // 日本時間のオフセット (9時間)
 } from '@f88/promidas/utils';
 ```
-
-### 型定義
-
-```typescript
-import type {
-    StatusCode, // ステータスコード型 (1 | 2 | 3 | 4)
-    LicenseTypeCode, // ライセンスコード型 (0 | 1)
-    ReleaseFlagCode, // リリースフラグコード型 (1 | 2 | 3)
-    ThanksFlagCode, // サンクスフラグコード型 (0 | 1 | undefined)
-} from '@f88/promidas/utils';
-```
-
-**Note**: これらの型定義は`@f88/promidas/types`からもimportできます。詳細は[Typesモジュール](../types/README.md)を参照してください。
 
 ---
 
