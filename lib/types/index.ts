@@ -5,10 +5,14 @@
  * It serves as the single source of truth for type definitions, ensuring
  * consistency across all layers (Fetcher, Store, Repository).
  *
- * ## Main Export
+ * ## Main Exports
  *
  * - {@link NormalizedPrototype} — The standardized shape of a prototype
  *   after normalization from ProtoPedia API responses.
+ * - {@link StatusCode} — Type for prototype status codes (1-4)
+ * - {@link ReleaseFlagCode} — Type for release flag codes (1-3)
+ * - {@link LicenseTypeCode} — Type for license type codes (0-1)
+ * - {@link ThanksFlagCode} — Type for thanks flag codes (0, 1, or undefined)
  *
  * ## Type Characteristics
  *
@@ -21,7 +25,7 @@
  *
  * @example
  * ```typescript
- * import type { NormalizedPrototype } from '@f88/promidas/types';
+ * import type { NormalizedPrototype, StatusCode } from '@f88/promidas/types';
  *
  * function processPrototype(prototype: NormalizedPrototype) {
  *   // Required fields are always accessible
@@ -34,6 +38,9 @@
  *   if (prototype.releaseDate !== undefined) {
  *     console.log(new Date(prototype.releaseDate));
  *   }
+ *
+ *   // Code types are available
+ *   const status: StatusCode = prototype.status as StatusCode;
  * }
  * ```
  *
@@ -51,7 +58,6 @@
  */
 
 export type { NormalizedPrototype } from './normalized-prototype.js';
-
 export type {
   StatusCode,
   ReleaseFlagCode,

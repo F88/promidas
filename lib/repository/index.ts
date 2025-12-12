@@ -77,6 +77,20 @@
  */
 
 /**
+ * Core data type used by the repository.
+ *
+ * Re-exported from types module for convenience when using the repository standalone.
+ *
+ * @example
+ * ```typescript
+ * import type { NormalizedPrototype } from '@f88/promidas/repository';
+ *
+ * const prototypes: NormalizedPrototype[] = await repository.getAllFromSnapshot();
+ * ```
+ */
+export type { NormalizedPrototype } from '../types/index.js';
+
+/**
  * Statistics about the current in-memory snapshot.
  *
  * Provides metadata about the snapshot including size, creation time,
