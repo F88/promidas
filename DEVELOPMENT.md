@@ -135,6 +135,23 @@ npm run build
 npm run clean
 ```
 
+### Continuous Integration
+
+This project uses GitHub Actions for Continuous Integration. The following checks run automatically on every Pull Request and push to the `main` branch:
+
+1.  **Linting & Formatting:** Ensures code style consistency.
+2.  **Exports Validation:** Verifies public API contracts (`npm run test:exports`).
+3.  **Performance Tests:** Checks for performance regressions (`npm run test:perf`).
+4.  **Unit Tests:** Runs all tests and uploads coverage reports to Codecov.
+
+Ensure all these checks pass locally before submitting a Pull Request.
+
+**Note:** The CI pipeline runs successfully even without Codecov configuration. However, if the `CODECOV_TOKEN` secret is set in the repository, code coverage reports will be automatically uploaded and analyzed by Codecov.
+
+All checks must pass for a PR to be merged.
+
+For more details on the CI configuration, refer to the [workflow file](.github/workflows/ci.yml).
+
 ## Troubleshooting
 
 ### Tests Failing
