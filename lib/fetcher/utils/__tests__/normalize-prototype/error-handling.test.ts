@@ -235,4 +235,320 @@ describe('Error Handling & Edge Cases', () => {
       expect(result2.tags).not.toContain('new-tag');
     });
   });
+
+  describe('Timestamp edge cases', () => {
+    it('handles timestamp with invalid year', () => {
+      const upstream = createMinimalUpstream({
+        createDate: '9999-12-31 23:59:59.0',
+      });
+      const result = normalizePrototype(upstream);
+      // Should attempt normalization
+      expect(result.createDate).toBeDefined();
+    });
+
+    it('handles timestamp with year 0', () => {
+      const upstream = createMinimalUpstream({
+        createDate: '0000-01-01 00:00:00.0',
+      });
+      const result = normalizePrototype(upstream);
+      // Should handle gracefully
+      expect(result.createDate).toBeDefined();
+    });
+
+    it('handles timestamp with invalid month', () => {
+      const upstream = createMinimalUpstream({
+        createDate: '2024-13-01 00:00:00.0',
+      });
+      const result = normalizePrototype(upstream);
+      // Should return original or normalized value
+      expect(result.createDate).toBeDefined();
+    });
+
+    it('handles timestamp with invalid day', () => {
+      const upstream = createMinimalUpstream({
+        createDate: '2024-02-30 00:00:00.0',
+      });
+      const result = normalizePrototype(upstream);
+      // Should handle invalid date gracefully
+      expect(result.createDate).toBeDefined();
+    });
+
+    it('handles timestamp with invalid hour', () => {
+      const upstream = createMinimalUpstream({
+        createDate: '2024-01-01 25:00:00.0',
+      });
+      const result = normalizePrototype(upstream);
+      expect(result.createDate).toBeDefined();
+    });
+
+    it('handles completely malformed timestamp', () => {
+      const upstream = createMinimalUpstream({
+        createDate: 'not-a-date-at-all',
+      });
+      const result = normalizePrototype(upstream);
+      // Should return original value
+      expect(result.createDate).toBe('not-a-date-at-all');
+    });
+
+    it('handles timestamp with only spaces', () => {
+      const upstream = createMinimalUpstream({
+        createDate: '     ',
+      });
+      const result = normalizePrototype(upstream);
+      expect(result.createDate).toBe('     ');
+    });
+  });
+
+  describe('Extremely long data', () => {
+    it('handles extremely long prototype name (10000+ chars)', () => {
+      const longName = 'A'.repeat(10000);
+      const upstream = createMinimalUpstream({
+        prototypeNm: longName,
+      });
+      const result = normalizePrototype(upstream);
+      expect(result.prototypeNm).toBe(longName);
+      expect(result.prototypeNm.length).toBe(10000);
+    });
+
+    it('handles extremely long summary (50000+ chars)', () => {
+      const longSummary = 'Summary text. '.repeat(5000);
+      const upstream = createMinimalUpstream({
+        summary: longSummary,
+      });
+      const result = normalizePrototype(upstream);
+      expect(result.summary).toBe(longSummary);
+      expect(result.summary.length).toBeGreaterThan(50000);
+    });
+
+    it('handles extremely long URL', () => {
+      const longUrl = 'https://example.com/' + 'segment/'.repeat(1000);
+      const upstream = createMinimalUpstream({
+        officialLink: longUrl,
+      });
+      const result = normalizePrototype(upstream);
+      expect(result.officialLink).toBe(longUrl);
+    });
+
+    it('handles pipe-separated field with many items (1000+)', () => {
+      const manyTags = Array.from({ length: 1000 }, (_, i) => `tag${i}`).join(
+        '|',
+      );
+      const upstream = createMinimalUpstream({
+        tags: manyTags,
+      });
+      const result = normalizePrototype(upstream);
+      expect(result.tags).toHaveLength(1000);
+      expect(result.tags[0]).toBe('tag0');
+      expect(result.tags[999]).toBe('tag999');
+    });
+
+    it('handles pipe-separated field with very long individual segments', () => {
+      const longTag = 'VeryLongTag'.repeat(100);
+      const upstream = createMinimalUpstream({
+        tags: `${longTag}|normalTag`,
+      });
+      const result = normalizePrototype(upstream);
+      expect(result.tags).toHaveLength(2);
+      expect(result.tags[0]).toBe(longTag);
+      expect(result.tags[1]).toBe('normalTag');
+    });
+  });
+
+  describe('Multiple simultaneous anomalies', () => {
+    it('handles all string fields being null simultaneously', () => {
+      const upstream = createMinimalUpstream({
+        summary: null as any,
+        freeComment: null as any,
+        systemDescription: null as any,
+        teamNm: null as any,
+      });
+      const result = normalizePrototype(upstream);
+      // All should use defaults
+      expect(result.summary).toBe('');
+      expect(result.freeComment).toBe('');
+      expect(result.systemDescription).toBe('');
+      expect(result.teamNm).toBe('');
+    });
+
+    it('handles all array fields being null simultaneously', () => {
+      const upstream = createMinimalUpstream({
+        users: null as any,
+        tags: null as any,
+        materials: null as any,
+        events: null as any,
+        awards: null as any,
+      });
+      const result = normalizePrototype(upstream);
+      // All should be empty arrays
+      expect(result.users).toEqual([]);
+      expect(result.tags).toEqual([]);
+      expect(result.materials).toEqual([]);
+      expect(result.events).toEqual([]);
+      expect(result.awards).toEqual([]);
+    });
+
+    it('handles all numeric fields being NaN simultaneously', () => {
+      const upstream = createMinimalUpstream({
+        id: NaN,
+        viewCount: NaN,
+        goodCount: NaN,
+        commentCount: NaN,
+      });
+      const result = normalizePrototype(upstream);
+      expect(Number.isNaN(result.id)).toBe(true);
+      expect(Number.isNaN(result.viewCount)).toBe(true);
+      expect(Number.isNaN(result.goodCount)).toBe(true);
+      expect(Number.isNaN(result.commentCount)).toBe(true);
+    });
+
+    it('handles mix of null, undefined, NaN, and Infinity', () => {
+      const { releaseDate, ...base } = createMinimalUpstream({
+        summary: null as any,
+        tags: null as any,
+        viewCount: NaN,
+        goodCount: Infinity,
+      });
+      const upstream = base as UpstreamPrototype;
+      const result = normalizePrototype(upstream);
+      expect(result.summary).toBe('');
+      expect(result.tags).toEqual([]);
+      expect(Number.isNaN(result.viewCount)).toBe(true);
+      expect(result.goodCount).toBe(Infinity);
+      expect(result.releaseDate).toBeUndefined();
+    });
+
+    it('handles all timestamps being invalid', () => {
+      const upstream = createMinimalUpstream({
+        createDate: 'invalid',
+        updateDate: 'also-invalid',
+        releaseDate: 'not-a-date',
+      });
+      const result = normalizePrototype(upstream);
+      // All should pass through as-is
+      expect(result.createDate).toBe('invalid');
+      expect(result.updateDate).toBe('also-invalid');
+      expect(result.releaseDate).toBe('not-a-date');
+    });
+  });
+
+  describe('Prototype pollution protection', () => {
+    it('handles __proto__ in string fields safely', () => {
+      const upstream = createMinimalUpstream({
+        prototypeNm: '__proto__',
+        summary: '__proto__',
+      });
+      const result = normalizePrototype(upstream);
+      expect(result.prototypeNm).toBe('__proto__');
+      expect(result.summary).toBe('__proto__');
+      // Ensure it's just a string value, not affecting prototype
+      expect(Object.getPrototypeOf(result)).toBeDefined();
+    });
+
+    it('handles constructor in string fields safely', () => {
+      const upstream = createMinimalUpstream({
+        prototypeNm: 'constructor',
+        teamNm: 'constructor',
+      });
+      const result = normalizePrototype(upstream);
+      expect(result.prototypeNm).toBe('constructor');
+      expect(result.teamNm).toBe('constructor');
+    });
+
+    it('handles prototype in pipe-separated fields safely', () => {
+      const upstream = createMinimalUpstream({
+        tags: '__proto__|constructor|prototype',
+      });
+      const result = normalizePrototype(upstream);
+      expect(result.tags).toEqual(['__proto__', 'constructor', 'prototype']);
+      // Ensure prototype chain is not affected
+      expect(Array.isArray(result.tags)).toBe(true);
+    });
+  });
+
+  describe('Array field edge cases', () => {
+    it('handles pipe-separated field with only delimiters', () => {
+      const upstream = createMinimalUpstream({
+        tags: '||||||||',
+      });
+      const result = normalizePrototype(upstream);
+      expect(result.tags).toEqual([]);
+    });
+
+    it('handles pipe-separated field with whitespace variations', () => {
+      const upstream = createMinimalUpstream({
+        tags: '  tag1  |  tag2\t|\ntag3  ',
+      });
+      const result = normalizePrototype(upstream);
+      expect(result.tags).toEqual(['tag1', 'tag2', 'tag3']);
+    });
+
+    it('handles pipe-separated field with mixed empty and valid segments', () => {
+      const upstream = createMinimalUpstream({
+        users: 'user1||  ||user2||  ||',
+      });
+      const result = normalizePrototype(upstream);
+      expect(result.users).toEqual(['user1', 'user2']);
+    });
+
+    it('handles pipe-separated field with Unicode whitespace', () => {
+      const upstream = createMinimalUpstream({
+        tags: 'tag1\u00A0|\u2003tag2\u2003|\u3000tag3',
+      });
+      const result = normalizePrototype(upstream);
+      // Should trim various types of whitespace
+      expect(result.tags.length).toBeGreaterThan(0);
+    });
+
+    it('handles pipe-separated field with special characters in segments', () => {
+      const upstream = createMinimalUpstream({
+        tags: 'tag<script>|tag&amp;|tag"quote"',
+      });
+      const result = normalizePrototype(upstream);
+      expect(result.tags).toEqual(['tag<script>', 'tag&amp;', 'tag"quote"']);
+    });
+  });
+
+  describe('Numeric field boundary conditions', () => {
+    it('handles Number.MAX_VALUE', () => {
+      const upstream = createMinimalUpstream({
+        viewCount: Number.MAX_VALUE,
+      });
+      const result = normalizePrototype(upstream);
+      expect(result.viewCount).toBe(Number.MAX_VALUE);
+    });
+
+    it('handles Number.MIN_VALUE', () => {
+      const upstream = createMinimalUpstream({
+        viewCount: Number.MIN_VALUE,
+      });
+      const result = normalizePrototype(upstream);
+      expect(result.viewCount).toBe(Number.MIN_VALUE);
+    });
+
+    it('handles Number.EPSILON', () => {
+      const upstream = createMinimalUpstream({
+        viewCount: Number.EPSILON,
+      });
+      const result = normalizePrototype(upstream);
+      expect(result.viewCount).toBe(Number.EPSILON);
+    });
+
+    it('handles unsafe integers beyond safe range', () => {
+      const unsafeInteger = Number.MAX_SAFE_INTEGER + 1000;
+      const upstream = createMinimalUpstream({
+        id: unsafeInteger,
+      });
+      const result = normalizePrototype(upstream);
+      expect(result.id).toBe(unsafeInteger);
+    });
+
+    it('handles negative zero', () => {
+      const upstream = createMinimalUpstream({
+        viewCount: -0,
+      });
+      const result = normalizePrototype(upstream);
+      // -0 is equal to 0 but can be distinguished with Object.is
+      expect(Object.is(result.viewCount, -0)).toBe(true);
+    });
+  });
 });
