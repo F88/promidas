@@ -164,6 +164,8 @@ function getVideoUrl(prototype: NormalizedPrototype): string | undefined {
 
 ProtoPediaのフィールド値を表す数値コードの型定義です。
 
+**Note**: これらの型定義は`@f88/promidas/types`から直接importできます。また、[Utilsモジュール](../utils/README.md)からも同じ型をimportできます。
+
 #### StatusCode
 
 プロトタイプのステータスコード型です。

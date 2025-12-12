@@ -102,6 +102,8 @@ import type {
 } from '@f88/promidas/utils';
 ```
 
+**Note**: これらの型定義は`@f88/promidas/types`からもimportできます。詳細は[Typesモジュール](../types/README.md)を参照してください。
+
 ---
 
 **困ったときは**: [USAGE.md](./docs/USAGE.md) に詳しい使い方とエラー対処法があります
