@@ -30,16 +30,38 @@ export const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
  * Parse ProtoPedia timestamp (JST without explicit timezone offset).
  *
  * ProtoPedia timestamps are JST-based timestamps without explicit timezone offset.
- * Format: `YYYY-MM-DD HH:MM:SS.f+` (space separator, fractional seconds required)
+ * Current format: `YYYY-MM-DD HH:MM:SS.0` (space separator, `.0` for zero milliseconds)
+ * Example: `2025-11-14 12:03:07.0`
+ *
+ * ## Fractional Seconds Support
+ *
+ * Currently, ProtoPedia API outputs `.0` (single digit, no sub-second precision).
+ * However, this parser accepts any number of fractional digits to accommodate
+ * future API changes:
+ *
+ * - Current: `2025-10-08 18:03:48.0` (1 digit)
+ * - Future possibilities:
+ *   - Milliseconds: `2025-10-08 18:03:48.123` (3 digits)
+ *   - Microseconds: `2025-10-08 18:03:48.123456` (6 digits)
+ *   - Nanoseconds: `2025-10-08 18:03:48.123456789` (9 digits)
+ *
+ * The regex pattern `\.(\d+)` accepts 1 or more digits to support all these cases,
+ * as the underlying Java implementation may begin storing sub-second precision
+ * in the database.
  *
  * @param value - String to parse
  * @returns UTC ISO string if valid ProtoPedia timestamp, undefined otherwise
  */
 export function parseAsProtoPediaTimestamp(value: string): string | undefined {
-  if (!value) {
+  if (typeof value !== 'string' || value.length === 0) {
     return undefined;
   }
 
+  // Pattern matches current format and future sub-second precision:
+  // - Current: .0 (1 digit)
+  // - Future: .123 (milliseconds), .123456 (microseconds), .123456789 (nanoseconds)
+  // The `\.(\d+)` pattern accepts 1 or more digits to accommodate potential
+  // database schema changes in the underlying Java implementation.
   const match = value.match(
     /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})\.(\d+)$/,
   );
@@ -108,7 +130,8 @@ export function parseDateTimeString(value: string): string | undefined {
  * This function attempts to parse timestamps using multiple strategies:
  *
  * 1. **ProtoPedia format** (`parseAsProtoPediaTimestamp`):
- *    - Format: `YYYY-MM-DD HH:MM:SS.f+` (space separator, fractional seconds required)
+ *    - Current format: `YYYY-MM-DD HH:MM:SS.0` (space separator, `.0` for zero milliseconds)
+ *    - Accepts variable-length fractional seconds for future compatibility
  *    - Timezone: Always treated as JST (UTC+9)
  *    - Returns UTC ISO string with JST offset subtracted
  *
