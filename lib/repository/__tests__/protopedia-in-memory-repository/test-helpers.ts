@@ -140,3 +140,28 @@ export const setupMocks = () => {
     resetMocks,
   };
 };
+
+/**
+ * Create a mock fetch function that returns successful prototype data.
+ *
+ * @param prototypes - Array of partial prototype data to return
+ * @returns Mock fetch function that resolves to a successful response
+ */
+export const createMockFetchPrototypesSuccess = (
+  prototypes: Array<Partial<ResultOfListPrototypesApiResponse>>,
+) => {
+  return () => {
+    const fullPrototypes = prototypes.map((p) => makePrototype(p));
+    return Promise.resolve(
+      new Response(
+        JSON.stringify({
+          results: fullPrototypes,
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      ),
+    );
+  };
+};
