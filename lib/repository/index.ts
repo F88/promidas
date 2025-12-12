@@ -198,7 +198,7 @@ export type {
  * // Production setup with TTL and memory limits
  * const repo = createProtopediaInMemoryRepository({
  *   storeConfig: {
- *     ttlSeconds: 3600,           // 1 hour
+ *     ttlMs: 60 * 60 * 1000,      // 1 hour
  *     maxDataSizeBytes: 10485760, // 10MB
  *   },
  *   apiClientOptions: {
