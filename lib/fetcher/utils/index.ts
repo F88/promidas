@@ -6,7 +6,7 @@
 
 export { splitPipeSeparatedString } from './string-parsers.js';
 
-export { normalizePrototype } from './normalizers.js';
+export { normalizePrototype } from './normalize-prototype.js';
 export type { UpstreamPrototype } from '../types/prototype-api.types.js';
 
 export { normalizeProtoPediaTimestamp } from './normalize-protopedia-timestamp.js';

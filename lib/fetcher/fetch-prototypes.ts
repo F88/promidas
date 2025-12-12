@@ -27,7 +27,7 @@ import type { NormalizedPrototype } from '../types/index.js';
 
 import type { FetchPrototypesResult } from './types/result.types.js';
 import { handleApiError } from './utils/errors/handler.js';
-import { normalizePrototype } from './utils/normalizers.js';
+import { normalizePrototype } from './utils/normalize-prototype.js';
 
 /**
  * Minimal interface for clients that can list ProtoPedia prototypes.

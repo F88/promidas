@@ -14,64 +14,11 @@
  * - Mapping all upstream fields to the canonical {@link NormalizedPrototype}
  *   structure.
  */
-import type { ResultOfListPrototypesApiResponse } from 'protopedia-api-v2-client';
-
 import type { NormalizedPrototype } from '../../types/index.js';
+import type { UpstreamPrototype } from '../types/prototype-api.types.js';
 
 import { normalizeProtoPediaTimestamp } from './normalize-protopedia-timestamp.js';
-
-/**
- * Alias for the upstream prototype shape returned by the ProtoPedia SDK.
- *
- * This type represents a single prototype object as delivered by the
- * `listPrototypes` API response. It is the input to
- * {@link normalizePrototype}.
- *
- * **Important:** This is a direct re-export of the SDK's response type.
- * If `protopedia-api-v2-client` changes its response shape in a future
- * version, this type will automatically reflect those changes. The
- * following areas may be affected:
- *
- * - {@link normalizePrototype} function implementation (field mappings)
- * - {@link NormalizedPrototype} type definition (may need updates)
- * - Normalization tests (may need new test cases)
- * - Helper functions (assignPipeSeparatedIfExists, assignIfDefined)
- *
- * **When upgrading `protopedia-api-v2-client`:**
- * 1. Review the SDK's changelog for new or changed fields
- * 2. Run tests - the field coverage test will fail if new fields are not normalized
- * 3. Update {@link normalizePrototype} to handle new fields
- * 4. Update {@link NormalizedPrototype} type if needed
- * 5. Add test cases for new field transformations
- */
-export type UpstreamPrototype = ResultOfListPrototypesApiResponse;
-
-/**
- * Split a pipe-separated string into an array of trimmed segments.
- *
- * The ProtoPedia API returns certain fields (tags, users, awards, events,
- * materials) as pipe-delimited strings. This helper parses such a string
- * into a clean array.
- *
- * @param value - The pipe-separated string to split. If empty or falsy,
- *   an empty array is returned.
- * @returns An array of trimmed string segments.
- *
- * @example
- * ```ts
- * splitPipeSeparatedString('tag1 | tag2|tag3 ');
- * // => ['tag1', 'tag2', 'tag3']
- *
- * splitPipeSeparatedString('');
- * // => []
- * ```
- */
-export const splitPipeSeparatedString = (value: string): string[] => {
-  if (!value) {
-    return [];
-  }
-  return value.split('|').map((s) => s.trim());
-};
+import { splitPipeSeparatedString } from './string-parsers.js';
 
 /**
  * Transform an upstream prototype object into the normalized shape.
