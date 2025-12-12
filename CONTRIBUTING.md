@@ -21,8 +21,6 @@ For development environment setup and daily development workflow, see [DEVELOPME
 
 ## Release Procedures
 
-For daily development workflow, see [DEVELOPMENT.md](./DEVELOPMENT.md).
-
 ### 1. Pre-Release Checklist
 
 Execute all of the following checks before releasing:
@@ -45,11 +43,7 @@ Ensure all tests pass.
 npm run test:exports
 ```
 
-**IMPORTANT:** This test is not just a pass/fail check, but a specification of the public API contract.
-
-- If you modify exports in `lib/*/index.ts`, you MUST update this test accordingly
-- Review the test output and ensure it matches the expected exports
-- Document any breaking changes in CHANGELOG.md
+Ensure there are no export validation errors. See [DEVELOPMENT.md](./DEVELOPMENT.md#subpath-exports-validation) for details.
 
 #### c. Run Performance Tests
 
@@ -57,12 +51,7 @@ npm run test:exports
 npm run test:perf
 ```
 
-This runs the following performance tests:
-
-- `lib/store/__tests__/store.perf.test.ts` - Store read/write performance
-- `lib/repository/__tests__/protopedia-in-memory-repository/data-access.perf.test.ts` - Repository data access performance
-
-Ensure there are no performance regressions.
+Ensure there are no performance regressions. See [DEVELOPMENT.md](./DEVELOPMENT.md#performance-tests) for requirements.
 
 #### d. Code Quality Checks
 
