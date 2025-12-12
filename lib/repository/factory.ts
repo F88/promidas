@@ -31,21 +31,21 @@
  *
  * ### Basic Usage
  * ```typescript
- * const repo = createProtopediaInMemoryRepository({}, {});
+ * const repo = createProtopediaInMemoryRepository({});
  * await repo.setupSnapshot({});
  * ```
  *
  * ### Production Setup
  * ```typescript
- * const repo = createProtopediaInMemoryRepository(
- *   {
+ * const repo = createProtopediaInMemoryRepository({
+ *   storeConfig: {
  *     ttlSeconds: 3600,           // 1 hour TTL
  *     maxDataSizeBytes: 10485760, // 10MB limit
  *   },
- *   {
+ *   apiClientOptions: {
  *     baseURL: 'https://protopedia.example.com',
- *   }
- * );
+ *   },
+ * });
  * ```
  *
  * ### Independent Logging
@@ -53,10 +53,10 @@
  * const storeLogger = createLogger({ prefix: '[Store]' });
  * const apiLogger = createLogger({ prefix: '[API]' });
  *
- * const repo = createProtopediaInMemoryRepository(
- *   { logger: storeLogger },
- *   { logger: apiLogger }
- * );
+ * const repo = createProtopediaInMemoryRepository({
+ *   storeConfig: { logger: storeLogger },
+ *   apiClientOptions: { logger: apiLogger },
+ * });
  * ```
  *
  * @module
@@ -71,22 +71,39 @@ import { ProtopediaInMemoryRepositoryImpl } from './protopedia-in-memory-reposit
 import type { ProtopediaInMemoryRepository } from './types/index.js';
 
 /**
+ * Options for creating a ProtoPedia in-memory repository.
+ */
+export interface CreateProtopediaInMemoryRepositoryOptions {
+  /**
+   * Configuration for the underlying in-memory store.
+   *
+   * - `ttlSeconds` - Time-to-live for automatic snapshot expiration (optional)
+   * - `maxDataSizeBytes` - Memory guard to prevent excessive data storage (optional)
+   * - `logger` - Custom logger instance for store operations (optional)
+   * - Defaults to `{}` for sensible defaults
+   */
+  storeConfig?: PrototypeInMemoryStoreConfig;
+
+  /**
+   * Configuration for the ProtoPedia HTTP client.
+   *
+   * - `baseURL` - API endpoint URL (optional, uses client default if omitted)
+   * - `logger` - Custom logger instance for API operations (optional)
+   * - Additional HTTP client options (headers, timeout, etc.)
+   */
+  apiClientOptions?: ProtoPediaApiClientOptions;
+}
+
+/**
  * Create an in-memory repository for ProtoPedia prototypes.
  *
  * This is the **recommended way** to instantiate a repository. It provides
  * a clean, functional interface with proper dependency injection and
  * configuration management.
  *
- * @param storeConfig - Configuration for the underlying in-memory store
- *   - `ttlSeconds` - Time-to-live for automatic snapshot expiration (optional)
- *   - `maxDataSizeBytes` - Memory guard to prevent excessive data storage (optional)
- *   - `logger` - Custom logger instance for store operations (optional)
- *   - Defaults to `{}` for sensible defaults
- *
- * @param protopediaApiClientOptions - Configuration for the ProtoPedia HTTP client
- *   - `baseURL` - API endpoint URL (optional, uses client default if omitted)
- *   - `logger` - Custom logger instance for API operations (optional)
- *   - Additional HTTP client options (headers, timeout, etc.)
+ * @param options - Configuration options for the repository
+ * @param options.storeConfig - Configuration for the underlying in-memory store (optional)
+ * @param options.apiClientOptions - Configuration for the ProtoPedia HTTP client (optional)
  *
  * @returns A fully configured {@link ProtopediaInMemoryRepository} instance
  *   ready for snapshot operations and data access.
@@ -105,7 +122,7 @@ import type { ProtopediaInMemoryRepository } from './types/index.js';
  * @example
  * **Minimal setup with defaults**
  * ```typescript
- * const repo = createProtopediaInMemoryRepository({}, {});
+ * const repo = createProtopediaInMemoryRepository({});
  * await repo.setupSnapshot({});
  * const prototype = await repo.getPrototypeFromSnapshotByPrototypeId(42);
  * ```
@@ -113,15 +130,15 @@ import type { ProtopediaInMemoryRepository } from './types/index.js';
  * @example
  * **Production setup with TTL and memory limits**
  * ```typescript
- * const repo = createProtopediaInMemoryRepository(
- *   {
+ * const repo = createProtopediaInMemoryRepository({
+ *   storeConfig: {
  *     ttlSeconds: 3600,           // Expire after 1 hour
  *     maxDataSizeBytes: 10485760, // Max 10MB in memory
  *   },
- *   {
+ *   apiClientOptions: {
  *     baseURL: 'https://protopedia.example.com/api/v2',
- *   }
- * );
+ *   },
+ * });
  *
  * const result = await repo.setupSnapshot({ limit: 1000 });
  * if (!result.ok) {
@@ -135,10 +152,10 @@ import type { ProtopediaInMemoryRepository } from './types/index.js';
  * import { createLogger } from './logger';
  *
  * const logger = createLogger({ minLevel: 'debug' });
- * const repo = createProtopediaInMemoryRepository(
- *   { logger },
- *   { logger }
- * );
+ * const repo = createProtopediaInMemoryRepository({
+ *   storeConfig: { logger },
+ *   apiClientOptions: { logger },
+ * });
  * ```
  *
  * @example
@@ -153,10 +170,10 @@ import type { ProtopediaInMemoryRepository } from './types/index.js';
  *   prefix: '[API]'
  * });
  *
- * const repo = createProtopediaInMemoryRepository(
- *   { logger: storeLogger },
- *   { logger: apiLogger }
- * );
+ * const repo = createProtopediaInMemoryRepository({
+ *   storeConfig: { logger: storeLogger },
+ *   apiClientOptions: { logger: apiLogger },
+ * });
  *
  * // Store logs will be more verbose (debug level)
  * // API logs will be less verbose (info level only)
@@ -166,18 +183,18 @@ import type { ProtopediaInMemoryRepository } from './types/index.js';
  * @example
  * **Full production configuration**
  * ```typescript
- * const repo = createProtopediaInMemoryRepository(
- *   {
+ * const repo = createProtopediaInMemoryRepository({
+ *   storeConfig: {
  *     ttlSeconds: 7200,              // 2 hours
  *     maxDataSizeBytes: 52428800,    // 50MB
  *     logger: productionStoreLogger,
  *   },
- *   {
+ *   apiClientOptions: {
  *     baseURL: process.env.PROTOPEDIA_API_URL,
  *     logger: productionApiLogger,
  *     timeout: 30000,                 // 30s timeout
- *   }
- * );
+ *   },
+ * });
  *
  * // Setup with error handling
  * const setupResult = await repo.setupSnapshot({
@@ -196,12 +213,9 @@ import type { ProtopediaInMemoryRepository } from './types/index.js';
  * @see {@link PrototypeInMemoryStoreConfig} for store configuration details
  * @see {@link ProtoPediaApiClientOptions} for API client options
  */
-export const createProtopediaInMemoryRepository = (
-  storeConfig: PrototypeInMemoryStoreConfig,
-  protopediaApiClientOptions?: ProtoPediaApiClientOptions,
-): ProtopediaInMemoryRepository => {
-  return new ProtopediaInMemoryRepositoryImpl(
-    storeConfig,
-    protopediaApiClientOptions,
-  );
+export const createProtopediaInMemoryRepository = ({
+  storeConfig = {},
+  apiClientOptions,
+}: CreateProtopediaInMemoryRepositoryOptions = {}): ProtopediaInMemoryRepository => {
+  return new ProtopediaInMemoryRepositoryImpl(storeConfig, apiClientOptions);
 };

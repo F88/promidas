@@ -30,10 +30,10 @@ async function main() {
     token,
     ...(logLevel && { logLevel }),
   };
-  const repo = createProtopediaInMemoryRepository(
-    prototypeInMemoryStoreConfig,
-    protoPediaApiClientOptions,
-  );
+  const repo = createProtopediaInMemoryRepository({
+    storeConfig: prototypeInMemoryStoreConfig,
+    apiClientOptions: protoPediaApiClientOptions,
+  });
   console.log('✓ Repository created with 60s TTL\n');
 
   // Test 2: Setup initial snapshot with 5 prototypes

@@ -47,10 +47,10 @@ import { createProtopediaInMemoryRepository } from '@f88/promidas';
 import { createProtopediaInMemoryRepository } from '@f88/promidas';
 
 // 1. リポジトリを作成
-const repository = createProtopediaInMemoryRepository(
-    { ttlMs: 30 * 60 * 1000 }, // ストア設定: 30分のTTL
-    { token: process.env.PROTOPEDIA_API_TOKEN }, // APIクライアント設定
-);
+const repository = createProtopediaInMemoryRepository({
+    storeConfig: { ttlMs: 30 * 60 * 1000 }, // ストア設定: 30分のTTL
+    apiClientOptions: { token: process.env.PROTOPEDIA_API_TOKEN }, // APIクライアント設定
+});
 
 // 2. データを読み込む
 const result = await repository.setupSnapshot({ limit: 1000 });

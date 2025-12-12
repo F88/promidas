@@ -301,9 +301,11 @@ const storeLogger = createConsoleLogger('warn');
 const apiLogger = createConsoleLogger('debug');
 
 const repository = createProtopediaInMemoryRepository({
-    token: process.env.PROTOPEDIA_API_TOKEN,
-    storeLogger,
-    apiLogger,
+    storeConfig: { logger: storeLogger },
+    apiClientOptions: {
+        token: process.env.PROTOPEDIA_API_TOKEN,
+        logger: apiLogger,
+    },
 });
 ```
 
@@ -352,9 +354,11 @@ const apiClient = createProtopediaApiCustomClient({
 });
 
 const repository = createProtopediaInMemoryRepository({
-    token: process.env.PROTOPEDIA_API_TOKEN,
-    storeLogger: logger,
-    apiLogger: logger,
+    storeConfig: { logger },
+    apiClientOptions: {
+        token: process.env.PROTOPEDIA_API_TOKEN,
+        logger,
+    },
 });
 ```
 

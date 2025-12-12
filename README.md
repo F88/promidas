@@ -83,16 +83,16 @@ npm install github:F88/promidas protopedia-api-v2-client
 import { createProtopediaInMemoryRepository } from '@f88/promidas';
 
 // Create repository with custom configuration
-const repo = createProtopediaInMemoryRepository(
-    {
+const repo = createProtopediaInMemoryRepository({
+    storeConfig: {
         ttlMs: 30 * 60 * 1000, // 30 minutes TTL
         maxDataSizeBytes: 10 * 1024 * 1024, // 10 MiB limit (default)
     },
-    {
+    apiClientOptions: {
         token: process.env.PROTOPEDIA_API_V2_TOKEN,
         logLevel: 'info',
     },
-);
+});
 
 // Setup initial snapshot
 await repo.setupSnapshot({ offset: 0, limit: 100 });

@@ -85,7 +85,7 @@ describe('createProtopediaInMemoryRepository', () => {
       listPrototypes: vi.fn(),
     } as never);
 
-    const repository = createProtopediaInMemoryRepository({}, {});
+    const repository = createProtopediaInMemoryRepository({});
 
     expect(repository).toBeDefined();
     expect(repository).toBeInstanceOf(ProtopediaInMemoryRepositoryImpl);
@@ -97,7 +97,7 @@ describe('createProtopediaInMemoryRepository', () => {
     } as never);
 
     const storeConfig = { maxDataSizeBytes: 5000 };
-    const repository = createProtopediaInMemoryRepository(storeConfig, {});
+    const repository = createProtopediaInMemoryRepository({ storeConfig });
 
     expect(repository).toBeDefined();
     expect(repository.getConfig()).toEqual(
@@ -112,7 +112,7 @@ describe('createProtopediaInMemoryRepository', () => {
       listPrototypes: vi.fn(),
     } as never);
 
-    const repository = createProtopediaInMemoryRepository({}, {});
+    const repository = createProtopediaInMemoryRepository({});
 
     expect(repository).toBeDefined();
     expect(repository).toBeInstanceOf(ProtopediaInMemoryRepositoryImpl);
@@ -124,7 +124,7 @@ describe('createProtopediaInMemoryRepository', () => {
     } as never);
 
     const storeConfig = { maxDataSizeBytes: 3000 };
-    const repository = createProtopediaInMemoryRepository(storeConfig, {});
+    const repository = createProtopediaInMemoryRepository({ storeConfig });
 
     expect(repository).toBeDefined();
     expect(repository.getConfig()).toEqual(
@@ -139,7 +139,7 @@ describe('createProtopediaInMemoryRepository', () => {
       listPrototypes: vi.fn(),
     } as never);
 
-    const repository = createProtopediaInMemoryRepository({}, {});
+    const repository = createProtopediaInMemoryRepository({});
 
     expect(repository.setupSnapshot).toBeTypeOf('function');
     expect(repository.refreshSnapshot).toBeTypeOf('function');
@@ -159,14 +159,12 @@ describe('createProtopediaInMemoryRepository', () => {
       listPrototypes: vi.fn(),
     } as never);
 
-    const repo1 = createProtopediaInMemoryRepository(
-      { maxDataSizeBytes: 1000 },
-      {},
-    );
-    const repo2 = createProtopediaInMemoryRepository(
-      { maxDataSizeBytes: 2000 },
-      {},
-    );
+    const repo1 = createProtopediaInMemoryRepository({
+      storeConfig: { maxDataSizeBytes: 1000 },
+    });
+    const repo2 = createProtopediaInMemoryRepository({
+      storeConfig: { maxDataSizeBytes: 2000 },
+    });
 
     expect(repo1).not.toBe(repo2);
     expect(repo1.getConfig().maxDataSizeBytes).toBe(1000);
