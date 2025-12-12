@@ -1,3 +1,38 @@
+/**
+ * @file Type safety and contract tests for normalizePrototype function
+ *
+ * @description
+ * This test suite validates the type safety guarantees and data contracts of the
+ * normalizePrototype function. It ensures that the output consistently adheres to
+ * the NormalizedPrototype type definition and maintains required field constraints.
+ *
+ * @testStrategy
+ * - **Required Fields**: Verify all mandatory fields are always present with correct types
+ * - **Optional Fields**: Validate optional fields are correctly omitted or present
+ * - **Type Consistency**: Ensure each field has the expected TypeScript type
+ * - **Contract Compliance**: Verify the function fulfills its type contract
+ *
+ * @testCategories
+ * - Required field presence and types
+ * - Optional field handling (omission when not provided)
+ * - Array field type consistency
+ * - Numeric field type validation
+ * - String field type validation
+ * - Timestamp field format validation
+ *
+ * @totalTests 29
+ *
+ * @remarks
+ * These tests are critical for TypeScript type safety. They ensure that the function's
+ * runtime behavior matches its type declarations, preventing type-related bugs in
+ * consuming code. Compliance with exactOptionalPropertyTypes is verified.
+ *
+ * @seeAlso
+ * - {@link ./fields.test.ts} - Individual field validation
+ * - {@link ./transformation.test.ts} - Transformation consistency
+ * - {@link ./error-handling.test.ts} - Error handling and edge cases
+ */
+
 import { describe, expect, it } from 'vitest';
 
 import type { UpstreamPrototype } from '../../../types/prototype-api.types.js';

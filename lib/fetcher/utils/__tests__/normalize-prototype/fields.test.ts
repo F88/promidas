@@ -1,3 +1,30 @@
+/**
+ * @file Field-focused tests for normalizePrototype function
+ *
+ * @description
+ * This test suite validates the normalization behavior of individual fields in the
+ * normalizePrototype function. Each field from UpstreamPrototype is tested in isolation
+ * to ensure correct transformation to NormalizedPrototype format.
+ *
+ * @testStrategy
+ * - **Isolation**: Each field is tested independently to prevent cross-field interference
+ * - **Coverage**: Tests include typical values, boundary cases, and error scenarios
+ * - **Organization**: Fields are grouped by logical categories (metadata, content, metrics, etc.)
+ * - **Priority**: Tests are ordered by field criticality and complexity
+ *
+ * @testCategories
+ * - High Priority: Critical fields with complex transformation logic (timestamps, arrays)
+ * - Medium Priority: Important fields with moderate complexity (strings with defaults)
+ * - Low Priority: Simple field mappings (direct assignments, status codes)
+ *
+ * @totalTests 152
+ *
+ * @seeAlso
+ * - {@link ./type-safety.test.ts} - Type contracts and guarantees
+ * - {@link ./transformation.test.ts} - Transformation consistency
+ * - {@link ./error-handling.test.ts} - Error handling and edge cases
+ */
+
 import { describe, expect, it } from 'vitest';
 
 import type { UpstreamPrototype } from '../../../types/prototype-api.types.js';
@@ -6,18 +33,7 @@ import { normalizePrototype } from '../../normalize-prototype.js';
 import { createMinimalUpstream } from './helpers.js';
 
 /**
- * Field-focused tests
- *
- * Each field is tested in isolation to verify correct normalization behavior.
- * This ensures that changes to one field's logic do not inadvertently affect others.
- * Tests include typical, boundary, and error cases where applicable.
- * This structure aids in pinpointing issues during maintenance and updates.
- * Each field's tests are grouped under its own describe block for clarity.
- * Tests are prioritized by importance and likelihood of issues:
- * - High: Critical fields with complex logic
- * - Medium: Important fields with moderate complexity
- * - Low: Less critical fields or simple mappings
- * This approach provides comprehensive coverage while maintaining test clarity.
+ * Field-focused Tests
  */
 describe('Field-focused testing', () => {
   describe('id field', () => {

@@ -1,3 +1,38 @@
+/**
+ * @file Test helper utilities for normalizePrototype test suite
+ *
+ * @description
+ * This module provides shared utility functions used across all normalizePrototype tests.
+ * The primary utility is createMinimalUpstream, which generates valid UpstreamPrototype
+ * objects with sensible defaults that can be selectively overridden for specific test cases.
+ *
+ * @utilities
+ * - createMinimalUpstream: Factory function for creating test UpstreamPrototype instances
+ *
+ * @usage
+ * ```typescript
+ * // Create minimal valid upstream
+ * const upstream = createMinimalUpstream();
+ *
+ * // Override specific fields for testing
+ * const customUpstream = createMinimalUpstream({
+ *   id: 999,
+ *   prototypeNm: 'Custom Name'
+ * });
+ * ```
+ *
+ * @remarks
+ * This helper centralizes the creation of test data, ensuring consistency across all test
+ * files and reducing code duplication. It guarantees that all required fields are present
+ * with valid default values, while allowing flexible overrides for specific test scenarios.
+ *
+ * @seeAlso
+ * - {@link ./fields.test.ts} - Field validation tests
+ * - {@link ./type-safety.test.ts} - Type safety tests
+ * - {@link ./transformation.test.ts} - Transformation tests
+ * - {@link ./error-handling.test.ts} - Error handling tests
+ */
+
 import type { UpstreamPrototype } from '../../../types/prototype-api.types.js';
 
 /**

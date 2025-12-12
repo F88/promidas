@@ -1,3 +1,48 @@
+/**
+ * @file Error handling and edge case tests for normalizePrototype function
+ *
+ * @description
+ * This test suite validates the robustness of the normalizePrototype function when
+ * handling malformed, invalid, or edge case input data. It ensures the function
+ * gracefully handles errors and produces safe, predictable output even with corrupted data.
+ *
+ * @testStrategy
+ * - **Defensive Programming**: Verify safe handling of null, undefined, and invalid values
+ * - **Data Corruption**: Test resilience against malformed timestamps, strings, and arrays
+ * - **Boundary Conditions**: Validate behavior at numeric and string length limits
+ * - **Security**: Ensure protection against prototype pollution and injection attacks
+ * - **Edge Cases**: Cover unusual but valid input scenarios
+ *
+ * @testCategories
+ * - Null and undefined value handling (6 tests)
+ * - NaN and Infinity in numeric fields (7 tests)
+ * - Timestamp edge cases (7 tests) - Invalid years, months, days, hours, malformed formats
+ * - Extremely long data (5 tests) - 10K+ character strings, 1000+ array items
+ * - Multiple simultaneous anomalies (5 tests) - All fields null/NaN, mixed corruption
+ * - Prototype pollution protection (3 tests) - __proto__, constructor keywords
+ * - Array field edge cases (5 tests) - Delimiters only, Unicode whitespace
+ * - Numeric boundary conditions (6 tests) - MAX_VALUE, MIN_VALUE, EPSILON, -0
+ * - Empty and whitespace-only inputs (13 tests)
+ * - Malformed pipe-separated strings (11 tests)
+ *
+ * @totalTests 68
+ *
+ * @remarks
+ * These tests are critical for production reliability. They ensure the normalizePrototype
+ * function never crashes, throws exceptions, or produces corrupted output when processing
+ * real-world data from the Protopedia API, which may contain unexpected or malformed values.
+ * The comprehensive edge case coverage provides confidence in the function's robustness.
+ *
+ * @security
+ * Includes tests for prototype pollution attacks (__proto__, constructor) to ensure
+ * the function safely handles potentially malicious input data.
+ *
+ * @seeAlso
+ * - {@link ./fields.test.ts} - Individual field validation
+ * - {@link ./type-safety.test.ts} - Type contracts and guarantees
+ * - {@link ./transformation.test.ts} - Transformation consistency
+ */
+
 import { describe, expect, it } from 'vitest';
 
 import type { UpstreamPrototype } from '../../../types/prototype-api.types.js';

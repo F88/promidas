@@ -1,3 +1,38 @@
+/**
+ * @file Transformation consistency tests for normalizePrototype function
+ *
+ * @description
+ * This test suite validates the consistency and completeness of data transformation
+ * performed by the normalizePrototype function. It ensures that all fields are properly
+ * mapped, no data is lost during transformation, and the output structure is predictable.
+ *
+ * @testStrategy
+ * - **Complete Mapping**: Verify all UpstreamPrototype fields are mapped to output
+ * - **No Data Loss**: Ensure no fields are dropped during transformation
+ * - **Idempotency**: Validate that multiple transformations produce consistent results
+ * - **Structural Integrity**: Confirm output structure matches NormalizedPrototype schema
+ *
+ * @testCategories
+ * - Complete field mapping validation
+ * - No extraneous fields in output
+ * - Transformation idempotency
+ * - Field count verification
+ * - Data preservation checks
+ *
+ * @totalTests 8
+ *
+ * @remarks
+ * These tests ensure the normalizePrototype function is a reliable data transformation
+ * layer. They verify that the function consistently produces complete, predictable output
+ * without data loss or unexpected fields, which is critical for data integrity in the
+ * prototype repository system.
+ *
+ * @seeAlso
+ * - {@link ./fields.test.ts} - Individual field validation
+ * - {@link ./type-safety.test.ts} - Type contracts and guarantees
+ * - {@link ./error-handling.test.ts} - Error handling and edge cases
+ */
+
 import { describe, expect, it } from 'vitest';
 
 import type { UpstreamPrototype } from '../../../types/prototype-api.types.js';
