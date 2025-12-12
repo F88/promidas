@@ -417,9 +417,9 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
 
       // All results should be identical
       const firstResult = results[0];
-      expect(
-        results.every((r) => JSON.stringify(r) === JSON.stringify(firstResult)),
-      ).toBe(true);
+      results.forEach((r) => {
+        expect(r).toEqual(firstResult);
+      });
     });
 
     it('handles rapid sequential batches without leaking promises', async () => {
