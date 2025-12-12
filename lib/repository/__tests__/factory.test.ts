@@ -1133,7 +1133,7 @@ describe('createProtopediaInMemoryRepository', () => {
       const newCallArgs = vi.mocked(createProtopediaApiCustomClient).mock
         .calls[0]?.[0];
       expect(newCallArgs?.token).toBe('modified-token');
-      expect(newCallArgs?.token).toBe('modified-token');
+      expect(newCallArgs?.logLevel).toBe('debug');
     });
 
     it('should return independent config objects', () => {
