@@ -11,6 +11,8 @@ export default [
       'eslint.config.mjs',
       'prettier.config.mjs',
       '**/*.d.ts',
+      '__tests__/**',
+      'vitest.exports.config.ts',
     ],
   },
   {
