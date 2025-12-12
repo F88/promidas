@@ -18,7 +18,7 @@ import type { ResultOfListPrototypesApiResponse } from 'protopedia-api-v2-client
 
 import type { NormalizedPrototype } from '../../types/index.js';
 
-import { normalizeProtoPediaTimestamp } from './time.js';
+import { normalizeProtoPediaTimestamp } from './normalize-protopedia-timestamp.js';
 
 /**
  * Alias for the upstream prototype shape returned by the ProtoPedia SDK.

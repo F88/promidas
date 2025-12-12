@@ -27,6 +27,16 @@
  * - {@link ProtopediaInMemoryRepository} — Repository interface with analysis methods
  * - {@link PrototypeAnalysisResult} — Result type for prototype ID range analysis
  *
+ * **Utilities:**
+ * - {@link getPrototypeStatusLabel} — Status code to Japanese label
+ * - {@link getPrototypeReleaseFlagLabel} — Release flag to Japanese label
+ * - {@link getPrototypeLicenseTypeLabel} — License type to Japanese label
+ * - {@link getPrototypeThanksFlagLabel} — Thanks flag to Japanese label
+ * - {@link parseProtoPediaTimestamp} — Parse ProtoPedia JST timestamps
+ * - {@link parseW3cDtfTimestamp} — Parse W3C-DTF timestamps
+ * - {@link normalizeProtoPediaTimestamp} — Normalize timestamps to UTC
+ * - {@link JST_OFFSET_MS} — JST timezone offset constant
+ *
  * @packageDocumentation
  */
 
@@ -61,3 +71,18 @@ export {
   type ProtopediaInMemoryRepositoryStats,
   type PrototypeAnalysisResult,
 } from './repository/index.js';
+
+// Utilities (converters and time)
+export {
+  getPrototypeLicenseTypeLabel,
+  getPrototypeReleaseFlagLabel,
+  getPrototypeStatusLabel,
+  getPrototypeThanksFlagLabel,
+  JST_OFFSET_MS,
+  parseProtoPediaTimestamp,
+  parseW3cDtfTimestamp,
+  type LicenseTypeCode,
+  type ReleaseFlagCode,
+  type StatusCode,
+  type ThanksFlagCode,
+} from './utils/index.js';

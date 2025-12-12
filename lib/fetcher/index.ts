@@ -26,13 +26,6 @@
  * - {@link Logger} — Logger interface compatible with protopedia-api-v2-client.
  * - {@link LogLevel} — Log level type for controlling logger verbosity.
  *
- * ### Time & Date Utilities
- *
- * - {@link normalizeProtoPediaTimestamp} — Convert JST timestamps to UTC ISO 8601.
- * - {@link parseAsProtoPediaTimestamp} — Parse date strings as JST timestamps.
- * - {@link parseDateTimeString} — General purpose date string parser.
- * - {@link JST_OFFSET_MS} — JST timezone offset constant (9 hours in milliseconds).
- *
  * ## API Client Version Compatibility
  *
  * This library supports `protopedia-api-v2-client` v3.0.0 and later.
@@ -54,10 +47,7 @@ export {
 } from './protopedia-api-custom-client.js';
 
 export {
-  JST_OFFSET_MS,
-  normalizeProtoPediaTimestamp,
-  parseAsProtoPediaTimestamp,
-  parseDateTimeString,
-} from './utils/time.js';
-
-export { constructDisplayMessage } from './utils/errors/messages.js';
+  handleApiError,
+  resolveErrorMessage,
+  constructDisplayMessage,
+} from './utils/index.js';
