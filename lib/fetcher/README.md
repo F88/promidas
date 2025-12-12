@@ -46,7 +46,7 @@ if (result.ok) {
     console.log(`${result.data.length} 件のプロトタイプを取得しました`);
 
     result.data.forEach((prototype) => {
-        console.log(`名前: ${prototype.name}`);
+        console.log(`名前: ${prototype.prototypeNm}`);
         console.log(`タグ: ${prototype.tags.join(', ')}`);
     });
 } else {
