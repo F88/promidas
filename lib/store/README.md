@@ -26,21 +26,21 @@ instructions-for-ais:
 ## 🚀 簡単な使い方
 
 ```typescript
-import { createPrototypeInMemoryStore } from '@f88/promidas/store';
+import { PrototypeInMemoryStore } from '@f88/promidas/store';
 
 // 1. ストアを作成
-const store = createPrototypeInMemoryStore({
-    ttl: 3600000, // データの有効期限 (1時間)
+const store = new PrototypeInMemoryStore({
+    ttlMs: 3600000, // データの有効期限 (1時間)
 });
 
 // 2. データを保存
-store.set([
-    { id: 1, name: 'プロトタイプA' /* ... */ },
-    { id: 2, name: 'プロトタイプB' /* ... */ },
+store.setAll([
+    { id: 1, prototypeNm: 'プロトタイプA' /* ... */ },
+    { id: 2, prototypeNm: 'プロトタイプB' /* ... */ },
 ]);
 
 // 3. データを取得
-const data = store.get();
+const data = store.getAll();
 console.log(`${data.length} 件のデータ`);
 
 // 4. データをクリア
@@ -58,17 +58,17 @@ store.clear();
 
 ```typescript
 // データを保存
-store.set([
-    { id: 1, name: 'サンプル1' },
-    { id: 2, name: 'サンプル2' },
+store.setAll([
+    { id: 1, prototypeNm: 'サンプル1' },
+    { id: 2, prototypeNm: 'サンプル2' },
 ]);
 
 // データを取得
-const allData = store.get();
+const allData = store.getAll();
 console.log(allData); // [{ id: 1, ... }, { id: 2, ... }]
 
 // データがあるか確認
-const hasData = store.has();
+const hasData = store.size > 0;
 console.log(hasData); // true
 ```
 
@@ -78,24 +78,24 @@ console.log(hasData); // true
 // すべてのデータを削除
 store.clear();
 
-console.log(store.has()); // false
-console.log(store.get()); // []
+console.log(store.size > 0); // false
+console.log(store.getAll()); // []
 ```
 
 ### 有効期限 (TTL)
 
 ```typescript
-import { createPrototypeInMemoryStore } from '@f88/promidas/store';
+import { PrototypeInMemoryStore } from '@f88/promidas/store';
 
 // 30分で期限切れになるストア
-const store = createPrototypeInMemoryStore({
-    ttl: 30 * 60 * 1000, // ミリ秒単位
+const store = new PrototypeInMemoryStore({
+    ttlMs: 30 * 60 * 1000, // ミリ秒単位
 });
 
-store.set([{ id: 1, name: 'データ' }]);
+store.setAll([{ id: 1, prototypeNm: 'データ' }]);
 
 // 30分後...
-console.log(store.has()); // false (自動的に削除される)
+console.log(store.isExpired()); // true (期限切れを検出)
 ```
 
 ## 🔗 関連モジュール
@@ -121,31 +121,32 @@ console.log(store.has()); // false (自動的に削除される)
 ### 基本的な使い方
 
 ```typescript
-import { createPrototypeInMemoryStore } from '@f88/promidas/store';
+import { PrototypeInMemoryStore } from '@f88/promidas/store';
+import type { NormalizedPrototype } from '@f88/promidas/types';
 
-const store = createPrototypeInMemoryStore({ ttl: 3600000 });
+const store = new PrototypeInMemoryStore({ ttlMs: 3600000 });
 
 // データを保存
-const prototypes = [
-    { id: 1, name: 'プロトA', status: 'active' },
-    { id: 2, name: 'プロトB', status: 'inactive' },
+const prototypes: NormalizedPrototype[] = [
+    { id: 1, prototypeNm: 'プロトA', status: 3 /* ... */ },
+    { id: 2, prototypeNm: 'プロトB', status: 1 /* ... */ },
 ];
-store.set(prototypes);
+store.setAll(prototypes);
 
 // データを取得して検索 (手動)
-const active = store.get().filter((p) => p.status === 'active');
-console.log(active); // [{ id: 1, name: 'プロトA', ... }]
+const completed = store.getAll().filter((p) => p.status === 3);
+console.log(completed); // [{ id: 1, prototypeNm: 'プロトA', ... }]
 ```
 
 ### TTL の活用
 
 ```typescript
-const store = createPrototypeInMemoryStore({
-    ttl: 60 * 60 * 1000, // 1時間
+const store = new PrototypeInMemoryStore({
+    ttlMs: 60 * 60 * 1000, // 1時間
 });
 
 // データを保存
-store.set(data);
+store.setAll(data);
 
 // しばらく後...
 if (store.has()) {
