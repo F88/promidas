@@ -1112,7 +1112,7 @@ describe('createProtopediaInMemoryRepository', () => {
         token: 'original-token',
         logLevel: 'info',
       };
-      const repository = createProtopediaInMemoryRepository({
+      createProtopediaInMemoryRepository({
         apiClientOptions,
       });
 
