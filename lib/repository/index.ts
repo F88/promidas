@@ -37,7 +37,7 @@
  * // Create repository with TTL and memory limits
  * const repository = createProtopediaInMemoryRepository({
  *   storeConfig: {
- *     ttlSeconds: 3600,           // 1 hour TTL
+ *     ttlMs: 60 * 60 * 1000,      // 1 hour TTL
  *     maxDataSizeBytes: 10485760, // 10MB limit
  *   },
  *   apiClientOptions: {
