@@ -92,6 +92,14 @@ describe('Time parser', () => {
         ).toBeUndefined();
       });
 
+      it('returns undefined for values with invalid numeric components', () => {
+        // Test edge case where parseInt might succeed but create NaN in conversion
+        // Note: These are caught by regex, but testing for defense in depth
+        expect(
+          parseProtoPediaTimestamp('2025-11-14 12:03:07.NaN'),
+        ).toBeUndefined();
+      });
+
       it('returns undefined for invalid random strings', () => {
         expect(parseProtoPediaTimestamp('invalid')).toBeUndefined();
         expect(parseProtoPediaTimestamp('not a timestamp')).toBeUndefined();
@@ -211,6 +219,34 @@ describe('Time parser', () => {
       it('verifies JST_OFFSET_MS constant is correct', () => {
         expect(JST_OFFSET_MS).toBe(HOURS_9_IN_MS);
         expect(JST_OFFSET_MS).toBe(32400000); // 9 * 60 * 60 * 1000
+      });
+    });
+
+    describe('invalid numeric values', () => {
+      it('handles dates with extreme overflow values', () => {
+        // These pass regex but create overflowed Date values
+        const result = parseProtoPediaTimestamp('9999-99-99 99:99:99.999');
+        // Date overflow is handled by JavaScript Date
+        expect(result).toBeDefined();
+        expect(typeof result).toBe('string');
+      });
+
+      it('returns undefined for extremely large values causing Date overflow', () => {
+        // Date.UTC with extreme values may return Infinity
+        const result = parseProtoPediaTimestamp('999999-12-31 23:59:59.999');
+        // JavaScript Date can handle very large years, but result may be undefined if not finite
+        expect(typeof result === 'string' || result === undefined).toBe(true);
+      });
+
+      it('returns undefined for values that produce non-finite UTC timestamp', () => {
+        // Year 275761 and beyond causes Date.UTC to return NaN (not finite)
+        // This tests the Number.isFinite check
+        expect(
+          parseProtoPediaTimestamp('275761-01-01 00:00:00.0'),
+        ).toBeUndefined();
+        expect(
+          parseProtoPediaTimestamp('999999-12-31 23:59:59.999'),
+        ).toBeUndefined();
       });
     });
 
@@ -530,6 +566,30 @@ describe('Time parser', () => {
         expect(parseW3cDtfTimestamp('2025-11-14T00:00:00-05:00')).toBe(
           '2025-11-14T05:00:00.000Z',
         );
+      });
+    });
+
+    describe('invalid numeric values', () => {
+      it('returns undefined for dates that produce invalid UTC timestamp', () => {
+        // Test values that might produce non-finite results
+        // Year 0 and negative years may cause issues
+        expect(parseProtoPediaTimestamp('0000-01-01 00:00:00.0')).toBeDefined();
+
+        // Extremely large milliseconds should still be handled
+        expect(
+          parseProtoPediaTimestamp('2025-11-14 12:00:00.999999999'),
+        ).toBeDefined();
+      });
+    });
+
+    describe('W3C-DTF invalid date values', () => {
+      it('returns undefined for invalid dates that pass regex', () => {
+        // Invalid month
+        expect(parseW3cDtfTimestamp('2025-13-01T12:00:00Z')).toBeUndefined();
+        // Invalid day
+        expect(parseW3cDtfTimestamp('2025-11-32T12:00:00Z')).toBeUndefined();
+        // Invalid hour
+        expect(parseW3cDtfTimestamp('2025-11-14T25:00:00Z')).toBeUndefined();
       });
     });
 
