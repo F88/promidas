@@ -114,6 +114,68 @@ describe('normalizePrototype', () => {
         const result = normalizePrototype(upstream);
         expect(result.createDate).toBe('');
       });
+
+      describe('MEDIUM: Format variations', () => {
+        it('handles different millisecond formats (.00)', () => {
+          const upstream = createMinimalUpstream({
+            createDate: '2024-01-01 12:00:00.00',
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.createDate).toBe('2024-01-01T03:00:00.000Z');
+        });
+
+        it('handles different millisecond formats (.000)', () => {
+          const upstream = createMinimalUpstream({
+            createDate: '2024-01-01 12:00:00.000',
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.createDate).toBe('2024-01-01T03:00:00.000Z');
+        });
+
+        it('handles different millisecond formats (.123)', () => {
+          const upstream = createMinimalUpstream({
+            createDate: '2024-01-01 12:00:00.123',
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.createDate).toBe('2024-01-01T03:00:00.123Z');
+        });
+
+        it('handles W3C-DTF format with timezone', () => {
+          const upstream = createMinimalUpstream({
+            createDate: '2024-01-01T12:00:00+09:00',
+          });
+          const result = normalizePrototype(upstream);
+          // W3C-DTF is converted to UTC ISO format
+          expect(result.createDate).toBe('2024-01-01T03:00:00.000Z');
+        });
+
+        it('handles ISO 8601 UTC format', () => {
+          const upstream = createMinimalUpstream({
+            createDate: '2024-01-01T03:00:00Z',
+          });
+          const result = normalizePrototype(upstream);
+          // Normalizer converts to standard format with milliseconds
+          expect(result.createDate).toBe('2024-01-01T03:00:00.000Z');
+        });
+      });
+
+      describe('LOW: Boundary dates', () => {
+        it('handles Year 2038 problem boundary', () => {
+          const upstream = createMinimalUpstream({
+            createDate: '2038-01-19 03:14:07.0',
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.createDate).toBe('2038-01-18T18:14:07.000Z');
+        });
+
+        it('handles Unix epoch start (JST)', () => {
+          const upstream = createMinimalUpstream({
+            createDate: '1970-01-01 09:00:00.0',
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.createDate).toBe('1970-01-01T00:00:00.000Z');
+        });
+      });
     });
 
     describe('updateDate field', () => {
@@ -258,6 +320,20 @@ describe('normalizePrototype', () => {
         const result = normalizePrototype(upstream);
         expect(result.releaseFlg).toBe(0);
       });
+
+      describe('MEDIUM: Boundary values', () => {
+        it('handles negative numbers', () => {
+          const upstream = createMinimalUpstream({ releaseFlg: -1 });
+          const result = normalizePrototype(upstream);
+          expect(result.releaseFlg).toBe(-1);
+        });
+
+        it('handles decimal values (if type allows)', () => {
+          const upstream = createMinimalUpstream({ releaseFlg: 1.5 as any });
+          const result = normalizePrototype(upstream);
+          expect(result.releaseFlg).toBe(1.5);
+        });
+      });
     });
 
     describe('status field', () => {
@@ -275,6 +351,33 @@ describe('normalizePrototype', () => {
         });
         const result = normalizePrototype(upstream);
         expect(result.prototypeNm).toBe('My Prototype');
+      });
+
+      describe('MEDIUM: Special characters', () => {
+        it('handles Unicode and emoji in name', () => {
+          const upstream = createMinimalUpstream({
+            prototypeNm: '🚀 ロケット Prototype',
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.prototypeNm).toBe('🚀 ロケット Prototype');
+        });
+
+        it('handles special characters', () => {
+          const upstream = createMinimalUpstream({
+            prototypeNm: 'Prototype v2.0 (beta)',
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.prototypeNm).toBe('Prototype v2.0 (beta)');
+        });
+      });
+
+      describe('LOW: Edge cases', () => {
+        it('handles very long names', () => {
+          const longName = 'Very Long Prototype Name '.repeat(10);
+          const upstream = createMinimalUpstream({ prototypeNm: longName });
+          const result = normalizePrototype(upstream);
+          expect(result.prototypeNm).toBe(longName);
+        });
       });
     });
 
@@ -296,6 +399,64 @@ describe('normalizePrototype', () => {
         const upstream = createMinimalUpstream({ summary: '' });
         const result = normalizePrototype(upstream);
         expect(result.summary).toBe('');
+      });
+
+      describe('MEDIUM: Special content', () => {
+        it('handles whitespace-only strings', () => {
+          const upstream = createMinimalUpstream({ summary: '   ' });
+          const result = normalizePrototype(upstream);
+          expect(result.summary).toBe('   ');
+        });
+
+        it('handles HTML content (passthrough)', () => {
+          const upstream = createMinimalUpstream({
+            summary: '<strong>Bold</strong>',
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.summary).toBe('<strong>Bold</strong>');
+        });
+
+        it('handles Markdown content', () => {
+          const upstream = createMinimalUpstream({
+            summary: '# Title\n\n**Bold**',
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.summary).toBe('# Title\n\n**Bold**');
+        });
+
+        it('handles Unicode and emoji', () => {
+          const upstream = createMinimalUpstream({
+            summary: '🎉 Success! 成功',
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.summary).toBe('🎉 Success! 成功');
+        });
+
+        it('handles newlines and tabs', () => {
+          const upstream = createMinimalUpstream({
+            summary: 'Line1\nLine2\tTabbed',
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.summary).toBe('Line1\nLine2\tTabbed');
+        });
+      });
+
+      describe('LOW: Edge cases', () => {
+        it('handles very long strings', () => {
+          const longString = 'a'.repeat(10000);
+          const upstream = createMinimalUpstream({ summary: longString });
+          const result = normalizePrototype(upstream);
+          expect(result.summary).toBe(longString);
+          expect(result.summary.length).toBe(10000);
+        });
+
+        it('handles SQL-like content (passthrough)', () => {
+          const upstream = createMinimalUpstream({
+            summary: "'; DROP TABLE--",
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.summary).toBe("'; DROP TABLE--");
+        });
       });
     });
 
@@ -320,6 +481,38 @@ describe('normalizePrototype', () => {
         const result = normalizePrototype(upstream);
         expect(result.freeComment).toBe('');
       });
+
+      describe('MEDIUM: Special content', () => {
+        it('handles whitespace-only strings', () => {
+          const upstream = createMinimalUpstream({ freeComment: '  \t  ' });
+          const result = normalizePrototype(upstream);
+          expect(result.freeComment).toBe('  \t  ');
+        });
+
+        it('handles HTML content in freeComment', () => {
+          const upstream = createMinimalUpstream({
+            freeComment: '<br>Line break<br>',
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.freeComment).toBe('<br>Line break<br>');
+        });
+
+        it('handles Unicode and emoji', () => {
+          const upstream = createMinimalUpstream({
+            freeComment: 'コメント 🎯',
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.freeComment).toBe('コメント 🎯');
+        });
+
+        it('handles multiline content with newlines', () => {
+          const upstream = createMinimalUpstream({
+            freeComment: 'Line 1\nLine 2\nLine 3',
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.freeComment).toBe('Line 1\nLine 2\nLine 3');
+        });
+      });
     });
 
     describe('systemDescription field', () => {
@@ -342,6 +535,27 @@ describe('normalizePrototype', () => {
         const upstream = createMinimalUpstream({ systemDescription: '' });
         const result = normalizePrototype(upstream);
         expect(result.systemDescription).toBe('');
+      });
+
+      describe('MEDIUM: Special content', () => {
+        it('handles HTML content', () => {
+          const upstream = createMinimalUpstream({
+            systemDescription: '<p>System <strong>info</strong></p>',
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.systemDescription).toBe(
+            '<p>System <strong>info</strong></p>',
+          );
+        });
+
+        it('handles very long description', () => {
+          const longDesc = 'System description: ' + 'detail '.repeat(1000);
+          const upstream = createMinimalUpstream({
+            systemDescription: longDesc,
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.systemDescription).toBe(longDesc);
+        });
       });
     });
 
@@ -412,6 +626,32 @@ describe('normalizePrototype', () => {
         const result = normalizePrototype(upstream);
         expect(result.users).toEqual(['single-user']);
       });
+
+      describe('MEDIUM: Special characters and Unicode', () => {
+        it('handles special characters in segments', () => {
+          const upstream = createMinimalUpstream({
+            users: 'user-1|user_2|user@3',
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.users).toEqual(['user-1', 'user_2', 'user@3']);
+        });
+
+        it('handles Unicode and emoji in segments', () => {
+          const upstream = createMinimalUpstream({
+            users: '🚀 Rocket|AI 人工知能',
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.users).toEqual(['🚀 Rocket', 'AI 人工知能']);
+        });
+
+        it('handles segments with internal spaces', () => {
+          const upstream = createMinimalUpstream({
+            users: 'John Doe|Jane Smith',
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.users).toEqual(['John Doe', 'Jane Smith']);
+        });
+      });
     });
 
     describe('teamNm field', () => {
@@ -432,6 +672,20 @@ describe('normalizePrototype', () => {
         const upstream = rest as UpstreamPrototype;
         const result = normalizePrototype(upstream);
         expect(result.teamNm).toBe('');
+      });
+
+      describe('LOW: Edge cases', () => {
+        it('handles pipe character in team name (not split)', () => {
+          const upstream = createMinimalUpstream({ teamNm: 'Team A|B' });
+          const result = normalizePrototype(upstream);
+          expect(result.teamNm).toBe('Team A|B');
+        });
+
+        it('handles Unicode in team name', () => {
+          const upstream = createMinimalUpstream({ teamNm: 'チーム Alpha' });
+          const result = normalizePrototype(upstream);
+          expect(result.teamNm).toBe('チーム Alpha');
+        });
       });
     });
 
@@ -490,6 +744,30 @@ describe('normalizePrototype', () => {
         const result = normalizePrototype(upstream);
         expect(result.tags).toEqual(['single-tag']);
       });
+
+      describe('MEDIUM: Special characters and Unicode', () => {
+        it('handles special characters', () => {
+          const upstream = createMinimalUpstream({ tags: 'C++|C#|Node.js' });
+          const result = normalizePrototype(upstream);
+          expect(result.tags).toEqual(['C++', 'C#', 'Node.js']);
+        });
+
+        it('handles Unicode and emoji', () => {
+          const upstream = createMinimalUpstream({
+            tags: '🎨 Design|機械学習',
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.tags).toEqual(['🎨 Design', '機械学習']);
+        });
+
+        it('handles tags with internal spaces', () => {
+          const upstream = createMinimalUpstream({
+            tags: 'Machine Learning|Deep Learning',
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.tags).toEqual(['Machine Learning', 'Deep Learning']);
+        });
+      });
     });
 
     describe('materials field', () => {
@@ -534,6 +812,24 @@ describe('normalizePrototype', () => {
         const upstream = createMinimalUpstream({ materials: '' });
         const result = normalizePrototype(upstream);
         expect(result.materials).toEqual([]);
+      });
+
+      describe('MEDIUM: Special characters', () => {
+        it('handles materials with special characters', () => {
+          const upstream = createMinimalUpstream({
+            materials: 'Raspberry Pi|Arduino Uno R3',
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.materials).toEqual(['Raspberry Pi', 'Arduino Uno R3']);
+        });
+
+        it('handles Unicode in materials', () => {
+          const upstream = createMinimalUpstream({
+            materials: 'センサー|モーター',
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.materials).toEqual(['センサー', 'モーター']);
+        });
       });
     });
 
@@ -641,6 +937,23 @@ describe('normalizePrototype', () => {
         const upstream = rest as UpstreamPrototype;
         const result = normalizePrototype(upstream);
         expect(result.officialLink).toBeUndefined();
+      });
+
+      describe('LOW: Edge cases', () => {
+        it('handles URLs with special characters (pipe not split)', () => {
+          const upstream = createMinimalUpstream({
+            officialLink: 'https://example.com?param=a|b',
+          });
+          const result = normalizePrototype(upstream);
+          expect(result.officialLink).toBe('https://example.com?param=a|b');
+        });
+
+        it('handles very long URLs', () => {
+          const longUrl = 'https://example.com/' + 'path/'.repeat(100);
+          const upstream = createMinimalUpstream({ officialLink: longUrl });
+          const result = normalizePrototype(upstream);
+          expect(result.officialLink).toBe(longUrl);
+        });
       });
     });
 
@@ -828,6 +1141,14 @@ describe('normalizePrototype', () => {
         const upstream = createMinimalUpstream({ revision: 0 });
         const result = normalizePrototype(upstream);
         expect(result.revision).toBe(0);
+      });
+
+      describe('MEDIUM: Boundary values', () => {
+        it('handles negative numbers', () => {
+          const upstream = createMinimalUpstream({ revision: -1 });
+          const result = normalizePrototype(upstream);
+          expect(result.revision).toBe(-1);
+        });
       });
     });
 
