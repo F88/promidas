@@ -404,7 +404,6 @@ const customClient = createProtopediaApiCustomClient({
 
 const repository2 = createProtopediaInMemoryRepository({
     apiClient: customClient,
-    },
 });
 ```
 
