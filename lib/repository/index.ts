@@ -132,6 +132,23 @@ export type { Logger, LogLevel } from '../logger/index.js';
 export type { PrototypeInMemoryStats as ProtopediaInMemoryRepositoryStats } from '../store/index.js';
 
 /**
+ * Configuration options for the in-memory store.
+ *
+ * Re-exported from the store module as it's a required parameter for
+ * {@link createProtopediaInMemoryRepository}.
+ *
+ * @example
+ * ```typescript
+ * const storeConfig: PrototypeInMemoryStoreConfig = {
+ *   ttlMs: 30 * 60 * 1000,
+ *   logger: createConsoleLogger('info')
+ * };
+ * const repo = createProtopediaInMemoryRepository(storeConfig, {});
+ * ```
+ */
+export type { PrototypeInMemoryStoreConfig } from '../store/index.js';
+
+/**
  * Type definitions for repository operations and results.
  *
  * Exports all type definitions used by the repository interface:

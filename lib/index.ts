@@ -68,4 +68,5 @@ export {
   type ProtopediaInMemoryRepository,
   type ProtopediaInMemoryRepositoryStats,
   type PrototypeAnalysisResult,
+  type PrototypeInMemoryStoreConfig,
 } from './repository/index.js';
