@@ -27,8 +27,10 @@ This document provides information for developers working on this project.
 ### Installation
 
 ```bash
-npm install
+npm ci
 ```
+
+**Note:** `npm ci` is recommended for clean and consistent installations, especially in CI/CD environments. Use `npm install` for regular dependency updates or when `package-lock.json` needs to be regenerated.
 
 ### Environment Variables
 
@@ -144,9 +146,6 @@ cat .env
 # Reinstall node_modules
 rm -rf node_modules package-lock.json
 npm install
-
-# Clear cache
-npm run clean
 ```
 
 ### Exports Test Failing
@@ -171,6 +170,22 @@ If performance has degraded, review the implementation and check for:
 
 ## References
 
+### Language & Runtime
+
 - [TypeScript Documentation](https://www.typescriptlang.org/docs/)
-- [Vitest Documentation](https://vitest.dev/)
-- [ESLint Documentation](https://eslint.org/docs/)
+- [Node.js Documentation](https://nodejs.org/docs/)
+
+### Development Tools
+
+- [Vitest Documentation](https://vitest.dev/) - Testing framework
+- [ESLint Documentation](https://eslint.org/docs/) - Linting
+- [Prettier Documentation](https://prettier.io/docs/) - Code formatting
+
+### Internal Documentation
+
+- [Types Module](lib/types/README.md)
+- [Utils Module](lib/utils/README.md)
+- [Logger Module](lib/logger/README.md)
+- [Fetcher Module](lib/fetcher/README.md)
+- [Store Module](lib/store/README.md)
+- [Repository Module](lib/repository/README.md)
