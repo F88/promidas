@@ -51,6 +51,77 @@ All methods live on `PrototypeInMemoryStore` in `lib/store/store.ts`.
       bytes (default: 10 MiB). Values above 30 MiB are rejected.
     - `logger?: Logger` – custom logger instance. Defaults to console logger with 'info' level.
 
+#### Logger Configuration
+
+The store accepts an optional `logger` parameter for customizing log output. If not provided, a default console logger with 'info' level is created automatically.
+
+**Simple Usage (Recommended):**
+
+```ts
+import { PrototypeInMemoryStore } from '@f88/promidas/store';
+import { createConsoleLogger } from '@f88/promidas/logger';
+
+// Use default logger (info level)
+const store1 = new PrototypeInMemoryStore({ ttlMs: 30000 });
+
+// Error level only
+const store2 = new PrototypeInMemoryStore({
+    ttlMs: 30000,
+    logger: createConsoleLogger('error'),
+});
+
+// Debug level for verbose output
+const store3 = new PrototypeInMemoryStore({
+    ttlMs: 30000,
+    logger: createConsoleLogger('debug'),
+});
+
+// Completely silent
+const store4 = new PrototypeInMemoryStore({
+    ttlMs: 30000,
+    logger: createConsoleLogger('silent'),
+});
+```
+
+**Custom Logger Integration:**
+
+For production environments, you may want to integrate with your application's logging framework:
+
+```ts
+import type { Logger } from '@f88/promidas/logger';
+import winston from 'winston';
+
+const winstonLogger = winston.createLogger({
+    level: 'warn',
+    transports: [new winston.transports.Console()],
+});
+
+// Adapt Winston to the Logger interface
+const loggerAdapter: Logger = {
+    error: (msg, meta) => winstonLogger.error(msg, meta),
+    warn: (msg, meta) => winstonLogger.warn(msg, meta),
+    info: (msg, meta) => winstonLogger.info(msg, meta),
+    debug: (msg, meta) => winstonLogger.debug(msg, meta),
+};
+
+const store = new PrototypeInMemoryStore({
+    ttlMs: 30000,
+    logger: loggerAdapter,
+});
+```
+
+**Logger Lifecycle:**
+
+- The logger is set during store construction and cannot be changed afterward.
+- The store uses the logger for:
+    - Initialization messages (`info`)
+    - Snapshot update confirmations (`info`)
+    - Warnings when data size exceeds limits (`warn`)
+
+**Current Limitation:**
+
+The logger's log level is fixed at creation time and cannot be changed dynamically. If you need to adjust log levels at runtime, you must create a new logger instance and instantiate a new store. For more flexible log level control, see the related GitHub issue for future improvements.
+
 - `getConfig(): Omit<Required<PrototypeInMemoryStoreConfig>, 'logger'>`
     - Returns the resolved configuration values (TTL and max data size) that were
       set during instantiation.
