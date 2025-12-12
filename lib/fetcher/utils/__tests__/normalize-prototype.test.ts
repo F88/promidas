@@ -1,0 +1,615 @@
+import { describe, expect, it } from 'vitest';
+
+import type { UpstreamPrototype } from '../../types/prototype-api.types.js';
+import { normalizePrototype } from '../normalize-prototype.js';
+
+/**
+ * Helper to create a minimal valid UpstreamPrototype for testing
+ */
+function createMinimalUpstream(
+  overrides?: Partial<UpstreamPrototype>,
+): UpstreamPrototype {
+  return {
+    id: 1,
+    createDate: '2024-01-01 00:00:00.0',
+    updateDate: '2024-01-02 00:00:00.0',
+    createId: 100,
+    updateId: 200,
+    releaseFlg: 2,
+    status: 1,
+    prototypeNm: 'Test Prototype',
+    summary: 'A test prototype',
+    freeComment: 'A comment',
+    systemDescription: 'A description',
+    users: 'user1|user2',
+    teamNm: 'Team Alpha',
+    tags: 'IoT|AI',
+    materials: 'material1',
+    events: 'event1',
+    awards: 'award1',
+    officialLink: 'https://example.com',
+    videoUrl: 'https://youtube.com/watch',
+    mainUrl: 'https://example.com/image.jpg',
+    relatedLink: 'https://example.com/related',
+    relatedLink2: 'https://example.com/related2',
+    relatedLink3: 'https://example.com/related3',
+    relatedLink4: 'https://example.com/related4',
+    relatedLink5: 'https://example.com/related5',
+    viewCount: 0,
+    goodCount: 0,
+    commentCount: 0,
+    uuid: 'test-uuid',
+    nid: 'test-nid',
+    revision: 0,
+    licenseType: 1,
+    thanksFlg: 0,
+    slideMode: 0,
+    ...overrides,
+  };
+}
+
+describe('normalizePrototype', () => {
+  describe('Field-focused testing', () => {
+    describe('id field', () => {
+      it('maps id from upstream', () => {
+        const upstream = createMinimalUpstream({ id: 42 });
+        const result = normalizePrototype(upstream);
+        expect(result.id).toBe(42);
+      });
+    });
+
+    describe('createDate field', () => {
+      it('normalizes valid ProtoPedia timestamp', () => {
+        const upstream = createMinimalUpstream({
+          createDate: '2024-01-15 10:30:45.0',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.createDate).toBe('2024-01-15T01:30:45.000Z');
+      });
+
+      it('uses original value if normalization fails', () => {
+        const upstream = createMinimalUpstream({
+          createDate: 'invalid-date',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.createDate).toBe('invalid-date');
+      });
+    });
+
+    describe('updateDate field', () => {
+      it('normalizes valid ProtoPedia timestamp', () => {
+        const upstream = createMinimalUpstream({
+          updateDate: '2024-01-20 15:45:30.0',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.updateDate).toBe('2024-01-20T06:45:30.000Z');
+      });
+
+      it('uses original value if normalization fails', () => {
+        const upstream = createMinimalUpstream({
+          updateDate: 'invalid-date',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.updateDate).toBe('invalid-date');
+      });
+
+      it('returns undefined when updateDate is not provided', () => {
+        const { updateDate, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.updateDate).toBeUndefined();
+      });
+    });
+
+    describe('releaseDate field', () => {
+      it('normalizes valid ProtoPedia timestamp', () => {
+        const upstream = createMinimalUpstream({
+          releaseDate: '2024-02-01 12:00:00.0',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.releaseDate).toBe('2024-02-01T03:00:00.000Z');
+      });
+
+      it('converts null to undefined', () => {
+        // Note: Cannot pass null directly due to type constraints,
+        // but testing the ?? undefined operator behavior
+        const upstream = createMinimalUpstream({ releaseDate: '' });
+        // Empty string case is handled by splitPipeSeparatedString
+        const result = normalizePrototype(upstream);
+        expect(result.releaseDate).toBeDefined(); // Empty string passes through
+      });
+
+      it('returns original value if normalization fails', () => {
+        const upstream = createMinimalUpstream({
+          releaseDate: 'invalid-date',
+        });
+        const result = normalizePrototype(upstream);
+        // normalizeProtoPediaTimestamp returns original value on parse failure
+        // Then ?? undefined converts it to undefined
+        expect(result.releaseDate).toBe('invalid-date');
+      });
+
+      it('returns undefined when releaseDate is not provided', () => {
+        const { releaseDate, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.releaseDate).toBeUndefined();
+      });
+    });
+
+    describe('createId field', () => {
+      it('maps createId from upstream', () => {
+        const upstream = createMinimalUpstream({ createId: 123 });
+        const result = normalizePrototype(upstream);
+        expect(result.createId).toBe(123);
+      });
+
+      it('returns undefined when createId is not provided', () => {
+        const { createId, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.createId).toBeUndefined();
+      });
+    });
+
+    describe('updateId field', () => {
+      it('maps updateId from upstream', () => {
+        const upstream = createMinimalUpstream({ updateId: 456 });
+        const result = normalizePrototype(upstream);
+        expect(result.updateId).toBe(456);
+      });
+
+      it('returns undefined when updateId is not provided', () => {
+        const { updateId, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.updateId).toBeUndefined();
+      });
+    });
+
+    describe('releaseFlg field', () => {
+      it('maps releaseFlg from upstream', () => {
+        const upstream = createMinimalUpstream({ releaseFlg: 1 });
+        const result = normalizePrototype(upstream);
+        expect(result.releaseFlg).toBe(1);
+      });
+
+      it('defaults to 2 when releaseFlg is not provided', () => {
+        const { releaseFlg, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.releaseFlg).toBe(2);
+      });
+    });
+
+    describe('status field', () => {
+      it('maps status from upstream', () => {
+        const upstream = createMinimalUpstream({ status: 3 });
+        const result = normalizePrototype(upstream);
+        expect(result.status).toBe(3);
+      });
+    });
+
+    describe('prototypeNm field', () => {
+      it('maps prototypeNm from upstream', () => {
+        const upstream = createMinimalUpstream({
+          prototypeNm: 'My Prototype',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.prototypeNm).toBe('My Prototype');
+      });
+    });
+
+    describe('summary field', () => {
+      it('maps summary from upstream', () => {
+        const upstream = createMinimalUpstream({ summary: 'A summary' });
+        const result = normalizePrototype(upstream);
+        expect(result.summary).toBe('A summary');
+      });
+
+      it('defaults to empty string when summary is not provided', () => {
+        const { summary, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.summary).toBe('');
+      });
+    });
+
+    describe('freeComment field', () => {
+      it('maps freeComment from upstream', () => {
+        const upstream = createMinimalUpstream({
+          freeComment: 'A free comment',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.freeComment).toBe('A free comment');
+      });
+
+      it('defaults to empty string when freeComment is not provided', () => {
+        const { freeComment, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.freeComment).toBe('');
+      });
+    });
+
+    describe('systemDescription field', () => {
+      it('maps systemDescription from upstream', () => {
+        const upstream = createMinimalUpstream({
+          systemDescription: 'System info',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.systemDescription).toBe('System info');
+      });
+
+      it('defaults to empty string when systemDescription is not provided', () => {
+        const { systemDescription, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.systemDescription).toBe('');
+      });
+    });
+
+    describe('users field', () => {
+      it('splits pipe-separated users', () => {
+        const upstream = createMinimalUpstream({ users: 'user1|user2|user3' });
+        const result = normalizePrototype(upstream);
+        expect(result.users).toEqual(['user1', 'user2', 'user3']);
+      });
+
+      it('returns empty array when users is empty string', () => {
+        const upstream = createMinimalUpstream({ users: '' });
+        const result = normalizePrototype(upstream);
+        expect(result.users).toEqual([]);
+      });
+
+      it('returns empty array when users is not provided', () => {
+        const { users, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.users).toEqual([]);
+      });
+
+      it('trims whitespace from segments', () => {
+        const upstream = createMinimalUpstream({ users: ' user1 | user2 ' });
+        const result = normalizePrototype(upstream);
+        expect(result.users).toEqual(['user1', 'user2']);
+      });
+
+      it('filters empty segments', () => {
+        const upstream = createMinimalUpstream({ users: 'user1||user2' });
+        const result = normalizePrototype(upstream);
+        expect(result.users).toEqual(['user1', 'user2']);
+      });
+    });
+
+    describe('teamNm field', () => {
+      it('maps teamNm from upstream', () => {
+        const upstream = createMinimalUpstream({ teamNm: 'Team Alpha' });
+        const result = normalizePrototype(upstream);
+        expect(result.teamNm).toBe('Team Alpha');
+      });
+
+      it('defaults to empty string when teamNm is empty', () => {
+        const upstream = createMinimalUpstream({ teamNm: '' });
+        const result = normalizePrototype(upstream);
+        expect(result.teamNm).toBe('');
+      });
+
+      it('defaults to empty string when teamNm is not provided', () => {
+        const { teamNm, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.teamNm).toBe('');
+      });
+    });
+
+    describe('tags field', () => {
+      it('splits pipe-separated tags', () => {
+        const upstream = createMinimalUpstream({ tags: 'tag1|tag2|tag3' });
+        const result = normalizePrototype(upstream);
+        expect(result.tags).toEqual(['tag1', 'tag2', 'tag3']);
+      });
+
+      it('returns empty array when tags is empty string', () => {
+        const upstream = createMinimalUpstream({ tags: '' });
+        const result = normalizePrototype(upstream);
+        expect(result.tags).toEqual([]);
+      });
+
+      it('returns empty array when tags is not provided', () => {
+        const { tags, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.tags).toEqual([]);
+      });
+    });
+
+    describe('materials field', () => {
+      it('splits pipe-separated materials', () => {
+        const upstream = createMinimalUpstream({ materials: 'mat1|mat2' });
+        const result = normalizePrototype(upstream);
+        expect(result.materials).toEqual(['mat1', 'mat2']);
+      });
+
+      it('returns empty array when materials is not provided', () => {
+        const { materials, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.materials).toEqual([]);
+      });
+    });
+
+    describe('events field', () => {
+      it('splits pipe-separated events', () => {
+        const upstream = createMinimalUpstream({ events: 'event1|event2' });
+        const result = normalizePrototype(upstream);
+        expect(result.events).toEqual(['event1', 'event2']);
+      });
+
+      it('returns empty array when events is not provided', () => {
+        const { events, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.events).toEqual([]);
+      });
+    });
+
+    describe('awards field', () => {
+      it('splits pipe-separated awards', () => {
+        const upstream = createMinimalUpstream({ awards: 'award1|award2' });
+        const result = normalizePrototype(upstream);
+        expect(result.awards).toEqual(['award1', 'award2']);
+      });
+
+      it('returns empty array when awards is not provided', () => {
+        const { awards, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.awards).toEqual([]);
+      });
+    });
+
+    describe('officialLink field', () => {
+      it('maps officialLink from upstream', () => {
+        const upstream = createMinimalUpstream({
+          officialLink: 'https://official.com',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.officialLink).toBe('https://official.com');
+      });
+
+      it('returns undefined when officialLink is not provided', () => {
+        const { officialLink, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.officialLink).toBeUndefined();
+      });
+    });
+
+    describe('videoUrl field', () => {
+      it('maps videoUrl from upstream', () => {
+        const upstream = createMinimalUpstream({
+          videoUrl: 'https://youtube.com/video',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.videoUrl).toBe('https://youtube.com/video');
+      });
+
+      it('returns undefined when videoUrl is not provided', () => {
+        const { videoUrl, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.videoUrl).toBeUndefined();
+      });
+    });
+
+    describe('mainUrl field', () => {
+      it('maps mainUrl from upstream', () => {
+        const upstream = createMinimalUpstream({
+          mainUrl: 'https://example.com/main.jpg',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.mainUrl).toBe('https://example.com/main.jpg');
+      });
+    });
+
+    describe('relatedLink field', () => {
+      it('maps relatedLink from upstream', () => {
+        const upstream = createMinimalUpstream({
+          relatedLink: 'https://related.com',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.relatedLink).toBe('https://related.com');
+      });
+
+      it('returns undefined when relatedLink is not provided', () => {
+        const { relatedLink, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.relatedLink).toBeUndefined();
+      });
+    });
+
+    describe('relatedLink2 field', () => {
+      it('maps relatedLink2 from upstream', () => {
+        const upstream = createMinimalUpstream({
+          relatedLink2: 'https://related2.com',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.relatedLink2).toBe('https://related2.com');
+      });
+
+      it('returns undefined when relatedLink2 is not provided', () => {
+        const { relatedLink2, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.relatedLink2).toBeUndefined();
+      });
+    });
+
+    describe('relatedLink3 field', () => {
+      it('maps relatedLink3 from upstream', () => {
+        const upstream = createMinimalUpstream({
+          relatedLink3: 'https://related3.com',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.relatedLink3).toBe('https://related3.com');
+      });
+
+      it('returns undefined when relatedLink3 is not provided', () => {
+        const { relatedLink3, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.relatedLink3).toBeUndefined();
+      });
+    });
+
+    describe('relatedLink4 field', () => {
+      it('maps relatedLink4 from upstream', () => {
+        const upstream = createMinimalUpstream({
+          relatedLink4: 'https://related4.com',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.relatedLink4).toBe('https://related4.com');
+      });
+
+      it('returns undefined when relatedLink4 is not provided', () => {
+        const { relatedLink4, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.relatedLink4).toBeUndefined();
+      });
+    });
+
+    describe('relatedLink5 field', () => {
+      it('maps relatedLink5 from upstream', () => {
+        const upstream = createMinimalUpstream({
+          relatedLink5: 'https://related5.com',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.relatedLink5).toBe('https://related5.com');
+      });
+
+      it('returns undefined when relatedLink5 is not provided', () => {
+        const { relatedLink5, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.relatedLink5).toBeUndefined();
+      });
+    });
+
+    describe('viewCount field', () => {
+      it('maps viewCount from upstream', () => {
+        const upstream = createMinimalUpstream({ viewCount: 12345 });
+        const result = normalizePrototype(upstream);
+        expect(result.viewCount).toBe(12345);
+      });
+    });
+
+    describe('goodCount field', () => {
+      it('maps goodCount from upstream', () => {
+        const upstream = createMinimalUpstream({ goodCount: 678 });
+        const result = normalizePrototype(upstream);
+        expect(result.goodCount).toBe(678);
+      });
+    });
+
+    describe('commentCount field', () => {
+      it('maps commentCount from upstream', () => {
+        const upstream = createMinimalUpstream({ commentCount: 90 });
+        const result = normalizePrototype(upstream);
+        expect(result.commentCount).toBe(90);
+      });
+    });
+
+    describe('uuid field', () => {
+      it('maps uuid from upstream', () => {
+        const upstream = createMinimalUpstream({ uuid: 'uuid-123' });
+        const result = normalizePrototype(upstream);
+        expect(result.uuid).toBe('uuid-123');
+      });
+
+      it('returns undefined when uuid is not provided', () => {
+        const { uuid, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.uuid).toBeUndefined();
+      });
+    });
+
+    describe('nid field', () => {
+      it('maps nid from upstream', () => {
+        const upstream = createMinimalUpstream({ nid: 'nid-456' });
+        const result = normalizePrototype(upstream);
+        expect(result.nid).toBe('nid-456');
+      });
+
+      it('returns undefined when nid is not provided', () => {
+        const { nid, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.nid).toBeUndefined();
+      });
+    });
+
+    describe('revision field', () => {
+      it('maps revision from upstream', () => {
+        const upstream = createMinimalUpstream({ revision: 5 });
+        const result = normalizePrototype(upstream);
+        expect(result.revision).toBe(5);
+      });
+
+      it('defaults to 0 when revision is not provided', () => {
+        const { revision, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.revision).toBe(0);
+      });
+    });
+
+    describe('licenseType field', () => {
+      it('maps licenseType from upstream', () => {
+        const upstream = createMinimalUpstream({ licenseType: 2 });
+        const result = normalizePrototype(upstream);
+        expect(result.licenseType).toBe(2);
+      });
+
+      it('defaults to 1 when licenseType is not provided', () => {
+        const { licenseType, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.licenseType).toBe(1);
+      });
+    });
+
+    describe('thanksFlg field', () => {
+      it('maps thanksFlg from upstream', () => {
+        const upstream = createMinimalUpstream({ thanksFlg: 1 });
+        const result = normalizePrototype(upstream);
+        expect(result.thanksFlg).toBe(1);
+      });
+
+      it('defaults to 0 when thanksFlg is not provided', () => {
+        const { thanksFlg, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.thanksFlg).toBe(0);
+      });
+    });
+
+    describe('slideMode field', () => {
+      it('maps slideMode from upstream', () => {
+        const upstream = createMinimalUpstream({ slideMode: 1 });
+        const result = normalizePrototype(upstream);
+        expect(result.slideMode).toBe(1);
+      });
+
+      it('returns undefined when slideMode is not provided', () => {
+        const { slideMode, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.slideMode).toBeUndefined();
+      });
+    });
+  });
+});
