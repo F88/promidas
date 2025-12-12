@@ -7,6 +7,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2025-12-13
+
+### Changed
+
+- **Repository Factory API**: Refactored `createProtopediaInMemoryRepository` to use named parameters instead of positional parameters for improved API usability and flexibility
+
+### Breaking Changes
+
+- **`createProtopediaInMemoryRepository` Signature Change**: The factory function now accepts a single options object with named parameters instead of two positional parameters.
+
+    ```typescript
+    // Before (v0.6.0)
+    const repo = createProtopediaInMemoryRepository(
+        { ttlMs: 30000 },
+        { token: 'xxx' },
+    );
+
+    // After (v0.7.0)
+    const repo = createProtopediaInMemoryRepository({
+        storeConfig: { ttlMs: 30000 },
+        apiClientOptions: { token: 'xxx' },
+    });
+    ```
+
+    **Migration Guide:**
+
+    Both parameters are now optional properties of a single options object:
+    - Use `{ storeConfig, apiClientOptions }` to specify both
+    - Use `{ storeConfig }` to specify only store configuration
+    - Use `{ apiClientOptions }` to specify only API client options
+    - Use `{}` or omit the argument entirely for all defaults
+
+    **Benefits:**
+    - No need to remember parameter order
+    - Specify only the options you need (no empty objects required)
+    - Better IDE autocomplete support
+    - More intuitive API for TypeScript users
+    - Easier to extend in the future without breaking changes
+
+### Added
+
+- **Type Export**: Added `CreateProtopediaInMemoryRepositoryOptions` interface to `@f88/promidas/repository` for type-safe factory usage
+
+### Improved
+
+- **Test Coverage**: Enhanced factory test suite from 6 to 64 comprehensive tests (967% increase), covering:
+    - Basic instantiation and configuration handling
+    - Edge cases and boundary values
+    - Realistic usage scenarios (production, development, testing environments)
+    - Runtime safety for JavaScript users
+    - Stress testing (1000 rapid instance creations)
+    - Configuration immutability and independence
+
 ## [0.6.0] - 2025-12-12
 
 ### Added

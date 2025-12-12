@@ -95,6 +95,9 @@ Update the version following Semantic Versioning:
 # Update version automatically
 npm version patch --no-git-tag-version  # or minor, major
 # This updates package.json and package-lock.json
+
+# Ensure package-lock.json is synchronized
+npm install
 ```
 
 Proceed to Step 3.
@@ -112,7 +115,7 @@ Manually edit `package.json`:
 Then update `package-lock.json`:
 
 ```bash
-npm install --package-lock-only
+npm install
 ```
 
 Proceed to Step 3.
