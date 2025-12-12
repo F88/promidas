@@ -20,31 +20,38 @@ This repository provides a modular toolset for managing ProtoPedia data, consist
     - Consistent handling of dates, arrays, and optional fields
     - Shared across all layers of the library
 
-2. **`lib/store`** - Standalone In-memory Store (`PrototypeInMemoryStore`)
+2. **`lib/utils`** - Utility Functions and Converters
+    - Type-safe converters for ProtoPedia data (status, license, flags)
+    - Timestamp parsers (ProtoPedia JST format and W3C-DTF)
+    - Shared type definitions and constants
+    - Independent utilities usable across all modules
+    - [📘 README](lib/utils/README.md) | [Usage Guide](lib/utils/docs/USAGE.md) | [Design Document](lib/utils/docs/DESIGN.md)
+
+3. **`lib/store`** - Standalone In-memory Store (`PrototypeInMemoryStore`)
     - Generic snapshot management with TTL support
     - O(1) lookups by ID via internal index
     - Independent of any specific API client
-    - [Usage Guide](lib/store/docs/USAGE.md) | [Design Document](lib/store/docs/DESIGN.md)
+    - [📘 README](lib/store/README.md) | [Usage Guide](lib/store/docs/USAGE.md) | [Design Document](lib/store/docs/DESIGN.md)
 
-3. **`lib/fetcher`** - API Client Utilities (`ProtopediaApiCustomClient`)
+4. **`lib/fetcher`** - API Client Utilities (`ProtopediaApiCustomClient`)
     - Utilities to fetch and normalize ProtoPedia prototypes
     - Error handling and network helpers for `protopedia-api-v2-client`
     - Supports custom logger configuration for unified diagnostic output
     - Can be used independently to build custom data pipelines
-    - [Usage Guide](lib/fetcher/docs/USAGE.md) | [Design Document](lib/fetcher/docs/DESIGN.md)
+    - [📘 README](lib/fetcher/README.md) | [Usage Guide](lib/fetcher/docs/USAGE.md) | [Design Document](lib/fetcher/docs/DESIGN.md)
 
-4. **`lib/logger`** - Logger Interface (`Logger`)
+5. **`lib/logger`** - Logger Interface (`Logger`)
     - Type-safe logging interface compatible with `protopedia-api-v2-client`
     - Used internally by Store, Fetcher, and Repository
     - Can be replaced with custom logger (e.g., Winston, Pino)
     - No `level` property for SDK compatibility (level managed by factory functions)
-    - [Usage Guide](lib/logger/docs/USAGE.md) | [Design Document](lib/logger/docs/DESIGN.md)
+    - [📘 README](lib/logger/README.md) | [Usage Guide](lib/logger/docs/USAGE.md) | [Design Document](lib/logger/docs/DESIGN.md)
 
-5. **`lib/repository`** - Ready-to-use Repository (`ProtopediaInMemoryRepository`)
+6. **`lib/repository`** - Ready-to-use Repository (`ProtopediaInMemoryRepository`)
     - Integrates `lib/store` and `lib/fetcher` into a single easy-to-use package
     - Provides `createProtopediaInMemoryRepository` factory
     - Best for most use cases requiring caching and automatic refreshing
-    - [Usage Guide](lib/repository/docs/USAGE.md) | [Design Document](lib/repository/docs/DESIGN.md)
+    - [📘 README](lib/repository/README.md) | [Usage Guide](lib/repository/docs/USAGE.md) | [Design Document](lib/repository/docs/DESIGN.md)
 
 This project extracts and generalizes the data-fetching and in-memory data management capabilities originally implemented in [F88/mugen-protopedia](https://github.com/F88/mugen-protopedia/), providing them as a standalone, reusable library for various applications.
 

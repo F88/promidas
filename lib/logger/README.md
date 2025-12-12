@@ -165,4 +165,4 @@ async function fetchData() {
 
 ---
 
-**困ったときは**: [USAGE.md](./docs/USAGE.md) に詳しい使い方とベストプラクティスがあります!
+**困ったときは**: [USAGE.md](./docs/USAGE.md) に詳しい使い方とベストプラクティスがあります

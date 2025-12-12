@@ -98,4 +98,4 @@ import type {
 
 ---
 
-**困ったときは**: [USAGE.md](./docs/USAGE.md) に詳しい使い方とエラー対処法があります!
+**困ったときは**: [USAGE.md](./docs/USAGE.md) に詳しい使い方とエラー対処法があります

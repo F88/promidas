@@ -131,4 +131,4 @@ fetchAndNormalizePrototypes で取得できるデータの例:
 
 ---
 
-**困ったときは**: [USAGE.md](./docs/USAGE.md) に詳しい説明とトラブルシューティングがあります!
+**困ったときは**: [USAGE.md](./docs/USAGE.md) に詳しい説明とトラブルシューティングがあります
