@@ -152,6 +152,68 @@ function getVideoUrl(prototype: NormalizedPrototype): string | undefined {
 
 変換処理の詳細は、[Fetcherモジュール](../fetcher/README.md)の`normalizePrototype`関数を参照してください。
 
+### コード型
+
+ProtoPediaのフィールド値を表す数値コードの型定義です。
+
+#### StatusCode
+
+プロトタイプのステータスコード型です。
+
+```typescript
+import type { StatusCode } from '@f88/promidas/types';
+
+type StatusCode = 1 | 2 | 3 | 4;
+```
+
+- `1`: 'アイデア' (Idea)
+- `2`: '開発中' (In Development)
+- `3`: '完成' (Completed)
+- `4`: '供養' (Retired/Memorial)
+
+#### ReleaseFlagCode
+
+リリースフラグのコード型です。
+
+```typescript
+import type { ReleaseFlagCode } from '@f88/promidas/types';
+
+type ReleaseFlagCode = 1 | 2 | 3;
+```
+
+- `1`: '下書き保存' (Draft) - Public APIでは取得不可
+- `2`: '一般公開' (Public) - APIレスポンスで取得できる値
+- `3`: '限定共有' (Limited Sharing) - Public APIでは取得不可
+
+#### LicenseTypeCode
+
+ライセンスタイプのコード型です。
+
+```typescript
+import type { LicenseTypeCode } from '@f88/promidas/types';
+
+type LicenseTypeCode = 0 | 1;
+```
+
+- `0`: 'なし' (None) - APIレスポンスではほぼ見られない
+- `1`: '表示(CC:BY)' (CC BY License) - ほとんどのプロトタイプがこの値
+
+#### ThanksFlagCode
+
+サンクスフラグのコード型です。
+
+```typescript
+import type { ThanksFlagCode } from '@f88/promidas/types';
+
+type ThanksFlagCode = 0 | 1 | undefined;
+```
+
+- `0`: 初回メッセージ未表示 - APIレスポンスではまれ
+- `1`: '初回表示済' ("Thank you" message shown) - 最も一般的な値
+- `undefined`: 古いプロトタイプではこのフィールドが存在しない場合がある
+
+**Note**: これらの型は数値から日本語ラベルに変換する際に便利です。変換関数は[Utilsモジュール](../utils/README.md)で提供されています。
+
 ## 🔗 関連モジュール
 
 - [Fetcher](../fetcher/README.md) - この型を使ってデータを取得・正規化

@@ -90,10 +90,10 @@ logger.error('これも表示されます'); // Error > Info
 ### ログ出力を無効化
 
 ```typescript
-import { createNoOpLogger } from '@f88/promidas/logger';
+import { createNoopLogger } from '@f88/promidas/logger';
 
 // 何もログを出力しないロガー (テストや本番環境で便利)
-const logger = createNoOpLogger();
+const logger = createNoopLogger();
 
 logger.info('このログは出力されません');
 logger.error('このエラーログも出力されません');
@@ -138,7 +138,7 @@ const logger = createConsoleLogger({ level: LogLevel.Warn });
 ### テスト実行時
 
 ```typescript
-const logger = createNoOpLogger();
+const logger = createNoopLogger();
 // ログを出力せず、テスト結果が見やすくなる
 ```
 
