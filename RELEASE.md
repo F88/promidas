@@ -81,16 +81,16 @@ Ensure there are no build errors.
 
 ### 2. Version Update
 
-Update the version in `package.json` following Semantic Versioning:
+Update the version following Semantic Versioning:
 
 - **MAJOR** (x.0.0): Breaking changes
 - **MINOR** (0.x.0): New features (backward compatible)
 - **PATCH** (0.0.x): Bug fixes
 
-```json
-{
-    "version": "0.5.0" // Example: 0.5.0 → 0.6.0
-}
+```bash
+# Update version and create commit (but not tag yet)
+npm version patch --no-git-tag-version  # or minor, major
+# This updates package.json and package-lock.json
 ```
 
 ### 3. Update CHANGELOG.md
@@ -120,16 +120,25 @@ Document the changes in `CHANGELOG.md`:
 ### 4. Commit and Create Tag
 
 ```bash
-# Commit changes
-git add package.json CHANGELOG.md
+# Commit changes (package.json, package-lock.json, CHANGELOG.md)
+git add package.json package-lock.json CHANGELOG.md
 git commit -m "chore(release): x.y.z"
 
-# Create tag
+# Create tag (signed, using .npmrc configuration)
 git tag -a vx.y.z -m "Release vx.y.z"
 
 # Push commits and tags
 git push origin main
 git push origin vx.y.z
+```
+
+**Alternative:** Use `npm version` to handle commit and tag creation:
+
+```bash
+# After updating CHANGELOG.md, use npm version
+# This will commit package.json, create tag, and use message from .npmrc
+npm version patch  # or minor, major
+git push origin main --follow-tags
 ```
 
 ### 5. Create GitHub Release
