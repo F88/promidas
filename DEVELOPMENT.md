@@ -140,9 +140,10 @@ npm run clean
 This project uses GitHub Actions for Continuous Integration. The following checks run automatically on every Pull Request and push to the `main` branch:
 
 1.  **Linting & Formatting:** Ensures code style consistency.
-2.  **Exports Validation:** Verifies public API contracts (`npm run test:exports`).
-3.  **Performance Tests:** Checks for performance regressions (`npm run test:perf`).
-4.  **Unit Tests:** Runs all tests and uploads coverage reports to Codecov.
+2. **Type Checking:** Verifies TypeScript types (`npm run typecheck`).
+3. **Exports Validation:** Verifies public API contracts (`npm run test:exports`).
+4. **Performance Tests:** Checks for performance regressions (`npm run test:perf`).
+5. **Unit Tests:** Runs all tests and uploads coverage reports to Codecov.
 
 Ensure all these checks pass locally before submitting a Pull Request.
 
@@ -153,17 +154,6 @@ All checks must pass for a PR to be merged.
 For more details on the CI configuration, refer to the [workflow file](.github/workflows/ci.yml).
 
 ## Troubleshooting
-
-### Tests Failing
-
-```bash
-# Check if environment variables are set
-cat .env
-
-# Reinstall node_modules
-rm -rf node_modules package-lock.json
-npm install
-```
 
 ### Exports Test Failing
 
