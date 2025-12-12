@@ -1221,7 +1221,8 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
       ).toBe(true);
 
       // Verify the API was called with the first parameter set
-      expect(fetchSpy.mock.calls[0]?.[0]).toMatch(/limit=10/);
+      const firstCallArg = (fetchSpy.mock.calls as unknown as Array<[string]>)[0]?.[0];
+      expect(firstCallArg).toMatch(/limit=10/);
     });
 
     it('handles window focus/blur causing refresh cycles', async () => {
