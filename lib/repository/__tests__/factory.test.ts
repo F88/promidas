@@ -1150,9 +1150,8 @@ describe('createProtopediaInMemoryRepository', () => {
 
       // Should be different object references (defensive copy)
       expect(config1).toEqual(config2);
-      // Note: We can't test if they're different references without modifying them,
-      // which would violate the immutability contract. The important part is they
-      // return consistent values.
+      // Should be different object references (defensive copy)
+      expect(config1).not.toBe(config2);
     });
   });
 
