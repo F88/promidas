@@ -20,11 +20,11 @@ This document provides practical examples for using the utility functions in the
 ## Table of Contents
 
 - [Quick Start](#quick-start)
-- [Converters](#converters)
+- [Label Converters](#label-converters)
 - [Time Utilities](#time-utilities)
 - [Type Definitions](#type-definitions)
 - [Integration Examples](#integration-examples)
-- [Error Handling](#error-handling)
+- [Best Practices](#best-practices)
 
 ## Quick Start
 
@@ -32,11 +32,11 @@ This document provides practical examples for using the utility functions in the
 
 ```typescript
 import {
-    // Converters
-    convertToStatusType,
-    convertToLicenseType,
-    convertToReleaseFlag,
-    convertToThanksFlag,
+    // Label converters
+    getPrototypeStatusLabel,
+    getPrototypeLicenseTypeLabel,
+    getPrototypeReleaseFlagLabel,
+    getPrototypeThanksFlagLabel,
 
     // Time utilities
     parseProtoPediaTimestamp,
@@ -44,10 +44,10 @@ import {
     JST_OFFSET_MS,
 
     // Types
-    StatusType,
-    LicenseType,
-    ReleaseFlag,
-    ThanksFlag,
+    StatusCode,
+    LicenseTypeCode,
+    ReleaseFlagCode,
+    ThanksFlagCode,
 } from '@f88/promidas/utils';
 ```
 
@@ -55,135 +55,122 @@ import {
 
 ```typescript
 import {
-    convertToStatusType,
+    getPrototypeStatusLabel,
     parseProtoPediaTimestamp,
 } from '@f88/promidas/utils';
 
-// Convert status string to typed enum
-const status = convertToStatusType('active');
-console.log(status); // 'active' (StatusType)
+// Convert status code to Japanese label
+const label = getPrototypeStatusLabel(1);
+console.log(label); // 'アイデア' (Idea)
 
 // Parse ProtoPedia timestamp (JST) to UTC
 const timestamp = parseProtoPediaTimestamp('2025-12-12 10:00:00.0');
 console.log(timestamp); // '2025-12-12T01:00:00.000Z'
 ```
 
-## Converters
+## Label Converters
 
-Converters transform ProtoPedia API string values into typed enums.
+Label converters transform ProtoPedia API numeric codes into human-readable Japanese labels.
 
-### Status Converter
+### Status Label Converter
 
-Convert prototype status strings to `StatusType`.
-
-```typescript
-import { convertToStatusType, StatusType } from '@f88/promidas/utils';
-
-// Valid status values
-const active = convertToStatusType('active');
-console.log(active); // 'active'
-
-const inactive = convertToStatusType('inactive');
-console.log(inactive); // 'inactive'
-
-// Case-insensitive
-const status1 = convertToStatusType('ACTIVE');
-console.log(status1); // 'active'
-
-// Handles whitespace
-const status2 = convertToStatusType('  active  ');
-console.log(status2); // 'active'
-
-// Unknown values return undefined
-const unknown = convertToStatusType('unknown-status');
-console.log(unknown); // undefined
-
-// Handle undefined input
-const nullish = convertToStatusType(undefined);
-console.log(nullish); // undefined
-```
-
-**Available Status Types**:
-
-- `StatusType.Active` - `'active'`
-- `StatusType.Inactive` - `'inactive'`
-
-### License Type Converter
-
-Convert license strings to `LicenseType`.
+Convert prototype status codes to Japanese labels.
 
 ```typescript
-import { convertToLicenseType, LicenseType } from '@f88/promidas/utils';
+import { getPrototypeStatusLabel } from '@f88/promidas/utils';
+import type { StatusCode } from '@f88/promidas/utils';
 
-// Convert various license formats
-const mit = convertToLicenseType('MIT');
-console.log(mit); // 'MIT'
+// All valid status values
+console.log(getPrototypeStatusLabel(1)); // 'アイデア' (Idea)
+console.log(getPrototypeStatusLabel(2)); // '開発中' (In Development)
+console.log(getPrototypeStatusLabel(3)); // '完成' (Completed)
+console.log(getPrototypeStatusLabel(4)); // '供養' (Retired/Memorial)
 
-const apache = convertToLicenseType('Apache-2.0');
-console.log(apache); // 'Apache-2.0'
+// Unknown values return the numeric value as string
+console.log(getPrototypeStatusLabel(99)); // '99'
 
-const gpl = convertToLicenseType('GPL-3.0');
-console.log(gpl); // 'GPL-3.0'
-
-// Unknown licenses
-const custom = convertToLicenseType('CustomLicense');
-console.log(custom); // undefined
+// Type-safe usage with StatusCode
+const status: StatusCode = 3;
+const label = getPrototypeStatusLabel(status);
+console.log(label); // '完成'
 ```
 
-**Available License Types**:
+**Status Code Distribution** (based on API data):
 
-- `LicenseType.MIT`
-- `LicenseType.Apache20`
-- `LicenseType.GPL30`
-- `LicenseType.BSD3Clause`
-- `LicenseType.Proprietary`
-- And more (see type definition)
+- `1` (アイデア): ~6% of prototypes
+- `2` (開発中): ~35% of prototypes
+- `3` (完成): ~57% of prototypes (most common)
+- `4` (供養): ~2% of prototypes
 
-### Release Flag Converter
+### License Type Label Converter
 
-Convert release flag strings to `ReleaseFlag`.
+Convert license type codes to Japanese labels.
 
 ```typescript
-import { convertToReleaseFlag, ReleaseFlag } from '@f88/promidas/utils';
+import { getPrototypeLicenseTypeLabel } from '@f88/promidas/utils';
+import type { LicenseTypeCode } from '@f88/promidas/utils';
 
-// Boolean-like strings
-const yes = convertToReleaseFlag('1');
-console.log(yes); // 'released'
+// Valid license values
+console.log(getPrototypeLicenseTypeLabel(0)); // 'なし' (None)
+console.log(getPrototypeLicenseTypeLabel(1)); // '表示(CC:BY)' (CC BY)
 
-const no = convertToReleaseFlag('0');
-console.log(no); // 'unreleased'
+// Unknown values return the numeric value as string
+console.log(getPrototypeLicenseTypeLabel(99)); // '99'
 
-// Explicit values
-const released = convertToReleaseFlag('released');
-console.log(released); // 'released'
-
-const unreleased = convertToReleaseFlag('unreleased');
-console.log(unreleased); // 'unreleased'
+// Type-safe usage
+const license: LicenseTypeCode = 1;
+const label = getPrototypeLicenseTypeLabel(license);
+console.log(label); // '表示(CC:BY)'
 ```
 
-**Available Release Flags**:
+**Note**: In practice, all prototypes accessible via the public API have `licenseType=1`.
 
-- `ReleaseFlag.Released` - `'released'`
-- `ReleaseFlag.Unreleased` - `'unreleased'`
+### Release Flag Label Converter
 
-### Thanks Flag Converter
-
-Convert thanks flag strings to `ThanksFlag`.
+Convert release flag codes to Japanese labels.
 
 ```typescript
-import { convertToThanksFlag, ThanksFlag } from '@f88/promidas/utils';
+import { getPrototypeReleaseFlagLabel } from '@f88/promidas/utils';
+import type { ReleaseFlagCode } from '@f88/promidas/utils';
 
-const enabled = convertToThanksFlag('1');
-console.log(enabled); // 'enabled'
+// Valid release flag values
+console.log(getPrototypeReleaseFlagLabel(1)); // '下書き保存' (Draft)
+console.log(getPrototypeReleaseFlagLabel(2)); // '一般公開' (Public)
+console.log(getPrototypeReleaseFlagLabel(3)); // '限定共有' (Limited Sharing)
 
-const disabled = convertToThanksFlag('0');
-console.log(disabled); // 'disabled'
+// Unknown values return the numeric value as string
+console.log(getPrototypeReleaseFlagLabel(0)); // '0'
+
+// Type-safe usage
+const releaseFlag: ReleaseFlagCode = 2;
+const label = getPrototypeReleaseFlagLabel(releaseFlag);
+console.log(label); // '一般公開'
 ```
 
-**Available Thanks Flags**:
+**Note**: The public API only returns publicly released prototypes (`releaseFlg=2`).
 
-- `ThanksFlag.Enabled` - `'enabled'`
-- `ThanksFlag.Disabled` - `'disabled'`
+### Thanks Flag Label Converter
+
+Convert thanks flag codes to Japanese labels.
+
+```typescript
+import { getPrototypeThanksFlagLabel } from '@f88/promidas/utils';
+import type { ThanksFlagCode } from '@f88/promidas/utils';
+
+// Valid thanks flag values
+console.log(getPrototypeThanksFlagLabel(1)); // '初回表示済'
+console.log(getPrototypeThanksFlagLabel(0)); // '0'
+
+// Historical data may have undefined thanksFlg
+console.log(getPrototypeThanksFlagLabel(undefined)); // '不明' (Unknown)
+
+// Type-safe usage
+const thanksFlag: ThanksFlagCode = 1;
+const label = getPrototypeThanksFlagLabel(thanksFlag);
+console.log(label); // '初回表示済'
+```
+
+**Note**: Almost all prototypes have `thanksFlg=1`. Historical data (~3.26%) may have `undefined`.
 
 ## Time Utilities
 
@@ -232,25 +219,10 @@ import { JST_OFFSET_MS } from '@f88/promidas/utils';
 
 console.log(JST_OFFSET_MS); // 32400000 (9 hours in milliseconds)
 
-// Manual conversion example (library does this internally)
+// The library handles JST → UTC conversion automatically
 const jstTime = '2025-12-12 12:00:00.0';
-const [date, time] = jstTime.split(' ');
-const [year, month, day] = date.split('-').map(Number);
-const [hh, mm, ss] = time.split(':').map(Number);
-const [whole, frac] = ss.toString().split('.');
-
-const utcMs =
-    Date.UTC(
-        year,
-        month - 1,
-        day,
-        hh,
-        mm,
-        parseInt(whole),
-        parseInt(frac || '0'),
-    ) - JST_OFFSET_MS;
-const utcISO = new Date(utcMs).toISOString();
-console.log(utcISO); // '2025-12-12T03:00:00.000Z'
+const utcTime = parseProtoPediaTimestamp(jstTime);
+console.log(utcTime); // '2025-12-12T03:00:00.000Z'
 ```
 
 ### Parse W3C-DTF Timestamp
@@ -300,165 +272,81 @@ parseW3cDtfTimestamp('2025-12-12T10:00:00+0900'); // undefined
 parseW3cDtfTimestamp('2025-12-12 10:00:00.0'); // undefined
 ```
 
-**W3C-DTF Specification**: <https://www.w3.org/TR/NOTE-datetime>
-
-### JST Offset Constant
-
-```typescript
-import { JST_OFFSET_MS } from '@f88/promidas/utils';
-
-// JST is UTC+9
-console.log(JST_OFFSET_MS); // 32400000 (9 * 60 * 60 * 1000)
-
-// Use for manual timezone calculations
-const jstTimestamp = Date.now();
-const utcTimestamp = jstTimestamp - JST_OFFSET_MS;
-```
-
 ## Type Definitions
 
 All utility types are exported for use in your application.
 
-### Using Enums
+### Code Types
 
 ```typescript
-import {
-    StatusType,
-    LicenseType,
-    ReleaseFlag,
-    ThanksFlag,
+import type {
+    StatusCode,
+    LicenseTypeCode,
+    ReleaseFlagCode,
+    ThanksFlagCode,
 } from '@f88/promidas/utils';
 
 // Use in function signatures
-function filterByStatus(
-    prototypes: Prototype[],
-    status: StatusType,
-): Prototype[] {
-    return prototypes.filter((p) => p.status === status);
+function filterByStatus(status: StatusCode): boolean {
+    return status === 3; // Completed
 }
 
 // Use in type definitions
 interface PrototypeFilter {
-    status?: StatusType;
-    license?: LicenseType;
-    released?: ReleaseFlag;
+    status?: StatusCode;
+    licenseType?: LicenseTypeCode;
+    releaseFlg?: ReleaseFlagCode;
+    thanksFlg?: ThanksFlagCode;
 }
 
-// Use in switch statements
-function getStatusLabel(status: StatusType): string {
+// Leverage TypeScript's type narrowing
+function getStatusDescription(status: StatusCode): string {
     switch (status) {
-        case StatusType.Active:
-            return 'Active';
-        case StatusType.Inactive:
-            return 'Inactive';
-        default:
-            return 'Unknown';
+        case 1:
+            return 'Idea';
+        case 2:
+            return 'In Development';
+        case 3:
+            return 'Completed';
+        case 4:
+            return 'Retired';
     }
-}
-```
-
-### Type Guards
-
-Converters serve as runtime type guards:
-
-```typescript
-import { convertToStatusType, StatusType } from '@f88/promidas/utils';
-
-const rawStatus: string = apiResponse.status;
-const status = convertToStatusType(rawStatus);
-
-if (status !== undefined) {
-    // TypeScript knows status is StatusType here
-    useTypedStatus(status);
-} else {
-    console.warn(`Unknown status: ${rawStatus}`);
 }
 ```
 
 ## Integration Examples
 
-### Normalize API Response
+### Display Prototype Information
 
 ```typescript
 import {
-    convertToStatusType,
-    convertToLicenseType,
-    convertToReleaseFlag,
-    parseProtoPediaTimestamp,
+    getPrototypeStatusLabel,
+    getPrototypeLicenseTypeLabel,
+    getPrototypeReleaseFlagLabel,
+    getPrototypeThanksFlagLabel,
 } from '@f88/promidas/utils';
+import type { NormalizedPrototype } from '@f88/promidas/types';
 
-interface ApiPrototype {
-    id: number;
-    name: string;
-    status: string;
-    licenseType: string;
-    releaseFlag: string;
-    createDate: string;
+function displayPrototype(prototype: NormalizedPrototype): void {
+    console.log(`Name: ${prototype.prototypeNm}`);
+    console.log(`Status: ${getPrototypeStatusLabel(prototype.status)}`);
+
+    if (prototype.licenseType !== undefined) {
+        console.log(
+            `License: ${getPrototypeLicenseTypeLabel(prototype.licenseType)}`,
+        );
+    }
+
+    console.log(
+        `Release: ${getPrototypeReleaseFlagLabel(prototype.releaseFlg)}`,
+    );
+
+    if (prototype.thanksFlg !== undefined) {
+        console.log(
+            `Thanks: ${getPrototypeThanksFlagLabel(prototype.thanksFlg)}`,
+        );
+    }
 }
-
-interface NormalizedPrototype {
-    id: number;
-    name: string;
-    status: StatusType | undefined;
-    licenseType: LicenseType | undefined;
-    releaseFlag: ReleaseFlag | undefined;
-    createDate: string; // ISO string or original
-}
-
-function normalizePrototype(raw: ApiPrototype): NormalizedPrototype {
-    return {
-        id: raw.id,
-        name: raw.name,
-        status: convertToStatusType(raw.status),
-        licenseType: convertToLicenseType(raw.licenseType),
-        releaseFlag: convertToReleaseFlag(raw.releaseFlag),
-        createDate: parseProtoPediaTimestamp(raw.createDate) ?? raw.createDate,
-    };
-}
-
-// Usage
-const apiData: ApiPrototype = {
-    id: 123,
-    name: 'My Prototype',
-    status: 'active',
-    licenseType: 'MIT',
-    releaseFlag: '1',
-    createDate: '2025-12-12 10:00:00.0',
-};
-
-const normalized = normalizePrototype(apiData);
-console.log(normalized.status); // 'active' (StatusType)
-console.log(normalized.createDate); // '2025-12-12T01:00:00.000Z'
-```
-
-### Filter with Type Safety
-
-```typescript
-import { StatusType, ReleaseFlag } from '@f88/promidas/utils';
-
-interface Prototype {
-    name: string;
-    status: StatusType | undefined;
-    released: ReleaseFlag | undefined;
-}
-
-const prototypes: Prototype[] = [
-    { name: 'P1', status: StatusType.Active, released: ReleaseFlag.Released },
-    {
-        name: 'P2',
-        status: StatusType.Inactive,
-        released: ReleaseFlag.Unreleased,
-    },
-    { name: 'P3', status: StatusType.Active, released: ReleaseFlag.Released },
-];
-
-// Filter active and released
-const activeReleased = prototypes.filter(
-    (p) =>
-        p.status === StatusType.Active && p.released === ReleaseFlag.Released,
-);
-
-console.log(activeReleased); // [P1, P3]
 ```
 
 ### Timestamp Formatting
@@ -485,138 +373,77 @@ if (protoTimestamp) {
 }
 ```
 
-## Error Handling
-
-All utilities use defensive programming and return `undefined` for invalid inputs.
-
-### Handling Undefined Results
+### Create Summary Report
 
 ```typescript
 import {
-    convertToStatusType,
+    getPrototypeStatusLabel,
     parseProtoPediaTimestamp,
 } from '@f88/promidas/utils';
+import type { NormalizedPrototype } from '@f88/promidas/types';
 
-// Option 1: Provide fallback
-const status = convertToStatusType(rawStatus) ?? 'unknown';
+function createSummary(prototypes: NormalizedPrototype[]): void {
+    // Count by status
+    const statusCounts = new Map<string, number>();
 
-// Option 2: Check before use
-const parsedStatus = convertToStatusType(rawStatus);
-if (parsedStatus !== undefined) {
-    useStatus(parsedStatus);
-} else {
-    console.warn(`Invalid status: ${rawStatus}`);
-}
-
-// Option 3: Preserve undefined
-interface Data {
-    status: StatusType | undefined;
-}
-
-const data: Data = {
-    status: convertToStatusType(rawStatus),
-};
-
-// Option 4: Use with optional chaining
-const data = {
-    timestamp: parseProtoPediaTimestamp(raw.date),
-};
-
-const year = data.timestamp ? new Date(data.timestamp).getFullYear() : null;
-```
-
-### Validation Pattern
-
-```typescript
-import { convertToStatusType, StatusType } from '@f88/promidas/utils';
-
-function validateStatus(raw: string): StatusType {
-    const status = convertToStatusType(raw);
-
-    if (status === undefined) {
-        throw new Error(`Invalid status: ${raw}. Expected: active, inactive`);
+    for (const prototype of prototypes) {
+        const label = getPrototypeStatusLabel(prototype.status);
+        statusCounts.set(label, (statusCounts.get(label) || 0) + 1);
     }
 
-    return status;
-}
-
-// Usage
-try {
-    const status = validateStatus('active'); // OK
-    const invalid = validateStatus('bad-status'); // throws
-} catch (error) {
-    console.error(error.message);
-}
-```
-
-### Batch Conversion with Errors
-
-```typescript
-import { convertToStatusType, StatusType } from '@f88/promidas/utils';
-
-interface ConversionResult {
-    successful: Array<{ original: string; converted: StatusType }>;
-    failed: Array<{ original: string; reason: string }>;
-}
-
-function batchConvert(values: string[]): ConversionResult {
-    const result: ConversionResult = {
-        successful: [],
-        failed: [],
-    };
-
-    for (const value of values) {
-        const converted = convertToStatusType(value);
-
-        if (converted !== undefined) {
-            result.successful.push({ original: value, converted });
-        } else {
-            result.failed.push({
-                original: value,
-                reason: 'Unknown status value',
-            });
-        }
+    console.log('Status Distribution:');
+    for (const [status, count] of statusCounts) {
+        console.log(`  ${status}: ${count}`);
     }
 
-    return result;
-}
+    // Find most recent
+    const sorted = [...prototypes].sort((a, b) => {
+        const dateA = a.updateDate || a.createDate;
+        const dateB = b.updateDate || b.createDate;
+        return dateB.localeCompare(dateA);
+    });
 
-// Usage
-const result = batchConvert(['active', 'inactive', 'bad-value']);
-console.log(result.successful); // [{ original: 'active', converted: 'active' }, ...]
-console.log(result.failed); // [{ original: 'bad-value', reason: '...' }]
+    if (sorted[0]) {
+        const latest = sorted[0];
+        const date = latest.updateDate || latest.createDate;
+        console.log(`\nMost recently updated: ${latest.prototypeNm}`);
+        console.log(`Date: ${new Date(date).toLocaleDateString('ja-JP')}`);
+    }
+}
 ```
 
 ## Best Practices
 
-### 1. Always Handle Undefined
+### Always Handle Undefined
 
 ```typescript
-// ✅ Good: Handle undefined
-const status = convertToStatusType(raw) ?? StatusType.Active;
+import { parseProtoPediaTimestamp } from '@f88/promidas/utils';
 
-// ✅ Good: Type-safe check
-const parsed = convertToStatusType(raw);
-if (parsed !== undefined) {
-    use(parsed);
+// ✅ Good: Provide fallback
+const timestamp = parseProtoPediaTimestamp(raw) ?? new Date().toISOString();
+
+// ✅ Good: Check before use
+const parsed = parseProtoPediaTimestamp(raw);
+if (parsed) {
+    useTimestamp(parsed);
 }
 
 // ❌ Bad: Assumes success
-const status = convertToStatusType(raw)!; // Dangerous!
+const timestamp = parseProtoPediaTimestamp(raw)!; // Dangerous!
 ```
 
-### 2. Use Type Imports
+### Use Type Imports
 
 ```typescript
 // ✅ Good: Import types separately
-import type { StatusType, LicenseType } from '@f88/promidas/utils';
-import { convertToStatusType } from '@f88/promidas/utils';
+import type { StatusCode } from '@f88/promidas/utils';
+import { getPrototypeStatusLabel } from '@f88/promidas/utils';
 
 // ✅ Also good: Combined import
-import { convertToStatusType, type StatusType } from '@f88/promidas/utils';
+import { getPrototypeStatusLabel, type StatusCode } from '@f88/promidas/utils';
 ```
 
-### 3. Document Timezone Assumptions
+### Document Timezone Assumptions
 
 ```typescript
 /**
@@ -631,18 +458,24 @@ function fetchPrototypes() {
 }
 ```
 
-### 4. Leverage Type System
+### Leverage Type System
 
 ```typescript
-// ✅ Good: Use enum types in interfaces
+import type { StatusCode } from '@f88/promidas/utils';
+
+// ✅ Good: Use code types in interfaces
 interface PrototypeData {
-    status: StatusType | undefined;
-    license: LicenseType | undefined;
+    status: StatusCode;
+    licenseType?: LicenseTypeCode;
 }
 
-// ❌ Bad: Use raw strings
+// ❌ Bad: Use raw numbers without type annotation
 interface PrototypeData {
-    status: string;
-    license: string;
+    status: number;
+    licenseType?: number;
 }
 ```
+
+---
+
+For more details on the design rationale, see [DESIGN.md](./DESIGN.md).

@@ -44,9 +44,9 @@ The utils module provides reusable, standalone utilities for data transformation
                           ▼
 ┌─────────────────────────────────────────────────────────┐
 │  Utils Layer                                            │
-│  ├── converters/   (Status, License, Flags)             │
+│  ├── converters/   (Code to Label converters)           │
 │  ├── time/         (Timestamp parsing & normalization)  │
-│  └── types/        (Type definitions)                   │
+│  └── types/        (Type definitions re-export)         │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -54,24 +54,39 @@ The utils module provides reusable, standalone utilities for data transformation
 
 ### Converters
 
-Purpose: Transform ProtoPedia API string values to typed enums.
+Purpose: Transform ProtoPedia API numeric codes to human-readable Japanese labels.
 
 ```plaintext
 converters/
 ├── index.ts              # Re-exports all converters
-├── status.ts             # Status string → StatusType
-├── license-type.ts       # License string → LicenseType
-├── release-flag.ts       # Release flag → ReleaseFlag
-├── thanks-flag.ts        # Thanks flag → ThanksFlag
+├── status.ts             # Status code → Japanese label
+├── license-type.ts       # License code → Japanese label
+├── release-flag.ts       # Release flag → Japanese label
+├── thanks-flag.ts        # Thanks flag → Japanese label
 └── __tests__/            # Unit tests for each converter
 ```
 
 **Design Pattern**: Each converter follows a consistent pattern:
 
-- Input: `string | undefined`
-- Output: `EnumType | undefined`
-- Unknown values: `undefined` (not an error)
-- Case-insensitive matching where appropriate
+- Input: `number` or `number | undefined`
+- Output: `string` (label or stringified number)
+- Unknown values: Return the numeric value as string (not an error)
+- Use `Record<CodeType, string>` for label mappings
+
+**Example**:
+
+```typescript
+const STATUS_LABELS: Record<StatusCode, string> = {
+    1: 'アイデア',
+    2: '開発中',
+    3: '完成',
+    4: '供養',
+};
+
+export const getPrototypeStatusLabel = (status: number): string => {
+    return STATUS_LABELS[status as StatusCode] ?? `${status}`;
+};
+```
 
 ### Time Utilities
 
@@ -92,184 +107,143 @@ time/
 
 - **parseProtoPediaTimestamp**: JST local time → UTC ISO string
 - **parseW3cDtfTimestamp**: W3C-DTF (Level 4-6) → UTC ISO string
-- Return `undefined` for unparseable inputs (not an error)
+- Return `string | undefined` for all parsers
 - Strict format validation via regex
+- Never throw exceptions
+
+**Key Implementation Details**:
+
+1. **ProtoPedia Timestamp** (`YYYY-MM-DD HH:MM:SS.f`)
+    - Space separator (not `T`)
+    - JST-based without explicit timezone
+    - Fractional seconds required (`.0` or more digits)
+    - Subtract `JST_OFFSET_MS` to convert to UTC
+
+2. **W3C-DTF Timestamp** (ISO 8601 subset with mandatory TZD)
+    - Levels 4-6 supported (datetime with timezone)
+    - Timezone required: `Z`, `z`, or `±HH:MM`
+    - Delegate to `Date` constructor for parsing
 
 ### Types
 
-Purpose: Shared type definitions for ProtoPedia domain.
+Purpose: Re-export type definitions from `lib/types` for convenience.
 
 ```plaintext
 types/
-├── index.ts              # Re-exports all types
-├── status.types.ts       # StatusType enum
-├── license.types.ts      # LicenseType enum
-├── release.types.ts      # ReleaseFlag enum
-└── thanks.types.ts       # ThanksFlag enum
+└── index.ts              # Re-exports from ../../types/codes.js
 ```
+
+**Design Rationale**:
+
+- Users can import code types from either `@f88/promidas/types` or `@f88/promidas/utils`
+- Maintains single source of truth in `lib/types`
+- Improves discoverability for utils users
 
 ## Design Patterns
 
-### 1. Defensive Parsing
+### Defensive Programming
 
-All parsers and converters are defensive:
-
-- Accept `undefined` as valid input
-- Return `undefined` for unparseable values
-- Never throw exceptions
-- Validate format before processing
-
-**Example**:
+All utilities return safe values instead of throwing errors:
 
 ```typescript
-export function parseProtoPediaTimestamp(value: string): string | undefined {
-    if (typeof value !== 'string' || value.length === 0) {
-        return undefined;
-    }
+// ✅ Safe: Returns undefined for invalid input
+parseProtoPediaTimestamp('invalid'); // => undefined
 
-    const match = value.match(
-        /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})\.(\d+)$/,
-    );
-    if (!match) {
-        return undefined;
-    }
+// ✅ Safe: Returns stringified number for unknown code
+getPrototypeStatusLabel(999); // => '999'
 
-    // ... process and return UTC ISO string
+// ✅ Safe: Handles undefined input
+getPrototypeThanksFlagLabel(undefined); // => '不明'
+```
+
+### Immutability
+
+All functions are pure and side-effect free:
+
+```typescript
+const timestamp = '2025-12-12 10:00:00.0';
+const parsed = parseProtoPediaTimestamp(timestamp);
+
+// Original value unchanged
+console.log(timestamp); // '2025-12-12 10:00:00.0'
+console.log(parsed); // '2025-12-12T01:00:00.000Z'
+```
+
+### Type Narrowing
+
+Code types enable TypeScript's type narrowing:
+
+```typescript
+import type { StatusCode } from '@f88/promidas/utils';
+
+function describeStatus(code: StatusCode): string {
+    // TypeScript knows code is 1 | 2 | 3 | 4
+    switch (code) {
+        case 1:
+            return 'Idea';
+        case 2:
+            return 'In Development';
+        case 3:
+            return 'Completed';
+        case 4:
+            return 'Retired';
+    }
 }
-```
-
-### 2. Immutable Transformations
-
-All utilities are pure functions:
-
-- No side effects
-- No mutation of input
-- Deterministic output
-- Easy to test and reason about
-
-### 3. Explicit Over Implicit
-
-Converters and parsers favor explicitness:
-
-- Explicit timezone handling (no implicit local timezone)
-- Explicit enum mapping (no magic strings)
-- Explicit validation (no silent coercion)
-
-**Example**:
-
-```typescript
-// Explicit: ProtoPedia format is always JST
-const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
-const utcMs =
-    Date.UTC(year, month - 1, day, hour, minute, second, milli) - JST_OFFSET_MS;
-
-// NOT implicit: new Date(value) would use local timezone
-```
-
-### 4. Fail-Safe Defaults
-
-When a value cannot be parsed:
-
-- Return `undefined` (not `null`)
-- Let the caller decide how to handle
-- Document the behavior in JSDoc
-
-This allows flexible handling:
-
-```typescript
-// Caller can provide fallback
-const status = convertToStatusType(value) ?? 'unknown';
-
-// Or propagate undefined
-const status = convertToStatusType(value); // StatusType | undefined
 ```
 
 ## Type Safety
 
-### Strict Null Checks
+### Strict Typing
 
-All utilities are designed for `strictNullChecks`:
-
-- Explicit `| undefined` in return types
-- No implicit `any`
-- Guards against `null`/`undefined` inputs
-
-### Type Guards
-
-Converters serve as runtime type guards:
+All types use TypeScript's strict mode features:
 
 ```typescript
-const rawStatus: string = apiResponse.status;
-const status: StatusType | undefined = convertToStatusType(rawStatus);
+// exactOptionalPropertyTypes: true
+export type ThanksFlagCode = 0 | 1 | undefined;
 
-if (status !== undefined) {
-    // TypeScript knows status is StatusType here
-    useStatus(status);
-}
+// noUncheckedIndexedAccess: true
+const label = STATUS_LABELS[code]; // string | undefined
 ```
 
-### Enum Safety
+### Runtime Safety
 
-All enums are string enums for:
-
-- Runtime inspection
-- Debugging clarity
-- Serialization safety
+Type guards are implicit in return values:
 
 ```typescript
-export const StatusType = {
-    Active: 'active',
-    Inactive: 'inactive',
-    // ...
-} as const;
+const parsed = parseProtoPediaTimestamp(raw);
 
-export type StatusType = (typeof StatusType)[keyof typeof StatusType];
+if (parsed !== undefined) {
+    // TypeScript knows parsed is string here
+    const date = new Date(parsed);
+}
 ```
 
 ## Extensibility
 
-### Adding New Converters
+### Adding New Label Converters
 
-To add a new converter:
+To add a new label converter:
 
 1. Create `lib/utils/converters/new-converter.ts`
-2. Define the enum type in `lib/utils/types/new.types.ts`
-3. Export from `lib/utils/converters/index.ts`
-4. Export type from `lib/utils/types/index.ts`
-5. Add tests in `lib/utils/converters/__tests__/new-converter.test.ts`
+2. Define label mapping using `Record<CodeType, string>`
+3. Export converter function
+4. Export from `lib/utils/converters/index.ts`
+5. Add tests in `lib/utils/converters/__tests__/`
 
 **Template**:
 
 ```typescript
-// lib/utils/types/new.types.ts
-export const NewType = {
-    Value1: 'value1',
-    Value2: 'value2',
-} as const;
-
-export type NewType = (typeof NewType)[keyof typeof NewType];
-
 // lib/utils/converters/new-converter.ts
-import type { NewType } from '../types/new.types.js';
+import type { NewCode } from '../types/index.js';
 
-export function convertToNewType(
-    value: string | undefined,
-): NewType | undefined {
-    if (value === undefined) {
-        return undefined;
-    }
+const NEW_LABELS: Record<NewCode, string> = {
+    1: 'ラベル1',
+    2: 'ラベル2',
+};
 
-    const normalized = value.toLowerCase().trim();
-
-    switch (normalized) {
-        case 'value1':
-            return NewType.Value1;
-        case 'value2':
-            return NewType.Value2;
-        default:
-            return undefined;
-    }
-}
+export const getNewLabel = (code: number): string => {
+    return NEW_LABELS[code as NewCode] ?? `${code}`;
+};
 ```
 
 ### Adding New Time Parsers
@@ -292,74 +266,95 @@ To add support for new timestamp formats:
 
 ### Fetcher Integration
 
-The fetcher module uses utils for normalization:
+The fetcher module uses time utilities for normalization:
 
 ```typescript
 import { parseProtoPediaTimestamp } from '../../utils/time/index.js';
-import {
-    convertToStatusType,
-    convertToLicenseType,
-} from '../../utils/converters/index.js';
 
-function normalizePrototype(upstream: UpstreamPrototype): NormalizedPrototype {
-    return {
-        status: convertToStatusType(upstream.status),
-        licenseType: convertToLicenseType(upstream.licenseType),
-        createDate:
-            parseProtoPediaTimestamp(upstream.createDate) ??
-            upstream.createDate,
-        // ...
-    };
+// Normalize ProtoPedia timestamps to UTC
+const normalized = {
+    ...prototype,
+    createDate:
+        parseProtoPediaTimestamp(prototype.createDate) ?? prototype.createDate,
+    updateDate: prototype.updateDate
+        ? parseProtoPediaTimestamp(prototype.updateDate)
+        : undefined,
+};
+```
+
+### Repository/Store Integration
+
+Label converters are typically used in application code for display:
+
+```typescript
+import { getPrototypeStatusLabel } from '@f88/promidas/utils';
+import type { NormalizedPrototype } from '@f88/promidas/types';
+
+function displayPrototype(prototype: NormalizedPrototype): void {
+    console.log(`Status: ${getPrototypeStatusLabel(prototype.status)}`);
 }
 ```
 
-### Repository Integration
+### Type Reusability
 
-Repositories can use converters for filtering and querying:
+Code types from `lib/types` are re-exported for convenience:
 
 ```typescript
-import { StatusType } from '@f88/promidas/utils/types';
+// Both imports work
+import type { StatusCode } from '@f88/promidas/types';
+import type { StatusCode } from '@f88/promidas/utils';
+```
 
-const activePrototypes = repository.filter(
-    (p) => p.status === StatusType.Active,
+## Performance Considerations
+
+### Constant-Time Lookups
+
+Label lookups use `Record` for O(1) access:
+
+```typescript
+const label = STATUS_LABELS[code as StatusCode]; // O(1)
+```
+
+### Minimal Allocations
+
+Parsers create minimal intermediate objects:
+
+```typescript
+// Single regex match, direct UTC calculation
+const match = value.match(
+    /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})\.(\d+)$/,
 );
+const utcMs =
+    Date.UTC(year, month - 1, day, hour, minute, second, milli) - JST_OFFSET_MS;
+return new Date(utcMs).toISOString();
 ```
 
-### Direct Usage
+### No Dependencies
 
-Applications can use utilities directly:
+Utils has zero runtime dependencies:
 
-```typescript
-import { parseW3cDtfTimestamp, JST_OFFSET_MS } from '@f88/promidas/utils/time';
-import { convertToStatusType } from '@f88/promidas/utils/converters';
+- Smaller bundle size
+- Faster installation
+- Fewer security vulnerabilities
+- Easier maintenance
 
-const timestamp = parseW3cDtfTimestamp('2025-12-12T10:00:00+09:00');
-const status = convertToStatusType('active');
+## Future Extensibility
+
+The utils module is designed to grow with ProtoPedia API changes:
+
+1. **New field codes**: Add new converter with same pattern
+2. **New timestamp formats**: Add new parser with same pattern
+3. **Additional types**: Re-export from `lib/types`
+4. **Utility functions**: Add to appropriate subdirectory
+
+All additions should follow the established patterns for consistency.
+
+---
+
+For practical usage examples, see [USAGE.md](./USAGE.md).
+
+```plaintext
+types/
+├── index.ts              # Re-exports all types
+├── status.types.ts       # StatusType enum
 ```
-
-## Future Considerations
-
-### Planned Additions
-
-1. **Validation Utilities**: Add validators for ProtoPedia field constraints
-2. **Formatting Utilities**: Format timestamps for display
-3. **ID Utilities**: Validate and normalize ProtoPedia IDs
-4. **URL Utilities**: Parse and construct ProtoPedia URLs
-
-### Backwards Compatibility
-
-When adding new features:
-
-- Never change existing converter behavior
-- Deprecate old parsers before removing
-- Version breaking changes appropriately
-- Document migration paths
-
-### Performance
-
-Current utilities are optimized for clarity over performance. Future optimizations should:
-
-- Maintain readability
-- Add benchmarks before optimizing
-- Profile real-world usage patterns
-- Consider caching only if profiling shows benefit

@@ -22,7 +22,7 @@ instructions-for-ais:
 
 ProtoPedia API から取得したデータを扱いやすくするための便利な関数を集めたモジュールです:
 
-- **Converters**: 文字列を型安全な値に変換 (例: `"active"` → `StatusType.Active`)
+- **Converters**: 数値コードを日本語ラベルに変換 (例: ステータスコード `1` → `'アイデア'`)
 - **Time Utilities**: 日時を扱う関数 (例: JST の日時を UTC に変換)
 - **Types**: TypeScript の型定義
 
@@ -31,14 +31,11 @@ ProtoPedia API から取得したデータを扱いやすくするための便�
 ### データ変換の例
 
 ```typescript
-import { convertToStatusType, StatusType } from '@f88/promidas/utils';
+import { getPrototypeStatusLabel } from '@f88/promidas/utils';
 
-// API から受け取った文字列を型安全な値に変換
-const status = convertToStatusType('active');
-
-if (status === StatusType.Active) {
-    console.log('このプロトタイプは公開中です');
-}
+// ステータスコードを日本語ラベルに変換
+const label = getPrototypeStatusLabel(1);
+console.log(label); // 'アイデア'
 ```
 
 ### 日時変換の例
@@ -68,10 +65,10 @@ console.log(timestamp); // '2025-12-12T01:00:00.000Z'
 
 ```typescript
 import {
-    convertToStatusType, // ステータス変換
-    convertToLicenseType, // ライセンス変換
-    convertToReleaseFlag, // リリース状態変換
-    convertToThanksFlag, // サンクス状態変換
+    getPrototypeStatusLabel, // ステータスコード → ラベル
+    getPrototypeLicenseTypeLabel, // ライセンスコード → ラベル
+    getPrototypeReleaseFlagLabel, // リリースフラグコード → ラベル
+    getPrototypeThanksFlagLabel, // サンクスフラグコード → ラベル
 } from '@f88/promidas/utils';
 ```
 
@@ -89,10 +86,10 @@ import {
 
 ```typescript
 import type {
-    StatusType, // プロトタイプのステータス
-    LicenseType, // ライセンスの種類
-    ReleaseFlag, // リリース済みかどうか
-    ThanksFlag, // サンクス機能の有効/無効
+    StatusCode, // ステータスコード型 (1 | 2 | 3 | 4)
+    LicenseTypeCode, // ライセンスコード型 (0 | 1)
+    ReleaseFlagCode, // リリースフラグコード型 (1 | 2 | 3)
+    ThanksFlagCode, // サンクスフラグコード型 (0 | 1 | undefined)
 } from '@f88/promidas/utils';
 ```
 
