@@ -81,3 +81,53 @@ The memorystore implementation is thoroughly tested:
 - **Overall coverage**: 98.01% statements, 92.15% branches, 100% functions
 
 These measurements are based on the test suite as of 2025-12-05 and should be revisited if the upstream schema or `NormalizedPrototype` shape changes significantly.
+
+## Logger Configuration Design
+
+### Design Decision: Logger-Only Configuration
+
+The `PrototypeInMemoryStore` accepts only a `logger?: Logger` parameter in its configuration, unlike the API client (`protopedia-api-v2-client`) which supports both `logger?: Logger` and `logLevel?: LogLevel`.
+
+**Rationale:**
+
+1. **Simplicity for Internal Component**: The store is an internal, low-level component with straightforward logging needs (initialization, updates, warnings). Complex runtime log level control is unnecessary.
+
+2. **Role-Appropriate Abstraction**:
+    - **Store**: Internal cache management → simple logger-only configuration
+    - **API Client**: External API integration → flexible logger + logLevel for dynamic control
+
+3. **Flexibility Preserved**: Users requiring specific log levels can create a logger with the desired level:
+
+    ```ts
+    import { createConsoleLogger } from '@f88/promidas/logger';
+
+    const store = new PrototypeInMemoryStore({
+        logger: createConsoleLogger('warn'), // Specific level
+    });
+    ```
+
+4. **YAGNI Principle**: There is no evidence from usage patterns or user feedback that store operations require dynamic log level changes. The API client needs this flexibility because it handles various network conditions and debugging scenarios; the store does not.
+
+### Comparison with API Client
+
+The `protopedia-api-v2-client` SDK provides both `logger` and `logLevel` options because:
+
+- It manages complex external HTTP operations requiring detailed diagnostics
+- Debug logging for API calls may need to be toggled without changing logger instances
+- The SDK maintains its own log level state separate from the logger instance
+
+The store, by contrast:
+
+- Performs simple in-memory operations with minimal diagnostic needs
+- Logs only during initialization, updates, and constraint violations
+- Does not require runtime log level adjustments
+
+### Future Considerations
+
+This design may be revisited if:
+
+- Usage patterns reveal a need for dynamic log level control in store operations
+- The store evolves to handle more complex operations requiring detailed diagnostics
+- A broader library-wide logger redesign introduces dynamic level control capabilities
+
+For tracking potential logger improvements across the library, see the related GitHub issues on logger design enhancements.

@@ -160,6 +160,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
   #store: PrototypeInMemoryStore;
   #apiClient: ReturnType<typeof createProtopediaApiCustomClient>;
   #lastFetchParams: ListPrototypesParams = { ...DEFAULT_FETCH_PARAMS };
+  #ongoingFetch: Promise<SnapshotOperationResult> | null = null;
 
   /**
    * Creates a new ProtoPedia in-memory repository instance.
@@ -282,19 +283,64 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
   /**
    * Initialize the in-memory snapshot using the provided fetch params.
    * Typically called once at startup or before the first read.
+   *
+   * @remarks
+   * **Concurrency Control**: If multiple calls to `setupSnapshot` or `refreshSnapshot`
+   * occur simultaneously, they are coalesced into a single API request. All callers
+   * receive the same result. This prevents resource waste and race conditions.
+   *
+   * The first caller's parameters are used for the fetch operation. Subsequent
+   * concurrent callers wait for the same result, even if they provide different
+   * parameters.
    */
   async setupSnapshot(
     params: ListPrototypesParams,
   ): Promise<SnapshotOperationResult> {
-    return this.#fetchAndNormalize(params);
+    return this.#executeWithCoalescing(() => this.#fetchAndNormalize(params));
   }
 
   /**
    * Refresh the in-memory snapshot using the last successful fetch params.
    * If no previous fetch exists, falls back to {@link DEFAULT_FETCH_PARAMS}.
+   *
+   * @remarks
+   * **Concurrency Control**: If multiple calls to `refreshSnapshot` or `setupSnapshot`
+   * occur simultaneously, they are coalesced into a single API request. All callers
+   * receive the same result. This prevents resource waste and race conditions.
    */
   async refreshSnapshot(): Promise<SnapshotOperationResult> {
-    return this.#fetchAndNormalize(this.#lastFetchParams);
+    return this.#executeWithCoalescing(() =>
+      this.#fetchAndNormalize(this.#lastFetchParams),
+    );
+  }
+
+  /**
+   * Execute a fetch operation with promise coalescing to prevent concurrent API calls.
+   *
+   * If a fetch is already in progress, returns the existing promise instead of
+   * starting a new fetch. This ensures that multiple concurrent calls result in
+   * only one API request.
+   *
+   * @param fetchFn - Function that performs the actual fetch operation
+   * @returns Promise that resolves to the fetch result
+   */
+  async #executeWithCoalescing(
+    fetchFn: () => Promise<SnapshotOperationResult>,
+  ): Promise<SnapshotOperationResult> {
+    // If a fetch is already in progress, return the existing promise
+    if (this.#ongoingFetch) {
+      return this.#ongoingFetch;
+    }
+
+    // Start new fetch and store the promise
+    this.#ongoingFetch = fetchFn();
+
+    try {
+      return await this.#ongoingFetch;
+    } finally {
+      // Clear the ongoing fetch regardless of success or failure
+      this.#ongoingFetch = null;
+    }
   }
 
   /**

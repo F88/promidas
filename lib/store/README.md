@@ -169,6 +169,40 @@ if (store.has()) {
 }
 ```
 
+### Logger の設定
+
+```typescript
+import { createConsoleLogger } from '@f88/promidas/logger';
+
+// デフォルト: infoレベルのコンソールlogger
+const store1 = new PrototypeInMemoryStore({
+    ttlMs: 3600000,
+});
+
+// errorレベルのみ出力
+const store2 = new PrototypeInMemoryStore({
+    ttlMs: 3600000,
+    logger: createConsoleLogger('error'),
+});
+
+// ログを完全に無効化
+const store3 = new PrototypeInMemoryStore({
+    ttlMs: 3600000,
+    logger: createConsoleLogger('silent'),
+});
+```
+
+**Loggerのライフサイクル:**
+
+- Loggerはストア作成時に設定され、その後変更できません
+- 設定しない場合、`createConsoleLogger('info')`がデフォルトで使われます
+- Loggerは以下の操作時に使用されます:
+    - ストアの初期化 (`info`)
+    - スナップショットの更新 (`info`)
+    - データサイズ制限超過時の警告 (`warn`)
+
+詳しい設定方法は [USAGE.md](./docs/USAGE.md) を参照してください。
+
 ## ⚙️ 内部の仕組み
 
 Store は非常にシンプルです:
