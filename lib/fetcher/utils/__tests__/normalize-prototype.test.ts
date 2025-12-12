@@ -74,6 +74,46 @@ describe('normalizePrototype', () => {
         const result = normalizePrototype(upstream);
         expect(result.createDate).toBe('invalid-date');
       });
+
+      it('correctly converts JST to UTC (9-hour offset)', () => {
+        const upstream = createMinimalUpstream({
+          createDate: '2024-06-15 09:00:00.0',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.createDate).toBe('2024-06-15T00:00:00.000Z');
+      });
+
+      it('handles midnight JST correctly', () => {
+        const upstream = createMinimalUpstream({
+          createDate: '2024-01-01 00:00:00.0',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.createDate).toBe('2023-12-31T15:00:00.000Z');
+      });
+
+      it('handles end of day JST correctly', () => {
+        const upstream = createMinimalUpstream({
+          createDate: '2024-12-31 23:59:59.0',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.createDate).toBe('2024-12-31T14:59:59.000Z');
+      });
+
+      it('handles leap year date correctly', () => {
+        const upstream = createMinimalUpstream({
+          createDate: '2024-02-29 12:00:00.0',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.createDate).toBe('2024-02-29T03:00:00.000Z');
+      });
+
+      it('handles empty string by passing through', () => {
+        const upstream = createMinimalUpstream({
+          createDate: '',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.createDate).toBe('');
+      });
     });
 
     describe('updateDate field', () => {
@@ -98,6 +138,22 @@ describe('normalizePrototype', () => {
         const upstream = rest as UpstreamPrototype;
         const result = normalizePrototype(upstream);
         expect(result.updateDate).toBeUndefined();
+      });
+
+      it('correctly converts JST to UTC (9-hour offset)', () => {
+        const upstream = createMinimalUpstream({
+          updateDate: '2024-06-20 18:00:00.0',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.updateDate).toBe('2024-06-20T09:00:00.000Z');
+      });
+
+      it('handles empty string by passing through', () => {
+        const upstream = createMinimalUpstream({
+          updateDate: '',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.updateDate).toBe('');
       });
     });
 
@@ -134,6 +190,22 @@ describe('normalizePrototype', () => {
         const upstream = rest as UpstreamPrototype;
         const result = normalizePrototype(upstream);
         expect(result.releaseDate).toBeUndefined();
+      });
+
+      it('correctly converts JST to UTC (9-hour offset)', () => {
+        const upstream = createMinimalUpstream({
+          releaseDate: '2024-07-01 15:00:00.0',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.releaseDate).toBe('2024-07-01T06:00:00.000Z');
+      });
+
+      it('handles empty string by passing through', () => {
+        const upstream = createMinimalUpstream({
+          releaseDate: '',
+        });
+        const result = normalizePrototype(upstream);
+        expect(result.releaseDate).toBe('');
       });
     });
 
@@ -180,6 +252,12 @@ describe('normalizePrototype', () => {
         const result = normalizePrototype(upstream);
         expect(result.releaseFlg).toBe(2);
       });
+
+      it('preserves explicit 0 value (does not default)', () => {
+        const upstream = createMinimalUpstream({ releaseFlg: 0 });
+        const result = normalizePrototype(upstream);
+        expect(result.releaseFlg).toBe(0);
+      });
     });
 
     describe('status field', () => {
@@ -213,6 +291,12 @@ describe('normalizePrototype', () => {
         const result = normalizePrototype(upstream);
         expect(result.summary).toBe('');
       });
+
+      it('preserves explicit empty string', () => {
+        const upstream = createMinimalUpstream({ summary: '' });
+        const result = normalizePrototype(upstream);
+        expect(result.summary).toBe('');
+      });
     });
 
     describe('freeComment field', () => {
@@ -230,6 +314,12 @@ describe('normalizePrototype', () => {
         const result = normalizePrototype(upstream);
         expect(result.freeComment).toBe('');
       });
+
+      it('preserves explicit empty string', () => {
+        const upstream = createMinimalUpstream({ freeComment: '' });
+        const result = normalizePrototype(upstream);
+        expect(result.freeComment).toBe('');
+      });
     });
 
     describe('systemDescription field', () => {
@@ -244,6 +334,12 @@ describe('normalizePrototype', () => {
       it('defaults to empty string when systemDescription is not provided', () => {
         const { systemDescription, ...rest } = createMinimalUpstream();
         const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.systemDescription).toBe('');
+      });
+
+      it('preserves explicit empty string', () => {
+        const upstream = createMinimalUpstream({ systemDescription: '' });
         const result = normalizePrototype(upstream);
         expect(result.systemDescription).toBe('');
       });
@@ -279,6 +375,42 @@ describe('normalizePrototype', () => {
         const upstream = createMinimalUpstream({ users: 'user1||user2' });
         const result = normalizePrototype(upstream);
         expect(result.users).toEqual(['user1', 'user2']);
+      });
+
+      it('handles consecutive pipes correctly', () => {
+        const upstream = createMinimalUpstream({ users: 'user1|||user2' });
+        const result = normalizePrototype(upstream);
+        expect(result.users).toEqual(['user1', 'user2']);
+      });
+
+      it('handles leading pipes', () => {
+        const upstream = createMinimalUpstream({ users: '|user1|user2' });
+        const result = normalizePrototype(upstream);
+        expect(result.users).toEqual(['user1', 'user2']);
+      });
+
+      it('handles trailing pipes', () => {
+        const upstream = createMinimalUpstream({ users: 'user1|user2|' });
+        const result = normalizePrototype(upstream);
+        expect(result.users).toEqual(['user1', 'user2']);
+      });
+
+      it('handles only pipes (returns empty array)', () => {
+        const upstream = createMinimalUpstream({ users: '|||' });
+        const result = normalizePrototype(upstream);
+        expect(result.users).toEqual([]);
+      });
+
+      it('handles whitespace-only segments', () => {
+        const upstream = createMinimalUpstream({ users: 'user1| |user2' });
+        const result = normalizePrototype(upstream);
+        expect(result.users).toEqual(['user1', 'user2']);
+      });
+
+      it('handles single item without pipes', () => {
+        const upstream = createMinimalUpstream({ users: 'single-user' });
+        const result = normalizePrototype(upstream);
+        expect(result.users).toEqual(['single-user']);
       });
     });
 
@@ -322,6 +454,42 @@ describe('normalizePrototype', () => {
         const result = normalizePrototype(upstream);
         expect(result.tags).toEqual([]);
       });
+
+      it('handles consecutive pipes correctly', () => {
+        const upstream = createMinimalUpstream({ tags: 'tag1|||tag2' });
+        const result = normalizePrototype(upstream);
+        expect(result.tags).toEqual(['tag1', 'tag2']);
+      });
+
+      it('handles leading pipes', () => {
+        const upstream = createMinimalUpstream({ tags: '|tag1|tag2' });
+        const result = normalizePrototype(upstream);
+        expect(result.tags).toEqual(['tag1', 'tag2']);
+      });
+
+      it('handles trailing pipes', () => {
+        const upstream = createMinimalUpstream({ tags: 'tag1|tag2|' });
+        const result = normalizePrototype(upstream);
+        expect(result.tags).toEqual(['tag1', 'tag2']);
+      });
+
+      it('handles only pipes (returns empty array)', () => {
+        const upstream = createMinimalUpstream({ tags: '|||' });
+        const result = normalizePrototype(upstream);
+        expect(result.tags).toEqual([]);
+      });
+
+      it('trims whitespace from segments', () => {
+        const upstream = createMinimalUpstream({ tags: ' tag1 | tag2 ' });
+        const result = normalizePrototype(upstream);
+        expect(result.tags).toEqual(['tag1', 'tag2']);
+      });
+
+      it('handles single item without pipes', () => {
+        const upstream = createMinimalUpstream({ tags: 'single-tag' });
+        const result = normalizePrototype(upstream);
+        expect(result.tags).toEqual(['single-tag']);
+      });
     });
 
     describe('materials field', () => {
@@ -334,6 +502,36 @@ describe('normalizePrototype', () => {
       it('returns empty array when materials is not provided', () => {
         const { materials, ...rest } = createMinimalUpstream();
         const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.materials).toEqual([]);
+      });
+
+      it('handles consecutive pipes correctly', () => {
+        const upstream = createMinimalUpstream({ materials: 'mat1|||mat2' });
+        const result = normalizePrototype(upstream);
+        expect(result.materials).toEqual(['mat1', 'mat2']);
+      });
+
+      it('handles leading and trailing pipes', () => {
+        const upstream = createMinimalUpstream({ materials: '|mat1|mat2|' });
+        const result = normalizePrototype(upstream);
+        expect(result.materials).toEqual(['mat1', 'mat2']);
+      });
+
+      it('returns empty array for only pipes', () => {
+        const upstream = createMinimalUpstream({ materials: '|||' });
+        const result = normalizePrototype(upstream);
+        expect(result.materials).toEqual([]);
+      });
+
+      it('trims whitespace from segments', () => {
+        const upstream = createMinimalUpstream({ materials: ' mat1 | mat2 ' });
+        const result = normalizePrototype(upstream);
+        expect(result.materials).toEqual(['mat1', 'mat2']);
+      });
+
+      it('returns empty array for empty string', () => {
+        const upstream = createMinimalUpstream({ materials: '' });
         const result = normalizePrototype(upstream);
         expect(result.materials).toEqual([]);
       });
@@ -352,6 +550,36 @@ describe('normalizePrototype', () => {
         const result = normalizePrototype(upstream);
         expect(result.events).toEqual([]);
       });
+
+      it('handles consecutive pipes correctly', () => {
+        const upstream = createMinimalUpstream({ events: 'event1|||event2' });
+        const result = normalizePrototype(upstream);
+        expect(result.events).toEqual(['event1', 'event2']);
+      });
+
+      it('handles leading and trailing pipes', () => {
+        const upstream = createMinimalUpstream({ events: '|event1|event2|' });
+        const result = normalizePrototype(upstream);
+        expect(result.events).toEqual(['event1', 'event2']);
+      });
+
+      it('returns empty array for only pipes', () => {
+        const upstream = createMinimalUpstream({ events: '|||' });
+        const result = normalizePrototype(upstream);
+        expect(result.events).toEqual([]);
+      });
+
+      it('trims whitespace from segments', () => {
+        const upstream = createMinimalUpstream({ events: ' event1 | event2 ' });
+        const result = normalizePrototype(upstream);
+        expect(result.events).toEqual(['event1', 'event2']);
+      });
+
+      it('returns empty array for empty string', () => {
+        const upstream = createMinimalUpstream({ events: '' });
+        const result = normalizePrototype(upstream);
+        expect(result.events).toEqual([]);
+      });
     });
 
     describe('awards field', () => {
@@ -364,6 +592,36 @@ describe('normalizePrototype', () => {
       it('returns empty array when awards is not provided', () => {
         const { awards, ...rest } = createMinimalUpstream();
         const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.awards).toEqual([]);
+      });
+
+      it('handles consecutive pipes correctly', () => {
+        const upstream = createMinimalUpstream({ awards: 'award1|||award2' });
+        const result = normalizePrototype(upstream);
+        expect(result.awards).toEqual(['award1', 'award2']);
+      });
+
+      it('handles leading and trailing pipes', () => {
+        const upstream = createMinimalUpstream({ awards: '|award1|award2|' });
+        const result = normalizePrototype(upstream);
+        expect(result.awards).toEqual(['award1', 'award2']);
+      });
+
+      it('returns empty array for only pipes', () => {
+        const upstream = createMinimalUpstream({ awards: '|||' });
+        const result = normalizePrototype(upstream);
+        expect(result.awards).toEqual([]);
+      });
+
+      it('trims whitespace from segments', () => {
+        const upstream = createMinimalUpstream({ awards: ' award1 | award2 ' });
+        const result = normalizePrototype(upstream);
+        expect(result.awards).toEqual(['award1', 'award2']);
+      });
+
+      it('returns empty array for empty string', () => {
+        const upstream = createMinimalUpstream({ awards: '' });
         const result = normalizePrototype(upstream);
         expect(result.awards).toEqual([]);
       });
@@ -565,6 +823,12 @@ describe('normalizePrototype', () => {
         const result = normalizePrototype(upstream);
         expect(result.revision).toBe(0);
       });
+
+      it('preserves explicit 0 value (does not re-default)', () => {
+        const upstream = createMinimalUpstream({ revision: 0 });
+        const result = normalizePrototype(upstream);
+        expect(result.revision).toBe(0);
+      });
     });
 
     describe('licenseType field', () => {
@@ -580,6 +844,12 @@ describe('normalizePrototype', () => {
         const result = normalizePrototype(upstream);
         expect(result.licenseType).toBe(1);
       });
+
+      it('preserves explicit 0 value if provided', () => {
+        const upstream = createMinimalUpstream({ licenseType: 0 });
+        const result = normalizePrototype(upstream);
+        expect(result.licenseType).toBe(0);
+      });
     });
 
     describe('thanksFlg field', () => {
@@ -592,6 +862,12 @@ describe('normalizePrototype', () => {
       it('defaults to 0 when thanksFlg is not provided', () => {
         const { thanksFlg, ...rest } = createMinimalUpstream();
         const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.thanksFlg).toBe(0);
+      });
+
+      it('preserves explicit 0 value (does not re-default)', () => {
+        const upstream = createMinimalUpstream({ thanksFlg: 0 });
         const result = normalizePrototype(upstream);
         expect(result.thanksFlg).toBe(0);
       });
