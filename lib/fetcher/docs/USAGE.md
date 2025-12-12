@@ -403,9 +403,7 @@ const customClient = createProtopediaApiCustomClient({
 });
 
 const repository2 = createProtopediaInMemoryRepository({
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
-        baseUrl: 'https://custom-api.example.com',
+    apiClient: customClient,
     },
 });
 ```
