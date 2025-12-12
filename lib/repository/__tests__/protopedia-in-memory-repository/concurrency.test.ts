@@ -851,9 +851,6 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
 
   describe('state consistency and partial failures', () => {
     it('maintains consistent state when concurrent calls encounter store errors', async () => {
-      let shouldThrow = true;
-      const originalSetAll = ProtopediaInMemoryRepositoryImpl.prototype;
-
       const fetchSpy = vi.fn(
         createMockFetchPrototypesSuccess([{ id: 1, prototypeNm: 'Test Data' }]),
       );
@@ -1214,11 +1211,9 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
 
       // All results should be identical
       const firstResult = rapidChanges[0];
-      expect(
-        rapidChanges.every(
-          (r) => JSON.stringify(r) === JSON.stringify(firstResult),
-        ),
-      ).toBe(true);
+      rapidChanges.forEach((r) => {
+        expect(r).toEqual(firstResult);
+      });
 
       // Verify the API was called with the first parameter set
       const firstCallArg = (
