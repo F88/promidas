@@ -8,9 +8,76 @@
  * @see {@link ../package.json} - exports field configuration
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 
 describe('subpath exports', () => {
+  beforeAll(() => {
+    console.log('\n');
+    console.log(
+      '═══════════════════════════════════════════════════════════════',
+    );
+    console.log('  📦 Subpath Exports Integration Test');
+    console.log(
+      '═══════════════════════════════════════════════════════════════',
+    );
+    console.log('');
+    console.log('🎯 PURPOSE:');
+    console.log(
+      '  This test validates that package.json subpath exports match',
+    );
+    console.log('  the actual exports in lib/*/index.ts files.');
+    console.log('');
+    console.log('⚠️  IMPORTANT:');
+    console.log('  When you modify exports in lib/*/index.ts, you MUST update');
+    console.log(
+      '  this test accordingly. This is not just a "pass/fail" test,',
+    );
+    console.log('  but a specification of the public API contract.');
+    console.log('');
+    console.log('📋 EXPECTED EXPORTS BY MODULE:');
+    console.log('');
+    console.log('  • @f88/promidas/types');
+    console.log(
+      '    ✓ StatusCode, ReleaseFlagCode, LicenseTypeCode, ThanksFlagCode (type-only)',
+    );
+    console.log('    ✓ NormalizedPrototype (type-only)');
+    console.log('    ℹ All exports are type-only, no runtime values');
+    console.log('');
+    console.log('  • @f88/promidas/utils');
+    console.log('    ✓ Converter functions (getPrototype*Label)');
+    console.log(
+      '    ✓ Time parsers (parseProtoPediaTimestamp, parseW3cDtfTimestamp)',
+    );
+    console.log('    ✗ Code types (moved to @f88/promidas/types)');
+    console.log('');
+    console.log('  • @f88/promidas/logger');
+    console.log('    ✓ Logger, LogLevel (types)');
+    console.log('    ✓ createConsoleLogger, createNoopLogger (factories)');
+    console.log('');
+    console.log('  • @f88/promidas/fetcher');
+    console.log('    ✓ fetchAndNormalizePrototypes, normalizePrototype');
+    console.log(
+      '    ✓ NormalizedPrototype, Logger, LogLevel (re-exported for convenience)',
+    );
+    console.log('');
+    console.log('  • @f88/promidas/store');
+    console.log('    ✓ PrototypeInMemoryStore (class)');
+    console.log(
+      '    ✓ NormalizedPrototype, Logger, LogLevel (re-exported for convenience)',
+    );
+    console.log('');
+    console.log('  • @f88/promidas/repository');
+    console.log('    ✓ createProtopediaInMemoryRepository (factory)');
+    console.log(
+      '    ✓ NormalizedPrototype, Logger, LogLevel (re-exported for convenience)',
+    );
+    console.log('');
+    console.log(
+      '═══════════════════════════════════════════════════════════════',
+    );
+    console.log('\n');
+  });
+
   describe('@f88/promidas (root)', () => {
     it('should export Repository module only', async () => {
       const root = await import('@f88/promidas');
@@ -30,14 +97,23 @@ describe('subpath exports', () => {
     it('should export type definitions (type-only module)', async () => {
       const types = await import('@f88/promidas/types');
 
-      // Note: types module exports only TypeScript types (no runtime exports)
+      // Note: All exports are type-only (no runtime values)
+      // NormalizedPrototype, StatusCode, ReleaseFlagCode, LicenseTypeCode, ThanksFlagCode
+      // are all exported as `export type`, so they don't exist at runtime
+
       // This test verifies the module can be imported without errors
+      // The actual type checking happens at compile time, not runtime
       expect(types).toBeDefined();
+
+      // Since all exports are type-only, the module should be essentially empty at runtime
+      // (or contain only Symbol.toStringTag from module system)
+      const runtimeKeys = Object.keys(types);
+      expect(runtimeKeys.length).toBe(0);
     });
   });
 
   describe('@f88/promidas/utils', () => {
-    it('should export utility functions', async () => {
+    it('should export utility functions only (no types)', async () => {
       const utils = await import('@f88/promidas/utils');
 
       // Time utilities
@@ -62,6 +138,13 @@ describe('subpath exports', () => {
 
       expect(utils).toHaveProperty('getPrototypeThanksFlagLabel');
       expect(typeof utils.getPrototypeThanksFlagLabel).toBe('function');
+
+      // Should NOT export code types (breaking change: removed in refactor)
+      // Import from @f88/promidas/types instead
+      expect(utils).not.toHaveProperty('StatusCode');
+      expect(utils).not.toHaveProperty('ReleaseFlagCode');
+      expect(utils).not.toHaveProperty('LicenseTypeCode');
+      expect(utils).not.toHaveProperty('ThanksFlagCode');
     });
   });
 
@@ -111,11 +194,15 @@ describe('subpath exports', () => {
 
       expect(fetcher).toHaveProperty('resolveErrorMessage');
       expect(typeof fetcher.resolveErrorMessage).toBe('function');
+
+      // Re-exported types for convenience (NormalizedPrototype is type-only)
+      // Logger and LogLevel are also type-only exports
+      // Note: Type-only exports don't have runtime values, so we can't test them here
     });
   });
 
   describe('@f88/promidas/store', () => {
-    it('should export Store class', async () => {
+    it('should export Store class and re-exported types', async () => {
       const store = await import('@f88/promidas/store');
 
       expect(store).toHaveProperty('PrototypeInMemoryStore');
@@ -126,11 +213,15 @@ describe('subpath exports', () => {
       expect(instance).toHaveProperty('setAll');
       expect(instance).toHaveProperty('getAll');
       expect(instance).toHaveProperty('getByPrototypeId');
+
+      // Re-exported types for convenience (NormalizedPrototype, Logger, LogLevel)
+      // Note: These are type-only exports, so no runtime values to test
+      // Users can import types like: import type { NormalizedPrototype } from '@f88/promidas/store'
     });
   });
 
   describe('@f88/promidas/repository', () => {
-    it('should export repository factory', async () => {
+    it('should export repository factory and re-exported types', async () => {
       const repository = await import('@f88/promidas/repository');
 
       expect(repository).toHaveProperty('createProtopediaInMemoryRepository');
@@ -140,6 +231,10 @@ describe('subpath exports', () => {
 
       // Note: Actual instantiation requires PROTOPEDIA_API_V2_TOKEN
       // So we only verify the factory exists and is callable
+
+      // Re-exported types for convenience (NormalizedPrototype, Logger, LogLevel)
+      // Note: These are type-only exports, so no runtime values to test
+      // Users can import types like: import type { NormalizedPrototype } from '@f88/promidas/repository'
     });
   });
 
