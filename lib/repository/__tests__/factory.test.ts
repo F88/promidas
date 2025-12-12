@@ -87,6 +87,17 @@
  * - analyzePrototypes returns null values when snapshot is empty
  * - getRandomSampleFromSnapshot returns empty array when snapshot is empty
  *
+ * ### 15. Stress Testing
+ * - Handles rapid creation of many instances (1000+)
+ * - Ensures instance uniqueness and valid configuration
+ *
+ * ### 16. Runtime Safety (JS Interop)
+ * - Throws TypeError when called with null
+ * - Throws TypeError when storeConfig is null
+ *
+ * ### 17. Type Inheritance
+ * - Returns instance of {@link ProtopediaInMemoryRepositoryImpl}
+ *
  * ## Test Design Philosophy
  *
  * ### Mock Setup Pattern
@@ -1267,6 +1278,57 @@ describe('createProtopediaInMemoryRepository', () => {
 
       const result = await repository.getRandomSampleFromSnapshot(10);
       expect(result).toEqual([]);
+    });
+  });
+
+  describe('stress testing', () => {
+    it('should handle rapid creation of many instances', () => {
+      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
+        listPrototypes: vi.fn(),
+      } as never);
+
+      const count = 1000;
+      const repositories = Array.from({ length: count }, () =>
+        createProtopediaInMemoryRepository(),
+      );
+
+      expect(repositories.length).toBe(count);
+      // Verify first and last are different instances
+      expect(repositories[0]).not.toBe(repositories[count - 1]);
+
+      // Verify they all have valid config
+      repositories.forEach((repo) => {
+        expect(repo.getConfig()).toBeDefined();
+      });
+    });
+  });
+
+  describe('runtime safety (JS interop)', () => {
+    it('should throw TypeError when called with null', () => {
+      // @ts-expect-error Testing runtime behavior for JS users
+      expect(() => createProtopediaInMemoryRepository(null)).toThrow(TypeError);
+    });
+
+    it('should throw TypeError when storeConfig is null', () => {
+      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
+        listPrototypes: vi.fn(),
+      } as never);
+
+      expect(() =>
+        // @ts-expect-error Testing runtime behavior for JS users
+        createProtopediaInMemoryRepository({ storeConfig: null }),
+      ).toThrow(TypeError);
+    });
+  });
+
+  describe('type inheritance', () => {
+    it('should return instance of ProtopediaInMemoryRepositoryImpl', () => {
+      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
+        listPrototypes: vi.fn(),
+      } as never);
+
+      const repository = createProtopediaInMemoryRepository();
+      expect(repository).toBeInstanceOf(ProtopediaInMemoryRepositoryImpl);
     });
   });
 });
