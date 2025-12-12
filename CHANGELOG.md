@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Repository Concurrency Control**: Implemented Promise Coalescing pattern for `setupSnapshot()` and `refreshSnapshot()` to prevent duplicate API requests during concurrent calls (#17)
+    - Multiple concurrent calls now share a single in-flight request
+    - Comprehensive test coverage with 34 tests including stress testing (100 concurrent calls)
+    - No breaking changes to public API
+
+### Improved
+
+- **Logger Configuration Documentation**: Enhanced documentation for logger configuration in `lib/store` (#12)
+    - Added Japanese user guide in `README.md`
+    - Added English technical documentation in `USAGE.md` and `DESIGN.md`
+    - Documented design rationale for logger-only configuration approach
+    - Noted current limitations and future considerations
+
 ## [0.7.0] - 2025-12-13
 
 ### Changed
