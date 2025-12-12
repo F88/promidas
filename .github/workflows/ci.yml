@@ -51,8 +51,11 @@ jobs:
       - name: Run lint
         run: npm run lint
 
-      # - name: Run tests
-      #   run: npm run test
+      - name: Validate exports
+        run: npm run test:exports
+
+      - name: Run performance tests
+        run: npm run test:perf
 
       - name: Run tests for Codecov Test Analytics
         run: npm run test:codecov
