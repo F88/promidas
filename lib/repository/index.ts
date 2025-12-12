@@ -244,14 +244,17 @@ export {
  * @example
  * ```typescript
  * // Normal usage: Use factory (recommended)
- * const repo = createProtopediaInMemoryRepository(config, options);
+ * const repo = createProtopediaInMemoryRepository({
+ *   storeConfig: { ttlMs: 3600000 },
+ *   apiClientOptions: { token: 'xxx' }
+ * });
  *
  * // Advanced: Direct instantiation (for testing or special cases)
  * import { ProtopediaInMemoryRepositoryImpl } from '@your-org/promidas';
  *
  * const repo = new ProtopediaInMemoryRepositoryImpl(
- *   { ttlSeconds: 3600 },
- *   { baseURL: 'https://api.example.com' }
+ *   { ttlMs: 3600000 },
+ *   { token: 'xxx' }
  * );
  * ```
  *

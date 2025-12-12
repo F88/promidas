@@ -99,10 +99,11 @@ export interface ProtopediaInMemoryRepository {
 }
 
 // Implementation is hidden behind factory
-export const createProtopediaInMemoryRepository = (
-    config: Config,
-): ProtopediaInMemoryRepository => {
-    return new ProtopediaInMemoryRepositoryImpl(config);
+export const createProtopediaInMemoryRepository = ({
+    storeConfig = {},
+    apiClientOptions,
+}: CreateProtopediaInMemoryRepositoryOptions = {}): ProtopediaInMemoryRepository => {
+    return new ProtopediaInMemoryRepositoryImpl(storeConfig, apiClientOptions);
 };
 ```
 

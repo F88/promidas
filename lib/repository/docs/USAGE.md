@@ -112,18 +112,16 @@ ProtoPedia HTTP API.
 ```ts
 import { createProtopediaInMemoryRepository } from 'in-memory-snapshot-manager-for-protopedia';
 
-const repo = createProtopediaInMemoryRepository(
-    {
-        // PrototypeInMemoryStoreConfig
+const repo = createProtopediaInMemoryRepository({
+    storeConfig: {
         ttlMs: 30 * 60 * 1000, // 30 minutes
         maxDataSizeBytes: 10 * 1024 * 1024, // 10 MiB (default)
     },
-    {
-        // ProtopediaApiClientOptions
+    apiClientOptions: {
         token: process.env.PROTOPEDIA_API_V2_TOKEN,
         logLevel: 'info', // 'debug' | 'info' | 'warn' | 'error' | 'silent'
     },
-);
+});
 ```
 
 ### Configuring Logging
@@ -143,14 +141,14 @@ configure anything:
 ```ts
 import { createProtopediaInMemoryRepository } from 'in-memory-snapshot-manager-for-protopedia';
 
-const repo = createProtopediaInMemoryRepository(
-    {
+const repo = createProtopediaInMemoryRepository({
+    storeConfig: {
         ttlMs: 30 * 60 * 1000, // 30 minutes
     },
-    {
+    apiClientOptions: {
         token: process.env.PROTOPEDIA_API_V2_TOKEN,
     },
-);
+});
 // Both store and API client will log at 'info' level
 ```
 
@@ -162,15 +160,15 @@ add `logLevel` to the second parameter:
 ```ts
 import { createProtopediaInMemoryRepository } from 'in-memory-snapshot-manager-for-protopedia';
 
-const repo = createProtopediaInMemoryRepository(
-    {
+const repo = createProtopediaInMemoryRepository({
+    storeConfig: {
         ttlMs: 30 * 60 * 1000,
     },
-    {
+    apiClientOptions: {
         token: process.env.PROTOPEDIA_API_V2_TOKEN,
         logLevel: 'debug', // ← Add this line to see detailed API logs
     },
-);
+});
 // Store logs at 'info' (default)
 // API client logs at 'debug' (more detailed)
 ```
@@ -192,16 +190,16 @@ import {
 const myLogger = createConsoleLogger('debug');
 
 // Step 2: Pass the same logger to both places
-const repo = createProtopediaInMemoryRepository(
-    {
+const repo = createProtopediaInMemoryRepository({
+    storeConfig: {
         ttlMs: 30 * 60 * 1000,
         logger: myLogger, // ← Add logger here for store
     },
-    {
+    apiClientOptions: {
         token: process.env.PROTOPEDIA_API_V2_TOKEN,
         logger: myLogger, // ← Add logger here for API client
     },
-);
+});
 // Both store and API client will use your custom logger
 ```
 
@@ -220,16 +218,16 @@ const storeLogger = createConsoleLogger('warn'); // Only warnings for store
 const apiLogger = createConsoleLogger('debug'); // Detailed logs for API
 
 // Step 2: Pass different loggers to each component
-const repo = createProtopediaInMemoryRepository(
-    {
+const repo = createProtopediaInMemoryRepository({
+    storeConfig: {
         ttlMs: 30 * 60 * 1000,
         logger: storeLogger, // ← Store uses this logger
     },
-    {
+    apiClientOptions: {
         token: process.env.PROTOPEDIA_API_V2_TOKEN,
         logger: apiLogger, // ← API client uses this logger
     },
-);
+});
 // Store logs at 'warn' level
 // API client logs at 'debug' level
 ```
@@ -237,14 +235,14 @@ const repo = createProtopediaInMemoryRepository(
 #### Summary: Where to add logger configuration
 
 ```ts
-const repo = createProtopediaInMemoryRepository(
-    {
-        // First parameter: store configuration
+const repo = createProtopediaInMemoryRepository({
+    storeConfig: {
+        // Store configuration
         ttlMs: 30 * 60 * 1000,
         logger: storeLogger, // ← Logger for store operations
     },
-    {
-        // Second parameter: API client configuration
+    apiClientOptions: {
+        // API client configuration
         token: process.env.PROTOPEDIA_API_V2_TOKEN,
         logger: apiLogger, // ← Logger for API operations
         // OR
