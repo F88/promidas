@@ -87,11 +87,35 @@ Update the version following Semantic Versioning:
 - **MINOR** (0.x.0): New features (backward compatible)
 - **PATCH** (0.0.x): Bug fixes
 
+**Choose one of the following methods:**
+
+#### Method A: Using npm version (Recommended)
+
 ```bash
-# Update version and create commit (but not tag yet)
+# Update version automatically
 npm version patch --no-git-tag-version  # or minor, major
 # This updates package.json and package-lock.json
 ```
+
+Proceed to Step 3.
+
+#### Method B: Manual update
+
+Manually edit `package.json`:
+
+```json
+{
+    "version": "0.6.0" // Example: 0.5.0 → 0.6.0
+}
+```
+
+Then update `package-lock.json`:
+
+```bash
+npm install --package-lock-only
+```
+
+Proceed to Step 3.
 
 ### 3. Update CHANGELOG.md
 
@@ -130,15 +154,6 @@ git tag -a vx.y.z -m "Release vx.y.z"
 # Push commits and tags
 git push origin main
 git push origin vx.y.z
-```
-
-**Alternative:** Use `npm version` to handle commit and tag creation:
-
-```bash
-# After updating CHANGELOG.md, use npm version
-# This will commit package.json, create tag, and use message from .npmrc
-npm version patch  # or minor, major
-git push origin main --follow-tags
 ```
 
 ### 5. Create GitHub Release
