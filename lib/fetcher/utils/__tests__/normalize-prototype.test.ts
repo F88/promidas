@@ -48,7 +48,26 @@ function createMinimalUpstream(
   };
 }
 
+/**
+ * Tests for normalizePrototype function
+ *
+ * These tests verify the correct normalization of prototype data received from the upstream source.
+ */
 describe('normalizePrototype', () => {
+  /**
+   * Field-focused tests
+   *
+   * Each field is tested in isolation to verify correct normalization behavior.
+   * This ensures that changes to one field's logic do not inadvertently affect others.
+   * Tests include typical, boundary, and error cases where applicable.
+   * This structure aids in pinpointing issues during maintenance and updates.
+   * Each field's tests are grouped under its own describe block for clarity.
+   * Tests are prioritized by importance and likelihood of issues:
+   * - High: Critical fields with complex logic
+   * - Medium: Important fields with moderate complexity
+   * - Low: Less critical fields or simple mappings
+   * This approach provides comprehensive coverage while maintaining test clarity.
+   */
   describe('Field-focused testing', () => {
     describe('id field', () => {
       it('maps id from upstream', () => {
@@ -1209,4 +1228,409 @@ describe('normalizePrototype', () => {
       });
     });
   });
+
+  /**
+   * Type Safety & Contract Testing
+   */
+  describe('Type Safety & Contract Testing', () => {
+    describe('Required fields always present', () => {
+      it('ensures id is always present', () => {
+        const upstream = createMinimalUpstream();
+        const result = normalizePrototype(upstream);
+        expect(result.id).toBeDefined();
+        expect(typeof result.id).toBe('number');
+      });
+
+      it('ensures createDate is always present', () => {
+        const upstream = createMinimalUpstream();
+        const result = normalizePrototype(upstream);
+        expect(result.createDate).toBeDefined();
+        expect(typeof result.createDate).toBe('string');
+      });
+
+      it('ensures updateDate is always present', () => {
+        const upstream = createMinimalUpstream();
+        const result = normalizePrototype(upstream);
+        expect(result.updateDate).toBeDefined();
+        expect(typeof result.updateDate).toBe('string');
+      });
+
+      it('ensures status is always present', () => {
+        const upstream = createMinimalUpstream();
+        const result = normalizePrototype(upstream);
+        expect(result.status).toBeDefined();
+        expect(typeof result.status).toBe('number');
+      });
+
+      it('ensures prototypeNm is always present', () => {
+        const upstream = createMinimalUpstream();
+        const result = normalizePrototype(upstream);
+        expect(result.prototypeNm).toBeDefined();
+        expect(typeof result.prototypeNm).toBe('string');
+      });
+
+      it('ensures mainUrl is always present', () => {
+        const upstream = createMinimalUpstream();
+        const result = normalizePrototype(upstream);
+        expect(result.mainUrl).toBeDefined();
+        expect(typeof result.mainUrl).toBe('string');
+      });
+
+      it('ensures viewCount is always present', () => {
+        const upstream = createMinimalUpstream();
+        const result = normalizePrototype(upstream);
+        expect(result.viewCount).toBeDefined();
+        expect(typeof result.viewCount).toBe('number');
+      });
+
+      it('ensures goodCount is always present', () => {
+        const upstream = createMinimalUpstream();
+        const result = normalizePrototype(upstream);
+        expect(result.goodCount).toBeDefined();
+        expect(typeof result.goodCount).toBe('number');
+      });
+
+      it('ensures commentCount is always present', () => {
+        const upstream = createMinimalUpstream();
+        const result = normalizePrototype(upstream);
+        expect(result.commentCount).toBeDefined();
+        expect(typeof result.commentCount).toBe('number');
+      });
+    });
+
+    describe('Fields with defaults are never undefined', () => {
+      it('ensures releaseFlg has default value when not provided', () => {
+        const { releaseFlg, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.releaseFlg).toBeDefined();
+        expect(result.releaseFlg).toBe(2);
+      });
+
+      it('ensures summary defaults to empty string when not provided', () => {
+        const { summary, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.summary).toBeDefined();
+        expect(result.summary).toBe('');
+      });
+
+      it('ensures freeComment defaults to empty string when not provided', () => {
+        const { freeComment, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.freeComment).toBeDefined();
+        expect(result.freeComment).toBe('');
+      });
+
+      it('ensures systemDescription defaults to empty string when not provided', () => {
+        const { systemDescription, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.systemDescription).toBeDefined();
+        expect(result.systemDescription).toBe('');
+      });
+
+      it('ensures teamNm defaults to empty string when not provided', () => {
+        const { teamNm, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.teamNm).toBeDefined();
+        expect(result.teamNm).toBe('');
+      });
+
+      it('ensures revision defaults to 0 when not provided', () => {
+        const { revision, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.revision).toBeDefined();
+        expect(result.revision).toBe(0);
+      });
+
+      it('ensures licenseType defaults to 1 when not provided', () => {
+        const { licenseType, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.licenseType).toBeDefined();
+        expect(result.licenseType).toBe(1);
+      });
+
+      it('ensures thanksFlg defaults to 0 when not provided', () => {
+        const { thanksFlg, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.thanksFlg).toBeDefined();
+        expect(result.thanksFlg).toBe(0);
+      });
+    });
+
+    describe('Pipe-separated fields always return arrays', () => {
+      it('ensures users is always an array', () => {
+        const upstream = createMinimalUpstream();
+        const result = normalizePrototype(upstream);
+        expect(Array.isArray(result.users)).toBe(true);
+      });
+
+      it('ensures tags is always an array', () => {
+        const upstream = createMinimalUpstream();
+        const result = normalizePrototype(upstream);
+        expect(Array.isArray(result.tags)).toBe(true);
+      });
+
+      it('ensures materials is always an array', () => {
+        const upstream = createMinimalUpstream();
+        const result = normalizePrototype(upstream);
+        expect(Array.isArray(result.materials)).toBe(true);
+      });
+
+      it('ensures events is always an array', () => {
+        const upstream = createMinimalUpstream();
+        const result = normalizePrototype(upstream);
+        expect(Array.isArray(result.events)).toBe(true);
+      });
+
+      it('ensures awards is always an array', () => {
+        const upstream = createMinimalUpstream();
+        const result = normalizePrototype(upstream);
+        expect(Array.isArray(result.awards)).toBe(true);
+      });
+    });
+
+    describe('Optional fields can be undefined', () => {
+      it('allows releaseDate to be undefined', () => {
+        const { releaseDate, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.releaseDate).toBeUndefined();
+      });
+
+      it('allows createId to be undefined', () => {
+        const { createId, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.createId).toBeUndefined();
+      });
+
+      it('allows updateId to be undefined', () => {
+        const { updateId, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.updateId).toBeUndefined();
+      });
+
+      it('allows officialLink to be undefined', () => {
+        const { officialLink, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.officialLink).toBeUndefined();
+      });
+
+      it('allows videoUrl to be undefined', () => {
+        const { videoUrl, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.videoUrl).toBeUndefined();
+      });
+
+      it('allows nid to be undefined', () => {
+        const { nid, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.nid).toBeUndefined();
+      });
+
+      it('allows slideMode to be undefined', () => {
+        const { slideMode, ...rest } = createMinimalUpstream();
+        const upstream = rest as UpstreamPrototype;
+        const result = normalizePrototype(upstream);
+        expect(result.slideMode).toBeUndefined();
+      });
+    });
+  });
+
+  /**
+   * Transformation Consistency Tests
+   */
+  describe('Transformation Consistency', () => {
+    describe('Complete field mapping', () => {
+      it('maps all UpstreamPrototype fields to NormalizedPrototype', () => {
+        const upstream = createMinimalUpstream();
+        const result = normalizePrototype(upstream);
+
+        // Check all expected fields exist
+        const expectedFields = [
+          'id',
+          'createDate',
+          'updateDate',
+          'releaseDate',
+          'createId',
+          'updateId',
+          'releaseFlg',
+          'status',
+          'prototypeNm',
+          'summary',
+          'freeComment',
+          'systemDescription',
+          'users',
+          'teamNm',
+          'tags',
+          'materials',
+          'events',
+          'awards',
+          'officialLink',
+          'videoUrl',
+          'mainUrl',
+          'relatedLink',
+          'relatedLink2',
+          'relatedLink3',
+          'relatedLink4',
+          'relatedLink5',
+          'viewCount',
+          'goodCount',
+          'commentCount',
+          'uuid',
+          'nid',
+          'revision',
+          'licenseType',
+          'thanksFlg',
+          'slideMode',
+        ];
+
+        expectedFields.forEach((field) => {
+          expect(result).toHaveProperty(field);
+        });
+      });
+
+      it('does not add extra fields beyond NormalizedPrototype', () => {
+        const upstream = createMinimalUpstream();
+        const result = normalizePrototype(upstream);
+
+        const expectedFieldCount = 35; // Total fields in NormalizedPrototype
+        const actualFieldCount = Object.keys(result).length;
+
+        expect(actualFieldCount).toBe(expectedFieldCount);
+      });
+    });
+
+    describe('Idempotency', () => {
+      it('produces consistent results on multiple normalizations', () => {
+        const upstream = createMinimalUpstream({
+          tags: 'tag1|tag2|tag3',
+          users: 'user1|user2',
+          createDate: '2024-01-01 12:00:00.0',
+        });
+
+        const result1 = normalizePrototype(upstream);
+        const result2 = normalizePrototype(upstream);
+
+        expect(result1).toEqual(result2);
+      });
+
+      it('produces same result for equivalent upstream objects', () => {
+        const upstream1 = createMinimalUpstream({
+          id: 100,
+          prototypeNm: 'Test',
+        });
+        const upstream2 = createMinimalUpstream({
+          id: 100,
+          prototypeNm: 'Test',
+        });
+
+        const result1 = normalizePrototype(upstream1);
+        const result2 = normalizePrototype(upstream2);
+
+        expect(result1).toEqual(result2);
+      });
+    });
+
+    describe('No data loss', () => {
+      it('preserves all provided data', () => {
+        const upstream = createMinimalUpstream({
+          id: 123,
+          prototypeNm: 'Important Project',
+          summary: 'Critical summary',
+          tags: 'important|critical',
+          viewCount: 9999,
+        });
+
+        const result = normalizePrototype(upstream);
+
+        expect(result.id).toBe(123);
+        expect(result.prototypeNm).toBe('Important Project');
+        expect(result.summary).toBe('Critical summary');
+        expect(result.tags).toEqual(['important', 'critical']);
+        expect(result.viewCount).toBe(9999);
+      });
+
+      it('preserves special characters in strings', () => {
+        const upstream = createMinimalUpstream({
+          prototypeNm: 'Test <>&" Project',
+          summary: 'Line1\\nLine2',
+          tags: 'C++|Node.js',
+        });
+
+        const result = normalizePrototype(upstream);
+
+        expect(result.prototypeNm).toBe('Test <>&" Project');
+        expect(result.summary).toBe('Line1\\nLine2');
+        expect(result.tags).toEqual(['C++', 'Node.js']);
+      });
+    });
+
+    describe('Minimal valid object transformation', () => {
+      it('handles object with only required fields', () => {
+        const minimal: UpstreamPrototype = {
+          id: 1,
+          createDate: '2024-01-01 00:00:00.0',
+          updateDate: '2024-01-01 00:00:00.0',
+          status: 1,
+          prototypeNm: 'Minimal',
+          mainUrl: 'https://example.com/image.jpg',
+          viewCount: 0,
+          goodCount: 0,
+          commentCount: 0,
+        } as UpstreamPrototype;
+
+        const result = normalizePrototype(minimal);
+
+        expect(result.id).toBe(1);
+        expect(result.prototypeNm).toBe('Minimal');
+        expect(result.status).toBe(1);
+        expect(result.mainUrl).toBe('https://example.com/image.jpg');
+        expect(result.viewCount).toBe(0);
+        expect(result.goodCount).toBe(0);
+        expect(result.commentCount).toBe(0);
+
+        // Check defaults are applied
+        expect(result.releaseFlg).toBe(2);
+        expect(result.summary).toBe('');
+        expect(result.users).toEqual([]);
+        expect(result.tags).toEqual([]);
+      });
+    });
+
+    describe('Maximal object transformation', () => {
+      it('handles object with all fields populated', () => {
+        const maximal = createMinimalUpstream({
+          releaseDate: '2024-01-15 12:00:00.0',
+          createId: 100,
+          updateId: 200,
+          nid: 'test-nid',
+          uuid: 'test-uuid',
+          slideMode: 1,
+        });
+
+        const result = normalizePrototype(maximal);
+
+        // All fields should be present and properly transformed
+        expect(result.releaseDate).toBe('2024-01-15T03:00:00.000Z');
+        expect(result.createId).toBe(100);
+        expect(result.updateId).toBe(200);
+        expect(result.nid).toBe('test-nid');
+        expect(result.uuid).toBe('test-uuid');
+        expect(result.slideMode).toBe(1);
+      });
+    });
+  });
 });
+
