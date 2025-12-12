@@ -26,27 +26,28 @@ API から取得したプロトタイプ情報をメモリに保存して、素�
 ## 🚀 簡単な使い方
 
 ```typescript
-import {
-    createProtopediaInMemoryRepository,
-    createProtopediaApiCustomClient,
-} from '@f88/promidas';
+import { createProtopediaInMemoryRepository } from '@f88/promidas';
 
 // 1. リポジトリを作成
-const repository = createProtopediaInMemoryRepository({
-    apiClient: createProtopediaApiCustomClient({
-        token: process.env.PROTOPEDIA_API_TOKEN,
-    }),
-});
+const repository = createProtopediaInMemoryRepository(
+    { ttlMs: 30 * 60 * 1000 }, // ストア設定: 30分のTTL
+    { token: process.env.PROTOPEDIA_API_TOKEN }, // APIクライアント設定
+);
 
 // 2. データを読み込む
-await repository.initialize({ limit: 1000 });
+const result = await repository.setupSnapshot({ limit: 1000 });
+if (!result.ok) {
+    console.error('データ取得失敗:', result.error);
+    throw new Error(result.error.message);
+}
 
 // 3. データを検索
-const activePrototypes = repository.findAll((p) => p.status === 'active');
-console.log(`公開中: ${activePrototypes.length} 件`);
+const allData = await repository.getAllFromSnapshot();
+const completed = allData.filter((p) => p.status === 3); // 3 = '完成'
+console.log(`完成プロトタイプ: ${completed.length} 件`);
 
 // 4. タグで検索
-const iotPrototypes = repository.findAll((p) => p.tags.includes('IoT'));
+const iotPrototypes = allData.filter((p) => p.tags.includes('IoT'));
 console.log(`IoT関連: ${iotPrototypes.length} 件`);
 ```
 
@@ -61,37 +62,55 @@ console.log(`IoT関連: ${iotPrototypes.length} 件`);
 
 ```typescript
 // 初回のデータ読み込み
-await repository.initialize({
+const result = await repository.setupSnapshot({
     limit: 1000, // 最大1000件
 });
 
+if (result.ok) {
+    console.log(`${result.data.count} 件のデータを読み込みました`);
+} else {
+    console.error('エラー:', result.error.message);
+}
+
 // データが読み込まれているか確認
 const stats = repository.getStats();
-console.log(`保存件数: ${stats.totalCount} 件`);
+console.log(`保存件数: ${stats.size} 件`);
+console.log(`期限切れ: ${stats.isExpired}`);
 ```
 
 ### データの検索
 
 ```typescript
 // すべてのデータを取得
-const all = repository.findAll();
+const all = await repository.getAllFromSnapshot();
 
-// 条件で絞り込み
-const filtered = repository.findAll((prototype) => {
-    return prototype.status === 'active' && prototype.tags.includes('Arduino');
+// 条件で絞り込み (JavaScriptの配列メソッドを使用)
+const filtered = all.filter((prototype) => {
+    return prototype.status === 3 && prototype.tags.includes('Arduino'); // 3 = '完成'
 });
 
 // 最初の1件だけ取得
-const first = repository.findFirst((p) => p.status === 'active');
+const first = all.find((p) => p.status === 3);
+
+// IDで特定のプロトタイプを取得 (O(1)の高速検索)
+const prototype = await repository.getPrototypeFromSnapshotByPrototypeId(123);
+if (prototype) {
+    console.log(prototype.prototypeNm);
+}
 ```
 
 ### データの更新
 
 ```typescript
 // API から最新データを取得して更新
-await repository.refresh({ limit: 1000 });
+const result = await repository.refreshSnapshot();
 
-console.log('データを更新しました');
+if (result.ok) {
+    console.log('データを更新しました');
+    console.log(`更新後の件数: ${result.data.count} 件`);
+} else {
+    console.error('更新失敗:', result.error.message);
+}
 ```
 
 ### データの統計
@@ -99,8 +118,14 @@ console.log('データを更新しました');
 ```typescript
 const stats = repository.getStats();
 
-console.log(`保存件数: ${stats.totalCount} 件`);
-console.log(`最終更新: ${stats.lastUpdatedAt}`);
+console.log(`保存件数: ${stats.size} 件`);
+console.log(`キャッシュ日時: ${stats.cachedAt}`);
+console.log(`期限切れ: ${stats.isExpired}`);
+console.log(`データサイズ: ${stats.dataSizeBytes} bytes`);
+
+// プロトタイプIDの範囲を分析
+const analysis = await repository.analyzePrototypes();
+console.log(`最小ID: ${analysis.min}, 最大ID: ${analysis.max}`);
 ```
 
 ## 🔗 関連モジュール
@@ -115,38 +140,49 @@ console.log(`最終更新: ${stats.lastUpdatedAt}`);
 
 ```typescript
 // アプリケーション起動時
-await repository.initialize({ limit: 10000 });
+await repository.setupSnapshot({ limit: 10000 });
 
-// あとは何度でも検索できる
-const data1 = repository.findAll((p) => p.status === 'active');
-const data2 = repository.findAll((p) => p.licenseType === 'MIT');
+// あとは何度でも検索できる (メモリ内なので高速)
+const all = await repository.getAllFromSnapshot();
+const completed = all.filter((p) => p.status === 3); // 3 = '完成'
+const ccby = all.filter((p) => p.licenseType === 1); // 1 = 'CC:BY'
 ```
 
 ### パターン2: 定期的に更新
 
 ```typescript
 // 初回読み込み
-await repository.initialize({ limit: 10000 });
+await repository.setupSnapshot({ limit: 10000 });
 
 // 30分ごとに更新
 setInterval(
     async () => {
-        await repository.refresh({ limit: 10000 });
-        console.log('データを更新しました');
+        const result = await repository.refreshSnapshot();
+        if (result.ok) {
+            console.log(`データを更新しました: ${result.data.count} 件`);
+        }
     },
     30 * 60 * 1000,
 );
 ```
 
-### パターン3: 条件付き更新
+### パターン3: 期限切れ時に更新
 
 ```typescript
 const stats = repository.getStats();
-const oneHour = 60 * 60 * 1000;
 
-// 1時間以上経過していたら更新
-if (Date.now() - stats.lastUpdatedAt.getTime() > oneHour) {
-    await repository.refresh({ limit: 10000 });
+// TTLが切れていたら更新
+if (stats.isExpired) {
+    const result = await repository.refreshSnapshot();
+    if (result.ok) {
+        console.log('期限切れのため更新しました');
+    }
+}
+
+// または、残り時間をチェック
+if (stats.remainingTtlMs < 5 * 60 * 1000) {
+    // 残り5分未満なら更新
+    await repository.refreshSnapshot();
 }
 ```
 
@@ -155,20 +191,24 @@ if (Date.now() - stats.lastUpdatedAt.getTime() > oneHour) {
 ### ステータスで検索
 
 ```typescript
-import { StatusType } from '@f88/promidas/utils';
+const all = await repository.getAllFromSnapshot();
 
-const active = repository.findAll((p) => p.status === StatusType.Active);
-const inactive = repository.findAll((p) => p.status === StatusType.Inactive);
+const idea = all.filter((p) => p.status === 1); // 1 = 'アイデア'
+const developing = all.filter((p) => p.status === 2); // 2 = '開発中'
+const completed = all.filter((p) => p.status === 3); // 3 = '完成'
+const retired = all.filter((p) => p.status === 4); // 4 = '供養'
 ```
 
 ### タグで検索
 
 ```typescript
+const all = await repository.getAllFromSnapshot();
+
 // 特定のタグを持つプロトタイプ
-const iot = repository.findAll((p) => p.tags.includes('IoT'));
+const iot = all.filter((p) => p.tags.includes('IoT'));
 
 // 複数のタグのいずれかを持つ
-const tech = repository.findAll((p) =>
+const tech = all.filter((p) =>
     p.tags.some((tag) => ['IoT', 'Arduino', 'Raspberry Pi'].includes(tag)),
 );
 ```
@@ -176,8 +216,10 @@ const tech = repository.findAll((p) =>
 ### 日付で検索
 
 ```typescript
+const all = await repository.getAllFromSnapshot();
+
 // 2025年に作成されたもの
-const recent = repository.findAll((p) => {
+const recent = all.filter((p) => {
     const year = new Date(p.createDate).getFullYear();
     return year === 2025;
 });
@@ -186,13 +228,29 @@ const recent = repository.findAll((p) => {
 ### 複合条件で検索
 
 ```typescript
-// 公開中 かつ IoTタグ付き かつ MITライセンス
-const filtered = repository.findAll(
+const all = await repository.getAllFromSnapshot();
+
+// 完成済み かつ IoTタグ付き かつ CC:BYライセンス
+const filtered = all.filter(
     (p) =>
-        p.status === 'active' &&
+        p.status === 3 && // 3 = '完成'
         p.tags.includes('IoT') &&
-        p.licenseType === 'MIT',
+        p.licenseType === 1, // 1 = 'CC:BY'
 );
+```
+
+### ランダムサンプリング
+
+```typescript
+// ランダムに1件取得
+const random = await repository.getRandomPrototypeFromSnapshot();
+if (random) {
+    console.log(random.prototypeNm);
+}
+
+// ランダムに10件取得
+const sample = await repository.getRandomSampleFromSnapshot(10);
+console.log(`サンプル: ${sample.length} 件`);
 ```
 
 ## ⚠️ 注意点
