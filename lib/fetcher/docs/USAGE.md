@@ -373,9 +373,11 @@ const apiClient = createProtopediaApiCustomClient({
 });
 
 const repository = createProtopediaInMemoryRepository({
-    token: process.env.PROTOPEDIA_API_TOKEN,
-    storeLogger: logger,
-    apiLogger: logger,
+    storeConfig: { logger },
+    apiClientOptions: {
+        token: process.env.PROTOPEDIA_API_TOKEN,
+        logger,
+    },
 });
 ```
 
@@ -389,7 +391,9 @@ import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
 
 // Option 1: Let repository create client
 const repository1 = createProtopediaInMemoryRepository({
-    token: process.env.PROTOPEDIA_API_TOKEN,
+    apiClientOptions: {
+        token: process.env.PROTOPEDIA_API_TOKEN,
+    },
 });
 
 // Option 2: Provide custom client

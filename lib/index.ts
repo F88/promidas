@@ -9,10 +9,10 @@
  * ```typescript
  * import { createProtopediaInMemoryRepository } from '@f88/promidas';
  *
- * const repo = createProtopediaInMemoryRepository(
- *   { ttlMs: 30 * 60 * 1000 },
- *   { token: process.env.PROTOPEDIA_API_V2_TOKEN }
- * );
+ * const repo = createProtopediaInMemoryRepository({
+ *   storeConfig: { ttlMs: 30 * 60 * 1000 },
+ *   apiClientOptions: { token: process.env.PROTOPEDIA_API_V2_TOKEN },
+ * });
  *
  * await repo.setupSnapshot({ limit: 100 });
  * const prototype = await repo.getRandomPrototypeFromSnapshot();
@@ -65,6 +65,7 @@
 // High-level Repository (most common use case)
 export {
   createProtopediaInMemoryRepository,
+  type CreateProtopediaInMemoryRepositoryOptions,
   type ProtopediaInMemoryRepository,
   type ProtopediaInMemoryRepositoryStats,
   type PrototypeAnalysisResult,

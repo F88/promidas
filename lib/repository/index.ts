@@ -35,15 +35,15 @@
  * import { createProtopediaInMemoryRepository } from '@your-org/promidas';
  *
  * // Create repository with TTL and memory limits
- * const repository = createProtopediaInMemoryRepository(
- *   {
- *     ttlSeconds: 3600,           // 1 hour TTL
+ * const repository = createProtopediaInMemoryRepository({
+ *   storeConfig: {
+ *     ttlMs: 60 * 60 * 1000,      // 1 hour TTL
  *     maxDataSizeBytes: 10485760, // 10MB limit
  *   },
- *   {
+ *   apiClientOptions: {
  *     baseURL: 'https://protopedia.example.com',
- *   }
- * );
+ *   },
+ * });
  *
  * // Fetch initial snapshot
  * const setupResult = await repository.setupSnapshot({ limit: 1000 });
@@ -106,10 +106,10 @@ export type { NormalizedPrototype } from '../types/index.js';
  *   error: (msg) => console.error(msg),
  * };
  *
- * const repo = createProtopediaInMemoryRepository(
- *   { logger: customLogger },
- *   { token: 'xxx' }
- * );
+ * const repo = createProtopediaInMemoryRepository({
+ *   storeConfig: { logger: customLogger },
+ *   apiClientOptions: { token: 'xxx' },
+ * });
  * ```
  */
 export type { Logger, LogLevel } from '../logger/index.js';
@@ -143,7 +143,7 @@ export type { PrototypeInMemoryStats as ProtopediaInMemoryRepositoryStats } from
  *   ttlMs: 30 * 60 * 1000,
  *   logger: createConsoleLogger('info')
  * };
- * const repo = createProtopediaInMemoryRepository(storeConfig, {});
+ * const repo = createProtopediaInMemoryRepository({ storeConfig });
  * ```
  */
 export type { PrototypeInMemoryStoreConfig } from '../store/index.js';
@@ -193,18 +193,18 @@ export type {
  * @example
  * ```typescript
  * // Minimal setup with defaults
- * const repo = createProtopediaInMemoryRepository({}, {});
+ * const repo = createProtopediaInMemoryRepository({});
  *
  * // Production setup with TTL and memory limits
- * const repo = createProtopediaInMemoryRepository(
- *   {
- *     ttlSeconds: 3600,           // 1 hour
+ * const repo = createProtopediaInMemoryRepository({
+ *   storeConfig: {
+ *     ttlMs: 60 * 60 * 1000,      // 1 hour
  *     maxDataSizeBytes: 10485760, // 10MB
  *   },
- *   {
+ *   apiClientOptions: {
  *     baseURL: 'https://protopedia.example.com',
- *   }
- * );
+ *   },
+ * });
  *
  * // Advanced: Independent loggers for store and API
  * import { createLogger } from './logger';
@@ -212,16 +212,19 @@ export type {
  * const storeLogger = createLogger({ minLevel: 'debug', prefix: '[Store]' });
  * const apiLogger = createLogger({ minLevel: 'info', prefix: '[API]' });
  *
- * const repo = createProtopediaInMemoryRepository(
- *   { logger: storeLogger },
- *   { logger: apiLogger }
- * );
+ * const repo = createProtopediaInMemoryRepository({
+ *   storeConfig: { logger: storeLogger },
+ *   apiClientOptions: { logger: apiLogger },
+ * });
  * ```
  *
  * @see {@link ProtopediaInMemoryRepository} for available operations
  * @see {@link PrototypeInMemoryStoreConfig} for store configuration options
  */
-export { createProtopediaInMemoryRepository } from './factory.js';
+export {
+  createProtopediaInMemoryRepository,
+  type CreateProtopediaInMemoryRepositoryOptions,
+} from './factory.js';
 
 /**
  * Implementation class for the in-memory repository.
@@ -241,14 +244,17 @@ export { createProtopediaInMemoryRepository } from './factory.js';
  * @example
  * ```typescript
  * // Normal usage: Use factory (recommended)
- * const repo = createProtopediaInMemoryRepository(config, options);
+ * const repo = createProtopediaInMemoryRepository({
+ *   storeConfig: { ttlMs: 3600000 },
+ *   apiClientOptions: { token: 'xxx' }
+ * });
  *
  * // Advanced: Direct instantiation (for testing or special cases)
  * import { ProtopediaInMemoryRepositoryImpl } from '@your-org/promidas';
  *
  * const repo = new ProtopediaInMemoryRepositoryImpl(
- *   { ttlSeconds: 3600 },
- *   { baseURL: 'https://api.example.com' }
+ *   { ttlMs: 3600000 },
+ *   { token: 'xxx' }
  * );
  * ```
  *
