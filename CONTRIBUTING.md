@@ -131,21 +131,7 @@ git push origin main
 git push origin vx.y.z
 ```
 
-### 5. npm publish
-
-```bash
-# Verify package (optional)
-npm pack
-
-# Publish
-npm publish
-```
-
-**Note:** Before `npm publish` runs, the following scripts are automatically executed:
-
-- `prepublishOnly`: `npm run build`
-
-### 6. Create GitHub Release
+### 5. Create GitHub Release
 
 1. Navigate to the GitHub repository page
 2. Go to "Releases" → "Draft a new release"
@@ -153,6 +139,8 @@ npm publish
 4. Enter release title: `vx.y.z`
 5. Copy the relevant version content from CHANGELOG.md
 6. Click "Publish release"
+
+**Note:** When the release is published, the GitHub Actions workflow will automatically build and publish the package to GitHub Packages.
 
 ## Pull Request Guidelines
 
