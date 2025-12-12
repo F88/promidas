@@ -51,8 +51,14 @@ jobs:
       - name: Run lint
         run: npm run lint
 
-      # - name: Run tests
-      #   run: npm run test
+      - name: Run type checking
+        run: npm run typecheck
+
+      - name: Validate exports
+        run: npm run test:exports
+
+      - name: Run performance tests
+        run: npm run test:perf
 
       - name: Run tests for Codecov Test Analytics
         run: npm run test:codecov
@@ -62,6 +68,7 @@ jobs:
         uses: codecov/test-results-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
 
       # - name: Run tests
       #   run: npm run test:coverage
@@ -70,3 +77,4 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false

@@ -1,6 +1,6 @@
 {
   "name": "@f88/promidas",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "In-memory snapshot manager for ProtoPedia prototypes with TTL and efficient data access.",
   "engines": {
     "node": ">=20"
@@ -30,6 +30,7 @@
     "test:codecov": "vitest run --coverage --reporter=default --reporter=junit --outputFile.junit=test-report.junit.xml",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
+    "test:exports": "npm run build && vitest run --config vitest.exports.config.ts",
     "test:perf": "vitest run lib/store/__tests__/store.perf.test.ts lib/repository/__tests__/protopedia-in-memory-repository/data-access.perf.test.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -55,14 +56,14 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
     "prettier": "^3.7.4",
-    "protopedia-api-v2-client": "^2.0.0",
+    "protopedia-api-v2-client": "^3.0.0",
     "rimraf": "^6.1.2",
     "ts-essentials": "^10.1.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.15"
   },
   "peerDependencies": {
-    "protopedia-api-v2-client": "^2.0.0"
+    "protopedia-api-v2-client": "^3.0.0"
   },
   "files": [
     "README.md",
@@ -75,6 +76,30 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/types/index.js"
+    },
+    "./utils": {
+      "types": "./dist/utils/index.d.ts",
+      "import": "./dist/utils/index.js"
+    },
+    "./logger": {
+      "types": "./dist/logger/index.d.ts",
+      "import": "./dist/logger/index.js"
+    },
+    "./fetcher": {
+      "types": "./dist/fetcher/index.d.ts",
+      "import": "./dist/fetcher/index.js"
+    },
+    "./store": {
+      "types": "./dist/store/index.d.ts",
+      "import": "./dist/store/index.js"
+    },
+    "./repository": {
+      "types": "./dist/repository/index.d.ts",
+      "import": "./dist/repository/index.js"
     }
   },
   "publishConfig": {

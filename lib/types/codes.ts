@@ -3,7 +3,7 @@
  *
  * These types define the valid numeric values for various ProtoPedia fields.
  *
- * @module utils/converters/types
+ * @module types
  */
 
 /**

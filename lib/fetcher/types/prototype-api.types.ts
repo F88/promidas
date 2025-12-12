@@ -1,3 +1,30 @@
+import type { ResultOfListPrototypesApiResponse } from 'protopedia-api-v2-client';
+
+/**
+ * Alias for the upstream prototype shape returned by the ProtoPedia SDK.
+ *
+ * This type represents a single prototype object as delivered by the
+ * `listPrototypes` API response. It is the input to normalization functions.
+ *
+ * **Important:** This is a direct re-export of the SDK's response type.
+ * If `protopedia-api-v2-client` changes its response shape in a future
+ * version, this type will automatically reflect those changes. The
+ * following areas may be affected:
+ *
+ * - Normalization function implementation (field mappings)
+ * - {@link NormalizedPrototype} type definition (may need updates)
+ * - Normalization tests (may need new test cases)
+ * - Helper functions (pipe-separated string parsing, timestamp normalization)
+ *
+ * **When upgrading `protopedia-api-v2-client`:**
+ * 1. Review the SDK's changelog for new or changed fields
+ * 2. Run tests - field coverage tests will fail if new fields are not normalized
+ * 3. Update normalization logic to handle new fields
+ * 4. Update {@link NormalizedPrototype} type if needed
+ * 5. Add test cases for new field transformations
+ */
+export type UpstreamPrototype = ResultOfListPrototypesApiResponse;
+
 /**
  * Structure for network failure responses in Result-type patterns.
  *

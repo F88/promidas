@@ -6,7 +6,7 @@
  * @module utils/converters/status
  */
 
-import type { StatusCode } from '../types/index.js';
+import type { StatusCode } from '../../types/codes.js';
 
 /**
  * Status labels mapping.

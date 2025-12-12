@@ -1,63 +1,72 @@
 /**
  * Public entrypoint for the @f88/promidas library.
  *
- * This module re-exports the primary types and factories:
+ * ## Quick Start
  *
- * **Types:**
- * - {@link NormalizedPrototype} — Core normalized prototype type
+ * For most use cases, use the high-level Repository:
  *
- * **Logger:**
- * - {@link Logger} — Logger interface compatible with protopedia-api-v2-client
- * - {@link LogLevel} — Log level type
- * - Note: Logger interface does not include a `level` property for SDK compatibility
+ * @example
+ * ```typescript
+ * import { createProtopediaInMemoryRepository } from '@f88/promidas';
  *
- * **Store (In-memory snapshot management):**
- * - {@link PrototypeInMemoryStore} — In-memory store with TTL and efficient lookups
- * - {@link PrototypeInMemoryStoreConfig} — Store configuration options (includes logger)
- * - {@link PrototypeInMemoryStats} — Store statistics and metadata
+ * const repo = createProtopediaInMemoryRepository(
+ *   { ttlMs: 30 * 60 * 1000 },
+ *   { token: process.env.PROTOPEDIA_API_V2_TOKEN }
+ * );
  *
- * **Fetcher (API client and normalization):**
- * - {@link createProtopediaApiCustomClient} — Standalone API client factory (supports logger)
- * - {@link fetchAndNormalizePrototypes} — Fetch and normalize helper
- * - {@link constructDisplayMessage} — Error message formatter
- * - Supports custom logger via ProtoPediaApiClientOptions
+ * await repo.setupSnapshot({ limit: 100 });
+ * const prototype = await repo.getRandomPrototypeFromSnapshot();
+ * ```
  *
- * **Repository (High-level data management):**
- * - {@link createProtopediaInMemoryRepository} — Repository factory
- * - {@link ProtopediaInMemoryRepository} — Repository interface with analysis methods
- * - {@link PrototypeAnalysisResult} — Result type for prototype ID range analysis
+ * ## Standalone Module Usage
+ *
+ * For advanced use cases or when you need specific modules independently,
+ * use subpath imports:
+ *
+ * @example
+ * ```typescript
+ * // Type definitions
+ * import type { NormalizedPrototype } from '@f88/promidas/types';
+ *
+ * // Utility functions and converters
+ * import {
+ *   parseProtoPediaTimestamp,
+ *   getPrototypeStatusLabel
+ * } from '@f88/promidas/utils';
+ *
+ * // Logger interface and implementations
+ * import { createConsoleLogger } from '@f88/promidas/logger';
+ *
+ * // API client and data fetching
+ * import {
+ *   createProtopediaApiCustomClient,
+ *   fetchAndNormalizePrototypes
+ * } from '@f88/promidas/fetcher';
+ *
+ * // In-memory store
+ * import { PrototypeInMemoryStore } from '@f88/promidas/store';
+ *
+ * // Repository (same as root import)
+ * import { createProtopediaInMemoryRepository } from '@f88/promidas/repository';
+ * ```
+ *
+ * ## Available Subpath Exports
+ *
+ * - `@f88/promidas/types` — Type definitions (NormalizedPrototype)
+ * - `@f88/promidas/utils` — Utility functions and converters
+ * - `@f88/promidas/logger` — Logger interface and implementations
+ * - `@f88/promidas/fetcher` — API client and data fetching utilities
+ * - `@f88/promidas/store` — In-memory store implementation
+ * - `@f88/promidas/repository` — High-level repository factory
  *
  * @packageDocumentation
  */
 
-// types
-export type { NormalizedPrototype } from './types/index.js';
-
-// Logger
-export type { Logger, LogLevel } from './logger/index.js';
-
-// Simple Store for ProtoPedia
-export {
-  PrototypeInMemoryStore,
-  type PrototypeInMemoryStats,
-  type PrototypeInMemoryStoreConfig,
-} from './store/index.js';
-
-// Fetcher (API client and utilities)
-export {
-  constructDisplayMessage,
-  createProtopediaApiCustomClient,
-  fetchAndNormalizePrototypes,
-  type FetchPrototypesResult,
-  type ListPrototypesClient,
-  type ProtoPediaApiClientOptions,
-  type ProtopediaApiCustomClient,
-} from './fetcher/index.js';
-
-// Protopedia In-Memory Repository
+// High-level Repository (most common use case)
 export {
   createProtopediaInMemoryRepository,
   type ProtopediaInMemoryRepository,
   type ProtopediaInMemoryRepositoryStats,
   type PrototypeAnalysisResult,
+  type PrototypeInMemoryStoreConfig,
 } from './repository/index.js';

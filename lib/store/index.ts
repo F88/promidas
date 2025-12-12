@@ -10,7 +10,8 @@
  * - {@link PrototypeInMemoryStats} — Statistics and metadata about the current state
  *   of the store, returned by `getStats()`.
  *
- * Logger types are re-exported for convenience when configuring the store:
+ * Type definitions are re-exported for convenience:
+ * - {@link NormalizedPrototype} — The data type stored in the store.
  * - {@link Logger} — Logger interface for custom logging implementations.
  * - {@link LogLevel} — Log level type for controlling logger verbosity.
  *
@@ -22,5 +23,7 @@ export {
   type PrototypeInMemoryStats,
   type PrototypeInMemoryStoreConfig,
 } from './store.js';
+
+export type { NormalizedPrototype } from '../types/index.js';
 
 export type { Logger, LogLevel } from '../logger/index.js';

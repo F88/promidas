@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => {
   return {
     test: {
       include: ['lib/**/*.test.ts'],
+      exclude: ['**/node_modules/**', '**/dist/**'],
       globals: true,
       environment: 'node',
       coverage: {
