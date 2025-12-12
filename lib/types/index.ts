@@ -51,3 +51,10 @@
  */
 
 export type { NormalizedPrototype } from './normalized-prototype.js';
+
+export type {
+  StatusCode,
+  ReleaseFlagCode,
+  LicenseTypeCode,
+  ThanksFlagCode,
+} from './codes.js';

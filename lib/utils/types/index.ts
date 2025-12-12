@@ -4,4 +4,4 @@
  * @module utils/types
  */
 
-export * from './converter-codes.js';
+export * from '../../types/codes.js';
