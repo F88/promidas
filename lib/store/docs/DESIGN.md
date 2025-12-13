@@ -78,8 +78,8 @@ The `PrototypeInMemoryStore` enforces ID uniqueness to maintain data consistency
 **Design Decision**:
 When `setAll(prototypes)` is called with an array containing duplicate prototype IDs, the store processes these duplicates with a "last-one-wins" strategy. Specifically:
 
-1.  The input `prototypes` array is used to build an internal `Map` (`prototypeIdIndex`), where each `prototype.id` serves as a key. Due to the nature of `Map`s, if an ID appears multiple times, the last prototype associated with that ID in the input array will overwrite previous entries.
-2.  The internal ordered array (`this.prototypes`, returned by `getAll()`) is then reconstructed by taking the `values()` from this `prototypeIdIndex`.
+1. The input `prototypes` array is used to build an internal `Map` (`prototypeIdIndex`), where each `prototype.id` serves as a key. Due to the nature of `Map`s, if an ID appears multiple times, the last prototype associated with that ID in the input array will overwrite previous entries.
+2. The internal ordered array (`this.prototypes`, returned by `getAll()`) is then reconstructed by taking the `values()` from this `prototypeIdIndex`.
 
 **Rationale**:
 
