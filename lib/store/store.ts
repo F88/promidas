@@ -7,7 +7,12 @@
  */
 import type { DeepReadonly } from 'ts-essentials';
 
-import { type Logger, createConsoleLogger } from '../logger/index.js';
+import {
+  ConsoleLogger,
+  type Logger,
+  type LogLevel,
+  createConsoleLogger,
+} from '../logger/index.js';
 import type { NormalizedPrototype } from '../types/index.js';
 
 const DEFAULT_TTL_MS = 30 * 60 * 1_000; // 30 minutes
@@ -18,12 +23,41 @@ const MAX_DATA_SIZE_BYTES = 30 * 1024 * 1024; // 30 MiB
  * Configuration options for the PrototypeInMemoryStore.
  */
 export type PrototypeInMemoryStoreConfig = {
-  /** TTL in milliseconds after which the cached snapshot is considered expired. */
+  /**
+   * TTL in milliseconds after which the cached snapshot is considered expired.
+   * @default 1800000 (30 minutes)
+   */
   ttlMs?: number;
-  /** Maximum allowed data size in bytes for storing snapshots. */
+
+  /**
+   * Maximum allowed data size in bytes for storing snapshots.
+   * @default 10485760 (10 MiB)
+   */
   maxDataSizeBytes?: number;
-  /** Custom logger instance. Defaults to console logger with 'info' level. */
+
+  /**
+   * Custom logger instance.
+   *
+   * @remarks
+   * - If provided, the logger will be used as-is (NOT modified)
+   * - If provided, the `logLevel` option is IGNORED
+   * - To use a custom logger with a specific level, configure it before passing
+   *
+   * @default undefined (creates ConsoleLogger)
+   */
   logger?: Logger;
+
+  /**
+   * Log level for creating a default ConsoleLogger.
+   *
+   * @remarks
+   * - Only used when `logger` is NOT provided
+   * - Creates a new ConsoleLogger with this level
+   * - IGNORED if `logger` is provided
+   *
+   * @default 'info'
+   */
+  logLevel?: LogLevel;
 };
 
 /**
@@ -64,6 +98,8 @@ type Snapshot = {
 export class PrototypeInMemoryStore {
   private readonly logger: Logger;
 
+  private readonly logLevel: LogLevel;
+
   private readonly ttlMs: number;
 
   private readonly maxDataSizeBytes: number;
@@ -92,8 +128,10 @@ export class PrototypeInMemoryStore {
    * @param config.maxDataSizeBytes - Maximum allowed size for cached data in bytes.
    *   Defaults to 10 MiB (10,485,760 bytes). Must not exceed 30 MiB.
    *   If a snapshot exceeds this limit, setAll() will reject it.
-   * @param config.logger - Optional logger instance for store operations.
-   *   If not provided, a default console logger at 'info' level is created.
+   * @param config.logger - Optional custom logger instance. If not provided,
+   *   a default ConsoleLogger is created. NOTE: The logger will NOT be modified.
+   * @param config.logLevel - Log level for the default logger. Only used when
+   *   `logger` is not provided. IGNORED if `logger` is provided.
    *
    * @throws {Error} When maxDataSizeBytes exceeds MAX_DATA_SIZE_BYTES (30 MiB)
    */
@@ -101,6 +139,7 @@ export class PrototypeInMemoryStore {
     ttlMs = DEFAULT_TTL_MS,
     maxDataSizeBytes = DEFAULT_DATA_SIZE_BYTES,
     logger,
+    logLevel,
   }: PrototypeInMemoryStoreConfig = {}) {
     // Throw if maxDataSizeBytes exceeds the hard limit
     if (maxDataSizeBytes > MAX_DATA_SIZE_BYTES) {
@@ -113,11 +152,26 @@ export class PrototypeInMemoryStore {
     this.ttlMs = ttlMs;
     this.maxDataSizeBytes = maxDataSizeBytes;
 
-    this.logger = logger ?? createConsoleLogger('info');
+    // Fastify-style logger configuration
+    if (logger) {
+      // Custom logger provided
+      this.logger = logger;
+      this.logLevel = logLevel ?? 'info';
+      // If logLevel is specified, update logger's level property (if mutable)
+      if (logLevel !== undefined && 'level' in logger) {
+        (logger as { level: LogLevel }).level = logLevel;
+      }
+    } else {
+      // No custom logger → create ConsoleLogger with logLevel
+      const resolvedLogLevel = logLevel ?? 'info';
+      this.logger = new ConsoleLogger(resolvedLogLevel);
+      this.logLevel = resolvedLogLevel;
+    }
 
     this.logger.info('PrototypeInMemoryStore initialized', {
       ttlMs: this.ttlMs,
       maxDataSizeBytes: this.maxDataSizeBytes,
+      logLevel: this.logLevel,
     });
   }
 
@@ -131,6 +185,7 @@ export class PrototypeInMemoryStore {
     return {
       ttlMs: this.ttlMs,
       maxDataSizeBytes: this.maxDataSizeBytes,
+      logLevel: this.logLevel,
     };
   }
 
@@ -279,16 +334,15 @@ export class PrototypeInMemoryStore {
       return null;
     }
 
-    // Create shallow copy to prevent external array mutations
-    const prototypesCopy = [...prototypes];
-
     // Build O(1) lookup index by prototype ID
+    // Note: If duplicate IDs are present in the input array, the last one wins.
     this.prototypeIdIndex = new Map(
-      prototypesCopy.map((prototype) => [prototype.id, prototype]),
+      prototypes.map((prototype) => [prototype.id, prototype]),
     );
 
-    // Store copied array for ordered access
-    this.prototypes = prototypesCopy;
+    // Reconstruct prototypes array from the map to ensure consistency and uniqueness by ID.
+    // This will also ensure that `getAll().length` matches `this.size`.
+    this.prototypes = Array.from(this.prototypeIdIndex.values());
 
     // Update cache metadata
     this.cachedAt = new Date();

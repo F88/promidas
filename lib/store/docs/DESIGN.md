@@ -77,14 +77,15 @@ The `PrototypeInMemoryStore` enforces ID uniqueness to maintain data consistency
 
 **Design Decision**:
 When `setAll(prototypes)` is called with an array containing duplicate prototype IDs, the store processes these duplicates with a "last-one-wins" strategy. Specifically:
+
 1.  The input `prototypes` array is used to build an internal `Map` (`prototypeIdIndex`), where each `prototype.id` serves as a key. Due to the nature of `Map`s, if an ID appears multiple times, the last prototype associated with that ID in the input array will overwrite previous entries.
 2.  The internal ordered array (`this.prototypes`, returned by `getAll()`) is then reconstructed by taking the `values()` from this `prototypeIdIndex`.
 
 **Rationale**:
--   **Consistency**: This approach guarantees that `store.size` (the number of unique prototypes by ID) always matches `store.getAll().length`. This prevents confusing inconsistencies where the total count might differ from the number of items actually accessible via `getByPrototypeId()`.
--   **Predictability**: `getByPrototypeId(id)` will consistently retrieve the same object instance found in the `getAll()` list, which corresponds to the last prototype provided for that ID during the `setAll` call.
--   **Simplicity**: Avoids complex error handling or explicit deduplication logic at the input stage, relying on standard `Map` behavior. Callers are implicitly informed that ID uniqueness is enforced internally.
 
+- **Consistency**: This approach guarantees that `store.size` (the number of unique prototypes by ID) always matches `store.getAll().length`. This prevents confusing inconsistencies where the total count might differ from the number of items actually accessible via `getByPrototypeId()`.
+- **Predictability**: `getByPrototypeId(id)` will consistently retrieve the same object instance found in the `getAll()` list, which corresponds to the last prototype provided for that ID during the `setAll` call.
+- **Simplicity**: Avoids complex error handling or explicit deduplication logic at the input stage, relying on standard `Map` behavior. Callers are implicitly informed that ID uniqueness is enforced internally.
 
 ## Test Coverage
 
