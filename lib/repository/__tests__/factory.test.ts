@@ -194,9 +194,9 @@ describe('createProtopediaInMemoryRepository', () => {
 
     expect(repository).toBeDefined();
     expect(repository).toBeInstanceOf(ProtopediaInMemoryRepositoryImpl);
-    expect(createProtopediaApiCustomClient).toHaveBeenCalledWith(
-      apiClientOptions,
-    );
+    expect(createProtopediaApiCustomClient).toHaveBeenCalledWith({
+      protoPediaApiClientOptions: apiClientOptions,
+    });
   });
 
   it('should create repository with both configurations', () => {
@@ -218,9 +218,9 @@ describe('createProtopediaInMemoryRepository', () => {
         maxDataSizeBytes: 3000,
       }),
     );
-    expect(createProtopediaApiCustomClient).toHaveBeenCalledWith(
-      apiClientOptions,
-    );
+    expect(createProtopediaApiCustomClient).toHaveBeenCalledWith({
+      protoPediaApiClientOptions: apiClientOptions,
+    });
   });
 
   it('should create repository without any arguments', () => {
@@ -362,9 +362,9 @@ describe('createProtopediaInMemoryRepository', () => {
 
     createProtopediaInMemoryRepository({ apiClientOptions });
 
-    expect(createProtopediaApiCustomClient).toHaveBeenCalledWith(
-      apiClientOptions,
-    );
+    expect(createProtopediaApiCustomClient).toHaveBeenCalledWith({
+      protoPediaApiClientOptions: apiClientOptions,
+    });
   });
 
   it('should support different loggers for store and API client', () => {
@@ -394,8 +394,41 @@ describe('createProtopediaInMemoryRepository', () => {
 
     expect(repository).toBeDefined();
     expect(createProtopediaApiCustomClient).toHaveBeenCalledWith({
+      protoPediaApiClientOptions: {
+        token: 'test-token',
+        logger: apiLogger,
+      },
+    });
+  });
+
+  it('should pass logLevel in storeConfig to store', () => {
+    vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
+      listPrototypes: vi.fn(),
+    } as never);
+
+    const repository = createProtopediaInMemoryRepository({
+      storeConfig: { logLevel: 'debug' },
+    });
+
+    expect(repository).toBeDefined();
+    expect(repository).toBeInstanceOf(ProtopediaInMemoryRepositoryImpl);
+  });
+
+  it('should pass logLevel in apiClientOptions to API client', () => {
+    const mockClient = { listPrototypes: vi.fn() };
+    vi.mocked(createProtopediaApiCustomClient).mockReturnValue(
+      mockClient as never,
+    );
+
+    const apiClientOptions = {
       token: 'test-token',
-      logger: apiLogger,
+      logLevel: 'warn' as const,
+    };
+
+    createProtopediaInMemoryRepository({ apiClientOptions });
+
+    expect(createProtopediaApiCustomClient).toHaveBeenCalledWith({
+      protoPediaApiClientOptions: apiClientOptions,
     });
   });
 
@@ -460,9 +493,9 @@ describe('createProtopediaInMemoryRepository', () => {
 
     createProtopediaInMemoryRepository({ apiClientOptions });
 
-    expect(createProtopediaApiCustomClient).toHaveBeenCalledWith(
-      apiClientOptions,
-    );
+    expect(createProtopediaApiCustomClient).toHaveBeenCalledWith({
+      protoPediaApiClientOptions: apiClientOptions,
+    });
     expect(createProtopediaApiCustomClient).toHaveBeenCalledTimes(1);
   });
 
@@ -506,7 +539,9 @@ describe('createProtopediaInMemoryRepository', () => {
     expect(repository).toBeDefined();
     expect(repository).toBeInstanceOf(ProtopediaInMemoryRepositoryImpl);
     expect(createProtopediaApiCustomClient).toHaveBeenCalledWith({
-      token: 'test',
+      protoPediaApiClientOptions: {
+        token: 'test',
+      },
     });
   });
 
@@ -588,7 +623,9 @@ describe('createProtopediaInMemoryRepository', () => {
 
       expect(repository).toBeDefined();
       expect(createProtopediaApiCustomClient).toHaveBeenCalledWith({
-        token: '',
+        protoPediaApiClientOptions: {
+          token: '',
+        },
       });
     });
 
@@ -742,8 +779,10 @@ describe('createProtopediaInMemoryRepository', () => {
       expect(repository).toBeDefined();
       expect(repository.getConfig().ttlMs).toBe(60 * 60 * 1000);
       expect(createProtopediaApiCustomClient).toHaveBeenCalledWith({
-        token: 'prod-token-abc123',
-        logLevel: 'warn',
+        protoPediaApiClientOptions: {
+          token: 'prod-token-abc123',
+          logLevel: 'warn',
+        },
       });
     });
 
@@ -775,9 +814,11 @@ describe('createProtopediaInMemoryRepository', () => {
       expect(repository).toBeDefined();
       expect(repository.getConfig().ttlMs).toBe(5 * 60 * 1000);
       expect(createProtopediaApiCustomClient).toHaveBeenCalledWith({
-        token: 'dev-token-xyz789',
-        logLevel: 'debug',
-        logger: devLogger,
+        protoPediaApiClientOptions: {
+          token: 'dev-token-xyz789',
+          logLevel: 'debug',
+          logger: devLogger,
+        },
       });
     });
 
@@ -1119,7 +1160,9 @@ describe('createProtopediaInMemoryRepository', () => {
       // Get the call arguments
       const callArgs = vi.mocked(createProtopediaApiCustomClient).mock
         .calls[0]?.[0];
-      expect(callArgs?.token).toBe('original-token');
+      expect(callArgs?.protoPediaApiClientOptions?.token).toBe(
+        'original-token',
+      );
 
       // Mutate the original options
       apiClientOptions.token = 'modified-token';
@@ -1132,8 +1175,10 @@ describe('createProtopediaInMemoryRepository', () => {
       // Should use the mutated values (proving the factory reads current state)
       const newCallArgs = vi.mocked(createProtopediaApiCustomClient).mock
         .calls[0]?.[0];
-      expect(newCallArgs?.token).toBe('modified-token');
-      expect(newCallArgs?.logLevel).toBe('debug');
+      expect(newCallArgs?.protoPediaApiClientOptions?.token).toBe(
+        'modified-token',
+      );
+      expect(newCallArgs?.protoPediaApiClientOptions?.logLevel).toBe('debug');
     });
 
     it('should return independent config objects', () => {
@@ -1168,7 +1213,11 @@ describe('createProtopediaInMemoryRepository', () => {
       });
 
       expect(createProtopediaApiCustomClient).toHaveBeenCalledWith(
-        expect.objectContaining({ token: testToken }),
+        expect.objectContaining({
+          protoPediaApiClientOptions: expect.objectContaining({
+            token: testToken,
+          }),
+        }),
       );
     });
 
@@ -1195,10 +1244,12 @@ describe('createProtopediaInMemoryRepository', () => {
       createProtopediaInMemoryRepository({ apiClientOptions: apiOptions });
 
       expect(createProtopediaApiCustomClient).toHaveBeenCalledWith({
-        token: 'test-token',
-        logLevel: 'debug',
-        baseUrl: 'https://custom.api.example.com',
-        logger: mockLogger,
+        protoPediaApiClientOptions: {
+          token: 'test-token',
+          logLevel: 'debug',
+          baseUrl: 'https://custom.api.example.com',
+          logger: mockLogger,
+        },
       });
     });
 

@@ -63,6 +63,12 @@ import {
   createProtopediaApiCustomClient,
 } from '../fetcher/index.js';
 import {
+  ConsoleLogger,
+  type Logger,
+  type LogLevel,
+  createConsoleLogger,
+} from '../logger/index.js';
+import {
   PrototypeInMemoryStore,
   type PrototypeInMemoryStats,
   type PrototypeInMemoryStoreConfig,
@@ -71,6 +77,7 @@ import type { NormalizedPrototype } from '../types/index.js';
 
 import { prototypeIdSchema, sampleSizeSchema } from './schemas/validation.js';
 import type {
+  ProtopediaInMemoryRepositoryConfig,
   PrototypeAnalysisResult,
   SnapshotOperationResult,
 } from './types/index.js';
@@ -147,16 +154,18 @@ const SAMPLE_SIZE_THRESHOLD_RATIO = 0.5;
  *
  * **Direct instantiation** (advanced):
  * ```typescript
- * const repo = new ProtopediaInMemoryRepositoryImpl(
- *   { ttlSeconds: 3600, maxDataSizeBytes: 10485760 },
- *   { baseURL: 'https://protopedia.example.com' }
- * );
+ * const repo = new ProtopediaInMemoryRepositoryImpl({
+ *   storeConfig: { ttlSeconds: 3600, maxDataSizeBytes: 10485760 },
+ *   apiClientOptions: { baseURL: 'https://protopedia.example.com' }
+ * });
  * ```
  *
  * @see {@link ProtopediaInMemoryRepository} for the public interface contract
  * @see {@link createProtopediaInMemoryRepository} for the recommended factory
  */
 export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepository {
+  #logger: Logger;
+  #logLevel: LogLevel;
   #store: PrototypeInMemoryStore;
   #apiClient: ReturnType<typeof createProtopediaApiCustomClient>;
   #lastFetchParams: ListPrototypesParams = { ...DEFAULT_FETCH_PARAMS };
@@ -168,61 +177,122 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    * Initializes the repository with configured store and API client.
    * Each component can have independent logger configuration for granular observability.
    *
-   * @param storeConfig - Configuration for the underlying in-memory store
+   * @param options - Configuration options
+   * @param options.repositoryConfig - Repository-level logger configuration
+   *   - `logger` - Custom logger instance for repository operations (optional)
+   *   - `logLevel` - Log level for the repository logger (optional, default: 'info')
+   *     Only used when `logger` is NOT provided. IGNORED if `logger` is provided.
+   *
+   * @param options.storeConfig - Configuration for the underlying in-memory store
    *   - `ttlSeconds` - Time-to-live for snapshot expiration (optional)
    *   - `maxDataSizeBytes` - Memory guard to prevent excessive data (optional)
    *   - `logger` - Custom logger for store operations (optional)
+   *   - `logLevel` - Log level for store logger (optional)
    *
-   * @param protopediaApiClientOptions - Configuration for the ProtoPedia HTTP client
+   * @param options.apiClientOptions - Configuration for the ProtoPedia HTTP client
    *   - `baseURL` - API endpoint URL (optional, uses default if omitted)
    *   - `logger` - Custom logger for API operations (optional)
+   *   - `logLevel` - Log level for API logger (optional)
    *   - Additional client-specific options
    *
    * @remarks
-   * **Logger Independence**: Store and API client loggers are independent.
+   * **Logger Independence**: Repository, store, and API client loggers are independent.
    * This allows fine-grained control over logging verbosity for different concerns.
    *
    * @example
    * ```typescript
    * // Minimal setup with defaults
-   * const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+   * const repo = new ProtopediaInMemoryRepositoryImpl({});
    *
    * // Production setup with TTL and memory limits
-   * const repo = new ProtopediaInMemoryRepositoryImpl(
-   *   {
+   * const repo = new ProtopediaInMemoryRepositoryImpl({
+   *   storeConfig: {
    *     ttlSeconds: 3600,           // 1 hour
    *     maxDataSizeBytes: 10485760, // 10MB
    *   },
-   *   {
+   *   apiClientOptions: {
    *     baseURL: 'https://protopedia.example.com',
    *   }
-   * );
+   * });
    *
-   * // Shared logger for both components
-   * const logger = createConsoleLogger('debug');
-   * const repo = new ProtopediaInMemoryRepositoryImpl(
-   *   { logger },
-   *   { logger }
-   * );
+   * // Full config with all options
+   * const repo = new ProtopediaInMemoryRepositoryImpl({
+   *   repositoryConfig: {
+   *     logger: createConsoleLogger(),
+   *     logLevel: 'info',
+   *   },
+   *   storeConfig: {
+   *     ttlMs: 3600000,             // 1 hour
+   *     maxDataSizeBytes: 20971520, // 20MB
+   *     logger: createConsoleLogger(),
+   *     logLevel: 'debug',
+   *   },
+   *   apiClientOptions: {
+   *     token: process.env.PROTOPEDIA_API_V2_TOKEN,
+   *     baseURL: 'https://protopedia.net/v2',
+   *     logger: createConsoleLogger(),
+   *     logLevel: 'warn',
+   *   }
+   * });
+   *
+   * // With shared logger
+   * const logger = createConsoleLogger();
+   * const repo = new ProtopediaInMemoryRepositoryImpl({
+   *   repositoryConfig: { logger, logLevel: 'info' },
+   *   storeConfig: { logger, logLevel: 'debug' },
+   *   apiClientOptions: { logger, logLevel: 'warn' }
+   * });
    *
    * // Independent loggers for granular control
+   * const repoLogger = createLogger({ minLevel: 'info', prefix: '[Repo]' });
    * const storeLogger = createLogger({ minLevel: 'debug', prefix: '[Store]' });
    * const apiLogger = createLogger({ minLevel: 'info', prefix: '[API]' });
-   * const repo = new ProtopediaInMemoryRepositoryImpl(
-   *   { logger: storeLogger },
-   *   { logger: apiLogger }
-   * );
+   * const repo = new ProtopediaInMemoryRepositoryImpl({
+   *   repositoryConfig: { logger: repoLogger },
+   *   storeConfig: { logger: storeLogger },
+   *   apiClientOptions: { logger: apiLogger }
+   * });
    * ```
    *
    * @see {@link PrototypeInMemoryStoreConfig} for store configuration details
    * @see {@link ProtoPediaApiClientOptions} for API client configuration
    */
-  constructor(
-    storeConfig: PrototypeInMemoryStoreConfig = {},
-    apiClientOptions?: ProtoPediaApiClientOptions,
-  ) {
+  constructor({
+    repositoryConfig = {},
+    storeConfig = {},
+    apiClientOptions,
+  }: {
+    repositoryConfig?: ProtopediaInMemoryRepositoryConfig;
+    storeConfig?: PrototypeInMemoryStoreConfig;
+    apiClientOptions?: ProtoPediaApiClientOptions;
+  } = {}) {
+    // Fastify-style logger configuration for repository
+    const { logger, logLevel } = repositoryConfig;
+    if (logger) {
+      this.#logger = logger;
+      this.#logLevel = logLevel ?? 'info';
+      // If logLevel is specified, update logger's level property (if mutable)
+      if (logLevel !== undefined && 'level' in logger) {
+        (logger as { level: LogLevel }).level = logLevel;
+      }
+    } else {
+      const resolvedLogLevel = logLevel ?? 'info';
+      this.#logger = new ConsoleLogger(resolvedLogLevel);
+      this.#logLevel = resolvedLogLevel;
+    }
+
+    this.#logger.info('ProtopediaInMemoryRepository constructor called', {
+      repositoryConfig,
+      storeConfig,
+      apiClientOptions,
+    });
+
     this.#store = new PrototypeInMemoryStore(storeConfig);
-    this.#apiClient = createProtopediaApiCustomClient(apiClientOptions);
+    this.#apiClient = createProtopediaApiCustomClient(
+      apiClientOptions !== undefined
+        ? { protoPediaApiClientOptions: apiClientOptions }
+        : undefined,
+    );
   }
 
   /**

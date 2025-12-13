@@ -30,9 +30,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         ]),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       const params = { offset: 0, limit: 10 };
@@ -61,9 +64,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
 
       const fetchSpy = vi.fn(createMockFetchPrototypesSuccess(mockData));
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       const params = { offset: 0, limit: 10 };
@@ -91,9 +97,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         ]),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // Call with different parameters concurrently
@@ -119,9 +128,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         createMockFetchPrototypesSuccess([{ id: 1, prototypeNm: 'Initial' }]),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // Initial setup
@@ -152,9 +164,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         ]),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       await repo.setupSnapshot({ offset: 0, limit: 10 });
@@ -178,9 +193,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         createMockFetchPrototypesSuccess([{ id: 1, prototypeNm: 'Data' }]),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // Mix setup and refresh calls
@@ -209,9 +227,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         createMockFetchPrototypesSuccess([{ id: 1, prototypeNm: 'First' }]),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // First call
@@ -232,9 +253,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         createMockFetchPrototypesSuccess([{ id: 1, prototypeNm: 'Data' }]),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // First concurrent batch
@@ -266,9 +290,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         ),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       const [result1, result2, result3] = await Promise.all([
@@ -308,9 +335,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         ])();
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // First batch - should fail
@@ -363,9 +393,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         );
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // Start two concurrent calls
@@ -397,9 +430,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         ]),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // Create 100 concurrent calls
@@ -429,9 +465,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         ]),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // Run 10 batches of concurrent calls
@@ -451,9 +490,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
     it('handles empty response data correctly', async () => {
       const fetchSpy = vi.fn(createMockFetchPrototypesSuccess([]));
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       const [result1, result2] = await Promise.all([
@@ -476,9 +518,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         createMockFetchPrototypesSuccess([{ id: 1, prototypeNm: 'Existing' }]),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // Initial setup with data
@@ -513,9 +558,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         Promise.reject(new Error('Network failure')),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       const [result1, result2, result3] = await Promise.all([
@@ -547,14 +595,20 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         createMockFetchPrototypesSuccess([{ id: 2, prototypeNm: 'Repo 2' }]),
       );
 
-      const repo1 = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy1 as unknown as typeof fetch,
+      const repo1 = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy1 as unknown as typeof fetch,
+        },
       });
 
-      const repo2 = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy2 as unknown as typeof fetch,
+      const repo2 = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy2 as unknown as typeof fetch,
+        },
       });
 
       // Concurrent calls on different instances should not interfere
@@ -605,9 +659,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         ])();
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // First batch - should fail
@@ -644,9 +701,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         ])();
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // Sequential calls
@@ -672,9 +732,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         ),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // Start multiple concurrent calls
@@ -717,9 +780,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
           }),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // Start multiple concurrent calls that will all wait
@@ -757,9 +823,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         ])();
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // First batch - should timeout
@@ -790,13 +859,13 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
       const fetchSpy = vi.fn(createMockFetchPrototypesSuccess(largeData));
 
       // Use smaller maxDataSizeBytes to test limits
-      const repo = new ProtopediaInMemoryRepositoryImpl(
-        { ttlMs: 30000, maxDataSizeBytes: 1024 * 100 }, // 100KB limit
-        {
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig: { ttlMs: 30000, maxDataSizeBytes: 1024 * 100 }, // 100KB limit
+        apiClientOptions: {
           ...apiClientOptions,
           fetch: fetchSpy as unknown as typeof fetch,
         },
-      );
+      });
 
       const [result1, result2, result3] = await Promise.all([
         repo.setupSnapshot({ offset: 0, limit: 1000 }),
@@ -825,9 +894,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         ]),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // Multiple concurrent setups
@@ -855,9 +927,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         createMockFetchPrototypesSuccess([{ id: 1, prototypeNm: 'Test Data' }]),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // First attempt - fetch succeeds but we'll verify state
@@ -901,9 +976,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         );
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // Initial setup
@@ -948,9 +1026,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         ),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // Start concurrent operations
@@ -985,9 +1066,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         createMockFetchPrototypesSuccess([{ id: 1, prototypeNm: 'Test' }]),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // Get config before, during, and after concurrent operations
@@ -1017,9 +1101,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         createMockFetchPrototypesSuccess([{ id: 1, prototypeNm: 'Data' }]),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // Complex pattern: setup -> concurrent refresh -> setup -> concurrent refresh
@@ -1057,9 +1144,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         ])();
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // First wave
@@ -1098,9 +1188,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         ])();
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // Simulate app startup - initial load
@@ -1147,9 +1240,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         ])();
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // Initial setup
@@ -1188,9 +1284,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         ]),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // User types rapidly in search box, triggering multiple setupSnapshot calls
@@ -1229,9 +1328,12 @@ describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
         ]),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig,
+        apiClientOptions: {
+          ...apiClientOptions,
+          fetch: fetchSpy as unknown as typeof fetch,
+        },
       });
 
       // Initial setup

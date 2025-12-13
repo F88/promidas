@@ -29,14 +29,16 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
 
   describe('constructor', () => {
     it('creates instance with store config', () => {
-      const repo = new ProtopediaInMemoryRepositoryImpl({ ttlMs: 60_000 }, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig: { ttlMs: 60_000 },
+      });
 
       expect(repo).toBeInstanceOf(ProtopediaInMemoryRepositoryImpl);
       expect(repo.getConfig().ttlMs).toBe(60_000);
     });
 
     it('creates instance with minimal config', () => {
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
 
       expect(repo).toBeInstanceOf(ProtopediaInMemoryRepositoryImpl);
     });
@@ -60,7 +62,9 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
         ],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({ ttlMs: 60_000 }, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig: { ttlMs: 60_000 },
+      });
 
       await repo.setupSnapshot({});
 
@@ -86,7 +90,7 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
         ],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
 
       await repo.setupSnapshot({ offset: 7, limit: 25 });
 
@@ -109,7 +113,9 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
         },
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({ ttlMs: 60_000 }, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig: { ttlMs: 60_000 },
+      });
 
       const result = await repo.setupSnapshot({});
 
@@ -130,7 +136,7 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
         data: [makePrototype({ id: 50 })],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({ offset: 20 });
 
       expect(fetchPrototypesMock).toHaveBeenCalledWith({
@@ -145,7 +151,7 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
         data: [makePrototype({ id: 60 })],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({ limit: 50 });
 
       expect(fetchPrototypesMock).toHaveBeenCalledWith({
@@ -160,7 +166,7 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
         data: [],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       const stats = repo.getStats();
@@ -194,7 +200,9 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
           ],
         });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({ ttlMs: 60_000 }, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig: { ttlMs: 60_000 },
+      });
 
       await repo.setupSnapshot({ offset: 5 });
 
@@ -228,7 +236,7 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
         ],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
 
       await repo.refreshSnapshot();
 
@@ -255,7 +263,9 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
         })
         .mockRejectedValueOnce(new Error('network failure'));
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({ ttlMs: 60_000 }, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig: { ttlMs: 60_000 },
+      });
 
       await repo.setupSnapshot({});
 
@@ -292,7 +302,7 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
           data: [makePrototype({ id: 3, prototypeNm: 'third' })],
         });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
 
       await repo.refreshSnapshot();
       let proto = await repo.getPrototypeFromSnapshotByPrototypeId(1);

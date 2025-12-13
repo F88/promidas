@@ -9,6 +9,7 @@ import type {
 } from 'protopedia-api-v2-client';
 import type { DeepReadonly } from 'ts-essentials';
 
+import type { Logger, LogLevel } from '../../logger/index.js';
 import type {
   PrototypeInMemoryStats,
   PrototypeInMemoryStoreConfig,
@@ -17,6 +18,35 @@ import type { NormalizedPrototype } from '../../types/index.js';
 
 import type { PrototypeAnalysisResult } from './analysis.types.js';
 import type { SnapshotOperationResult } from './snapshot-operation.types.js';
+
+/**
+ * Configuration options for the ProtoPedia in-memory repository.
+ */
+export type ProtopediaInMemoryRepositoryConfig = {
+  /**
+   * Custom logger instance for repository operations.
+   *
+   * @remarks
+   * - If provided, the logger will be used as-is (NOT modified)
+   * - If provided, the `logLevel` option is IGNORED
+   * - To use a custom logger with a specific level, configure it before passing
+   *
+   * @default undefined (creates ConsoleLogger)
+   */
+  logger?: Logger;
+
+  /**
+   * Log level for creating a default ConsoleLogger.
+   *
+   * @remarks
+   * - Only used when `logger` is NOT provided
+   * - Creates a new ConsoleLogger with this level
+   * - IGNORED if `logger` is provided
+   *
+   * @default 'info'
+   */
+  logLevel?: LogLevel;
+};
 
 /**
  * In-memory, snapshot-based repository for ProtoPedia prototypes.
@@ -201,19 +231,23 @@ export interface ProtopediaInMemoryRepository {
  * Factory function type for creating a ProtoPedia in-memory repository.
  *
  * This factory wires together:
+ * - a {@link ProtopediaInMemoryRepositoryConfig} for repository-level logging
  * - a {@link PrototypeInMemoryStoreConfig} for the underlying in-memory store
- *   (TTL, memory guard, etc.), and
+ *   (TTL, memory guard, logger, etc.), and
  * - options for the ProtoPedia HTTP client used to fetch prototypes.
  *
  * The returned {@link ProtopediaInMemoryRepository} exposes a
  * snapshot-based API: it uses the configured client to populate a snapshot
  * in memory, and then serves read operations from that snapshot only.
  *
- * @param storeConfig - Configuration for the underlying in-memory store
- * @param protopediaApiClientOptions - Optional HTTP client configuration
+ * @param options - Configuration options for the repository
+ * @param options.repositoryConfig - Configuration for repository-level logging (optional)
+ * @param options.storeConfig - Configuration for the underlying in-memory store (optional)
+ * @param options.apiClientOptions - Configuration for the ProtoPedia HTTP client (optional)
  * @returns A configured repository instance
  */
-export type CreateProtopediaInMemoryRepository = (
-  storeConfig: PrototypeInMemoryStoreConfig,
-  protopediaApiClientOptions?: ProtoPediaApiClientOptions,
-) => ProtopediaInMemoryRepository;
+export type CreateProtopediaInMemoryRepository = (options?: {
+  repositoryConfig?: ProtopediaInMemoryRepositoryConfig;
+  storeConfig?: PrototypeInMemoryStoreConfig;
+  apiClientOptions?: ProtoPediaApiClientOptions;
+}) => ProtopediaInMemoryRepository;

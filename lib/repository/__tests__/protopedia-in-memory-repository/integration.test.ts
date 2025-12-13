@@ -42,12 +42,16 @@ describe('ProtopediaInMemoryRepositoryImpl - integration', () => {
         logLevel: 'debug' as const,
       };
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, apiOptions);
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        apiClientOptions: apiOptions,
+      });
       await repo.setupSnapshot({});
 
       expect(
         createProtopediaApiCustomClient as unknown as ReturnType<typeof vi.fn>,
-      ).toHaveBeenCalledWith(apiOptions);
+      ).toHaveBeenCalledWith({
+        protoPediaApiClientOptions: apiOptions,
+      });
     });
 
     it('works without API client options', async () => {
@@ -71,7 +75,7 @@ describe('ProtopediaInMemoryRepositoryImpl - integration', () => {
         data: [makePrototype({ id: 999, prototypeNm: 'specific' })],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({ prototypeId: 999 });
 
       expect(fetchPrototypesMock).toHaveBeenCalledWith({
@@ -95,7 +99,7 @@ describe('ProtopediaInMemoryRepositoryImpl - integration', () => {
           data: [makePrototype({ id: 888, prototypeNm: 'refreshed' })],
         });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({ prototypeId: 888, offset: 5, limit: 20 });
 
       expect(fetchPrototypesMock).toHaveBeenNthCalledWith(1, {
@@ -119,7 +123,7 @@ describe('ProtopediaInMemoryRepositoryImpl - integration', () => {
         data: [makePrototype({ id: 1 })],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({
         offset: 15,
         limit: 25,
@@ -151,7 +155,7 @@ describe('ProtopediaInMemoryRepositoryImpl - integration', () => {
         data: [rawPrototype],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       const stored = await repo.getPrototypeFromSnapshotByPrototypeId(12345);
@@ -177,7 +181,7 @@ describe('ProtopediaInMemoryRepositoryImpl - integration', () => {
         data: [minimalPrototype],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       const stored = await repo.getPrototypeFromSnapshotByPrototypeId(1);
@@ -193,7 +197,7 @@ describe('ProtopediaInMemoryRepositoryImpl - integration', () => {
         data: [makePrototype({ id: 1 })],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({ limit: 1 });
 
       expect(fetchPrototypesMock).toHaveBeenCalledWith({
@@ -211,7 +215,7 @@ describe('ProtopediaInMemoryRepositoryImpl - integration', () => {
         data: [makePrototype({ id: 1 })],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({ offset: 0, limit: 5 });
 
       expect(fetchPrototypesMock).toHaveBeenCalledWith({
@@ -226,7 +230,7 @@ describe('ProtopediaInMemoryRepositoryImpl - integration', () => {
         data: [makePrototype({ id: 99999 })],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({ offset: 10000, limit: 100 });
 
       expect(fetchPrototypesMock).toHaveBeenCalledWith({
@@ -245,7 +249,7 @@ describe('ProtopediaInMemoryRepositoryImpl - integration', () => {
         data: largeDataset,
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({ limit: 100 });
 
       const stats = repo.getStats();
@@ -269,7 +273,7 @@ describe('ProtopediaInMemoryRepositoryImpl - integration', () => {
         ],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       const results = await Promise.all([
@@ -296,7 +300,7 @@ describe('ProtopediaInMemoryRepositoryImpl - integration', () => {
           data: [makePrototype({ id: 2, prototypeNm: 'second' })],
         });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
 
       await repo.setupSnapshot({ offset: 0 });
       let proto = await repo.getPrototypeFromSnapshotByPrototypeId(1);
@@ -318,8 +322,8 @@ describe('ProtopediaInMemoryRepositoryImpl - integration', () => {
         data: [makePrototype({ id: 1 })],
       });
 
-      const repo1 = new ProtopediaInMemoryRepositoryImpl({}, {});
-      const repo2 = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo1 = new ProtopediaInMemoryRepositoryImpl({});
+      const repo2 = new ProtopediaInMemoryRepositoryImpl({});
 
       await repo1.setupSnapshot({});
 

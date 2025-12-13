@@ -82,7 +82,7 @@ describe('ProtopediaInMemoryRepositoryImpl - fetch error handling', () => {
         },
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
 
       const result = await repo.setupSnapshot({});
 
@@ -104,7 +104,7 @@ describe('ProtopediaInMemoryRepositoryImpl - fetch error handling', () => {
         },
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
 
       const result = await repo.setupSnapshot({});
 
@@ -121,7 +121,7 @@ describe('ProtopediaInMemoryRepositoryImpl - fetch error handling', () => {
         new Error('ECONNREFUSED: Connection refused'),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
 
       const result = await repo.setupSnapshot({});
 
@@ -139,7 +139,7 @@ describe('ProtopediaInMemoryRepositoryImpl - fetch error handling', () => {
           data: [makePrototype({ id: 1, prototypeNm: 'success' })],
         });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
 
       const failResult = await repo.setupSnapshot({});
       expect(failResult.ok).toBe(false);
@@ -172,7 +172,7 @@ describe('ProtopediaInMemoryRepositoryImpl - fetch error handling', () => {
           data: [makePrototype({ id: 2, prototypeNm: 'recovered' })],
         });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       const failResult = await repo.refreshSnapshot();
@@ -207,7 +207,7 @@ describe('ProtopediaInMemoryRepositoryImpl - fetch error handling', () => {
           data: [makePrototype({ id: 3, prototypeNm: 'new' })],
         });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       let stats = repo.getStats();

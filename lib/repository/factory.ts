@@ -68,18 +68,31 @@ import type { ProtoPediaApiClientOptions } from 'protopedia-api-v2-client';
 import type { PrototypeInMemoryStoreConfig } from '../store/index.js';
 
 import { ProtopediaInMemoryRepositoryImpl } from './protopedia-in-memory-repository.js';
-import type { ProtopediaInMemoryRepository } from './types/index.js';
+import type {
+  ProtopediaInMemoryRepository,
+  ProtopediaInMemoryRepositoryConfig,
+} from './types/index.js';
 
 /**
  * Options for creating a ProtoPedia in-memory repository.
  */
 export interface CreateProtopediaInMemoryRepositoryOptions {
   /**
+   * Configuration for repository-level logging.
+   *
+   * - `logger` - Custom logger instance for repository operations (optional)
+   * - `logLevel` - Log level for default logger (only used when logger is not provided)
+   * - Defaults to `{}` for sensible defaults
+   */
+  repositoryConfig?: ProtopediaInMemoryRepositoryConfig;
+
+  /**
    * Configuration for the underlying in-memory store.
    *
    * - `ttlMs` - Time-to-live for automatic snapshot expiration (optional)
    * - `maxDataSizeBytes` - Memory guard to prevent excessive data storage (optional)
    * - `logger` - Custom logger instance for store operations (optional)
+   * - `logLevel` - Log level for default logger (only used when logger is not provided)
    * - Defaults to `{}` for sensible defaults
    */
   storeConfig?: PrototypeInMemoryStoreConfig;
@@ -89,6 +102,7 @@ export interface CreateProtopediaInMemoryRepositoryOptions {
    *
    * - `baseURL` - API endpoint URL (optional, uses client default if omitted)
    * - `logger` - Custom logger instance for API operations (optional)
+   * - `logLevel` - Log level for SDK logger (optional, see SDK documentation)
    * - Additional HTTP client options (headers, timeout, etc.)
    */
   apiClientOptions?: ProtoPediaApiClientOptions;
@@ -147,36 +161,36 @@ export interface CreateProtopediaInMemoryRepositoryOptions {
  * ```
  *
  * @example
- * **Shared logger for both components**
+ * **Shared logger for all components**
  * ```typescript
- * import { createLogger } from './logger';
+ * import { createConsoleLogger } from './logger';
  *
- * const logger = createLogger({ minLevel: 'debug' });
+ * const logger = createConsoleLogger();
  * const repo = createProtopediaInMemoryRepository({
- *   storeConfig: { logger },
- *   apiClientOptions: { logger },
+ *   repositoryConfig: { logger, logLevel: 'info' },
+ *   storeConfig: { logger, logLevel: 'debug' },
+ *   apiClientOptions: { logger, logLevel: 'debug' },
  * });
  * ```
  *
  * @example
  * **Independent loggers for granular control**
  * ```typescript
- * const storeLogger = createLogger({
- *   minLevel: 'debug',
- *   prefix: '[Store]'
- * });
- * const apiLogger = createLogger({
- *   minLevel: 'info',
- *   prefix: '[API]'
- * });
+ * import { createConsoleLogger } from './logger';
+ *
+ * const repoLogger = createConsoleLogger();
+ * const storeLogger = createConsoleLogger();
+ * const apiLogger = createConsoleLogger();
  *
  * const repo = createProtopediaInMemoryRepository({
- *   storeConfig: { logger: storeLogger },
- *   apiClientOptions: { logger: apiLogger },
+ *   repositoryConfig: { logger: repoLogger, logLevel: 'info' },
+ *   storeConfig: { logger: storeLogger, logLevel: 'debug' },
+ *   apiClientOptions: { logger: apiLogger, logLevel: 'warn' },
  * });
  *
- * // Store logs will be more verbose (debug level)
- * // API logs will be less verbose (info level only)
+ * // Repository logs at info level
+ * // Store logs at debug level (more verbose)
+ * // API logs at warn level (less verbose)
  * await repo.setupSnapshot({ offset: 0, limit: 100 });
  * ```
  *
@@ -214,8 +228,13 @@ export interface CreateProtopediaInMemoryRepositoryOptions {
  * @see {@link ProtoPediaApiClientOptions} for API client options
  */
 export const createProtopediaInMemoryRepository = ({
+  repositoryConfig = {},
   storeConfig = {},
   apiClientOptions,
 }: CreateProtopediaInMemoryRepositoryOptions = {}): ProtopediaInMemoryRepository => {
-  return new ProtopediaInMemoryRepositoryImpl(storeConfig, apiClientOptions);
+  return new ProtopediaInMemoryRepositoryImpl({
+    repositoryConfig,
+    storeConfig,
+    ...(apiClientOptions !== undefined && { apiClientOptions }),
+  });
 };
