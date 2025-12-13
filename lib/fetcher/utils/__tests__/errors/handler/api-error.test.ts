@@ -26,6 +26,13 @@ vi.mock('../../../../logger', () => ({
   }),
 }));
 
+const mockLogger = {
+  warn: vi.fn(),
+  error: vi.fn(),
+  info: vi.fn(),
+  debug: vi.fn(),
+};
+
 describe('handleApiError - ProtoPediaApiError handling', () => {
   describe('4xx client errors', () => {
     it('handles 400 Bad Request', () => {
@@ -39,7 +46,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Bad Request',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleApiError(apiError, mockLogger);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -59,7 +66,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Bad Request',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleApiError(apiError, mockLogger);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -79,7 +86,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Unauthorized',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleApiError(apiError, mockLogger);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -101,7 +108,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Not Found',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleApiError(apiError, mockLogger);
 
       expect(result).toEqual({
         ok: false,
@@ -130,7 +137,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Not Found',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleApiError(apiError, mockLogger);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -152,7 +159,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Not Found',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleApiError(apiError, mockLogger);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -172,7 +179,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'URI Too Long',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleApiError(apiError, mockLogger);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -192,7 +199,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Too Many Requests',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleApiError(apiError, mockLogger);
 
       expect(result).toEqual({
         ok: false,
@@ -221,7 +228,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Client Closed Request',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleApiError(apiError, mockLogger);
 
       expect(result).toEqual({
         ok: false,
@@ -252,7 +259,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: '',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleApiError(apiError, mockLogger);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -272,7 +279,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Internal Server Error',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleApiError(apiError, mockLogger);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -292,7 +299,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Bad Gateway',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleApiError(apiError, mockLogger);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -315,7 +322,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Service Unavailable',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleApiError(apiError, mockLogger);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {

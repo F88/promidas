@@ -62,24 +62,25 @@ describe('ProtopediaInMemoryRepositoryImpl - configuration and statistics', () =
 
   describe('getConfig', () => {
     it('returns store configuration with custom TTL', () => {
-      const repo = new ProtopediaInMemoryRepositoryImpl({ ttlMs: 120_000 }, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig: { ttlMs: 120_000 },
+      });
 
       const config = repo.getConfig();
       expect(config.ttlMs).toBe(120_000);
     });
 
     it('returns configuration with custom maxDataSizeBytes', () => {
-      const repo = new ProtopediaInMemoryRepositoryImpl(
-        { maxDataSizeBytes: 5_000_000 },
-        {},
-      );
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig: { maxDataSizeBytes: 5_000_000 },
+      });
 
       const config = repo.getConfig();
       expect(config.maxDataSizeBytes).toBe(5_000_000);
     });
 
     it('returns configuration with default values', () => {
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl();
 
       const config = repo.getConfig();
       expect(config.ttlMs).toBeDefined();
@@ -89,7 +90,7 @@ describe('ProtopediaInMemoryRepositoryImpl - configuration and statistics', () =
 
   describe('getStats', () => {
     it('returns null cachedAt and size 0 before any snapshot is created', () => {
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl();
 
       const stats = repo.getStats();
       expect(stats.cachedAt).toBeNull();
@@ -106,7 +107,7 @@ describe('ProtopediaInMemoryRepositoryImpl - configuration and statistics', () =
         ],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl();
       await repo.setupSnapshot({});
 
       const stats = repo.getStats();
@@ -127,7 +128,7 @@ describe('ProtopediaInMemoryRepositoryImpl - configuration and statistics', () =
         ],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl();
       await repo.setupSnapshot({});
 
       const stats = repo.getStats();
@@ -145,7 +146,7 @@ describe('ProtopediaInMemoryRepositoryImpl - configuration and statistics', () =
           data: [makePrototype({ id: 2 })],
         });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl();
       await repo.setupSnapshot({});
 
       const stats1 = repo.getStats();
@@ -172,7 +173,9 @@ describe('ProtopediaInMemoryRepositoryImpl - configuration and statistics', () =
         data: [makePrototype({ id: 1 })],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({ ttlMs: 1000 }, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        storeConfig: { ttlMs: 1000 },
+      });
       await repo.setupSnapshot({});
 
       const stats = repo.getStats();
@@ -185,7 +188,7 @@ describe('ProtopediaInMemoryRepositoryImpl - configuration and statistics', () =
         data: [makePrototype({ id: 1 }), makePrototype({ id: 2 })],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl();
       await repo.setupSnapshot({});
 
       const stats1 = repo.getStats();
@@ -199,7 +202,7 @@ describe('ProtopediaInMemoryRepositoryImpl - configuration and statistics', () =
     });
 
     it('returns consistent cached state when empty', () => {
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl();
       const stats = repo.getStats();
 
       expect(stats.cachedAt).toBeNull();

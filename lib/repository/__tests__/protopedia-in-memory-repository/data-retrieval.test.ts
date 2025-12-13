@@ -31,7 +31,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
 
   describe('getRandomPrototypeFromSnapshot', () => {
     it('returns undefined when the store is empty', async () => {
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
 
       const random = await repo.getRandomPrototypeFromSnapshot();
       expect(random).toBeNull();
@@ -48,7 +48,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         ],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       const random = await repo.getRandomPrototypeFromSnapshot();
@@ -66,7 +66,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         ],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       const random = await repo.getRandomPrototypeFromSnapshot();
@@ -78,7 +78,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
 
   describe('getRandomSampleFromSnapshot', () => {
     it('returns empty array when the store is empty', async () => {
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
 
       const sample = await repo.getRandomSampleFromSnapshot(5);
       expect(sample).toEqual([]);
@@ -90,7 +90,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         data: [makePrototype({ id: 1 }), makePrototype({ id: 2 })],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       const sample = await repo.getRandomSampleFromSnapshot(0);
@@ -103,7 +103,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         data: [makePrototype({ id: 1 }), makePrototype({ id: 2 })],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       const sample = await repo.getRandomSampleFromSnapshot(-5);
@@ -122,7 +122,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         ],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       const sample = await repo.getRandomSampleFromSnapshot(3);
@@ -135,7 +135,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         data: [makePrototype({ id: 1 }), makePrototype({ id: 2 })],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       const sample = await repo.getRandomSampleFromSnapshot(10);
@@ -154,7 +154,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         ],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       const sample = await repo.getRandomSampleFromSnapshot(5);
@@ -173,7 +173,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         ],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       const seen = new Set<number>();
@@ -196,7 +196,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         ),
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       const sample = await repo.getRandomSampleFromSnapshot(6);
@@ -214,7 +214,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         ),
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       const sample = await repo.getRandomSampleFromSnapshot(3);
@@ -226,14 +226,14 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
 
     describe('parameter validation', () => {
       it('throws ZodError when size is not an integer', async () => {
-        const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+        const repo = new ProtopediaInMemoryRepositoryImpl({});
         await expect(repo.getRandomSampleFromSnapshot(1.5)).rejects.toThrow(
           ZodError,
         );
       });
 
       it('throws ZodError when size is NaN', async () => {
-        const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+        const repo = new ProtopediaInMemoryRepositoryImpl({});
         await expect(repo.getRandomSampleFromSnapshot(NaN)).rejects.toThrow(
           ZodError,
         );
@@ -243,7 +243,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
 
   describe('getPrototypeIdsFromSnapshot', () => {
     it('returns empty array when snapshot is empty', async () => {
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       const ids = await repo.getPrototypeIdsFromSnapshot();
       expect(ids).toEqual([]);
     });
@@ -258,7 +258,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         ],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       const ids = await repo.getPrototypeIdsFromSnapshot();
@@ -275,7 +275,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         ],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       const ids = await repo.getPrototypeIdsFromSnapshot();
@@ -291,7 +291,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         data: [makePrototype({ id: 1 })],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       let ids = await repo.getPrototypeIdsFromSnapshot();
@@ -310,7 +310,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
 
   describe('getAllFromSnapshot', () => {
     it('returns empty array when snapshot is empty', async () => {
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       const prototypes = await repo.getAllFromSnapshot();
       expect(prototypes).toEqual([]);
     });
@@ -327,7 +327,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         data: testData,
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       const prototypes = await repo.getAllFromSnapshot();
@@ -347,7 +347,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         data: [makePrototype({ id: 1 })],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       const prototypes = await repo.getAllFromSnapshot();
@@ -364,7 +364,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         data: [makePrototype({ id: 1, prototypeNm: 'Old' })],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       let prototypes = await repo.getAllFromSnapshot();
@@ -399,7 +399,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         ],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       const missing = await repo.getPrototypeFromSnapshotByPrototypeId(1234);
@@ -417,7 +417,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         ],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       const found = await repo.getPrototypeFromSnapshotByPrototypeId(9);
@@ -436,7 +436,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         ],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       const proto1 = await repo.getPrototypeFromSnapshotByPrototypeId(1);
@@ -452,28 +452,28 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
 
     describe('parameter validation', () => {
       it('throws ZodError when prototypeId is not an integer', async () => {
-        const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+        const repo = new ProtopediaInMemoryRepositoryImpl({});
         await expect(
           repo.getPrototypeFromSnapshotByPrototypeId(1.5),
         ).rejects.toThrow(ZodError);
       });
 
       it('throws ZodError when prototypeId is zero', async () => {
-        const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+        const repo = new ProtopediaInMemoryRepositoryImpl({});
         await expect(
           repo.getPrototypeFromSnapshotByPrototypeId(0),
         ).rejects.toThrow(ZodError);
       });
 
       it('throws ZodError when prototypeId is negative', async () => {
-        const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+        const repo = new ProtopediaInMemoryRepositoryImpl({});
         await expect(
           repo.getPrototypeFromSnapshotByPrototypeId(-1),
         ).rejects.toThrow(ZodError);
       });
 
       it('throws ZodError when prototypeId is NaN', async () => {
-        const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+        const repo = new ProtopediaInMemoryRepositoryImpl({});
         await expect(
           repo.getPrototypeFromSnapshotByPrototypeId(NaN),
         ).rejects.toThrow(ZodError);

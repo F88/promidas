@@ -50,42 +50,60 @@ All methods live on `PrototypeInMemoryStore` in `lib/store/store.ts`.
     - `maxDataSizeBytes?: number` – maximum allowed payload size in
       bytes (default: 10 MiB). Values above 30 MiB are rejected.
     - `logger?: Logger` – custom logger instance. Defaults to console logger with 'info' level.
+    - `logLevel?: LogLevel` – log level for default logger (only used when `logger` is not provided).
 
 #### Logger Configuration
 
-The store accepts an optional `logger` parameter for customizing log output. If not provided, a default console logger with 'info' level is created automatically.
+The store follows the Fastify-style logger configuration pattern, accepting both `logger` and `logLevel` parameters.
 
-**Simple Usage (Recommended):**
+##### Pattern 1: Default Logger with Log Level
+
+When no logger is provided, the store creates a `ConsoleLogger` with the specified level:
 
 ```ts
 import { PrototypeInMemoryStore } from '@f88/promidas/store';
-import { createConsoleLogger } from '@f88/promidas/logger';
 
-// Use default logger (info level)
+// Default logger with 'info' level
 const store1 = new PrototypeInMemoryStore({ ttlMs: 30000 });
 
-// Error level only
+// Default logger with custom level
 const store2 = new PrototypeInMemoryStore({
     ttlMs: 30000,
-    logger: createConsoleLogger('error'),
+    logLevel: 'warn', // Creates ConsoleLogger('warn')
 });
 
 // Debug level for verbose output
 const store3 = new PrototypeInMemoryStore({
     ttlMs: 30000,
-    logger: createConsoleLogger('debug'),
+    logLevel: 'debug', // Creates ConsoleLogger('debug')
 });
 
 // Completely silent
 const store4 = new PrototypeInMemoryStore({
     ttlMs: 30000,
-    logger: createConsoleLogger('silent'),
+    logLevel: 'silent', // Creates ConsoleLogger('silent')
 });
 ```
 
-**Custom Logger Integration:**
+##### Pattern 2: Custom Logger with Level Override
 
-For production environments, you may want to integrate with your application's logging framework:
+When both logger and logLevel are provided, the store attempts to update the logger's level:
+
+```ts
+import { createConsoleLogger } from '@f88/promidas/logger';
+
+const logger = createConsoleLogger(); // Default 'info' level
+
+const store = new PrototypeInMemoryStore({
+    ttlMs: 30000,
+    logger,
+    logLevel: 'debug', // Updates logger.level to 'debug' if mutable
+});
+```
+
+##### Pattern 3: Custom Logger Integration
+
+For production environments, integrate with your application's logging framework:
 
 ```ts
 import type { Logger } from '@f88/promidas/logger';
@@ -106,21 +124,19 @@ const loggerAdapter: Logger = {
 
 const store = new PrototypeInMemoryStore({
     ttlMs: 30000,
-    logger: loggerAdapter,
+    logger: loggerAdapter, // Used as-is
 });
 ```
 
-**Logger Lifecycle:**
+##### Logger Usage
 
-- The logger is set during store construction and cannot be changed afterward.
-- The store uses the logger for:
-    - Initialization messages (`info`)
-    - Snapshot update confirmations (`info`)
-    - Warnings when data size exceeds limits (`warn`)
+The store uses the logger for:
 
-**Current Limitation:**
+- Initialization messages (`info`)
+- Snapshot update confirmations (`info`)
+- Warnings when data size exceeds limits (`warn`)
 
-The logger's log level is fixed at creation time and cannot be changed dynamically. If you need to adjust log levels at runtime, you must create a new logger instance and instantiate a new store. For more flexible log level control, see the related GitHub issue for future improvements.
+> **Note:** The logger is set during store construction. If you need to change logging behavior at runtime, pass a custom logger implementation that supports dynamic level changes.
 
 - `getConfig(): Omit<Required<PrototypeInMemoryStoreConfig>, 'logger'>`
     - Returns the resolved configuration values (TTL and max data size) that were
@@ -135,6 +151,8 @@ The logger's log level is fixed at creation time and cannot be changed dynamical
       `{ dataSizeBytes }`.
     - If the payload exceeds the limit, leaves the store unchanged and
       returns `null`.
+    - If duplicate IDs exist in the input array, the last occurrence wins
+      (see [DESIGN.md](DESIGN.md#handling-duplicate-ids) for details).
 
 - `clear(): void`
     - Resets the store to an empty state and clears all metadata.

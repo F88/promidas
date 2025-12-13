@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import {
+  ConsoleLogger,
+  createConsoleLogger,
+  createNoopLogger,
+} from '../../logger/index.js';
 import type { NormalizedPrototype } from '../../types/index.js';
 import { PrototypeInMemoryStore } from '../store.js';
 
@@ -72,6 +77,49 @@ describe('PrototypeInMemoryStore', () => {
         /PrototypeInMemoryStore maxDataSizeBytes must be <= \d+ bytes \(\d+ MiB\) to prevent oversized data/,
       );
     });
+
+    describe('logger configuration', () => {
+      it('uses default console logger when no logger provided', () => {
+        const store = new PrototypeInMemoryStore();
+        const stats = store.getStats();
+        expect(stats).toBeDefined();
+      });
+
+      it('accepts custom logger instance', () => {
+        const customLogger = createNoopLogger();
+        const store = new PrototypeInMemoryStore({ logger: customLogger });
+        const stats = store.getStats();
+        expect(stats).toBeDefined();
+      });
+
+      it('accepts logLevel option without logger', () => {
+        const store = new PrototypeInMemoryStore({ logLevel: 'debug' });
+        const stats = store.getStats();
+        expect(stats).toBeDefined();
+      });
+
+      it('updates logger level when both logger and logLevel are provided', () => {
+        const customLogger = new ConsoleLogger('info');
+
+        new PrototypeInMemoryStore({
+          logger: customLogger,
+          logLevel: 'debug',
+        });
+
+        expect(customLogger.level).toBe('debug');
+      });
+
+      it('respects logLevel when creating default logger', () => {
+        const debugSpy = vi
+          .spyOn(console, 'debug')
+          .mockImplementation(() => {});
+
+        const store = new PrototypeInMemoryStore({ logLevel: 'debug' });
+        store.getStats(); // Trigger some logging
+
+        debugSpy.mockRestore();
+      });
+    });
   });
 
   describe('configuration and statistics', () => {
@@ -101,7 +149,8 @@ describe('PrototypeInMemoryStore', () => {
 
         expect(config).toHaveProperty('ttlMs');
         expect(config).toHaveProperty('maxDataSizeBytes');
-        expect(Object.keys(config).length).toBe(2);
+        expect(config).toHaveProperty('logLevel');
+        expect(Object.keys(config).length).toBe(3);
       });
     });
 
@@ -260,6 +309,40 @@ describe('PrototypeInMemoryStore', () => {
       JSON.stringify = originalStringify;
 
       expect(store.getByPrototypeId(1)).toBeDefined();
+    });
+
+    it('deduplicates prototypes by ID and ensures consistency between size and getAll().length', () => {
+      const store = new PrototypeInMemoryStore();
+      const prototypes = [
+        createPrototype({ id: 1, prototypeNm: 'First Proto' }),
+        createPrototype({ id: 2, prototypeNm: 'Second Proto' }),
+        createPrototype({ id: 1, prototypeNm: 'Updated First Proto' }), // Duplicate ID
+        createPrototype({ id: 3, prototypeNm: 'Third Proto' }),
+      ];
+
+      store.setAll(prototypes);
+
+      // size and getAll().length should now be consistent (3 unique prototypes)
+      expect(store.size).toBe(3);
+      expect(store.getAll().length).toBe(3);
+
+      // getByPrototypeId should return the last one for duplicated ID
+      expect(store.getByPrototypeId(1)?.prototypeNm).toBe(
+        'Updated First Proto',
+      );
+
+      // getAll should contain the unique prototypes, with the last one for duplicated ID
+      const allPrototypes = store.getAll();
+      expect(
+        allPrototypes.some(
+          (p) => p.id === 1 && p.prototypeNm === 'Updated First Proto',
+        ),
+      ).toBe(true);
+      expect(allPrototypes.some((p) => p.id === 2)).toBe(true);
+      expect(allPrototypes.some((p) => p.id === 3)).toBe(true);
+      expect(allPrototypes.some((p) => p.prototypeNm === 'First Proto')).toBe(
+        false,
+      ); // Original duplicate should be gone
     });
   });
 

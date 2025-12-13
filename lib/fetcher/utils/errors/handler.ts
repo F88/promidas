@@ -34,7 +34,7 @@ const ERROR_MESSAGES = {
   UNKNOWN: 'Failed to fetch prototypes',
 } as const;
 
-import { type Logger, createConsoleLogger } from '../../../logger/index.js';
+import { ConsoleLogger, type Logger } from '../../../logger/index.js';
 import type { NetworkFailure } from '../../types/prototype-api.types.js';
 import type { FetchPrototypesResult } from '../../types/result.types.js';
 
@@ -174,7 +174,7 @@ function createFailureResult(
  */
 export function handleApiError(
   error: unknown,
-  logger: Logger = createConsoleLogger('info'),
+  logger: Logger,
 ): FetchPrototypesResult {
   // Handle AbortError (timeout) - network error, no status
   if (isAbortError(error)) {

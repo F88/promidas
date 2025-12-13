@@ -31,16 +31,15 @@ This document describes the fetcher layer, data normalization, and integration w
 ### Basic Fetch Example
 
 ```typescript
-import {
-    createProtopediaApiCustomClient,
-    fetchAndNormalizePrototypes,
-} from '@f88/promidas/fetcher';
+import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
 
 const client = createProtopediaApiCustomClient({
-    token: process.env.PROTOPEDIA_API_TOKEN,
+    protoPediaApiClientOptions: {
+        token: process.env.PROTOPEDIA_API_TOKEN,
+    },
 });
 
-const result = await fetchAndNormalizePrototypes(client, { limit: 10 });
+const result = await client.fetchPrototypes({ limit: 10 });
 
 if (result.ok) {
     console.log(`Fetched ${result.data.length} prototypes`);
@@ -66,13 +65,14 @@ import {
 import type {
     FetchPrototypesResult,
     ListPrototypesClient,
-    ProtoPediaApiClientOptions,
+    ProtopediaApiCustomClientConfig,
 } from '@f88/promidas/fetcher';
 
 // Combined
 import {
-    fetchAndNormalizePrototypes,
+    createProtopediaApiCustomClient,
     type FetchPrototypesResult,
+    type ProtopediaApiCustomClientConfig,
 } from '@f88/promidas/fetcher';
 ```
 
@@ -137,17 +137,58 @@ client internally by providing the same options shape.
 
 ## Fetch and Normalize
 
-### Using fetchAndNormalizePrototypes
+### Using Client's fetchPrototypes Method (Recommended)
+
+The `ProtopediaApiCustomClient` provides a high-level `fetchPrototypes()` method
+that handles API calls, normalization, and error handling automatically:
+
+```typescript
+import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+
+const client = createProtopediaApiCustomClient({
+    protoPediaApiClientOptions: {
+        token: process.env.PROTOPEDIA_API_TOKEN,
+    },
+    logLevel: 'debug',
+});
+
+// Fetch with automatic normalization
+const result = await client.fetchPrototypes({
+    limit: 50,
+    offset: 0,
+});
+
+if (result.ok) {
+    console.log(`Fetched ${result.data.length} prototypes`);
+    result.data.forEach((prototype) => {
+        console.log(prototype.name, prototype.tags);
+    });
+} else {
+    console.error(`Error ${result.status}: ${result.error}`);
+}
+```
+
+### Using fetchAndNormalizePrototypes Directly
+
+For advanced use cases or when you need more control, you can use
+`fetchAndNormalizePrototypes` with a custom client implementation:
 
 ```typescript
 import { fetchAndNormalizePrototypes } from '@f88/promidas/fetcher';
+import { createConsoleLogger } from '@f88/promidas/logger';
+
+const logger = createConsoleLogger();
 
 // Assuming you have a client instance
-const result = await fetchAndNormalizePrototypes(client, {
-    limit: 50,
-    sort: 'created_at',
-    order: 'desc',
-});
+const result = await fetchAndNormalizePrototypes(
+    client,
+    {
+        limit: 50,
+        sort: 'created_at',
+        order: 'desc',
+    },
+    logger, // Logger is required for error diagnostics
+);
 
 if (result.ok) {
     // result.data is NormalizedPrototype[]
@@ -156,6 +197,26 @@ if (result.ok) {
     // result.error, result.status, result.details
     console.error(`Error: ${result.error}`);
 }
+```
+
+### Direct API Access with listPrototypes
+
+For cases where you need the raw API response without normalization:
+
+```typescript
+const client = createProtopediaApiCustomClient({
+    protoPediaApiClientOptions: {
+        token: process.env.PROTOPEDIA_API_TOKEN,
+    },
+});
+
+// Direct access to protopedia-api-v2-client's listPrototypes
+const rawResult = await client.listPrototypes({
+    limit: 10,
+    offset: 0,
+});
+
+console.log(rawResult.results); // Raw API response
 ```
 
 ### Result Type Handling
@@ -299,35 +360,68 @@ const msg2 = constructDisplayMessage('Not Found', 404);
 
 ## Logger Configuration
 
-### Using Built-in Logger
+### Fastify-Style Logger Configuration
+
+The client supports Fastify-style logger configuration with three patterns:
 
 ```typescript
 import { createConsoleLogger } from '@f88/promidas/logger';
 import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
 
-const logger = createConsoleLogger('debug');
+// Pattern 1: logLevel only (creates ConsoleLogger internally)
+const client1 = createProtopediaApiCustomClient({
+    protoPediaApiClientOptions: {
+        token: process.env.PROTOPEDIA_API_TOKEN,
+    },
+    logLevel: 'debug',
+});
 
-const client = createProtopediaApiCustomClient({
-    token: process.env.PROTOPEDIA_API_TOKEN,
-    logger, // Used by both SDK and error handler
+// Pattern 2: Custom logger with logLevel
+const logger = createConsoleLogger();
+const client2 = createProtopediaApiCustomClient({
+    protoPediaApiClientOptions: {
+        token: process.env.PROTOPEDIA_API_TOKEN,
+    },
+    logger,
+    logLevel: 'debug', // Updates logger's level if mutable
+});
+
+// Pattern 3: Custom logger only
+const client3 = createProtopediaApiCustomClient({
+    protoPediaApiClientOptions: {
+        token: process.env.PROTOPEDIA_API_TOKEN,
+    },
+    logger, // Uses logger's existing level
 });
 ```
 
 ### Logger Levels
 
 ```typescript
-// Development
-const devLogger = createConsoleLogger('debug');
+import { createConsoleLogger, createNoopLogger } from '@f88/promidas/logger';
 
-// Production
-const prodLogger = createConsoleLogger('error');
-
-// Testing
-const testLogger = createNoopLogger();
-
+// Development - verbose logging
 const client = createProtopediaApiCustomClient({
-    token: process.env.PROTOPEDIA_API_TOKEN,
-    logger: process.env.NODE_ENV === 'production' ? prodLogger : devLogger,
+    protoPediaApiClientOptions: {
+        token: process.env.PROTOPEDIA_API_TOKEN,
+    },
+    logLevel: 'debug',
+});
+
+// Production - minimal logging
+const prodClient = createProtopediaApiCustomClient({
+    protoPediaApiClientOptions: {
+        token: process.env.PROTOPEDIA_API_TOKEN,
+    },
+    logLevel: 'error',
+});
+
+// Testing - silent logger
+const testClient = createProtopediaApiCustomClient({
+    protoPediaApiClientOptions: {
+        token: process.env.PROTOPEDIA_API_TOKEN,
+    },
+    logger: createNoopLogger(),
 });
 ```
 
@@ -365,11 +459,12 @@ import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
 import { createProtopediaInMemoryRepository } from '@f88/promidas/repository';
 
 // Single logger for all components
-const logger = createConsoleLogger('info');
+const logger = createConsoleLogger();
 
 const apiClient = createProtopediaApiCustomClient({
     token: process.env.PROTOPEDIA_API_TOKEN,
     logger,
+    logLevel: 'info',
 });
 
 const repository = createProtopediaInMemoryRepository({
@@ -482,10 +577,11 @@ import {
 } from '@f88/promidas/fetcher';
 import { createConsoleLogger } from '@f88/promidas/logger';
 
-const logger = createConsoleLogger('info');
+const logger = createConsoleLogger();
 const client = createProtopediaApiCustomClient({
     token: process.env.PROTOPEDIA_API_TOKEN,
     logger,
+    logLevel: 'info',
 });
 
 async function fetchWithRetry(params: ListPrototypesParams, maxRetries = 3) {

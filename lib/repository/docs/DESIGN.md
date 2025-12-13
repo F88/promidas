@@ -103,7 +103,11 @@ export const createProtopediaInMemoryRepository = ({
     storeConfig = {},
     apiClientOptions,
 }: CreateProtopediaInMemoryRepositoryOptions = {}): ProtopediaInMemoryRepository => {
-    return new ProtopediaInMemoryRepositoryImpl(storeConfig, apiClientOptions);
+    return new ProtopediaInMemoryRepositoryImpl({
+        repositoryConfig: {},
+        storeConfig,
+        apiClientOptions,
+    });
 };
 ```
 
@@ -488,6 +492,6 @@ Not supported. Would require significant redesign. Use multiple repository insta
 
 ---
 
-**Document Version**: 1.0.0
-**Last Updated**: 2025-12-10
-**Related Issues**: #12, #13, #14, #15, #17-#21
+**Document Version**: 1.1.0
+**Last Updated**: 2025-12-13
+**Related Issues**: #12, #13, #14, #15, #17-#21, #32

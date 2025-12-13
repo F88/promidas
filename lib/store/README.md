@@ -182,20 +182,22 @@ const store1 = new PrototypeInMemoryStore({
 // errorレベルのみ出力
 const store2 = new PrototypeInMemoryStore({
     ttlMs: 3600000,
-    logger: createConsoleLogger('error'),
+    logger: createConsoleLogger(),
+    logLevel: 'error',
 });
 
 // ログを完全に無効化
 const store3 = new PrototypeInMemoryStore({
     ttlMs: 3600000,
-    logger: createConsoleLogger('silent'),
+    logger: createConsoleLogger(),
+    logLevel: 'silent',
 });
 ```
 
 **Loggerのライフサイクル:**
 
 - Loggerはストア作成時に設定され、その後変更できません
-- 設定しない場合、`createConsoleLogger('info')`がデフォルトで使われます
+- 設定しない場合、`createConsoleLogger()`がデフォルトで使われます（logLevel: 'info'）
 - Loggerは以下の操作時に使用されます:
     - ストアの初期化 (`info`)
     - スナップショットの更新 (`info`)

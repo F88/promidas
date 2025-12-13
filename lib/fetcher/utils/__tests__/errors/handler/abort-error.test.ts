@@ -25,10 +25,17 @@ vi.mock('../../../../logger', () => ({
   }),
 }));
 
+const mockLogger = {
+  warn: vi.fn(),
+  error: vi.fn(),
+  info: vi.fn(),
+  debug: vi.fn(),
+};
+
 describe('handleApiError - AbortError handling', () => {
   it('maps AbortError to network error without status', () => {
     const abortError = new DOMException('Aborted', 'AbortError');
-    const result = handleApiError(abortError);
+    const result = handleApiError(abortError, mockLogger);
 
     expect(result).toEqual({
       ok: false,
@@ -39,7 +46,7 @@ describe('handleApiError - AbortError handling', () => {
 
   it('logs diagnostic information for AbortError', () => {
     const abortError = new DOMException('Operation aborted', 'AbortError');
-    const result = handleApiError(abortError);
+    const result = handleApiError(abortError, mockLogger);
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -51,8 +58,8 @@ describe('handleApiError - AbortError handling', () => {
     const abortError1 = new DOMException('Timeout 1', 'AbortError');
     const abortError2 = new DOMException('Timeout 2', 'AbortError');
 
-    const result1 = handleApiError(abortError1);
-    const result2 = handleApiError(abortError2);
+    const result1 = handleApiError(abortError1, mockLogger);
+    const result2 = handleApiError(abortError2, mockLogger);
 
     expect(result1).toEqual(result2);
     expect(result1.ok).toBe(false);

@@ -95,15 +95,18 @@ The factory type is:
 ```ts
 import type { PrototypeInMemoryStoreConfig } from '../store/index.js';
 
+export interface CreateProtopediaInMemoryRepositoryOptions {
+    storeConfig?: PrototypeInMemoryStoreConfig;
+    apiClientOptions?: ProtopediaApiClientOptions;
+}
+
 export type CreateProtopediaInMemoryRepository = (
-    storeConfig: PrototypeInMemoryStoreConfig,
-    protopediaApiClientOptions?: ProtopediaApiClientOptions,
+    options?: CreateProtopediaInMemoryRepositoryOptions,
 ) => ProtopediaInMemoryRepository;
 ```
 
-`ProtopediaApiClientOptions` is the same as the first argument of the
-underlying `createProtoPediaClient` helper used to talk to the
-ProtoPedia HTTP API.
+`ProtopediaApiClientOptions` contains options for the underlying API client,
+including authentication token and optional custom logger configuration.
 
 ## Typical usage pattern
 
@@ -187,17 +190,19 @@ import {
 } from 'in-memory-snapshot-manager-for-protopedia';
 
 // Step 1: Create a logger
-const myLogger = createConsoleLogger('debug');
+const myLogger = createConsoleLogger();
 
 // Step 2: Pass the same logger to both places
 const repo = createProtopediaInMemoryRepository({
     storeConfig: {
         ttlMs: 30 * 60 * 1000,
-        logger: myLogger, // ← Add logger here for store
+        logger: myLogger,
+        logLevel: 'debug', // ← Add logLevel here for store
     },
     apiClientOptions: {
         token: process.env.PROTOPEDIA_API_V2_TOKEN,
-        logger: myLogger, // ← Add logger here for API client
+        logger: myLogger,
+        logLevel: 'debug', // ← Add logLevel here for API client
     },
 });
 // Both store and API client will use your custom logger
@@ -213,19 +218,20 @@ import {
     createConsoleLogger,
 } from 'in-memory-snapshot-manager-for-protopedia';
 
-// Step 1: Create two separate loggers
-const storeLogger = createConsoleLogger('warn'); // Only warnings for store
-const apiLogger = createConsoleLogger('debug'); // Detailed logs for API
+// Step 1: Create a shared logger
+const logger = createConsoleLogger();
 
-// Step 2: Pass different loggers to each component
+// Step 2: Pass logger with different log levels
 const repo = createProtopediaInMemoryRepository({
     storeConfig: {
         ttlMs: 30 * 60 * 1000,
-        logger: storeLogger, // ← Store uses this logger
+        logger,
+        logLevel: 'warn', // ← Store uses 'warn' level
     },
     apiClientOptions: {
         token: process.env.PROTOPEDIA_API_V2_TOKEN,
-        logger: apiLogger, // ← API client uses this logger
+        logger,
+        logLevel: 'debug', // ← API client uses 'debug' level
     },
 });
 // Store logs at 'warn' level
@@ -240,19 +246,22 @@ const repo = createProtopediaInMemoryRepository({
         // Store configuration
         ttlMs: 30 * 60 * 1000,
         logger: storeLogger, // ← Logger for store operations
+        logLevel: 'info', // ← Log level for store
     },
     apiClientOptions: {
         // API client configuration
         token: process.env.PROTOPEDIA_API_V2_TOKEN,
         logger: apiLogger, // ← Logger for API operations
-        // OR
-        logLevel: 'debug', // ← Simple log level (uses built-in logger)
+        logLevel: 'debug', // ← Log level for API client
     },
-);
+});
 ```
 
 **Important**: The `logger` and `logLevel` settings for each component are independent.
 If you don't specify them, default loggers will be used automatically.
+
+**Note**: When you provide a custom logger to `apiClientOptions`, the API client wrapper
+automatically wraps it with the correct structure internally.
 
 ### 2. Populate the initial snapshot
 

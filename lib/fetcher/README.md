@@ -38,18 +38,18 @@ import {
 ## 🚀 簡単な使い方
 
 ```typescript
-import {
-    createProtopediaApiCustomClient,
-    fetchAndNormalizePrototypes,
-} from '@f88/promidas/fetcher';
+import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
 
 // 1. API クライアントを作成
 const client = createProtopediaApiCustomClient({
-    token: process.env.PROTOPEDIA_API_TOKEN, // あなたの API トークン
+    protoPediaApiClientOptions: {
+        token: process.env.PROTOPEDIA_API_TOKEN, // あなたの API トークン
+    },
+    logLevel: 'info', // ログレベル (オプション)
 });
 
 // 2. データを取得
-const result = await fetchAndNormalizePrototypes(client, {
+const result = await client.fetchPrototypes({
     limit: 10, // 最大10件取得
 });
 
@@ -79,23 +79,24 @@ if (result.ok) {
 import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
 
 const client = createProtopediaApiCustomClient({
-    token: 'your-api-token', // API トークン (必須)
-    timeout: 30000, // タイムアウト (ミリ秒, オプション)
+    protoPediaApiClientOptions: {
+        token: 'your-api-token', // API トークン (必須)
+        timeoutMs: 30000, // タイムアウト (ミリ秒, オプション)
+    },
+    logLevel: 'debug', // ログレベル (オプション)
 });
 ```
 
 ### データの取得
 
 ```typescript
-import { fetchAndNormalizePrototypes } from '@f88/promidas/fetcher';
-
 // 基本的な取得
-const result = await fetchAndNormalizePrototypes(client, {
+const result = await client.fetchPrototypes({
     limit: 100, // 取得件数
 });
 
 // 検索条件を指定
-const filtered = await fetchAndNormalizePrototypes(client, {
+const filtered = await client.fetchPrototypes({
     limit: 50,
     status: 'active', // 公開中のもののみ
 });

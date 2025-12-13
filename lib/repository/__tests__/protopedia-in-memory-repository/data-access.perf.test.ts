@@ -139,7 +139,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data access performance', () => {
 
     fetchPrototypesMock.mockResolvedValueOnce({ ok: true, data });
 
-    const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+    const repo = new ProtopediaInMemoryRepositoryImpl();
 
     // Setup snapshot (excluded from perf measurement)
     await repo.setupSnapshot({});
@@ -241,7 +241,9 @@ describe('ProtopediaInMemoryRepositoryImpl - data access performance', () => {
       );
 
       const repo = new ProtopediaInMemoryRepositoryImpl({
-        maxDataSizeBytes: 30 * 1024 * 1024,
+        storeConfig: {
+          maxDataSizeBytes: 30 * 1024 * 1024,
+        },
       });
 
       await repo.setupSnapshot({ limit: count });

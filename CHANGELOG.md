@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking Changes
+
+- **Logger API Simplification**: Simplified `createConsoleLogger()` to always create loggers with default 'info' level (#32)
+    - `createConsoleLogger()` no longer accepts a `level` parameter
+    - For specific log levels, use `new ConsoleLogger(level)` directly
+    - `ConsoleLogger` class is now exported for direct instantiation
+    - This change enforces the separation of logger creation from level configuration, aligning with the Fastify-style pattern used throughout the project
+    - Module structure improved: factory functions separated into `factory.ts`, tests split into focused files
+
+    ```typescript
+    // Before (v0.7.0 and earlier)
+    const logger = createConsoleLogger('debug');
+
+    // After (v0.8.0)
+    const logger = new ConsoleLogger('debug');
+    // OR use default and change level later
+    const logger = createConsoleLogger();
+    logger.level = 'debug';
+    ```
+
+    **Migration Guide:**
+    - Replace `createConsoleLogger('level')` with `new ConsoleLogger('level')`
+    - Or use `createConsoleLogger()` and set `logger.level = 'level'` if dynamic
+    - When using with Repository/Store, prefer the pattern: `createConsoleLogger()` + `logLevel` option
+
+    **Files Affected:**
+    - `lib/logger/console-logger.ts` (renamed from `logger.ts`)
+    - `lib/logger/factory.ts` (new - separated factory functions)
+    - `lib/logger/__tests__/console-logger.test.ts` (new - class tests)
+    - `lib/logger/__tests__/factory.test.ts` (new - factory tests)
+    - `lib/logger/__tests__/logger.test.ts` (removed - split into above)
+
 ### Added
 
 - **Repository Concurrency Control**: Implemented Promise Coalescing pattern for `setupSnapshot()` and `refreshSnapshot()` to prevent duplicate API requests during concurrent calls (#17)
@@ -21,6 +53,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Added English technical documentation in `USAGE.md` and `DESIGN.md`
     - Documented design rationale for logger-only configuration approach
     - Noted current limitations and future considerations
+
+- **Repository Configuration Structure**: Unified repository factory function signature for better consistency (#32)
+    - Consolidated all configuration into a single options object
+    - Added `ProtopediaInMemoryRepositoryConfig` type for repository-level logging
+    - Improved separation of concerns: repositoryConfig, storeConfig, and apiClientOptions
+    - Updated documentation (DESIGN.md, USAGE.md) to reflect new patterns
+    - All 182 repository tests updated and passing
+    - No breaking changes to public API (backward compatible)
 
 ## [0.7.0] - 2025-12-13
 

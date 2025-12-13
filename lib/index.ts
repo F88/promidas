@@ -39,9 +39,11 @@
  *
  * // API client and data fetching
  * import {
- *   createProtopediaApiCustomClient,
- *   fetchAndNormalizePrototypes
+ *   createProtopediaApiCustomClient
  * } from '@f88/promidas/fetcher';
+ *
+ * // Note: fetchAndNormalizePrototypes is deprecated.
+ * // Use ProtopediaApiCustomClient.fetchPrototypes instead.
  *
  * // In-memory store
  * import { PrototypeInMemoryStore } from '@f88/promidas/store';

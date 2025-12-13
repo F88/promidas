@@ -58,7 +58,7 @@ describe('ProtopediaInMemoryRepositoryImpl - analysis', () => {
 
   describe('analyzePrototypes', () => {
     it('returns null min/max when snapshot is empty', async () => {
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
 
       const result = await repo.analyzePrototypes();
 
@@ -72,7 +72,7 @@ describe('ProtopediaInMemoryRepositoryImpl - analysis', () => {
         data: [makePrototype({ id: 42 })],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       const result = await repo.analyzePrototypes();
@@ -92,7 +92,7 @@ describe('ProtopediaInMemoryRepositoryImpl - analysis', () => {
         ],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       const result = await repo.analyzePrototypes();
@@ -125,7 +125,7 @@ describe('ProtopediaInMemoryRepositoryImpl - analysis', () => {
         ],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       // NOTE: Intentionally verbose pattern - DO NOT refactor to getAllFromSnapshot()
@@ -167,7 +167,7 @@ describe('ProtopediaInMemoryRepositoryImpl - analysis', () => {
         ],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({});
       await repo.setupSnapshot({});
 
       // NOTE: Intentionally verbose pattern - DO NOT refactor to getAllFromSnapshot()

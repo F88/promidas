@@ -71,6 +71,22 @@ within a single-digit MB footprint. The guard mainly protects against
 future upstream growth (more fields or much larger text bodies) rather
 than current data volumes.
 
+### Handling Duplicate IDs
+
+The `PrototypeInMemoryStore` enforces ID uniqueness to maintain data consistency within its internal state.
+
+**Design Decision**:
+When `setAll(prototypes)` is called with an array containing duplicate prototype IDs, the store processes these duplicates with a "last-one-wins" strategy. Specifically:
+
+1. The input `prototypes` array is used to build an internal `Map` (`prototypeIdIndex`), where each `prototype.id` serves as a key. Due to the nature of `Map`s, if an ID appears multiple times, the last prototype associated with that ID in the input array will overwrite previous entries.
+2. The internal ordered array (`this.prototypes`, returned by `getAll()`) is then reconstructed by taking the `values()` from this `prototypeIdIndex`.
+
+**Rationale**:
+
+- **Consistency**: This approach guarantees that `store.size` (the number of unique prototypes by ID) always matches `store.getAll().length`. This prevents confusing inconsistencies where the total count might differ from the number of items actually accessible via `getByPrototypeId()`.
+- **Predictability**: `getByPrototypeId(id)` will consistently retrieve the same object instance found in the `getAll()` list, which corresponds to the last prototype provided for that ID during the `setAll` call.
+- **Simplicity**: Avoids complex error handling or explicit deduplication logic at the input stage, relying on standard `Map` behavior. Callers are implicitly informed that ID uniqueness is enforced internally.
+
 ## Test Coverage
 
 The memorystore implementation is thoroughly tested:
@@ -84,50 +100,60 @@ These measurements are based on the test suite as of 2025-12-05 and should be re
 
 ## Logger Configuration Design
 
-### Design Decision: Logger-Only Configuration
+The `PrototypeInMemoryStore` follows the Fastify-style logger configuration pattern, accepting both `logger?: Logger` and `logLevel?: LogLevel` parameters.
 
-The `PrototypeInMemoryStore` accepts only a `logger?: Logger` parameter in its configuration, unlike the API client (`protopedia-api-v2-client`) which supports both `logger?: Logger` and `logLevel?: LogLevel`.
+### Configuration Patterns
 
-**Rationale:**
+#### Pattern 1: Default Logger with Custom Level
 
-1. **Simplicity for Internal Component**: The store is an internal, low-level component with straightforward logging needs (initialization, updates, warnings). Complex runtime log level control is unnecessary.
+When no logger is provided, the store creates a `ConsoleLogger` with the specified log level:
 
-2. **Role-Appropriate Abstraction**:
-    - **Store**: Internal cache management → simple logger-only configuration
-    - **API Client**: External API integration → flexible logger + logLevel for dynamic control
+```ts
+const store = new PrototypeInMemoryStore({
+    logLevel: 'debug', // Creates ConsoleLogger('debug')
+});
+```
 
-3. **Flexibility Preserved**: Users requiring specific log levels can create a logger with the desired level:
+#### Pattern 2: Custom Logger with Level Override
 
-    ```ts
-    import { createConsoleLogger } from '@f88/promidas/logger';
+When a custom logger is provided with a log level, the store attempts to update the logger's level property if mutable:
 
-    const store = new PrototypeInMemoryStore({
-        logger: createConsoleLogger('warn'), // Specific level
-    });
-    ```
+```ts
+import { createConsoleLogger } from '@f88/promidas/logger';
 
-4. **YAGNI Principle**: There is no evidence from usage patterns or user feedback that store operations require dynamic log level changes. The API client needs this flexibility because it handles various network conditions and debugging scenarios; the store does not.
+const logger = createConsoleLogger(); // level: 'info'
+const store = new PrototypeInMemoryStore({
+    logger,
+    logLevel: 'warn', // Updates logger.level to 'warn' if mutable
+});
+```
 
-### Comparison with API Client
+#### Pattern 3: Custom Logger Only
 
-The `protopedia-api-v2-client` SDK provides both `logger` and `logLevel` options because:
+When only a custom logger is provided, it is used as-is without modification:
 
-- It manages complex external HTTP operations requiring detailed diagnostics
-- Debug logging for API calls may need to be toggled without changing logger instances
-- The SDK maintains its own log level state separate from the logger instance
+```ts
+const customLogger = new MyCustomLogger();
+const store = new PrototypeInMemoryStore({
+    logger: customLogger, // Used without modification
+});
+```
 
-The store, by contrast:
+### Design Rationale
 
-- Performs simple in-memory operations with minimal diagnostic needs
-- Logs only during initialization, updates, and constraint violations
-- Does not require runtime log level adjustments
+1. **Consistency**: Follows the same pattern as other components in the library (fetcher, repository), providing a unified configuration experience.
 
-### Future Considerations
+2. **Flexibility**: Supports both simple (logLevel-only) and advanced (custom logger) use cases without forcing users to create logger instances for basic scenarios.
 
-This design may be revisited if:
+3. **Fastify Compatibility**: Aligns with widely-adopted patterns from the Fastify ecosystem, making the API familiar to Node.js developers.
 
-- Usage patterns reveal a need for dynamic log level control in store operations
-- The store evolves to handle more complex operations requiring detailed diagnostics
-- A broader library-wide logger redesign introduces dynamic level control capabilities
+4. **Type Safety**: The `logLevel` parameter is type-checked against the `LogLevel` union type, preventing invalid level strings at compile time.
 
-For tracking potential logger improvements across the library, see the related GitHub issues on logger design enhancements.
+### Logger Usage in Store Operations
+
+The store uses logging for:
+
+- **Initialization**: Records TTL, size limits, and log level configuration
+- **Snapshot Updates**: Logs when prototypes are cached via `setAll()`
+- **Size Violations**: Warns when payload size exceeds configured limits
+- **State Changes**: Tracks refresh operations and cache invalidation

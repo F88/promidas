@@ -141,7 +141,8 @@ export type { PrototypeInMemoryStats as ProtopediaInMemoryRepositoryStats } from
  * ```typescript
  * const storeConfig: PrototypeInMemoryStoreConfig = {
  *   ttlMs: 30 * 60 * 1000,
- *   logger: createConsoleLogger('info')
+ *   logger: createConsoleLogger(),
+ *   logLevel: 'info'
  * };
  * const repo = createProtopediaInMemoryRepository({ storeConfig });
  * ```
