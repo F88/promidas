@@ -27,12 +27,19 @@ vi.mock('../../../logger', () => ({
   }),
 }));
 
+const mockLogger = {
+  warn: vi.fn(),
+  error: vi.fn(),
+  info: vi.fn(),
+  debug: vi.fn(),
+};
+
 describe('error-handler', () => {
   describe('handleApiError', () => {
     describe('unexpected error handling', () => {
       it('maps unexpected Error to network error without status', () => {
         const error = new Error('Unexpected crash');
-        const result = handleApiError(error);
+        const result = handleApiError(error, mockLogger);
 
         expect(result).toEqual({
           ok: false,
@@ -42,7 +49,7 @@ describe('error-handler', () => {
       });
 
       it('maps unexpected string to network error without status', () => {
-        const result = handleApiError('Something went wrong');
+        const result = handleApiError('Something went wrong', mockLogger);
 
         expect(result).toEqual({
           ok: false,
@@ -52,7 +59,7 @@ describe('error-handler', () => {
       });
 
       it('maps null to network error without status', () => {
-        const result = handleApiError(null);
+        const result = handleApiError(null, mockLogger);
 
         expect(result).toEqual({
           ok: false,
@@ -62,7 +69,7 @@ describe('error-handler', () => {
       });
 
       it('maps undefined to network error without status', () => {
-        const result = handleApiError(undefined);
+        const result = handleApiError(undefined, mockLogger);
 
         expect(result).toEqual({
           ok: false,
@@ -72,7 +79,7 @@ describe('error-handler', () => {
       });
 
       it('maps number to network error without status', () => {
-        const result = handleApiError(404);
+        const result = handleApiError(404, mockLogger);
 
         expect(result).toEqual({
           ok: false,
@@ -83,7 +90,7 @@ describe('error-handler', () => {
 
       it('includes empty details for unexpected errors without code', () => {
         const error = new Error('Network failure');
-        const result = handleApiError(error);
+        const result = handleApiError(error, mockLogger);
 
         expect(result.ok).toBe(false);
         if (!result.ok) {
@@ -98,7 +105,7 @@ describe('error-handler', () => {
           syscall: 'getaddrinfo',
         });
 
-        const result = handleApiError(error);
+        const result = handleApiError(error, mockLogger);
 
         expect(result).toEqual({
           ok: false,
@@ -121,7 +128,7 @@ describe('error-handler', () => {
           }),
         });
 
-        const result = handleApiError(error);
+        const result = handleApiError(error, mockLogger);
 
         expect(result).toEqual({
           ok: false,
@@ -141,7 +148,7 @@ describe('error-handler', () => {
           syscall: 'connect',
         });
 
-        const result = handleApiError(error);
+        const result = handleApiError(error, mockLogger);
 
         expect(result.ok).toBe(false);
         if (!result.ok) {
@@ -157,7 +164,7 @@ describe('error-handler', () => {
           syscall: 'connect',
         });
 
-        const result = handleApiError(error);
+        const result = handleApiError(error, mockLogger);
 
         expect(result.ok).toBe(false);
         if (!result.ok) {
@@ -172,7 +179,7 @@ describe('error-handler', () => {
           cause: { code: 'CAUSE_CODE' },
         });
 
-        const result = handleApiError(error);
+        const result = handleApiError(error, mockLogger);
 
         expect(result.ok).toBe(false);
         if (!result.ok) {
@@ -182,7 +189,7 @@ describe('error-handler', () => {
 
       it('handles TypeError with proper error message', () => {
         const error = new TypeError('Cannot read property of undefined');
-        const result = handleApiError(error);
+        const result = handleApiError(error, mockLogger);
 
         expect(result).toEqual({
           ok: false,
@@ -193,7 +200,7 @@ describe('error-handler', () => {
 
       it('handles RangeError with proper error message', () => {
         const error = new RangeError('Array length out of bounds');
-        const result = handleApiError(error);
+        const result = handleApiError(error, mockLogger);
 
         expect(result.ok).toBe(false);
         if (!result.ok) {
@@ -204,7 +211,7 @@ describe('error-handler', () => {
 
       it('handles Error with empty message', () => {
         const error = new Error('');
-        const result = handleApiError(error);
+        const result = handleApiError(error, mockLogger);
 
         expect(result).toEqual({
           ok: false,
@@ -215,7 +222,7 @@ describe('error-handler', () => {
 
       it('handles plain object without status', () => {
         const error = { message: 'Plain object error' };
-        const result = handleApiError(error);
+        const result = handleApiError(error, mockLogger);
 
         expect(result).toEqual({
           ok: false,
@@ -226,7 +233,7 @@ describe('error-handler', () => {
 
       it('handles array as error', () => {
         const error = ['error', 'occurred'];
-        const result = handleApiError(error);
+        const result = handleApiError(error, mockLogger);
 
         expect(result).toEqual({
           ok: false,
@@ -237,7 +244,7 @@ describe('error-handler', () => {
 
       it('handles function as error', () => {
         const error = () => 'error function';
-        const result = handleApiError(error);
+        const result = handleApiError(error, mockLogger);
 
         expect(result).toEqual({
           ok: false,
@@ -248,7 +255,7 @@ describe('error-handler', () => {
 
       it('handles symbol as error', () => {
         const error = Symbol('error');
-        const result = handleApiError(error);
+        const result = handleApiError(error, mockLogger);
 
         expect(result).toEqual({
           ok: false,
@@ -258,7 +265,7 @@ describe('error-handler', () => {
       });
 
       it('handles boolean as error', () => {
-        const result = handleApiError(false);
+        const result = handleApiError(false, mockLogger);
 
         expect(result).toEqual({
           ok: false,
@@ -269,7 +276,7 @@ describe('error-handler', () => {
 
       it('handles RegExp as error', () => {
         const error = /error pattern/;
-        const result = handleApiError(error);
+        const result = handleApiError(error, mockLogger);
 
         expect(result).toEqual({
           ok: false,
@@ -280,7 +287,7 @@ describe('error-handler', () => {
 
       it('handles Date as error', () => {
         const error = new Date();
-        const result = handleApiError(error);
+        const result = handleApiError(error, mockLogger);
 
         expect(result).toEqual({
           ok: false,
@@ -291,7 +298,7 @@ describe('error-handler', () => {
 
       it('handles Map as error', () => {
         const error = new Map([['key', 'value']]);
-        const result = handleApiError(error);
+        const result = handleApiError(error, mockLogger);
 
         expect(result).toEqual({
           ok: false,
@@ -302,7 +309,7 @@ describe('error-handler', () => {
 
       it('handles Set as error', () => {
         const error = new Set([1, 2, 3]);
-        const result = handleApiError(error);
+        const result = handleApiError(error, mockLogger);
 
         expect(result).toEqual({
           ok: false,
@@ -313,7 +320,7 @@ describe('error-handler', () => {
 
       it('handles Promise as error', () => {
         const error = Promise.resolve('error');
-        const result = handleApiError(error);
+        const result = handleApiError(error, mockLogger);
 
         expect(result).toEqual({
           ok: false,
@@ -326,7 +333,7 @@ describe('error-handler', () => {
         const error: any = { name: 'circular' };
         error.self = error;
 
-        const result = handleApiError(error);
+        const result = handleApiError(error, mockLogger);
 
         expect(result).toEqual({
           ok: false,
@@ -339,7 +346,7 @@ describe('error-handler', () => {
     describe('edge cases', () => {
       it('handles DOMException that is not AbortError', () => {
         const domError = new DOMException('Invalid state', 'InvalidStateError');
-        const result = handleApiError(domError);
+        const result = handleApiError(domError, mockLogger);
 
         expect(result.ok).toBe(false);
         if (!result.ok) {
@@ -353,7 +360,7 @@ describe('error-handler', () => {
           status: 0,
         });
 
-        const result = handleApiError(httpError);
+        const result = handleApiError(httpError, mockLogger);
 
         expect(result.ok).toBe(false);
         if (!result.ok) {
@@ -368,7 +375,7 @@ describe('error-handler', () => {
           message: 'Invalid status',
         };
 
-        const result = handleApiError(httpError);
+        const result = handleApiError(httpError, mockLogger);
 
         expect(result.ok).toBe(false);
         if (!result.ok) {
@@ -393,7 +400,7 @@ describe('error-handler', () => {
         ];
 
         testCases.forEach((error) => {
-          const result = handleApiError(error);
+          const result = handleApiError(error, mockLogger);
           expect(result.ok).toBe(false);
         });
       });
@@ -411,7 +418,7 @@ describe('error-handler', () => {
         ];
 
         testCases.forEach((error) => {
-          const result = handleApiError(error);
+          const result = handleApiError(error, mockLogger);
           expect(result.ok).toBe(false);
           if (!result.ok) {
             expect(result.details).toBeDefined();
@@ -421,7 +428,7 @@ describe('error-handler', () => {
 
       it('result object has correct shape', () => {
         const error = new Error('Test error');
-        const result = handleApiError(error);
+        const result = handleApiError(error, mockLogger);
 
         expect(result).toHaveProperty('ok');
         expect(result).toHaveProperty('error');
@@ -460,7 +467,7 @@ describe('error-handler', () => {
         ];
 
         testCases.forEach(({ error, hasStatus }) => {
-          const result = handleApiError(error);
+          const result = handleApiError(error, mockLogger);
           expect(result.ok).toBe(false);
           if (!result.ok) {
             if (hasStatus) {
@@ -489,7 +496,7 @@ describe('error-handler', () => {
         ];
 
         testCases.forEach((error) => {
-          const result = handleApiError(error);
+          const result = handleApiError(error, mockLogger);
           expect(result.ok).toBe(false);
           if (!result.ok) {
             expect(typeof result.error).toBe('string');
@@ -511,7 +518,7 @@ describe('error-handler', () => {
         ];
 
         testCases.forEach((error) => {
-          const result = handleApiError(error);
+          const result = handleApiError(error, mockLogger);
           expect(result.ok).toBe(false);
           if (!result.ok) {
             expect(typeof result.details).toBe('object');
@@ -523,7 +530,7 @@ describe('error-handler', () => {
 
       it('empty details object is distinct from undefined', () => {
         const error = new Error('Test error');
-        const result = handleApiError(error);
+        const result = handleApiError(error, mockLogger);
 
         expect(result.ok).toBe(false);
         if (!result.ok) {
@@ -541,7 +548,7 @@ describe('error-handler', () => {
           },
         });
 
-        const result = handleApiError(httpError);
+        const result = handleApiError(httpError, mockLogger);
 
         expect(result.ok).toBe(false);
         if (!result.ok) {
@@ -557,7 +564,7 @@ describe('error-handler', () => {
           statusText: 'Internal Server Error',
         });
 
-        const result = handleApiError(httpError);
+        const result = handleApiError(httpError, mockLogger);
 
         expect(result.ok).toBe(false);
         if (!result.ok) {
@@ -574,7 +581,7 @@ describe('error-handler', () => {
           { status: 404, message: 'Not found' },
         ];
 
-        const results = errors.map((e) => handleApiError(e));
+        const results = errors.map((e) => handleApiError(e, mockLogger));
 
         results.forEach((result) => {
           expect(result.ok).toBe(false);

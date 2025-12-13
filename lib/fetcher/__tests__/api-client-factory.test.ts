@@ -1,8 +1,8 @@
 import { createProtoPediaClient } from 'protopedia-api-v2-client';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
+import { createProtopediaApiCustomClient } from '../client/factory.js';
 import * as fetchPrototypesModule from '../fetch-prototypes.js';
-import { createProtopediaApiCustomClient } from '../protopedia-api-custom-client.js';
 
 vi.mock('protopedia-api-v2-client', () => ({
   createProtoPediaClient: vi.fn(),
@@ -28,7 +28,9 @@ describe('createProtopediaApiCustomClient', () => {
       const clientInstance = { listPrototypes: vi.fn() };
       createProtoPediaClientMock.mockReturnValue(clientInstance);
 
-      const result = createProtopediaApiCustomClient({ token, baseUrl });
+      const result = createProtopediaApiCustomClient({
+        protoPediaApiClientOptions: { token, baseUrl },
+      });
 
       expect(createProtoPediaClientMock).toHaveBeenCalledWith({
         token,
@@ -46,9 +48,11 @@ describe('createProtopediaApiCustomClient', () => {
       createProtoPediaClientMock.mockReturnValue(clientInstance);
 
       const result = createProtopediaApiCustomClient({
-        token,
-        baseUrl,
-        logLevel,
+        protoPediaApiClientOptions: {
+          token,
+          baseUrl,
+          logLevel,
+        },
       });
 
       expect(createProtoPediaClientMock).toHaveBeenCalledWith({
@@ -77,8 +81,10 @@ describe('createProtopediaApiCustomClient', () => {
       createProtoPediaClientMock.mockReturnValue(clientInstance);
 
       const result = createProtopediaApiCustomClient({
-        fetch: customFetch,
-        timeoutMs,
+        protoPediaApiClientOptions: {
+          fetch: customFetch,
+          timeoutMs,
+        },
       });
 
       expect(createProtoPediaClientMock).toHaveBeenCalledWith({
@@ -108,7 +114,8 @@ describe('createProtopediaApiCustomClient', () => {
 
       const result = createProtopediaApiCustomClient();
 
-      expect(result.listPrototypes).toBe(clientInstance.listPrototypes);
+      expect(result.listPrototypes).toBeDefined();
+      expect(typeof result.listPrototypes).toBe('function');
       expect(result).toHaveProperty('fetchPrototypes');
     });
 
@@ -130,7 +137,7 @@ describe('createProtopediaApiCustomClient', () => {
       expect(fetchAndNormalizePrototypesMock).toHaveBeenCalledWith(
         clientInstance,
         params,
-        undefined,
+        expect.any(Object), // logger instance
       );
       expect(result).toBe(mockResult);
     });
@@ -188,12 +195,16 @@ describe('createProtopediaApiCustomClient', () => {
         .mockReturnValueOnce(clientInstance1)
         .mockReturnValueOnce(clientInstance2);
 
-      const client1 = createProtopediaApiCustomClient({ token: 'token1' });
-      const client2 = createProtopediaApiCustomClient({ token: 'token2' });
+      const client1 = createProtopediaApiCustomClient({
+        protoPediaApiClientOptions: { token: 'token1' },
+      });
+      const client2 = createProtopediaApiCustomClient({
+        protoPediaApiClientOptions: { token: 'token2' },
+      });
 
-      expect(client1.listPrototypes).toBe(clientInstance1.listPrototypes);
-      expect(client2.listPrototypes).toBe(clientInstance2.listPrototypes);
-      expect(client1.listPrototypes).not.toBe(client2.listPrototypes);
+      expect(client1.listPrototypes).toBeDefined();
+      expect(client2.listPrototypes).toBeDefined();
+      expect(client1).not.toBe(client2);
     });
 
     it('each instance has its own fetchPrototypes method', () => {
@@ -209,7 +220,7 @@ describe('createProtopediaApiCustomClient', () => {
 
       expect(client1.fetchPrototypes).toBeDefined();
       expect(client2.fetchPrototypes).toBeDefined();
-      expect(client1.fetchPrototypes).not.toBe(client2.fetchPrototypes);
+      expect(client1).not.toBe(client2);
     });
   });
 
@@ -221,7 +232,9 @@ describe('createProtopediaApiCustomClient', () => {
         const clientInstance = { listPrototypes: vi.fn() };
         createProtoPediaClientMock.mockReturnValue(clientInstance);
 
-        const result = createProtopediaApiCustomClient({ logLevel });
+        const result = createProtopediaApiCustomClient({
+          protoPediaApiClientOptions: { logLevel },
+        });
 
         expect(createProtoPediaClientMock).toHaveBeenCalledWith({ logLevel });
         expect(result).toHaveProperty('fetchPrototypes');
@@ -239,7 +252,9 @@ describe('createProtopediaApiCustomClient', () => {
         const clientInstance = { listPrototypes: vi.fn() };
         createProtoPediaClientMock.mockReturnValue(clientInstance);
 
-        const result = createProtopediaApiCustomClient({ baseUrl });
+        const result = createProtopediaApiCustomClient({
+          protoPediaApiClientOptions: { baseUrl },
+        });
 
         expect(createProtoPediaClientMock).toHaveBeenCalledWith({ baseUrl });
         expect(result).toHaveProperty('fetchPrototypes');
@@ -253,7 +268,9 @@ describe('createProtopediaApiCustomClient', () => {
         const clientInstance = { listPrototypes: vi.fn() };
         createProtoPediaClientMock.mockReturnValue(clientInstance);
 
-        const result = createProtopediaApiCustomClient({ timeoutMs });
+        const result = createProtopediaApiCustomClient({
+          protoPediaApiClientOptions: { timeoutMs },
+        });
 
         expect(createProtoPediaClientMock).toHaveBeenCalledWith({ timeoutMs });
         expect(result).toHaveProperty('fetchPrototypes');
@@ -266,7 +283,9 @@ describe('createProtopediaApiCustomClient', () => {
       createProtoPediaClientMock.mockReturnValue(clientInstance);
 
       const result = createProtopediaApiCustomClient({
-        fetch: customFetch as any,
+        protoPediaApiClientOptions: {
+          fetch: customFetch as any,
+        },
       });
 
       expect(createProtoPediaClientMock).toHaveBeenCalledWith({
@@ -285,7 +304,9 @@ describe('createProtopediaApiCustomClient', () => {
       const clientInstance = { listPrototypes: vi.fn() };
       createProtoPediaClientMock.mockReturnValue(clientInstance);
 
-      const result = createProtopediaApiCustomClient(config);
+      const result = createProtopediaApiCustomClient({
+        protoPediaApiClientOptions: config,
+      });
 
       expect(createProtoPediaClientMock).toHaveBeenCalledWith(config);
       expect(result).toHaveProperty('fetchPrototypes');
@@ -310,7 +331,7 @@ describe('createProtopediaApiCustomClient', () => {
 
       const result = createProtopediaApiCustomClient(null as any);
 
-      expect(createProtoPediaClientMock).toHaveBeenCalledWith(null);
+      expect(createProtoPediaClientMock).toHaveBeenCalledWith({});
       expect(result).toHaveProperty('fetchPrototypes');
     });
   });
@@ -326,18 +347,24 @@ describe('createProtopediaApiCustomClient', () => {
       const result = createProtopediaApiCustomClient();
 
       expect(result).toHaveProperty('listPrototypes');
-      expect(result).toHaveProperty('someOtherMethod');
       expect(result).toHaveProperty('fetchPrototypes');
+      // Note: Class-based design only exposes specific methods
+      // someOtherMethod from SDK client is not directly accessible
+      expect(typeof result.listPrototypes).toBe('function');
+      expect(typeof result.fetchPrototypes).toBe('function');
     });
 
-    it('preserves SDK client method references', () => {
-      const listPrototypesFn = vi.fn();
+    it('listPrototypes delegates to underlying SDK client', async () => {
+      const listPrototypesFn = vi.fn().mockResolvedValue({ results: [] });
       const clientInstance = { listPrototypes: listPrototypesFn };
       createProtoPediaClientMock.mockReturnValue(clientInstance);
 
       const result = createProtopediaApiCustomClient();
+      const params = { offset: 0, limit: 10 };
+      await result.listPrototypes(params);
 
-      expect(result.listPrototypes).toBe(listPrototypesFn);
+      // Class method delegates to SDK client
+      expect(listPrototypesFn).toHaveBeenCalledWith(params);
     });
   });
 
@@ -359,7 +386,7 @@ describe('createProtopediaApiCustomClient', () => {
       expect(fetchAndNormalizePrototypesMock).toHaveBeenCalledWith(
         clientInstance,
         { offset: 0, limit: 10 },
-        undefined,
+        expect.any(Object), // logger instance
       );
     });
 
@@ -453,7 +480,7 @@ describe('createProtopediaApiCustomClient', () => {
       expect(fetchAndNormalizePrototypesMock).toHaveBeenCalledWith(
         clientInstance,
         { prototypeId: 123 },
-        undefined,
+        expect.any(Object), // logger instance
       );
     });
   });

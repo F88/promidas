@@ -1,6 +1,7 @@
 import type { ListPrototypesParams } from 'protopedia-api-v2-client';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
+import { ConsoleLogger } from '../../logger/index.js';
 import {
   fetchAndNormalizePrototypes,
   type ListPrototypesClient,
@@ -31,6 +32,7 @@ describe('fetchAndNormalizePrototypes', () => {
   const handleApiErrorMock = errorHandler.handleApiError as ReturnType<
     typeof vi.fn
   >;
+  const logger = new ConsoleLogger('info');
 
   beforeEach(() => {
     handleApiErrorMock.mockReset();
@@ -48,7 +50,11 @@ describe('fetchAndNormalizePrototypes', () => {
       };
 
       const params: ListPrototypesParams = { offset: 0, limit: 10 };
-      const result = await fetchAndNormalizePrototypes(mockClient, params);
+      const result = await fetchAndNormalizePrototypes(
+        mockClient,
+        params,
+        logger,
+      );
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -70,10 +76,14 @@ describe('fetchAndNormalizePrototypes', () => {
         }),
       };
 
-      const result = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 10,
-      });
+      const result = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 10,
+        },
+        logger,
+      );
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -86,10 +96,14 @@ describe('fetchAndNormalizePrototypes', () => {
         listPrototypes: vi.fn().mockResolvedValue({}),
       };
 
-      const result = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 10,
-      });
+      const result = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 10,
+        },
+        logger,
+      );
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -104,10 +118,14 @@ describe('fetchAndNormalizePrototypes', () => {
         }),
       };
 
-      const result = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 1,
-      });
+      const result = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 1,
+        },
+        logger,
+      );
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -129,10 +147,14 @@ describe('fetchAndNormalizePrototypes', () => {
         }),
       };
 
-      const result = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 50,
-      });
+      const result = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 50,
+        },
+        logger,
+      );
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -149,10 +171,14 @@ describe('fetchAndNormalizePrototypes', () => {
         listPrototypes: vi.fn().mockResolvedValue({ results: [] }),
       };
 
-      await fetchAndNormalizePrototypes(mockClient, {
-        offset: 100,
-        limit: 10,
-      });
+      await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 100,
+          limit: 10,
+        },
+        logger,
+      );
 
       expect(mockClient.listPrototypes).toHaveBeenCalledWith({
         offset: 100,
@@ -165,10 +191,14 @@ describe('fetchAndNormalizePrototypes', () => {
         listPrototypes: vi.fn().mockResolvedValue({ results: [] }),
       };
 
-      await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 25,
-      });
+      await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 25,
+        },
+        logger,
+      );
 
       expect(mockClient.listPrototypes).toHaveBeenCalledWith({
         offset: 0,
@@ -181,11 +211,15 @@ describe('fetchAndNormalizePrototypes', () => {
         listPrototypes: vi.fn().mockResolvedValue({ results: [] }),
       };
 
-      await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 10,
-        prototypeId: 999,
-      });
+      await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 10,
+          prototypeId: 999,
+        },
+        logger,
+      );
 
       expect(mockClient.listPrototypes).toHaveBeenCalledWith({
         offset: 0,
@@ -205,7 +239,7 @@ describe('fetchAndNormalizePrototypes', () => {
         prototypeId: 123,
       };
 
-      await fetchAndNormalizePrototypes(mockClient, params);
+      await fetchAndNormalizePrototypes(mockClient, params, logger);
 
       expect(mockClient.listPrototypes).toHaveBeenCalledWith(params);
     });
@@ -225,12 +259,16 @@ describe('fetchAndNormalizePrototypes', () => {
       };
       handleApiErrorMock.mockReturnValue(expectedResult);
 
-      const result = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 10,
-      });
+      const result = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 10,
+        },
+        logger,
+      );
 
-      expect(handleApiErrorMock).toHaveBeenCalledWith(mockError, undefined);
+      expect(handleApiErrorMock).toHaveBeenCalledWith(mockError, logger);
       expect(result).toEqual(expectedResult);
     });
 
@@ -250,12 +288,16 @@ describe('fetchAndNormalizePrototypes', () => {
       };
       handleApiErrorMock.mockReturnValue(expectedResult);
 
-      const result = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 10,
-      });
+      const result = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 10,
+        },
+        logger,
+      );
 
-      expect(handleApiErrorMock).toHaveBeenCalledWith(customError, undefined);
+      expect(handleApiErrorMock).toHaveBeenCalledWith(customError, logger);
       expect(result).toEqual(expectedResult);
     });
 
@@ -271,7 +313,11 @@ describe('fetchAndNormalizePrototypes', () => {
       });
 
       await expect(
-        fetchAndNormalizePrototypes(mockClient, { offset: 0, limit: 10 }),
+        fetchAndNormalizePrototypes(
+          mockClient,
+          { offset: 0, limit: 10 },
+          logger,
+        ),
       ).resolves.toBeDefined();
     });
   });
@@ -284,10 +330,14 @@ describe('fetchAndNormalizePrototypes', () => {
         }),
       };
 
-      const result = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 10,
-      });
+      const result = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 10,
+        },
+        logger,
+      );
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -304,10 +354,14 @@ describe('fetchAndNormalizePrototypes', () => {
         }),
       };
 
-      const result = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 10,
-      });
+      const result = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 10,
+        },
+        logger,
+      );
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -323,7 +377,11 @@ describe('fetchAndNormalizePrototypes', () => {
         listPrototypes: listPrototypesMock,
       };
 
-      await fetchAndNormalizePrototypes(mockClient, { offset: 0, limit: 10 });
+      await fetchAndNormalizePrototypes(
+        mockClient,
+        { offset: 0, limit: 10 },
+        logger,
+      );
 
       expect(listPrototypesMock).toHaveBeenCalledTimes(1);
     });
@@ -337,14 +395,22 @@ describe('fetchAndNormalizePrototypes', () => {
         listPrototypes: listPrototypesMock,
       };
 
-      const result1 = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 10,
-      });
-      const result2 = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 10,
-        limit: 10,
-      });
+      const result1 = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 10,
+        },
+        logger,
+      );
+      const result2 = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 10,
+          limit: 10,
+        },
+        logger,
+      );
 
       expect(result1.ok && result1.data[0]!.id).toBe(1);
       expect(result2.ok && result2.data[0]!.id).toBe(2);
@@ -360,9 +426,21 @@ describe('fetchAndNormalizePrototypes', () => {
       };
 
       const [result1, result2, result3] = await Promise.all([
-        fetchAndNormalizePrototypes(mockClient, { offset: 0, limit: 10 }),
-        fetchAndNormalizePrototypes(mockClient, { offset: 10, limit: 10 }),
-        fetchAndNormalizePrototypes(mockClient, { offset: 20, limit: 10 }),
+        fetchAndNormalizePrototypes(
+          mockClient,
+          { offset: 0, limit: 10 },
+          logger,
+        ),
+        fetchAndNormalizePrototypes(
+          mockClient,
+          { offset: 10, limit: 10 },
+          logger,
+        ),
+        fetchAndNormalizePrototypes(
+          mockClient,
+          { offset: 20, limit: 10 },
+          logger,
+        ),
       ]);
 
       expect(result1.ok && result1.data[0]!.id).toBe(0);
@@ -388,10 +466,14 @@ describe('fetchAndNormalizePrototypes', () => {
         }),
       };
 
-      const result = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 10,
-      });
+      const result = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 10,
+        },
+        logger,
+      );
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -410,10 +492,14 @@ describe('fetchAndNormalizePrototypes', () => {
         }),
       };
 
-      const result = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 10,
-      });
+      const result = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 10,
+        },
+        logger,
+      );
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -430,10 +516,14 @@ describe('fetchAndNormalizePrototypes', () => {
         listPrototypes: vi.fn().mockResolvedValue({ results: [] }),
       };
 
-      const result = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 999999,
-        limit: 10,
-      });
+      const result = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 999999,
+          limit: 10,
+        },
+        logger,
+      );
 
       expect(result.ok).toBe(true);
       expect(mockClient.listPrototypes).toHaveBeenCalledWith({
@@ -447,10 +537,14 @@ describe('fetchAndNormalizePrototypes', () => {
         listPrototypes: vi.fn().mockResolvedValue({ results: [] }),
       };
 
-      const result = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 10000,
-      });
+      const result = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 10000,
+        },
+        logger,
+      );
 
       expect(result.ok).toBe(true);
       expect(mockClient.listPrototypes).toHaveBeenCalledWith({
@@ -466,9 +560,13 @@ describe('fetchAndNormalizePrototypes', () => {
         }),
       };
 
-      const result = await fetchAndNormalizePrototypes(mockClient, {
-        prototypeId: 123,
-      });
+      const result = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          prototypeId: 123,
+        },
+        logger,
+      );
 
       expect(result.ok).toBe(true);
       expect(mockClient.listPrototypes).toHaveBeenCalledWith({
@@ -484,10 +582,14 @@ describe('fetchAndNormalizePrototypes', () => {
         } as any),
       };
 
-      const result = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 10,
-      });
+      const result = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 10,
+        },
+        logger,
+      );
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -500,7 +602,7 @@ describe('fetchAndNormalizePrototypes', () => {
         listPrototypes: vi.fn().mockResolvedValue({ results: [] }),
       };
 
-      const result = await fetchAndNormalizePrototypes(mockClient, {});
+      const result = await fetchAndNormalizePrototypes(mockClient, {}, logger);
 
       expect(result.ok).toBe(true);
       expect(mockClient.listPrototypes).toHaveBeenCalledWith({});
@@ -513,10 +615,14 @@ describe('fetchAndNormalizePrototypes', () => {
         listPrototypes: vi.fn().mockResolvedValue({ results: [] }),
       };
 
-      const result = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 10,
-      });
+      const result = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 10,
+        },
+        logger,
+      );
 
       expect(result).toHaveProperty('ok');
       if (result.ok) {
@@ -535,10 +641,14 @@ describe('fetchAndNormalizePrototypes', () => {
         }),
       };
 
-      const result = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 10,
-      });
+      const result = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 10,
+        },
+        logger,
+      );
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -560,10 +670,14 @@ describe('fetchAndNormalizePrototypes', () => {
         error: 'API error',
       });
 
-      const result = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 10,
-      });
+      const result = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 10,
+        },
+        logger,
+      );
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -586,10 +700,14 @@ describe('fetchAndNormalizePrototypes', () => {
         listPrototypes: vi.fn().mockResolvedValue({ results: largeResults }),
       };
 
-      const result = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 1000,
-      });
+      const result = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 1000,
+        },
+        logger,
+      );
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -603,7 +721,11 @@ describe('fetchAndNormalizePrototypes', () => {
       };
 
       const calls = Array.from({ length: 10 }, () =>
-        fetchAndNormalizePrototypes(mockClient, { offset: 0, limit: 10 }),
+        fetchAndNormalizePrototypes(
+          mockClient,
+          { offset: 0, limit: 10 },
+          logger,
+        ),
       );
 
       const results = await Promise.all(calls);
@@ -618,10 +740,18 @@ describe('fetchAndNormalizePrototypes', () => {
         listPrototypes: vi.fn().mockResolvedValue({ results: [] }),
       };
 
-      await fetchAndNormalizePrototypes(mockClient, { offset: 0, limit: 10 });
-      await fetchAndNormalizePrototypes(mockClient, { offset: 10 });
-      await fetchAndNormalizePrototypes(mockClient, { limit: 20 });
-      await fetchAndNormalizePrototypes(mockClient, { prototypeId: 123 });
+      await fetchAndNormalizePrototypes(
+        mockClient,
+        { offset: 0, limit: 10 },
+        logger,
+      );
+      await fetchAndNormalizePrototypes(mockClient, { offset: 10 }, logger);
+      await fetchAndNormalizePrototypes(mockClient, { limit: 20 }, logger);
+      await fetchAndNormalizePrototypes(
+        mockClient,
+        { prototypeId: 123 },
+        logger,
+      );
 
       expect(mockClient.listPrototypes).toHaveBeenNthCalledWith(1, {
         offset: 0,
@@ -656,17 +786,25 @@ describe('fetchAndNormalizePrototypes', () => {
         error: 'Temporary failure',
       });
 
-      const result1 = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 10,
-      });
+      const result1 = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 10,
+        },
+        logger,
+      );
       expect(result1.ok).toBe(false);
 
       handleApiErrorMock.mockClear();
-      const result2 = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 10,
-      });
+      const result2 = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 10,
+        },
+        logger,
+      );
       expect(result2.ok).toBe(true);
     });
 
@@ -691,18 +829,30 @@ describe('fetchAndNormalizePrototypes', () => {
           error: 'Request timed out',
         });
 
-      const r1 = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 10,
-      });
-      const r2 = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 10,
-      });
-      const r3 = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 10,
-      });
+      const r1 = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 10,
+        },
+        logger,
+      );
+      const r2 = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 10,
+        },
+        logger,
+      );
+      const r3 = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 10,
+        },
+        logger,
+      );
 
       expect(r1.ok).toBe(false);
       expect(r2.ok).toBe(false);
@@ -716,10 +866,14 @@ describe('fetchAndNormalizePrototypes', () => {
         listPrototypes: vi.fn().mockResolvedValue({ results: [] }),
       };
 
-      const result = await fetchAndNormalizePrototypes(mockClient, {
-        offset: 0,
-        limit: 0,
-      });
+      const result = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: 0,
+          limit: 0,
+        },
+        logger,
+      );
 
       expect(result.ok).toBe(true);
       expect(mockClient.listPrototypes).toHaveBeenCalledWith({
@@ -733,10 +887,14 @@ describe('fetchAndNormalizePrototypes', () => {
         listPrototypes: vi.fn().mockResolvedValue({ results: [] }),
       };
 
-      const result = await fetchAndNormalizePrototypes(mockClient, {
-        offset: -1,
-        limit: 10,
-      });
+      const result = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: -1,
+          limit: 10,
+        },
+        logger,
+      );
 
       expect(result.ok).toBe(true);
       expect(mockClient.listPrototypes).toHaveBeenCalledWith({
@@ -750,9 +908,13 @@ describe('fetchAndNormalizePrototypes', () => {
         listPrototypes: vi.fn().mockResolvedValue({ results: [] }),
       };
 
-      const result = await fetchAndNormalizePrototypes(mockClient, {
-        prototypeId: 0,
-      });
+      const result = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          prototypeId: 0,
+        },
+        logger,
+      );
 
       expect(result.ok).toBe(true);
       expect(mockClient.listPrototypes).toHaveBeenCalledWith({
@@ -765,11 +927,15 @@ describe('fetchAndNormalizePrototypes', () => {
         listPrototypes: vi.fn().mockResolvedValue({ results: [] }),
       };
 
-      const result = await fetchAndNormalizePrototypes(mockClient, {
-        offset: undefined,
-        limit: undefined,
-        prototypeId: undefined,
-      } as any);
+      const result = await fetchAndNormalizePrototypes(
+        mockClient,
+        {
+          offset: undefined,
+          limit: undefined,
+          prototypeId: undefined,
+        } as any,
+        logger,
+      );
 
       expect(result.ok).toBe(true);
     });

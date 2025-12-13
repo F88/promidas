@@ -11,8 +11,10 @@
  * ### API Client
  *
  * - {@link createProtopediaApiCustomClient} — Factory to create a configured API client.
- * - {@link ProtopediaApiCustomClient} — The client interface with helper methods.
- * - {@link ProtoPediaApiClientOptions} — Configuration options for the API client.
+ * - {@link ProtopediaApiCustomClient} — Class-based client with managed logger and high-level methods.
+ * - {@link ProtopediaApiCustomClientConfig} — Configuration options including logger and SDK client settings.
+ * - {@link ProtoPediaApiClientOptions} — SDK client options (re-exported from protopedia-api-v2-client).
+ * - {@link ListPrototypesParams} — Query parameters for listing prototypes (re-exported from protopedia-api-v2-client).
  *
  * ### Data Fetching & Normalization
  *
@@ -51,16 +53,16 @@
  *
  * @example
  * ```typescript
- * import {
- *   createProtopediaApiCustomClient,
- *   fetchAndNormalizePrototypes,
- * } from '@f88/promidas/fetcher';
+ * import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
  *
  * const client = createProtopediaApiCustomClient({
- *   token: process.env.PROTOPEDIA_API_TOKEN,
+ *   protoPediaApiClientOptions: {
+ *     token: process.env.PROTOPEDIA_API_TOKEN,
+ *   },
+ *   logLevel: 'debug',
  * });
  *
- * const result = await fetchAndNormalizePrototypes(client, { limit: 10 });
+ * const result = await client.fetchPrototypes({ limit: 10 });
  *
  * if (result.ok) {
  *   console.log(`Fetched ${result.data.length} prototypes`);
@@ -76,11 +78,13 @@ export type { NormalizedPrototype } from '../types/index.js';
 export type { Logger, LogLevel } from '../logger/index.js';
 
 // API Client
-export {
-  createProtopediaApiCustomClient,
-  type ProtoPediaApiClientOptions,
-  type ProtopediaApiCustomClient,
-} from './protopedia-api-custom-client.js';
+export { createProtopediaApiCustomClient } from './client/factory.js';
+export { ProtopediaApiCustomClient } from './client/protopedia-api-custom-client.js';
+export type { ProtopediaApiCustomClientConfig } from './client/config.js';
+
+// Re-export protopedia-api-v2-client types for convenience
+export type { ProtoPediaApiClientOptions } from 'protopedia-api-v2-client';
+export type { ListPrototypesParams } from 'protopedia-api-v2-client';
 
 // Fetching & Normalization
 export {

@@ -12,8 +12,9 @@
  *   {@link FetchPrototypesResult} discriminated union.
  *
  * These helpers are intentionally decoupled from any particular
- * ProtoPedia SDK so that they can operate against any client that
- * implements {@link ListPrototypesClient}. Error handling is delegated
+ * ProtoPedia client library (like `protopedia-api-v2-client`) so that
+ * they can operate against any client that implements {@link ListPrototypesClient}.
+ * Error handling is delegated
  * to {@link handleApiError} from `./utils/errors/handler`, which
  * converts exceptions into structured failure results with appropriate
  * status codes and messages.
@@ -34,8 +35,8 @@ import { normalizePrototype } from './utils/normalize-prototype.js';
  *
  * This abstraction allows {@link fetchAndNormalizePrototypes} to work
  * with different underlying implementations (for example, the official
- * SDK client or a test double) as long as they expose a compatible
- * `listPrototypes` method.
+ * `protopedia-api-v2-client` or a test double) as long as they expose
+ * a compatible `listPrototypes` method.
  *
  * The returned object must have a `results` property that, when present,
  * contains an array of raw prototype data from the upstream API.
@@ -72,27 +73,41 @@ export type ListPrototypesClient = {
  * @param client - A client capable of listing prototypes.
  * @param params - Query parameters for the upstream `listPrototypes`
  *   call (offset, limit, prototypeId).
- * @param logger - Optional logger instance for error diagnostic output.
- *   If not provided, handleApiError will use its default logger.
+ * @param logger - Logger instance for error diagnostic output.
  * @returns A {@link FetchPrototypesResult} representing either a
  *   normalized data set or a failure description.
  *
  * @example
  * ```typescript
- * const client = createProtopediaApiCustomClient({ token: 'my-token' });
- * const result = await fetchAndNormalizePrototypes(client, { offset: 0, limit: 10 });
+ * import { createConsoleLogger } from '@f88/promidas/logger';
+ * import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
  *
- * if (result.ok) {
- *   console.log('Fetched prototypes:', result.data);
+ * const logger = createConsoleLogger();
+ * const client = createProtopediaApiCustomClient({
+ *   protoPediaApiClientOptions: { token: 'my-token' },
+ * });
+ *
+ * // Option 1: Use client's fetchPrototypes (recommended)
+ * const result1 = await client.fetchPrototypes({ offset: 0, limit: 10 });
+ *
+ * // Option 2: Use fetchAndNormalizePrototypes directly
+ * const result2 = await fetchAndNormalizePrototypes(
+ *   client,
+ *   { offset: 0, limit: 10 },
+ *   logger
+ * );
+ *
+ * if (result1.ok) {
+ *   console.log('Fetched prototypes:', result1.data);
  * } else {
- *   console.error('Fetch failed:', result.status, result.message);
+ *   console.error('Fetch failed:', result1.status, result1.error);
  * }
  * ```
  */
 export const fetchAndNormalizePrototypes = async (
   client: ListPrototypesClient,
   params: ListPrototypesParams,
-  logger?: Logger,
+  logger: Logger,
 ): Promise<FetchPrototypesResult> => {
   try {
     const upstream = await client.listPrototypes(params);

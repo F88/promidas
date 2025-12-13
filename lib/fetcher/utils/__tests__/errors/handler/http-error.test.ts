@@ -26,6 +26,13 @@ vi.mock('../../../logger', () => ({
   }),
 }));
 
+const mockLogger = {
+  warn: vi.fn(),
+  error: vi.fn(),
+  info: vi.fn(),
+  debug: vi.fn(),
+};
+
 describe('error-handler', () => {
   describe('handleApiError', () => {
     describe('HTTP-like error handling', () => {
@@ -36,7 +43,7 @@ describe('error-handler', () => {
             message: 'Unknown error',
           };
 
-          const result = handleApiError(httpError);
+          const result = handleApiError(httpError, mockLogger);
 
           expect(result.ok).toBe(false);
           if (!result.ok) {
@@ -49,7 +56,7 @@ describe('error-handler', () => {
             status: 999999,
           });
 
-          const result = handleApiError(httpError);
+          const result = handleApiError(httpError, mockLogger);
 
           expect(result.ok).toBe(false);
           if (!result.ok) {
@@ -63,7 +70,7 @@ describe('error-handler', () => {
             message: 'Null status',
           };
 
-          const result = handleApiError(httpError);
+          const result = handleApiError(httpError, mockLogger);
 
           expect(result.ok).toBe(false);
           if (!result.ok) {
@@ -76,7 +83,7 @@ describe('error-handler', () => {
             status: -500,
           });
 
-          const result = handleApiError(httpError);
+          const result = handleApiError(httpError, mockLogger);
 
           expect(result.ok).toBe(false);
           if (!result.ok) {
@@ -91,7 +98,7 @@ describe('error-handler', () => {
             status: 400,
           };
 
-          const result = handleApiError(httpError);
+          const result = handleApiError(httpError, mockLogger);
 
           expect(result.ok).toBe(false);
           if (!result.ok) {
@@ -107,7 +114,7 @@ describe('error-handler', () => {
             },
           });
 
-          const result = handleApiError(httpError);
+          const result = handleApiError(httpError, mockLogger);
 
           expect(result).toEqual({
             ok: false,
@@ -130,7 +137,7 @@ describe('error-handler', () => {
             },
           });
 
-          const result = handleApiError(httpError);
+          const result = handleApiError(httpError, mockLogger);
 
           expect(result.ok).toBe(false);
           if (!result.ok) {
@@ -148,7 +155,7 @@ describe('error-handler', () => {
             },
           });
 
-          const result = handleApiError(httpError);
+          const result = handleApiError(httpError, mockLogger);
 
           expect(result.ok).toBe(false);
           if (!result.ok) {
@@ -165,7 +172,7 @@ describe('error-handler', () => {
             },
           });
 
-          const result = handleApiError(httpError);
+          const result = handleApiError(httpError, mockLogger);
 
           expect(result.ok).toBe(false);
           if (!result.ok) {
@@ -179,7 +186,7 @@ describe('error-handler', () => {
             statusText: 'Unauthorized',
           });
 
-          const result = handleApiError(httpError);
+          const result = handleApiError(httpError, mockLogger);
 
           expect(result).toEqual({
             ok: false,
@@ -204,7 +211,7 @@ describe('error-handler', () => {
             },
           });
 
-          const result = handleApiError(httpError);
+          const result = handleApiError(httpError, mockLogger);
 
           expect(result).toEqual({
             ok: false,
@@ -229,7 +236,7 @@ describe('error-handler', () => {
             message: 'Not found',
           };
 
-          const result = handleApiError(httpError);
+          const result = handleApiError(httpError, mockLogger);
 
           expect(result.ok).toBe(false);
           if (!result.ok) {
@@ -245,7 +252,7 @@ describe('error-handler', () => {
             },
           });
 
-          const result = handleApiError(httpError);
+          const result = handleApiError(httpError, mockLogger);
 
           expect(result).toEqual({
             ok: false,
@@ -270,7 +277,7 @@ describe('error-handler', () => {
             },
           });
 
-          const result = handleApiError(httpError);
+          const result = handleApiError(httpError, mockLogger);
 
           expect(result.ok).toBe(false);
           if (!result.ok) {
@@ -297,7 +304,7 @@ describe('error-handler', () => {
             },
           });
 
-          const result = handleApiError(httpError);
+          const result = handleApiError(httpError, mockLogger);
 
           expect(result).toEqual({
             ok: false,
@@ -328,7 +335,7 @@ describe('error-handler', () => {
             },
           );
 
-          const result = handleApiError(httpError);
+          const result = handleApiError(httpError, mockLogger);
 
           expect(result).toEqual({
             ok: false,
@@ -353,7 +360,7 @@ describe('error-handler', () => {
             status: 500,
           };
 
-          const result = handleApiError(httpError);
+          const result = handleApiError(httpError, mockLogger);
 
           expect(result.ok).toBe(false);
           if (!result.ok) {
@@ -368,7 +375,7 @@ describe('error-handler', () => {
             statusText: 'Internal Server Error',
           });
 
-          const result = handleApiError(httpError);
+          const result = handleApiError(httpError, mockLogger);
 
           expect(result.ok).toBe(false);
           if (!result.ok) {
@@ -387,7 +394,7 @@ describe('error-handler', () => {
             },
           );
 
-          const result = handleApiError(httpError);
+          const result = handleApiError(httpError, mockLogger);
 
           expect(result).toEqual({
             ok: false,
