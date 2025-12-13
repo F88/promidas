@@ -168,10 +168,11 @@ export class PrototypeInMemoryStore {
       this.logLevel = resolvedLogLevel;
     }
 
-    this.logger.info('PrototypeInMemoryStore initialized', {
-      ttlMs: this.ttlMs,
-      maxDataSizeBytes: this.maxDataSizeBytes,
-      logLevel: this.logLevel,
+    this.logger.info('PrototypeInMemoryStore constructor called', {
+      ttlMs,
+      maxDataSizeBytes,
+      logger: logger ? 'custom' : undefined,
+      logLevel,
     });
   }
 
