@@ -33,6 +33,10 @@ import { normalizePrototype } from './utils/normalize-prototype.js';
 /**
  * Minimal interface for clients that can list ProtoPedia prototypes.
  *
+ * @deprecated This interface is deprecated along with {@link fetchAndNormalizePrototypes}.
+ * Use {@link ProtopediaApiCustomClient} instead, which provides the same functionality
+ * with better encapsulation.
+ *
  * This abstraction allows {@link fetchAndNormalizePrototypes} to work
  * with different underlying implementations (for example, the official
  * `protopedia-api-v2-client` or a test double) as long as they expose
@@ -58,6 +62,21 @@ export type ListPrototypesClient = {
 /**
  * Fetch and normalize ProtoPedia prototypes.
  *
+ * @deprecated This standalone function is deprecated. Use {@link ProtopediaApiCustomClient.fetchPrototypes} instead.
+ * The class-based approach provides better encapsulation and eliminates the need for explicit logger parameter passing.
+ *
+ * @example
+ * ```typescript
+ * // ❌ Old approach (deprecated):
+ * import { fetchAndNormalizePrototypes } from '@f88/promidas/fetcher';
+ * const result = await fetchAndNormalizePrototypes(client, params, logger);
+ *
+ * // ✅ New approach (recommended):
+ * import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+ * const client = createProtopediaApiCustomClient({ logger, logLevel: 'info' });
+ * const result = await client.fetchPrototypes(params);
+ * ```
+ *
  * This helper calls the provided {@link ListPrototypesClient},
  * normalizes each item into a {@link NormalizedPrototype} via
  * {@link normalizePrototype}, and wraps the result in a
@@ -76,33 +95,6 @@ export type ListPrototypesClient = {
  * @param logger - Logger instance for error diagnostic output.
  * @returns A {@link FetchPrototypesResult} representing either a
  *   normalized data set or a failure description.
- *
- * @example
- * ```typescript
- * import { createConsoleLogger } from '@f88/promidas/logger';
- * import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
- *
- * const logger = createConsoleLogger();
- * const client = createProtopediaApiCustomClient({
- *   protoPediaApiClientOptions: { token: 'my-token' },
- * });
- *
- * // Option 1: Use client's fetchPrototypes (recommended)
- * const result1 = await client.fetchPrototypes({ offset: 0, limit: 10 });
- *
- * // Option 2: Use fetchAndNormalizePrototypes directly
- * const result2 = await fetchAndNormalizePrototypes(
- *   client,
- *   { offset: 0, limit: 10 },
- *   logger
- * );
- *
- * if (result1.ok) {
- *   console.log('Fetched prototypes:', result1.data);
- * } else {
- *   console.error('Fetch failed:', result1.status, result1.error);
- * }
- * ```
  */
 export const fetchAndNormalizePrototypes = async (
   client: ListPrototypesClient,

@@ -18,12 +18,15 @@
  *
  * ### Data Fetching & Normalization
  *
- * - {@link fetchAndNormalizePrototypes} — Fetch and normalize prototypes from any compatible client.
- * - {@link ListPrototypesClient} — Interface for clients that can list prototypes.
  * - {@link FetchPrototypesResult} — Discriminated union result type for fetch operations.
  * - {@link normalizePrototype} — Transform raw API data to {@link NormalizedPrototype}.
  * - {@link UpstreamPrototype} — Raw API response type from protopedia-api-v2-client.
  * - {@link NormalizedPrototype} — Standardized, type-safe prototype data model.
+ *
+ * #### Deprecated Functions
+ *
+ * - {@link fetchAndNormalizePrototypes} — **Deprecated:** Use {@link ProtopediaApiCustomClient.fetchPrototypes} instead.
+ * - {@link ListPrototypesClient} — **Deprecated:** Interface for standalone function, no longer needed with class-based client.
  *
  * ### Utilities
  *
