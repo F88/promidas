@@ -7,8 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.8.0] - 2025-12-13
-
 ### Breaking Changes
 
 - **Logger API Simplification**: Simplified `createConsoleLogger()` to always create loggers with default 'info' level (#32)
@@ -55,6 +53,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Added English technical documentation in `USAGE.md` and `DESIGN.md`
     - Documented design rationale for logger-only configuration approach
     - Noted current limitations and future considerations
+
+- **Repository Configuration Structure**: Unified repository factory function signature for better consistency (#32)
+    - Consolidated all configuration into a single options object
+    - Added `ProtopediaInMemoryRepositoryConfig` type for repository-level logging
+    - Improved separation of concerns: repositoryConfig, storeConfig, and apiClientOptions
+    - Updated documentation (DESIGN.md, USAGE.md) to reflect new patterns
+    - All 182 repository tests updated and passing
+    - No breaking changes to public API (backward compatible)
 
 ## [0.7.0] - 2025-12-13
 
