@@ -17,7 +17,7 @@ instructions-for-ais:
 This document describes how to use the ProtoPedia-specific in-memory
 repository built on top of the generic `PrototypeInMemoryStore` core.
 
-The main entry point is the `createProtopediaInMemoryRepository` factory
+The main entry point is the `createPromidasRepository` factory
 exported from `lib/repository`.
 
 ## Overview
@@ -95,13 +95,13 @@ The factory type is:
 ```ts
 import type { PrototypeInMemoryStoreConfig } from '../store/index.js';
 
-export interface CreateProtopediaInMemoryRepositoryOptions {
+export interface CreatePromidasRepositoryOptions {
     storeConfig?: PrototypeInMemoryStoreConfig;
     apiClientOptions?: ProtopediaApiClientOptions;
 }
 
-export type CreateProtopediaInMemoryRepository = (
-    options?: CreateProtopediaInMemoryRepositoryOptions,
+export type CreatePromidasRepository = (
+    options?: CreatePromidasRepositoryOptions,
 ) => ProtopediaInMemoryRepository;
 ```
 
@@ -113,9 +113,9 @@ including authentication token and optional custom logger configuration.
 ### 1. Create a repository instance
 
 ```ts
-import { createProtopediaInMemoryRepository } from 'in-memory-snapshot-manager-for-protopedia';
+import { createPromidasRepository } from 'in-memory-snapshot-manager-for-protopedia';
 
-const repo = createProtopediaInMemoryRepository({
+const repo = createPromidasRepository({
     storeConfig: {
         ttlMs: 30 * 60 * 1000, // 30 minutes
         maxDataSizeBytes: 10 * 1024 * 1024, // 10 MiB (default)
@@ -142,9 +142,9 @@ By default, both components use a built-in logger at 'info' level. You don't nee
 configure anything:
 
 ```ts
-import { createProtopediaInMemoryRepository } from 'in-memory-snapshot-manager-for-protopedia';
+import { createPromidasRepository } from 'in-memory-snapshot-manager-for-protopedia';
 
-const repo = createProtopediaInMemoryRepository({
+const repo = createPromidasRepository({
     storeConfig: {
         ttlMs: 30 * 60 * 1000, // 30 minutes
     },
@@ -161,9 +161,9 @@ If you want to see more detailed logs for API requests (e.g., for debugging),
 add `logLevel` to the second parameter:
 
 ```ts
-import { createProtopediaInMemoryRepository } from 'in-memory-snapshot-manager-for-protopedia';
+import { createPromidasRepository } from 'in-memory-snapshot-manager-for-protopedia';
 
-const repo = createProtopediaInMemoryRepository({
+const repo = createPromidasRepository({
     storeConfig: {
         ttlMs: 30 * 60 * 1000,
     },
@@ -185,7 +185,7 @@ create a logger and pass it to both components:
 
 ```ts
 import {
-    createProtopediaInMemoryRepository,
+    createPromidasRepository,
     createConsoleLogger,
 } from 'in-memory-snapshot-manager-for-protopedia';
 
@@ -193,7 +193,7 @@ import {
 const myLogger = createConsoleLogger();
 
 // Step 2: Pass the same logger to both places
-const repo = createProtopediaInMemoryRepository({
+const repo = createPromidasRepository({
     storeConfig: {
         ttlMs: 30 * 60 * 1000,
         logger: myLogger,
@@ -214,7 +214,7 @@ If you want different log levels or formats for store vs API operations:
 
 ```ts
 import {
-    createProtopediaInMemoryRepository,
+    createPromidasRepository,
     createConsoleLogger,
 } from 'in-memory-snapshot-manager-for-protopedia';
 
@@ -222,7 +222,7 @@ import {
 const logger = createConsoleLogger();
 
 // Step 2: Pass logger with different log levels
-const repo = createProtopediaInMemoryRepository({
+const repo = createPromidasRepository({
     storeConfig: {
         ttlMs: 30 * 60 * 1000,
         logger,
@@ -241,7 +241,7 @@ const repo = createProtopediaInMemoryRepository({
 #### Summary: Where to add logger configuration
 
 ```ts
-const repo = createProtopediaInMemoryRepository({
+const repo = createPromidasRepository({
     storeConfig: {
         // Store configuration
         ttlMs: 30 * 60 * 1000,

@@ -67,7 +67,7 @@ describe('subpath exports', () => {
     );
     console.log('');
     console.log('  • @f88/promidas/repository');
-    console.log('    ✓ createProtopediaInMemoryRepository (factory)');
+    console.log('    ✓ createPromidasRepository (factory)');
     console.log(
       '    ✓ NormalizedPrototype, Logger, LogLevel (re-exported for convenience)',
     );
@@ -83,8 +83,8 @@ describe('subpath exports', () => {
       const root = await import('@f88/promidas');
 
       // Should export Repository factory and types
-      expect(root).toHaveProperty('createProtopediaInMemoryRepository');
-      expect(typeof root.createProtopediaInMemoryRepository).toBe('function');
+      expect(root).toHaveProperty('createPromidasRepository');
+      expect(typeof root.createPromidasRepository).toBe('function');
 
       // Should NOT export other modules (breaking change in v0)
       expect(root).not.toHaveProperty('fetchAndNormalizePrototypes');
@@ -203,10 +203,8 @@ describe('subpath exports', () => {
     it('should export repository factory and re-exported types', async () => {
       const repository = await import('@f88/promidas/repository');
 
-      expect(repository).toHaveProperty('createProtopediaInMemoryRepository');
-      expect(typeof repository.createProtopediaInMemoryRepository).toBe(
-        'function',
-      );
+      expect(repository).toHaveProperty('createPromidasRepository');
+      expect(typeof repository.createPromidasRepository).toBe('function');
 
       // Note: Actual instantiation requires PROTOPEDIA_API_V2_TOKEN
       // So we only verify the factory exists and is callable
@@ -223,8 +221,8 @@ describe('subpath exports', () => {
       const repository = await import('@f88/promidas/repository');
 
       // Same factory function
-      expect(root.createProtopediaInMemoryRepository).toBe(
-        repository.createProtopediaInMemoryRepository,
+      expect(root.createPromidasRepository).toBe(
+        repository.createPromidasRepository,
       );
     });
 
@@ -235,8 +233,8 @@ describe('subpath exports', () => {
 
       // All modules are independent and functional
       expect(utils.parseProtoPediaTimestamp).toBeDefined();
-      expect(fetcher.createProtopediaApiCustomClient).toBeDefined();
-      expect(repository.createProtopediaInMemoryRepository).toBeDefined();
+      expect(fetcher.ProtopediaApiCustomClient).toBeDefined();
+      expect(repository.createPromidasRepository).toBeDefined();
     });
   });
 });

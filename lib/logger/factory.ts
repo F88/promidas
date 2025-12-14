@@ -26,7 +26,7 @@ import type { Logger } from './logger.types.js';
  * ```typescript
  * // Recommended: Use with Repository/Store
  * const logger = createConsoleLogger();
- * const repo = createProtopediaInMemoryRepository({
+ * const repo = createPromidasRepository({
  *   storeConfig: { logger, logLevel: 'debug' }
  * });
  * ```

@@ -121,7 +121,7 @@ export interface ProtopediaInMemoryRepository {
    *
    * @example
    * ```typescript
-   * const repo = createProtopediaInMemoryRepository({});
+   * const repo = createPromidasRepository({});
    * await repo.setupSnapshot({ limit: 1000 });
    *
    * const analysis = await repo.analyzePrototypes();
@@ -143,7 +143,7 @@ export interface ProtopediaInMemoryRepository {
    *
    * @example
    * ```typescript
-   * const repo = createProtopediaInMemoryRepository({});
+   * const repo = createPromidasRepository({});
    * await repo.setupSnapshot({ limit: 100 });
    *
    * // Get all prototypes
@@ -170,7 +170,7 @@ export interface ProtopediaInMemoryRepository {
    *
    * @example
    * ```typescript
-   * const repo = createProtopediaInMemoryRepository({});
+   * const repo = createPromidasRepository({});
    * await repo.setupSnapshot({ limit: 100 });
    *
    * // Get all available IDs
@@ -246,7 +246,7 @@ export interface ProtopediaInMemoryRepository {
  * @param options.apiClientOptions - Configuration for the ProtoPedia HTTP client (optional)
  * @returns A configured repository instance
  */
-export type CreateProtopediaInMemoryRepository = (options?: {
+export type CreatePromidasRepository = (options?: {
   repositoryConfig?: ProtopediaInMemoryRepositoryConfig;
   storeConfig?: PrototypeInMemoryStoreConfig;
   apiClientOptions?: ProtoPediaApiClientOptions;

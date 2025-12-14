@@ -7,9 +7,9 @@
  *
  * @example
  * ```typescript
- * import { createProtopediaInMemoryRepository } from '@f88/promidas';
+ * import { createPromidasRepository } from '@f88/promidas';
  *
- * const repo = createProtopediaInMemoryRepository({
+ * const repo = createPromidasRepository({
  *   storeConfig: { ttlMs: 30 * 60 * 1000 },
  *   apiClientOptions: { token: process.env.PROTOPEDIA_API_V2_TOKEN },
  * });
@@ -46,7 +46,7 @@
  * import { PrototypeInMemoryStore } from '@f88/promidas/store';
  *
  * // Repository (same as root import)
- * import { createProtopediaInMemoryRepository } from '@f88/promidas/repository';
+ * import { createPromidasRepository } from '@f88/promidas/repository';
  * ```
  *
  * ## Available Subpath Exports
@@ -63,10 +63,10 @@
 
 // High-level Repository (most common use case)
 export {
-  createProtopediaInMemoryRepository,
-  type CreateProtopediaInMemoryRepositoryOptions,
+  createPromidasRepository,
+  type CreatePromidasRepositoryOptions,
   type ProtopediaInMemoryRepository,
   type ProtopediaInMemoryRepositoryStats,
   type PrototypeAnalysisResult,
   type PrototypeInMemoryStoreConfig,
-} from './repository/index.js';
+} from './factory.js';

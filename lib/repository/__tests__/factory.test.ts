@@ -1,7 +1,7 @@
 /**
  * Test suite for the repository factory function.
  *
- * This test suite verifies that {@link createProtopediaInMemoryRepository}
+ * This test suite verifies that {@link createPromidasRepository}
  * correctly instantiates repository instances with proper configuration,
  * dependency injection, and interface compliance.
  *
@@ -134,13 +134,13 @@
  * - Focus tests on factory logic, not API implementation
  *
  * @module
- * @see {@link createProtopediaInMemoryRepository} for the factory being tested
+ * @see {@link createPromidasRepository} for the factory being tested
  * @see {@link ProtopediaInMemoryRepository} for the interface contract
  */
 import { describe, expect, it, vi } from 'vitest';
 
+import { createPromidasRepository } from '../../factory.js';
 import { ProtopediaApiCustomClient } from '../../fetcher/index.js';
-import { createProtopediaInMemoryRepository } from '../factory.js';
 import { ProtopediaInMemoryRepositoryImpl } from '../protopedia-in-memory-repository.js';
 
 vi.mock('../../fetcher/index', async (importOriginal) => {
@@ -152,7 +152,7 @@ vi.mock('../../fetcher/index', async (importOriginal) => {
   };
 });
 
-describe('createProtopediaInMemoryRepository', () => {
+describe('createPromidasRepository', () => {
   it('should create a repository instance', () => {
     vi.mocked(ProtopediaApiCustomClient).mockImplementation(
       class {
@@ -160,7 +160,7 @@ describe('createProtopediaInMemoryRepository', () => {
       } as any,
     );
 
-    const repository = createProtopediaInMemoryRepository({});
+    const repository = createPromidasRepository({});
 
     expect(repository).toBeDefined();
     expect(repository).toBeInstanceOf(ProtopediaInMemoryRepositoryImpl);
@@ -174,7 +174,7 @@ describe('createProtopediaInMemoryRepository', () => {
     );
 
     const storeConfig = { maxDataSizeBytes: 5000 };
-    const repository = createProtopediaInMemoryRepository({ storeConfig });
+    const repository = createPromidasRepository({ storeConfig });
 
     expect(repository).toBeDefined();
     expect(repository.getConfig()).toEqual(
@@ -196,7 +196,7 @@ describe('createProtopediaInMemoryRepository', () => {
       token: 'test-token',
       logLevel: 'debug' as const,
     };
-    const repository = createProtopediaInMemoryRepository({ apiClientOptions });
+    const repository = createPromidasRepository({ apiClientOptions });
 
     expect(repository).toBeDefined();
     expect(repository).toBeInstanceOf(ProtopediaInMemoryRepositoryImpl);
@@ -215,7 +215,7 @@ describe('createProtopediaInMemoryRepository', () => {
 
     const storeConfig = { maxDataSizeBytes: 3000 };
     const apiClientOptions = { token: 'test-token' };
-    const repository = createProtopediaInMemoryRepository({
+    const repository = createPromidasRepository({
       storeConfig,
       apiClientOptions,
     });
@@ -238,7 +238,7 @@ describe('createProtopediaInMemoryRepository', () => {
       } as any,
     );
 
-    const repository = createProtopediaInMemoryRepository();
+    const repository = createPromidasRepository();
 
     expect(repository).toBeDefined();
     expect(repository).toBeInstanceOf(ProtopediaInMemoryRepositoryImpl);
@@ -257,7 +257,7 @@ describe('createProtopediaInMemoryRepository', () => {
       } as any,
     );
 
-    const repository = createProtopediaInMemoryRepository({});
+    const repository = createPromidasRepository({});
 
     expect(repository.setupSnapshot).toBeTypeOf('function');
     expect(repository.refreshSnapshot).toBeTypeOf('function');
@@ -279,10 +279,10 @@ describe('createProtopediaInMemoryRepository', () => {
       } as any,
     );
 
-    const repo1 = createProtopediaInMemoryRepository({
+    const repo1 = createPromidasRepository({
       storeConfig: { maxDataSizeBytes: 1000 },
     });
-    const repo2 = createProtopediaInMemoryRepository({
+    const repo2 = createPromidasRepository({
       storeConfig: { maxDataSizeBytes: 2000 },
     });
 
@@ -298,7 +298,7 @@ describe('createProtopediaInMemoryRepository', () => {
       } as any,
     );
 
-    const repository = createProtopediaInMemoryRepository({
+    const repository = createPromidasRepository({
       storeConfig: {},
     });
 
@@ -315,7 +315,7 @@ describe('createProtopediaInMemoryRepository', () => {
     );
 
     const customTtl = 5 * 60 * 1000; // 5 minutes
-    const repository = createProtopediaInMemoryRepository({
+    const repository = createPromidasRepository({
       storeConfig: { ttlMs: customTtl },
     });
 
@@ -332,7 +332,7 @@ describe('createProtopediaInMemoryRepository', () => {
     );
 
     const customSize = 5 * 1024 * 1024; // 5 MiB
-    const repository = createProtopediaInMemoryRepository({
+    const repository = createPromidasRepository({
       storeConfig: { maxDataSizeBytes: customSize },
     });
 
@@ -355,7 +355,7 @@ describe('createProtopediaInMemoryRepository', () => {
       error: vi.fn(),
     };
 
-    const repository = createProtopediaInMemoryRepository({
+    const repository = createPromidasRepository({
       storeConfig: { logger: mockLogger },
     });
 
@@ -384,7 +384,7 @@ describe('createProtopediaInMemoryRepository', () => {
       logger: mockLogger,
     };
 
-    createProtopediaInMemoryRepository({ apiClientOptions });
+    createPromidasRepository({ apiClientOptions });
 
     expect(ProtopediaApiCustomClient).toHaveBeenCalledWith({
       protoPediaApiClientOptions: apiClientOptions,
@@ -413,7 +413,7 @@ describe('createProtopediaInMemoryRepository', () => {
       error: vi.fn(),
     };
 
-    const repository = createProtopediaInMemoryRepository({
+    const repository = createPromidasRepository({
       storeConfig: { logger: storeLogger },
       apiClientOptions: { token: 'test-token', logger: apiLogger },
     });
@@ -434,7 +434,7 @@ describe('createProtopediaInMemoryRepository', () => {
       } as any,
     );
 
-    const repository = createProtopediaInMemoryRepository({
+    const repository = createPromidasRepository({
       storeConfig: { logLevel: 'debug' },
     });
 
@@ -455,7 +455,7 @@ describe('createProtopediaInMemoryRepository', () => {
       logLevel: 'warn' as const,
     };
 
-    createProtopediaInMemoryRepository({ apiClientOptions });
+    createPromidasRepository({ apiClientOptions });
 
     expect(ProtopediaApiCustomClient).toHaveBeenCalledWith({
       protoPediaApiClientOptions: apiClientOptions,
@@ -469,9 +469,9 @@ describe('createProtopediaInMemoryRepository', () => {
       } as any,
     );
 
-    const repo1 = createProtopediaInMemoryRepository({});
-    const repo2 = createProtopediaInMemoryRepository({});
-    const repo3 = createProtopediaInMemoryRepository({});
+    const repo1 = createPromidasRepository({});
+    const repo2 = createPromidasRepository({});
+    const repo3 = createPromidasRepository({});
 
     expect(repo1).not.toBe(repo2);
     expect(repo2).not.toBe(repo3);
@@ -498,7 +498,7 @@ describe('createProtopediaInMemoryRepository', () => {
       logger: mockLogger,
     };
 
-    const repository = createProtopediaInMemoryRepository({ storeConfig });
+    const repository = createPromidasRepository({ storeConfig });
 
     const config = repository.getConfig();
     expect(config.ttlMs).toBe(10 * 60 * 1000);
@@ -523,7 +523,7 @@ describe('createProtopediaInMemoryRepository', () => {
       baseUrl: 'https://custom.api.example.com',
     };
 
-    createProtopediaInMemoryRepository({ apiClientOptions });
+    createPromidasRepository({ apiClientOptions });
 
     expect(ProtopediaApiCustomClient).toHaveBeenCalledWith({
       protoPediaApiClientOptions: apiClientOptions,
@@ -540,7 +540,7 @@ describe('createProtopediaInMemoryRepository', () => {
 
     vi.mocked(ProtopediaApiCustomClient).mockClear();
 
-    createProtopediaInMemoryRepository({
+    createPromidasRepository({
       apiClientOptions: { token: 'test' },
     });
 
@@ -554,7 +554,7 @@ describe('createProtopediaInMemoryRepository', () => {
       } as any,
     );
 
-    const repository = createProtopediaInMemoryRepository({
+    const repository = createPromidasRepository({
       storeConfig: { ttlMs: 5000 },
     });
 
@@ -570,7 +570,7 @@ describe('createProtopediaInMemoryRepository', () => {
       } as any,
     );
 
-    const repository = createProtopediaInMemoryRepository({
+    const repository = createPromidasRepository({
       apiClientOptions: { token: 'test' },
     });
 
@@ -592,7 +592,7 @@ describe('createProtopediaInMemoryRepository', () => {
       );
 
       const largeTtl = Number.MAX_SAFE_INTEGER;
-      const repository = createProtopediaInMemoryRepository({
+      const repository = createPromidasRepository({
         storeConfig: { ttlMs: largeTtl },
       });
 
@@ -608,7 +608,7 @@ describe('createProtopediaInMemoryRepository', () => {
 
       // Maximum allowed is 30 MiB (31457280 bytes)
       const maxAllowedSize = 30 * 1024 * 1024;
-      const repository = createProtopediaInMemoryRepository({
+      const repository = createPromidasRepository({
         storeConfig: { maxDataSizeBytes: maxAllowedSize },
       });
 
@@ -625,7 +625,7 @@ describe('createProtopediaInMemoryRepository', () => {
       const tooLargeSize = 31 * 1024 * 1024; // 31 MiB (exceeds 30 MiB limit)
 
       expect(() => {
-        createProtopediaInMemoryRepository({
+        createPromidasRepository({
           storeConfig: { maxDataSizeBytes: tooLargeSize },
         });
       }).toThrow('maxDataSizeBytes must be <=');
@@ -638,7 +638,7 @@ describe('createProtopediaInMemoryRepository', () => {
         } as any,
       );
 
-      const repository = createProtopediaInMemoryRepository({
+      const repository = createPromidasRepository({
         storeConfig: { ttlMs: 0 },
       });
 
@@ -652,7 +652,7 @@ describe('createProtopediaInMemoryRepository', () => {
         } as any,
       );
 
-      const repository = createProtopediaInMemoryRepository({
+      const repository = createPromidasRepository({
         storeConfig: { ttlMs: 1 },
       });
 
@@ -667,7 +667,7 @@ describe('createProtopediaInMemoryRepository', () => {
         } as any,
       );
 
-      const repository = createProtopediaInMemoryRepository({
+      const repository = createPromidasRepository({
         apiClientOptions: { token: '' },
       });
 
@@ -687,8 +687,8 @@ describe('createProtopediaInMemoryRepository', () => {
       );
 
       const config = { storeConfig: { ttlMs: 60000 } };
-      const repo1 = createProtopediaInMemoryRepository(config);
-      const repo2 = createProtopediaInMemoryRepository(config);
+      const repo1 = createPromidasRepository(config);
+      const repo2 = createPromidasRepository(config);
 
       expect(repo1).not.toBe(repo2);
       expect(repo1.getConfig().ttlMs).toBe(60000);
@@ -710,7 +710,7 @@ describe('createProtopediaInMemoryRepository', () => {
       const originalStoreConfig = { ...storeConfig };
       const originalApiOptions = { ...apiClientOptions };
 
-      createProtopediaInMemoryRepository({ storeConfig, apiClientOptions });
+      createPromidasRepository({ storeConfig, apiClientOptions });
 
       expect(storeConfig).toEqual(originalStoreConfig);
       expect(apiClientOptions).toEqual(originalApiOptions);
@@ -731,7 +731,7 @@ describe('createProtopediaInMemoryRepository', () => {
       ];
 
       levels.forEach((logLevel) => {
-        createProtopediaInMemoryRepository({
+        createPromidasRepository({
           apiClientOptions: { token: 'test', logLevel },
         });
       });
@@ -751,7 +751,7 @@ describe('createProtopediaInMemoryRepository', () => {
       ];
 
       customUrls.forEach((baseUrl) => {
-        createProtopediaInMemoryRepository({
+        createPromidasRepository({
           apiClientOptions: { token: 'test', baseUrl },
         });
       });
@@ -774,7 +774,7 @@ describe('createProtopediaInMemoryRepository', () => {
       );
 
       expect(() => {
-        createProtopediaInMemoryRepository({
+        createPromidasRepository({
           apiClientOptions: { token: 'test' },
         });
       }).toThrow('Failed to create API client');
@@ -789,7 +789,7 @@ describe('createProtopediaInMemoryRepository', () => {
 
       // Factory doesn't validate - passes through to store
       // Store constructor will handle validation
-      const repository = createProtopediaInMemoryRepository({
+      const repository = createPromidasRepository({
         storeConfig: { maxDataSizeBytes: -1000 },
       });
 
@@ -805,7 +805,7 @@ describe('createProtopediaInMemoryRepository', () => {
       );
 
       // Factory doesn't validate - passes through to store
-      const repository = createProtopediaInMemoryRepository({
+      const repository = createPromidasRepository({
         storeConfig: { ttlMs: -1000 },
       });
 
@@ -819,7 +819,7 @@ describe('createProtopediaInMemoryRepository', () => {
       const mockClient = { listPrototypes: vi.fn() };
       vi.mocked(ProtopediaApiCustomClient).mockClear();
 
-      const repository = createProtopediaInMemoryRepository({
+      const repository = createPromidasRepository({
         storeConfig: {
           ttlMs: 60 * 60 * 1000, // 1 hour
           maxDataSizeBytes: 20 * 1024 * 1024, // 20 MiB
@@ -851,7 +851,7 @@ describe('createProtopediaInMemoryRepository', () => {
         error: vi.fn(),
       };
 
-      const repository = createProtopediaInMemoryRepository({
+      const repository = createPromidasRepository({
         storeConfig: {
           ttlMs: 5 * 60 * 1000, // 5 minutes for frequent refreshes
           logger: devLogger,
@@ -878,7 +878,7 @@ describe('createProtopediaInMemoryRepository', () => {
       const mockClient = { listPrototypes: vi.fn() };
       vi.mocked(ProtopediaApiCustomClient).mockClear();
 
-      const repository = createProtopediaInMemoryRepository({
+      const repository = createPromidasRepository({
         apiClientOptions: { token: 'quick-test-token' },
       });
 
@@ -893,7 +893,7 @@ describe('createProtopediaInMemoryRepository', () => {
       const mockClient = { listPrototypes: vi.fn() };
       vi.mocked(ProtopediaApiCustomClient).mockClear();
 
-      const repository = createProtopediaInMemoryRepository({
+      const repository = createPromidasRepository({
         storeConfig: {
           ttlMs: 1000, // 1 second for testing
           maxDataSizeBytes: 1024 * 1024, // 1 MiB for test data
@@ -916,17 +916,17 @@ describe('createProtopediaInMemoryRepository', () => {
         } as any,
       );
 
-      const prodRepo = createProtopediaInMemoryRepository({
+      const prodRepo = createPromidasRepository({
         storeConfig: { ttlMs: 3600000 },
         apiClientOptions: { token: 'prod-token', logLevel: 'error' },
       });
 
-      const stagingRepo = createProtopediaInMemoryRepository({
+      const stagingRepo = createPromidasRepository({
         storeConfig: { ttlMs: 1800000 },
         apiClientOptions: { token: 'staging-token', logLevel: 'warn' },
       });
 
-      const devRepo = createProtopediaInMemoryRepository({
+      const devRepo = createPromidasRepository({
         storeConfig: { ttlMs: 300000 },
         apiClientOptions: { token: 'dev-token', logLevel: 'debug' },
       });
@@ -947,7 +947,7 @@ describe('createProtopediaInMemoryRepository', () => {
         } as any,
       );
 
-      const repository = createProtopediaInMemoryRepository({
+      const repository = createPromidasRepository({
         storeConfig: { ttlMs: 100 }, // 100ms
       });
 
@@ -962,7 +962,7 @@ describe('createProtopediaInMemoryRepository', () => {
       );
 
       const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
-      const repository = createProtopediaInMemoryRepository({
+      const repository = createPromidasRepository({
         storeConfig: { ttlMs: oneWeekMs },
       });
 
@@ -976,7 +976,7 @@ describe('createProtopediaInMemoryRepository', () => {
         } as any,
       );
 
-      const repository = createProtopediaInMemoryRepository({
+      const repository = createPromidasRepository({
         storeConfig: { maxDataSizeBytes: 1024 }, // 1 KB
       });
 
@@ -1000,7 +1000,7 @@ describe('createProtopediaInMemoryRepository', () => {
       ];
 
       commonTtls.forEach(({ name, value }) => {
-        const repo = createProtopediaInMemoryRepository({
+        const repo = createPromidasRepository({
           storeConfig: { ttlMs: value },
         });
         expect(repo.getConfig().ttlMs).toBe(value);
@@ -1023,7 +1023,7 @@ describe('createProtopediaInMemoryRepository', () => {
       ];
 
       commonSizes.forEach(({ name, value }) => {
-        const repo = createProtopediaInMemoryRepository({
+        const repo = createPromidasRepository({
           storeConfig: { maxDataSizeBytes: value },
         });
         expect(repo.getConfig().maxDataSizeBytes).toBe(value);
@@ -1039,7 +1039,7 @@ describe('createProtopediaInMemoryRepository', () => {
         } as any,
       );
 
-      const repository = createProtopediaInMemoryRepository();
+      const repository = createPromidasRepository();
 
       // Verify all required methods exist and are functions
       expect(typeof repository.setupSnapshot).toBe('function');
@@ -1069,7 +1069,7 @@ describe('createProtopediaInMemoryRepository', () => {
         } as any,
       );
 
-      const repository = createProtopediaInMemoryRepository({
+      const repository = createPromidasRepository({
         apiClientOptions: { token: 'test' },
       });
 
@@ -1099,7 +1099,7 @@ describe('createProtopediaInMemoryRepository', () => {
         } as any,
       );
 
-      const repository = createProtopediaInMemoryRepository({
+      const repository = createPromidasRepository({
         apiClientOptions: { token: 'test' },
       });
 
@@ -1133,7 +1133,7 @@ describe('createProtopediaInMemoryRepository', () => {
         } as any,
       );
 
-      const repository = createProtopediaInMemoryRepository({
+      const repository = createPromidasRepository({
         storeConfig: { ttlMs: 0 },
       });
 
@@ -1150,7 +1150,7 @@ describe('createProtopediaInMemoryRepository', () => {
         } as any,
       );
 
-      const repository = createProtopediaInMemoryRepository({
+      const repository = createPromidasRepository({
         storeConfig: { maxDataSizeBytes: 0 },
       });
 
@@ -1164,7 +1164,7 @@ describe('createProtopediaInMemoryRepository', () => {
         } as any,
       );
 
-      const repository = createProtopediaInMemoryRepository({
+      const repository = createPromidasRepository({
         storeConfig: { ttlMs: 1500.75 },
       });
 
@@ -1180,7 +1180,7 @@ describe('createProtopediaInMemoryRepository', () => {
       );
 
       const oneYearMs = 365 * 24 * 60 * 60 * 1000;
-      const repository = createProtopediaInMemoryRepository({
+      const repository = createPromidasRepository({
         storeConfig: { ttlMs: oneYearMs },
       });
 
@@ -1195,7 +1195,7 @@ describe('createProtopediaInMemoryRepository', () => {
       );
 
       const MAX_SIZE = 30 * 1024 * 1024; // 30 MiB
-      const repository = createProtopediaInMemoryRepository({
+      const repository = createPromidasRepository({
         storeConfig: { maxDataSizeBytes: MAX_SIZE },
       });
 
@@ -1212,7 +1212,7 @@ describe('createProtopediaInMemoryRepository', () => {
       );
 
       const storeConfig = { ttlMs: 5000, maxDataSizeBytes: 5000000 };
-      const repository = createProtopediaInMemoryRepository({ storeConfig });
+      const repository = createPromidasRepository({ storeConfig });
 
       // Mutate the original config
       storeConfig.ttlMs = 99999;
@@ -1231,7 +1231,7 @@ describe('createProtopediaInMemoryRepository', () => {
         token: 'original-token',
         logLevel: 'info',
       };
-      createProtopediaInMemoryRepository({
+      createPromidasRepository({
         apiClientOptions,
       });
 
@@ -1247,7 +1247,7 @@ describe('createProtopediaInMemoryRepository', () => {
 
       // Create another repository
       vi.mocked(ProtopediaApiCustomClient).mockClear();
-      createProtopediaInMemoryRepository({ apiClientOptions });
+      createPromidasRepository({ apiClientOptions });
 
       // Should use the mutated values (proving the factory reads current state)
       const newCallArgs = vi.mocked(ProtopediaApiCustomClient).mock
@@ -1265,7 +1265,7 @@ describe('createProtopediaInMemoryRepository', () => {
         } as any,
       );
 
-      const repository = createProtopediaInMemoryRepository({
+      const repository = createPromidasRepository({
         storeConfig: { ttlMs: 3000 },
       });
 
@@ -1285,7 +1285,7 @@ describe('createProtopediaInMemoryRepository', () => {
       vi.mocked(ProtopediaApiCustomClient).mockClear();
 
       const testToken = 'secret-api-token-12345';
-      createProtopediaInMemoryRepository({
+      createPromidasRepository({
         apiClientOptions: { token: testToken },
       });
 
@@ -1316,7 +1316,7 @@ describe('createProtopediaInMemoryRepository', () => {
         logger: mockLogger,
       };
 
-      createProtopediaInMemoryRepository({ apiClientOptions: apiOptions });
+      createPromidasRepository({ apiClientOptions: apiOptions });
 
       expect(ProtopediaApiCustomClient).toHaveBeenCalledWith({
         protoPediaApiClientOptions: {
@@ -1332,7 +1332,7 @@ describe('createProtopediaInMemoryRepository', () => {
       const mockClient = { listPrototypes: vi.fn() };
       vi.mocked(ProtopediaApiCustomClient).mockClear();
 
-      createProtopediaInMemoryRepository({ storeConfig: { ttlMs: 1000 } });
+      createPromidasRepository({ storeConfig: { ttlMs: 1000 } });
 
       expect(ProtopediaApiCustomClient).toHaveBeenCalledWith(undefined);
     });
@@ -1346,7 +1346,7 @@ describe('createProtopediaInMemoryRepository', () => {
         } as any,
       );
 
-      const repository = createProtopediaInMemoryRepository();
+      const repository = createPromidasRepository();
 
       // getStats should return stats object
       const stats = repository.getStats();
@@ -1376,7 +1376,7 @@ describe('createProtopediaInMemoryRepository', () => {
         } as any,
       );
 
-      const repository = createProtopediaInMemoryRepository();
+      const repository = createPromidasRepository();
 
       const result =
         await repository.getPrototypeFromSnapshotByPrototypeId(99999);
@@ -1390,7 +1390,7 @@ describe('createProtopediaInMemoryRepository', () => {
         } as any,
       );
 
-      const repository = createProtopediaInMemoryRepository();
+      const repository = createPromidasRepository();
 
       const result = await repository.analyzePrototypes();
       expect(result).toBeDefined();
@@ -1405,7 +1405,7 @@ describe('createProtopediaInMemoryRepository', () => {
         } as any,
       );
 
-      const repository = createProtopediaInMemoryRepository();
+      const repository = createPromidasRepository();
 
       const result = await repository.getRandomSampleFromSnapshot(10);
       expect(result).toEqual([]);
@@ -1422,7 +1422,7 @@ describe('createProtopediaInMemoryRepository', () => {
 
       const count = 1000;
       const repositories = Array.from({ length: count }, () =>
-        createProtopediaInMemoryRepository(),
+        createPromidasRepository(),
       );
 
       expect(repositories.length).toBe(count);
@@ -1439,7 +1439,7 @@ describe('createProtopediaInMemoryRepository', () => {
   describe('runtime safety (JS interop)', () => {
     it('should throw TypeError when called with null', () => {
       // @ts-expect-error Testing runtime behavior for JS users
-      expect(() => createProtopediaInMemoryRepository(null)).toThrow(TypeError);
+      expect(() => createPromidasRepository(null)).toThrow(TypeError);
     });
 
     it('should throw TypeError when storeConfig is null', () => {
@@ -1451,7 +1451,7 @@ describe('createProtopediaInMemoryRepository', () => {
 
       expect(() =>
         // @ts-expect-error Testing runtime behavior for JS users
-        createProtopediaInMemoryRepository({ storeConfig: null }),
+        createPromidasRepository({ storeConfig: null }),
       ).toThrow(TypeError);
     });
   });
@@ -1464,7 +1464,7 @@ describe('createProtopediaInMemoryRepository', () => {
         } as any,
       );
 
-      const repository = createProtopediaInMemoryRepository();
+      const repository = createPromidasRepository();
       expect(repository).toBeInstanceOf(ProtopediaInMemoryRepositoryImpl);
     });
   });

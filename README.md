@@ -49,7 +49,7 @@ This repository provides a modular toolset for managing ProtoPedia data, consist
 
 6. **`lib/repository`** - Ready-to-use Repository (`ProtopediaInMemoryRepository`)
     - Integrates `lib/store` and `lib/fetcher` into a single easy-to-use package
-    - Provides `createProtopediaInMemoryRepository` factory
+    - Provides `createPromidasRepository` factory (in top-level `lib/factory.ts`)
     - Best for most use cases requiring caching and automatic refreshing
     - [📘 README](lib/repository/README.md) | [Usage Guide](lib/repository/docs/USAGE.md) | [Design Document](lib/repository/docs/DESIGN.md)
 
@@ -80,10 +80,10 @@ npm install github:F88/promidas protopedia-api-v2-client
 ### Usage
 
 ```typescript
-import { createProtopediaInMemoryRepository } from '@f88/promidas';
+import { createPromidasRepository } from '@f88/promidas';
 
 // Create repository with custom configuration
-const repo = createProtopediaInMemoryRepository({
+const repo = createPromidasRepository({
     storeConfig: {
         ttlMs: 30 * 60 * 1000, // 30 minutes TTL
         maxDataSizeBytes: 10 * 1024 * 1024, // 10 MiB limit (default)
@@ -145,7 +145,7 @@ import {
 } from '@f88/promidas/store';
 
 // Repository (same as root import)
-import { createProtopediaInMemoryRepository } from '@f88/promidas/repository';
+import { createPromidasRepository } from '@f88/promidas/repository';
 ```
 
 **Available subpath exports:**

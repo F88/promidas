@@ -4,7 +4,7 @@ import {
 } from 'protopedia-api-v2-client';
 
 import {
-  createProtopediaInMemoryRepository,
+  createPromidasRepository,
   type PrototypeInMemoryStoreConfig,
 } from '../lib/index.js';
 
@@ -30,7 +30,7 @@ async function main() {
     token,
     ...(logLevel && { logLevel }),
   };
-  const repo = createProtopediaInMemoryRepository({
+  const repo = createPromidasRepository({
     storeConfig: prototypeInMemoryStoreConfig,
     apiClientOptions: protoPediaApiClientOptions,
   });

@@ -39,7 +39,7 @@
  *
  * ## Usage Recommendation
  *
- * **Use the factory function** {@link createProtopediaInMemoryRepository}
+ * **Use the factory function** {@link createPromidasRepository}
  * instead of direct instantiation. The factory provides better dependency
  * injection and configuration management.
  *
@@ -49,7 +49,7 @@
  * - Framework integration
  *
  * @module
- * @see {@link createProtopediaInMemoryRepository} for the factory function
+ * @see {@link createPromidasRepository} for the factory function
  * @see {@link ProtopediaInMemoryRepository} for the public interface
  */
 import type {
@@ -146,7 +146,7 @@ const SAMPLE_SIZE_THRESHOLD_RATIO = 0.5;
  *
  * ## Usage
  *
- * **Recommended**: Use {@link createProtopediaInMemoryRepository} factory
+ * **Recommended**: Use {@link createPromidasRepository} factory
  *
  * **Direct instantiation** (advanced):
  * ```typescript
@@ -161,7 +161,7 @@ const SAMPLE_SIZE_THRESHOLD_RATIO = 0.5;
  * ```
  *
  * @see {@link ProtopediaInMemoryRepository} for the public interface contract
- * @see {@link createProtopediaInMemoryRepository} for the recommended factory
+ * @see {@link createPromidasRepository} for the recommended factory
  */
 export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepository {
   #logger: Logger;

@@ -1,5 +1,5 @@
 /**
- * Factory function for creating ProtoPedia in-memory repository instances.
+ * Factory function for creating Promidas repository instances.
  *
  * This module provides the **recommended entry point** for creating repository
  * instances. It encapsulates the instantiation logic and provides better
@@ -31,13 +31,13 @@
  *
  * ### Basic Usage
  * ```typescript
- * const repo = createProtopediaInMemoryRepository({});
+ * const repo = createPromidasRepository({});
  * await repo.setupSnapshot({});
  * ```
  *
  * ### Production Setup
  * ```typescript
- * const repo = createProtopediaInMemoryRepository({
+ * const repo = createPromidasRepository({
  *   storeConfig: {
  *     ttlMs: 60 * 60 * 1000,      // 1 hour TTL
  *     maxDataSizeBytes: 10485760, // 10MB limit
@@ -53,34 +53,43 @@
  * const storeLogger = createLogger({ prefix: '[Store]' });
  * const apiLogger = createLogger({ prefix: '[API]' });
  *
- * const repo = createProtopediaInMemoryRepository({
+ * const repo = createPromidasRepository({
  *   storeConfig: { logger: storeLogger },
  *   apiClientOptions: { logger: apiLogger },
  * });
  * ```
  *
  * @module
- * @see {@link createProtopediaInMemoryRepository} for the factory function
+ * @see {@link createPromidasRepository} for the factory function
  * @see {@link ProtopediaInMemoryRepository} for the interface contract
  */
 import type { ProtoPediaApiClientOptions } from 'protopedia-api-v2-client';
 
-import { ProtopediaApiCustomClient } from '../fetcher/index.js';
-import {
-  PrototypeInMemoryStore,
-  type PrototypeInMemoryStoreConfig,
-} from '../store/index.js';
-
-import { ProtopediaInMemoryRepositoryImpl } from './protopedia-in-memory-repository.js';
+import { ProtopediaApiCustomClient } from './fetcher/index.js';
+import { ProtopediaInMemoryRepositoryImpl } from './repository/protopedia-in-memory-repository.js';
 import type {
   ProtopediaInMemoryRepository,
   ProtopediaInMemoryRepositoryConfig,
-} from './types/index.js';
+} from './repository/types/index.js';
+import {
+  PrototypeInMemoryStore,
+  type PrototypeInMemoryStoreConfig,
+} from './store/index.js';
+
+// Re-export types from repository module for convenience
+export type {
+  ProtopediaInMemoryRepository,
+  PrototypeAnalysisResult,
+} from './repository/types/index.js';
+export type {
+  PrototypeInMemoryStoreConfig,
+  PrototypeInMemoryStats as ProtopediaInMemoryRepositoryStats,
+} from './store/index.js';
 
 /**
- * Options for creating a ProtoPedia in-memory repository.
+ * Options for creating a Promidas repository.
  */
-export interface CreateProtopediaInMemoryRepositoryOptions {
+export interface CreatePromidasRepositoryOptions {
   /**
    * Configuration for repository-level logging.
    *
@@ -113,13 +122,14 @@ export interface CreateProtopediaInMemoryRepositoryOptions {
 }
 
 /**
- * Create an in-memory repository for ProtoPedia prototypes.
+ * Create a Promidas repository for ProtoPedia prototypes.
  *
  * This is the **recommended way** to instantiate a repository. It provides
  * a clean, functional interface with proper dependency injection and
  * configuration management.
  *
  * @param options - Configuration options for the repository
+ * @param options.repositoryConfig - Configuration for repository-level logging (optional)
  * @param options.storeConfig - Configuration for the underlying in-memory store (optional)
  * @param options.apiClientOptions - Configuration for the ProtoPedia HTTP client (optional)
  *
@@ -140,7 +150,7 @@ export interface CreateProtopediaInMemoryRepositoryOptions {
  * @example
  * **Minimal setup with defaults**
  * ```typescript
- * const repo = createProtopediaInMemoryRepository({});
+ * const repo = createPromidasRepository({});
  * await repo.setupSnapshot({});
  * const prototype = await repo.getPrototypeFromSnapshotByPrototypeId(42);
  * ```
@@ -148,7 +158,7 @@ export interface CreateProtopediaInMemoryRepositoryOptions {
  * @example
  * **Production setup with TTL and memory limits**
  * ```typescript
- * const repo = createProtopediaInMemoryRepository({
+ * const repo = createPromidasRepository({
  *   storeConfig: {
  *     ttlMs: 60 * 60 * 1000,      // Expire after 1 hour
  *     maxDataSizeBytes: 10485760, // Max 10MB in memory
@@ -167,10 +177,10 @@ export interface CreateProtopediaInMemoryRepositoryOptions {
  * @example
  * **Shared logger for all components**
  * ```typescript
- * import { createConsoleLogger } from './logger';
+ * import { createConsoleLogger } from '@f88/promidas/logger';
  *
  * const logger = createConsoleLogger();
- * const repo = createProtopediaInMemoryRepository({
+ * const repo = createPromidasRepository({
  *   repositoryConfig: { logger, logLevel: 'info' },
  *   storeConfig: { logger, logLevel: 'debug' },
  *   apiClientOptions: { logger, logLevel: 'debug' },
@@ -180,13 +190,13 @@ export interface CreateProtopediaInMemoryRepositoryOptions {
  * @example
  * **Independent loggers for granular control**
  * ```typescript
- * import { createConsoleLogger } from './logger';
+ * import { createConsoleLogger } from '@f88/promidas/logger';
  *
  * const repoLogger = createConsoleLogger();
  * const storeLogger = createConsoleLogger();
  * const apiLogger = createConsoleLogger();
  *
- * const repo = createProtopediaInMemoryRepository({
+ * const repo = createPromidasRepository({
  *   repositoryConfig: { logger: repoLogger, logLevel: 'info' },
  *   storeConfig: { logger: storeLogger, logLevel: 'debug' },
  *   apiClientOptions: { logger: apiLogger, logLevel: 'warn' },
@@ -201,7 +211,7 @@ export interface CreateProtopediaInMemoryRepositoryOptions {
  * @example
  * **Full production configuration**
  * ```typescript
- * const repo = createProtopediaInMemoryRepository({
+ * const repo = createPromidasRepository({
  *   storeConfig: {
  *     ttlMs: 2 * 60 * 60 * 1000,     // 2 hours
  *     maxDataSizeBytes: 52428800,    // 50MB
@@ -231,11 +241,11 @@ export interface CreateProtopediaInMemoryRepositoryOptions {
  * @see {@link PrototypeInMemoryStoreConfig} for store configuration details
  * @see {@link ProtoPediaApiClientOptions} for API client options
  */
-export const createProtopediaInMemoryRepository = ({
+export const createPromidasRepository = ({
   repositoryConfig = {},
   storeConfig = {},
   apiClientOptions,
-}: CreateProtopediaInMemoryRepositoryOptions = {}): ProtopediaInMemoryRepository => {
+}: CreatePromidasRepositoryOptions = {}): ProtopediaInMemoryRepository => {
   // Debug log with sanitized arguments
   if (console.debug) {
     const sanitizedApiOptions = apiClientOptions
@@ -245,7 +255,7 @@ export const createProtopediaInMemoryRepository = ({
         }
       : undefined;
 
-    console.debug('createProtopediaInMemoryRepository called', {
+    console.debug('createPromidasRepository called', {
       repositoryConfig,
       storeConfig,
       apiClientOptions: sanitizedApiOptions,

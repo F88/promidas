@@ -32,10 +32,10 @@
  * ## Usage Example
  *
  * ```typescript
- * import { createProtopediaInMemoryRepository } from '@your-org/promidas';
+ * import { createPromidasRepository } from '@f88/promidas';
  *
  * // Create repository with TTL and memory limits
- * const repository = createProtopediaInMemoryRepository({
+ * const repository = createPromidasRepository({
  *   storeConfig: {
  *     ttlMs: 60 * 60 * 1000,      // 1 hour TTL
  *     maxDataSizeBytes: 10485760, // 10MB limit
@@ -73,7 +73,7 @@
  *
  * @module
  * @see {@link ProtopediaInMemoryRepository} for the complete interface
- * @see {@link createProtopediaInMemoryRepository} for the factory function
+ * @see {@link createPromidasRepository} for the factory function (in ../factory.js)
  */
 
 /**
@@ -97,7 +97,7 @@ export type { NormalizedPrototype } from '../types/index.js';
  *
  * @example
  * ```typescript
- * import { createProtopediaInMemoryRepository, type Logger } from '@f88/promidas/repository';
+ * import { createPromidasRepository, type Logger } from '@f88/promidas';
  *
  * const customLogger: Logger = {
  *   debug: (msg) => console.debug(msg),
@@ -106,7 +106,7 @@ export type { NormalizedPrototype } from '../types/index.js';
  *   error: (msg) => console.error(msg),
  * };
  *
- * const repo = createProtopediaInMemoryRepository({
+ * const repo = createPromidasRepository({
  *   storeConfig: { logger: customLogger },
  *   apiClientOptions: { token: 'xxx' },
  * });
@@ -135,7 +135,7 @@ export type { PrototypeInMemoryStats as ProtopediaInMemoryRepositoryStats } from
  * Configuration options for the in-memory store.
  *
  * Re-exported from the store module as it's a required parameter for
- * {@link createProtopediaInMemoryRepository}.
+ * {@link createPromidasRepository}.
  *
  * @example
  * ```typescript
@@ -144,7 +144,7 @@ export type { PrototypeInMemoryStats as ProtopediaInMemoryRepositoryStats } from
  *   logger: createConsoleLogger(),
  *   logLevel: 'info'
  * };
- * const repo = createProtopediaInMemoryRepository({ storeConfig });
+ * const repo = createPromidasRepository({ storeConfig });
  * ```
  */
 export type { PrototypeInMemoryStoreConfig } from '../store/index.js';
@@ -155,17 +155,19 @@ export type { PrototypeInMemoryStoreConfig } from '../store/index.js';
  * Exports all type definitions used by the repository interface:
  *
  * - {@link ProtopediaInMemoryRepository} - Main repository interface
- * - {@link CreateProtopediaInMemoryRepository} - Factory function signature
+ * - {@link ProtopediaInMemoryRepositoryConfig} - Repository configuration options
  * - {@link SnapshotOperationResult} - Result type for setup/refresh operations
  * - {@link SnapshotOperationSuccess} - Success variant with metadata
  * - {@link SnapshotOperationFailure} - Failure variant with error details
  * - {@link PrototypeAnalysisResult} - Statistical analysis result type
  *
+ * Note: Factory function {@link createPromidasRepository} is now in ../factory.js
+ *
  * @see {@link ProtopediaInMemoryRepository} for usage examples
  */
 export type {
-  CreateProtopediaInMemoryRepository,
   ProtopediaInMemoryRepository,
+  ProtopediaInMemoryRepositoryConfig,
   PrototypeAnalysisResult,
   SnapshotOperationResult,
   SnapshotOperationSuccess,
@@ -173,59 +175,32 @@ export type {
 } from './types/index.js';
 
 /**
- * Create an in-memory repository for ProtoPedia prototypes.
+ * Factory function documentation moved to ../factory.ts
  *
- * This factory function is the recommended way to instantiate a repository.
- * It wires together the in-memory store and HTTP API client with proper
- * configuration and dependency injection.
+ * This module re-exports the factory for backward compatibility.
+ * Users can import from either '@f88/promidas' or '@f88/promidas/repository'.
  *
- * @param storeConfig - Configuration for the underlying in-memory store
- *   - `ttlSeconds` - Time-to-live for snapshot expiration
- *   - `maxDataSizeBytes` - Memory guard to prevent excessive data
- *   - `logger` - Custom logger for store operations (optional)
- *
- * @param apiClientOptions - Configuration for the ProtoPedia HTTP client
- *   - `baseURL` - API endpoint URL
- *   - `logger` - Custom logger for API operations (optional)
- *   - Other client-specific options
- *
- * @returns A fully configured {@link ProtopediaInMemoryRepository} instance
- *
- * @example
- * ```typescript
- * // Minimal setup with defaults
- * const repo = createProtopediaInMemoryRepository({});
- *
- * // Production setup with TTL and memory limits
- * const repo = createProtopediaInMemoryRepository({
- *   storeConfig: {
- *     ttlMs: 60 * 60 * 1000,      // 1 hour
- *     maxDataSizeBytes: 10485760, // 10MB
- *   },
- *   apiClientOptions: {
- *     baseURL: 'https://protopedia.example.com',
- *   },
- * });
- *
- * // Advanced: Independent loggers for store and API
- * import { createLogger } from './logger';
- *
- * const storeLogger = createLogger({ minLevel: 'debug', prefix: '[Store]' });
- * const apiLogger = createLogger({ minLevel: 'info', prefix: '[API]' });
- *
- * const repo = createProtopediaInMemoryRepository({
- *   storeConfig: { logger: storeLogger },
- *   apiClientOptions: { logger: apiLogger },
- * });
- * ```
- *
+ * @see {@link createPromidasRepository} in ../factory.ts for full documentation
  * @see {@link ProtopediaInMemoryRepository} for available operations
  * @see {@link PrototypeInMemoryStoreConfig} for store configuration options
  */
+
+/**
+ * Re-export factory function from the top-level factory module.
+ *
+ * This allows backward compatibility for users importing from '@f88/promidas/repository'.
+ *
+ * @example
+ * ```typescript
+ * // Both work (recommended: use top-level import)
+ * import { createPromidasRepository } from '@f88/promidas';
+ * import { createPromidasRepository } from '@f88/promidas/repository';
+ * ```
+ */
 export {
-  createProtopediaInMemoryRepository,
-  type CreateProtopediaInMemoryRepositoryOptions,
-} from './factory.js';
+  createPromidasRepository,
+  type CreatePromidasRepositoryOptions,
+} from '../factory.js';
 
 /**
  * Implementation class for the in-memory repository.
@@ -239,13 +214,13 @@ export {
  *
  * ## When to Use
  *
- * - ✅ **Use the factory** ({@link createProtopediaInMemoryRepository}) for normal usage
+ * - ✅ **Use the factory** ({@link createPromidasRepository}) for normal usage
  * - ⚠️ **Use this class** only when you need direct control over construction
  *
  * @example
  * ```typescript
  * // Normal usage: Use factory (recommended)
- * const repo = createProtopediaInMemoryRepository({
+ * const repo = createPromidasRepository({
  *   storeConfig: { ttlMs: 3600000 },
  *   apiClientOptions: { token: 'xxx' }
  * });
@@ -259,7 +234,7 @@ export {
  * );
  * ```
  *
- * @see {@link createProtopediaInMemoryRepository} for the recommended factory function
+ * @see {@link createPromidasRepository} for the recommended factory function
  * @see {@link ProtopediaInMemoryRepository} for the interface definition
  */
 export { ProtopediaInMemoryRepositoryImpl } from './protopedia-in-memory-repository.js';
