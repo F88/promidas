@@ -13,8 +13,12 @@
  * - {@link createProtopediaApiCustomClient} — Factory to create a configured API client.
  * - {@link ProtopediaApiCustomClient} — Class-based client with managed logger and high-level methods.
  * - {@link ProtopediaApiCustomClientConfig} — Configuration options including logger and SDK client settings.
- * - {@link ProtoPediaApiClientOptions} — SDK client options (re-exported from protopedia-api-v2-client).
- * - {@link ListPrototypesParams} — Query parameters for listing prototypes (re-exported from protopedia-api-v2-client).
+ *
+ * ### Dependencies
+ *
+ * Types from `protopedia-api-v2-client` should be imported directly from the package:
+ * - `ProtoPediaApiClientOptions` — SDK client options.
+ * - `ListPrototypesParams` — Query parameters for listing prototypes.
  *
  * ### Data Fetching & Normalization
  *
@@ -69,10 +73,6 @@ export type { Logger, LogLevel } from '../logger/index.js';
 export { createProtopediaApiCustomClient } from './client/factory.js';
 export { ProtopediaApiCustomClient } from './client/protopedia-api-custom-client.js';
 export type { ProtopediaApiCustomClientConfig } from './client/config.js';
-
-// Re-export protopedia-api-v2-client types for convenience
-export type { ProtoPediaApiClientOptions } from 'protopedia-api-v2-client';
-export type { ListPrototypesParams } from 'protopedia-api-v2-client';
 
 // Result Types
 export type { FetchPrototypesResult } from './types/result.types.js';
