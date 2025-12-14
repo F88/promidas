@@ -82,7 +82,7 @@ export type PrototypeInMemoryStats = {
 
 type RefreshTask = () => Promise<void>;
 
-type Snapshot = {
+export type Snapshot = {
   data: readonly DeepReadonly<NormalizedPrototype>[];
   cachedAt: Date | null;
   isExpired: boolean;
