@@ -65,7 +65,11 @@
  */
 import type { ProtoPediaApiClientOptions } from 'protopedia-api-v2-client';
 
-import type { PrototypeInMemoryStoreConfig } from '../store/index.js';
+import { ProtopediaApiCustomClient } from '../fetcher/index.js';
+import {
+  PrototypeInMemoryStore,
+  type PrototypeInMemoryStoreConfig,
+} from '../store/index.js';
 
 import { ProtopediaInMemoryRepositoryImpl } from './protopedia-in-memory-repository.js';
 import type {
@@ -232,9 +236,32 @@ export const createProtopediaInMemoryRepository = ({
   storeConfig = {},
   apiClientOptions,
 }: CreateProtopediaInMemoryRepositoryOptions = {}): ProtopediaInMemoryRepository => {
+  // Debug log with sanitized arguments
+  if (console.debug) {
+    const sanitizedApiOptions = apiClientOptions
+      ? {
+          ...apiClientOptions,
+          token: apiClientOptions.token ? '***' : undefined,
+        }
+      : undefined;
+
+    console.debug('createProtopediaInMemoryRepository called', {
+      repositoryConfig,
+      storeConfig,
+      apiClientOptions: sanitizedApiOptions,
+    });
+  }
+
+  const store = new PrototypeInMemoryStore(storeConfig);
+  const apiClient = new ProtopediaApiCustomClient(
+    apiClientOptions !== undefined
+      ? { protoPediaApiClientOptions: apiClientOptions }
+      : undefined,
+  );
+
   return new ProtopediaInMemoryRepositoryImpl({
     repositoryConfig,
-    storeConfig,
-    ...(apiClientOptions !== undefined && { apiClientOptions }),
+    store,
+    apiClient,
   });
 };
