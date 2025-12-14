@@ -254,16 +254,48 @@ export class PrototypeInMemoryStore {
     };
   }
 
-  /** Estimate JSON payload size for logging and guardrails. */
-  private estimateSize(data: NormalizedPrototype[]): number {
+  /**
+   * Estimates the JSON payload size of an array of NormalizedPrototypes in bytes.
+   *
+   * This method calculates the size by iteratively serializing each item and summing their byte lengths,
+   * along with the overhead for array brackets and commas. This approach minimizes memory usage
+   * by avoiding the creation of a single large JSON string for the entire array, thus reducing
+   * the risk of out-of-memory errors, especially with large datasets.
+   *
+   * @param data - The array of NormalizedPrototypes to estimate the size for.
+   * @returns The estimated size in bytes of the JSON-serialized data, or 0 if estimation fails.
+   */
+  private estimateSize(data: readonly NormalizedPrototype[]): number {
     try {
-      const serialized = JSON.stringify(data);
-      if (typeof Buffer !== 'undefined') {
-        return Buffer.byteLength(serialized, 'utf8');
+      if (data.length === 0) {
+        return 2; // "[]"
       }
-      if (typeof TextEncoder !== 'undefined') {
-        return new TextEncoder().encode(serialized).length;
+
+      // Start with 2 bytes for "[]" and 1 byte for each comma (N-1 commas)
+      let totalBytes = 2 + (data.length - 1);
+      const useBuffer = typeof Buffer !== 'undefined';
+      const useTextEncoder = !useBuffer && typeof TextEncoder !== 'undefined';
+      const encoder = useTextEncoder ? new TextEncoder() : null;
+
+      if (!useBuffer && !useTextEncoder) {
+        // Fallback for environments without Buffer/TextEncoder (should not happen in Node.js)
+        this.logger.warn(
+          'Neither Buffer nor TextEncoder found for size estimation. Returning 0.',
+          {},
+        );
+        return 0;
       }
+
+      for (const item of data) {
+        const serializedItem = JSON.stringify(item);
+        if (useBuffer) {
+          totalBytes += Buffer.byteLength(serializedItem, 'utf8');
+        } else if (encoder) {
+          totalBytes += encoder.encode(serializedItem).length;
+        }
+        // No else needed here; if neither is available, we already returned 0.
+      }
+      return totalBytes;
     } catch (error) {
       this.logger.warn('Failed to estimate payload size, defaulting to 0', {
         error,
