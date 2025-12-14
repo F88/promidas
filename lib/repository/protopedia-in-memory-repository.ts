@@ -566,39 +566,6 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
   }
 
   /**
-   * Analyze prototypes to extract ID range (minimum and maximum).
-   *
-   * Uses a reduce implementation for more declarative code style.
-   * May perform better with small datasets (~1,000 items) due to JIT optimization.
-   *
-   * @param prototypes - Array of prototypes to analyze
-   * @returns Object containing min and max IDs, or null values if array is empty
-   */
-  analyzePrototypesWithReduce(
-    prototypes: readonly DeepReadonly<NormalizedPrototype>[],
-  ): PrototypeAnalysisResult {
-    if (prototypes.length === 0) {
-      return { min: null, max: null };
-    }
-
-    const firstId = prototypes[0]!.id;
-    const { min, max } = prototypes.reduce(
-      (acc, prototype) => {
-        if (prototype.id < acc.min) {
-          acc.min = prototype.id;
-        }
-        if (prototype.id > acc.max) {
-          acc.max = prototype.id;
-        }
-        return acc;
-      },
-      { min: firstId, max: firstId },
-    );
-
-    return { min, max };
-  }
-
-  /**
    * Analyze prototypes from the current snapshot to extract ID range.
    *
    * Currently uses the for-loop implementation for optimal performance with typical dataset sizes.

@@ -14,12 +14,11 @@
  *
  * ### Private Method Tests (via public interface)
  * - `analyzePrototypesWithForLoop()` - For-loop based analysis
- * - `analyzePrototypesWithReduce()` - Reduce-based analysis
  *
  * ## Design Philosophy
  *
  * ### Intentional Test Patterns
- * Tests for private methods (`analyzePrototypesWithForLoop`, `analyzePrototypesWithReduce`)
+ * Tests for private methods (`analyzePrototypesWithForLoop`)
  * intentionally use a **verbose data retrieval pattern**:
  *
  * 1. `getPrototypeIdsFromSnapshot()` - Fetch all IDs
@@ -131,48 +130,6 @@ describe('ProtopediaInMemoryRepositoryImpl - analysis', () => {
       // NOTE: Intentionally verbose pattern - DO NOT refactor to getAllFromSnapshot()
       // This tests the composition of individual lookup methods (different code path)
       const result = repo.analyzePrototypesWithForLoop(
-        await repo
-          .getPrototypeIdsFromSnapshot()
-          .then((ids) =>
-            ids.map((id) =>
-              repo.getPrototypeFromSnapshotByPrototypeId(id).then((p) => p!),
-            ),
-          )
-          .then((promises) => Promise.all(promises)),
-      );
-
-      expect(result.min).toBe(1);
-      expect(result.max).toBe(100);
-    });
-
-    /**
-     * Tests analyzePrototypesWithReduce by manually reconstructing the prototype array.
-     *
-     * This test intentionally uses the verbose pattern of:
-     * 1. getPrototypeIdsFromSnapshot() - get all IDs
-     * 2. map each ID to getPrototypeFromSnapshotByPrototypeId() - individual lookups
-     * 3. Promise.all() - wait for all lookups
-     *
-     * This validates that the individual lookup methods work correctly when composed,
-     * which is a different code path than getAllFromSnapshot().
-     * Do NOT simplify this to use getAllFromSnapshot() - that would bypass the test's purpose.
-     */
-    it('analyzePrototypesWithReduce works correctly', async () => {
-      fetchPrototypesMock.mockResolvedValueOnce({
-        ok: true,
-        data: [
-          makePrototype({ id: 100 }),
-          makePrototype({ id: 1 }),
-          makePrototype({ id: 50 }),
-        ],
-      });
-
-      const repo = new ProtopediaInMemoryRepositoryImpl({});
-      await repo.setupSnapshot({});
-
-      // NOTE: Intentionally verbose pattern - DO NOT refactor to getAllFromSnapshot()
-      // This tests the composition of individual lookup methods (different code path)
-      const result = repo.analyzePrototypesWithReduce(
         await repo
           .getPrototypeIdsFromSnapshot()
           .then((ids) =>
