@@ -62,9 +62,8 @@ This document describes the architecture, design decisions, and implementation p
 ### Dependency Flow
 
 - **Consumer → ProtopediaApiCustomClient**: Requests normalized prototype data
-- **Client → fetchAndNormalizePrototypes**: Delegates fetch and normalization
-- **Fetcher → API Client**: Delegates HTTP operations
-- **Fetcher → Normalization**: Transforms raw API responses
+- **Client → listPrototypes**: Delegates HTTP operations to API client
+- **Client → Normalization**: Transforms raw API responses
 - **API Client → HTTP**: Network communication with ProtoPedia API
 
 ### Responsibility Separation
@@ -77,34 +76,33 @@ This document describes the architecture, design decisions, and implementation p
 
 ## Design Patterns
 
-### 1. Adapter Pattern
+### 1. Client-Based Pattern
 
-**Purpose**: Adapt the official API client to application needs
+**Purpose**: Encapsulate API client and provide normalized data access
 
 **Implementation**:
 
 ```typescript
-// Minimal interface for listing prototypes
-export interface ListPrototypesClient {
-    listPrototypes(
+// Client class encapsulates API access and normalization
+export class ProtopediaApiCustomClient {
+    async fetchPrototypes(
         params: ListPrototypesParams,
-    ): Promise<ApiResult<ResultOfListPrototypesApiResponse>>;
-}
+    ): Promise<FetchPrototypesResult> {
+        // Handles API call, error handling, and normalization
+    }
 
-// Consumer doesn't depend on full client implementation
-export async function fetchAndNormalizePrototypes(
-    client: ListPrototypesClient,
-    params: ListPrototypesParams,
-    logger: Logger,
-): Promise<FetchPrototypesResult>;
+    async listPrototypes(params: ListPrototypesParams) {
+        // Direct access to raw API response
+    }
+}
 ```
 
 **Benefits**:
 
-- Decouples from specific client implementation
-- Enables testing with mock clients
-- Future-proof against client API changes
-- Supports alternative clients with same interface
+- Single source of truth for API interactions
+- Proper logger lifecycle management
+- Clear separation between normalized and raw API access
+- Testable with standard mocking approaches
 
 ### 2. Class-Based Client Architecture
 
@@ -132,7 +130,10 @@ export class ProtopediaApiCustomClient {
     async fetchPrototypes(
         params: ListPrototypesParams,
     ): Promise<FetchPrototypesResult> {
-        return fetchAndNormalizePrototypes(this.#client, params, this.#logger);
+        // Internally handles API call and normalization
+        const apiResult = await this.#client.listPrototypes(params);
+        // ... error handling and normalization ...
+        return result;
     }
 
     async listPrototypes(params: ListPrototypesParams) {
@@ -292,11 +293,11 @@ if (!result.ok) {
 ### Error Flow
 
 ```typescript
-async function fetchAndNormalizePrototypes(
-    client: ListPrototypesClient,
+// Within ProtopediaApiCustomClient.fetchPrototypes()
+async fetchPrototypes(
     params: ListPrototypesParams,
 ): Promise<FetchPrototypesResult> {
-    const apiResult = await client.listPrototypes(params);
+    const apiResult = await this.#client.listPrototypes(params);
 
     // API client already returns Result type
     if (!apiResult.ok) {
@@ -384,9 +385,8 @@ constructor(config?: ProtopediaApiCustomClientConfig | null) {
 ```plaintext
 ProtopediaApiCustomClient
   └─> fetchPrototypes()
-      └─> fetchAndNormalizePrototypes(client, params, logger)
-          └─> handleApiError(error, logger)
-              └─> logger.error() for diagnostics
+      └─> handleApiError(error, this.#logger)
+          └─> this.#logger.error() for diagnostics
 ```
 
 **Design Rationale**:
@@ -541,7 +541,7 @@ class FullClient implements ListPrototypesClient {
 **Example**:
 
 ```typescript
-const result = await fetchAndNormalizePrototypes(client, params);
+const result = await client.fetchPrototypes(params);
 
 if (result.ok) {
     // TypeScript knows: result.data is NormalizedPrototype[]
@@ -562,8 +562,8 @@ if (result.ok) {
 
 **Categories**:
 
-1. **Public API types**: `FetchPrototypesResult`, `ListPrototypesClient`
-2. **Configuration types**: `ProtoPediaApiClientOptions`
+1. **Public API types**: `FetchPrototypesResult`, `ProtopediaApiCustomClient`
+2. **Configuration types**: `ProtopediaApiCustomClientConfig`
 3. **Helper types**: `Logger`, `LogLevel` (re-exported from logger)
 
 **Location**: `lib/fetcher/index.ts` (single entry point)
@@ -583,21 +583,17 @@ if (result.ok) {
 **Example**:
 
 ```typescript
-// Option 1: Use library's factory
+// Create client with custom configuration
 const client = createProtopediaApiCustomClient({
-    token: process.env.TOKEN,
-    baseUrl: 'https://api.protopedia.net',
+    protoPediaApiClientOptions: {
+        token: process.env.TOKEN,
+        baseUrl: 'https://api.protopedia.net',
+    },
     logLevel: 'error',
 });
 
-// Option 2: Bring your own client
-import { createProtoPediaClient } from 'protopedia-api-v2-client';
-const customClient = createProtoPediaClient({
-    /* custom config */
-});
-
-// Both work the same
-const result = await fetchAndNormalizePrototypes(client, params);
+// Use client's methods
+const result = await client.fetchPrototypes(params);
 ```
 
 ### With Repository Layer
@@ -609,7 +605,7 @@ const result = await fetchAndNormalizePrototypes(client, params);
 ```typescript
 // Repository expects FetchPrototypesResult
 async setupSnapshot(params: ListPrototypesParams) {
-  const fetchResult = await fetchAndNormalizePrototypes(this.#apiClient, params);
+  const fetchResult = await this.#apiClient.fetchPrototypes(params);
 
   if (!fetchResult.ok) {
     return {

@@ -1,8 +1,8 @@
 import { createProtoPediaClient } from 'protopedia-api-v2-client';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-import type { Logger } from '../../../../logger/index.js';
-import { ProtopediaApiCustomClient } from '../../../client/protopedia-api-custom-client.js';
+import type { Logger } from '../../../../../logger/index.js';
+import { ProtopediaApiCustomClient } from '../../../../client/protopedia-api-custom-client.js';
 
 vi.mock('protopedia-api-v2-client', async (importOriginal) => {
   const actual =

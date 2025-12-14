@@ -30,7 +30,6 @@ ProtoPedia の Web API にアクセスして、プロトタイプ情報を取得
 ```typescript
 import {
     createProtopediaApiCustomClient,
-    fetchAndNormalizePrototypes,
     type NormalizedPrototype,
 } from '@f88/promidas/fetcher';
 ```
@@ -105,18 +104,21 @@ const filtered = await client.fetchPrototypes({
 ### エラーハンドリング
 
 ```typescript
-const result = await fetchAndNormalizePrototypes(client, { limit: 10 });
+const result = await client.fetchPrototypes({ limit: 10 });
 
 if (result.ok) {
     // 成功した場合
     console.log('データ:', result.data);
 } else {
     // 失敗した場合
-    console.error('エラーの種類:', result.error.type);
-    console.error('メッセージ:', result.error.message);
+    console.error('エラー:', result.error.message);
 
-    if (result.error.type === 'network_failure') {
-        console.log('ネットワークエラーです。接続を確認してください。');
+    if (result.status === 401) {
+        console.log('認証エラーです。APIトークンを確認してください。');
+    } else if (result.status === 500) {
+        console.log(
+            'サーバーエラーです。しばらく待ってから再試行してください。',
+        );
     }
 }
 ```
@@ -129,13 +131,13 @@ if (result.ok) {
 
 ## ⚙️ 取得されるデータ
 
-fetchAndNormalizePrototypes で取得できるデータの例:
+`client.fetchPrototypes()` で取得できるデータの例:
 
 ```typescript
 {
-  id: 12345,
-  name: 'サンプルプロトタイプ',
-  status: 'active',           // 型安全な値
+  prototypeId: 12345,
+  prototypeNm: 'サンプルプロトタイプ',
+  status: 1,                  // ステータスコード
   tags: ['IoT', 'Arduino'],   // 配列に変換済み
   createDate: '2025-12-12T01:00:00.000Z',  // UTC に変換済み
   // ... その他多数のフィールド

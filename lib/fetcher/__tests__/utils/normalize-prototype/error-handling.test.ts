@@ -46,7 +46,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { UpstreamPrototype } from '../../../types/prototype-api.types.js';
-import { normalizePrototype } from '../../normalize-prototype.js';
+import { normalizePrototype } from '../../../utils/normalize-prototype.js';
 
 import { createMinimalUpstream } from './helpers.js';
 

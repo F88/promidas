@@ -23,11 +23,6 @@
  * - {@link UpstreamPrototype} — Raw API response type from protopedia-api-v2-client.
  * - {@link NormalizedPrototype} — Standardized, type-safe prototype data model.
  *
- * #### Deprecated Functions
- *
- * - {@link fetchAndNormalizePrototypes} — **Deprecated:** Use {@link ProtopediaApiCustomClient.fetchPrototypes} instead.
- * - {@link ListPrototypesClient} — **Deprecated:** Interface for standalone function, no longer needed with class-based client.
- *
  * ### Utilities
  *
  * - {@link normalizeProtoPediaTimestamp} — Convert ProtoPedia JST timestamps to UTC ISO 8601.
@@ -90,10 +85,6 @@ export type { ProtoPediaApiClientOptions } from 'protopedia-api-v2-client';
 export type { ListPrototypesParams } from 'protopedia-api-v2-client';
 
 // Fetching & Normalization
-export {
-  fetchAndNormalizePrototypes,
-  type ListPrototypesClient,
-} from './fetch-prototypes.js';
 export type { FetchPrototypesResult } from './types/result.types.js';
 
 // Data Types

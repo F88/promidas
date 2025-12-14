@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { splitPipeSeparatedString } from '../string-parsers.js';
+import { splitPipeSeparatedString } from '../../utils/string-parsers.js';
 
 describe('splitPipeSeparatedString', () => {
   describe('valid input', () => {

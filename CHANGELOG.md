@@ -9,6 +9,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking Changes
 
+- **Removed Deprecated Standalone Function**: Removed `fetchAndNormalizePrototypes()` function from exports (#32)
+    - Use `ProtopediaApiCustomClient.fetchPrototypes()` instead
+    - The standalone function was deprecated as part of the logger redesign
+    - Client-based approach provides better logger lifecycle management
+
+    ```typescript
+    // Before (v0.7.0 and earlier)
+    import {
+        fetchAndNormalizePrototypes,
+        createProtopediaApiCustomClient,
+    } from '@f88/promidas/fetcher';
+
+    const client = createProtopediaApiCustomClient({ token: 'xxx' });
+    const result = await fetchAndNormalizePrototypes(client, { limit: 100 });
+
+    // After (v0.8.0)
+    import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+
+    const client = createProtopediaApiCustomClient({
+        protoPediaApiClientOptions: { token: 'xxx' },
+    });
+    const result = await client.fetchPrototypes({ limit: 100 });
+    ```
+
+    **Migration Guide:**
+    - Replace `fetchAndNormalizePrototypes(client, params)` with `client.fetchPrototypes(params)`
+    - Update imports to remove `fetchAndNormalizePrototypes`
+    - Update client creation to use nested config: `{ protoPediaApiClientOptions: { token } }`
+
+    **Files Removed:**
+    - `lib/fetcher/fetch-prototypes.ts`
+    - `lib/fetcher/__tests__/fetch-prototypes.test.ts`
+
 - **Logger API Simplification**: Simplified `createConsoleLogger()` to always create loggers with default 'info' level (#32)
     - `createConsoleLogger()` no longer accepts a `level` parameter
     - For specific log levels, use `new ConsoleLogger(level)` directly
