@@ -63,10 +63,23 @@
 
 // High-level Repository (most common use case)
 export {
-  createPromidasRepository,
-  type CreatePromidasRepositoryOptions,
-  type ProtopediaInMemoryRepository,
-  type ProtopediaInMemoryRepositoryStats,
-  type PrototypeAnalysisResult,
+  // Builder for advanced use cases
+  PromidasRepositoryBuilder,
+
+  // Re-exported from Store module for convenience
   type PrototypeInMemoryStoreConfig,
-} from './factory.js';
+  type PrototypeInMemoryStats,
+
+  // Re-exported from Logger module for convenience
+  // type Logger,
+  // type LogLevel,
+
+  // Re-exported from Fetcher module for convenience
+  type ProtoPediaApiClientOptions,
+
+  // Re-exported from Repository module for convenience
+  type ProtopediaInMemoryRepository,
+  type ProtopediaInMemoryRepositoryConfig,
+} from './builder.js';
+
+export { createPromidasRepository } from './factory.js';
