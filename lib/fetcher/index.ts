@@ -76,3 +76,6 @@ export type { ListPrototypesParams } from 'protopedia-api-v2-client';
 
 // Result Types
 export type { FetchPrototypesResult } from './types/result.types.js';
+export type { UpstreamPrototype } from './types/prototype-api.types.js';
+
+export { normalizePrototype } from './utils/normalize-prototype.js';
