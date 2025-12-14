@@ -153,7 +153,10 @@
 import type { ResultOfListPrototypesApiResponse } from 'protopedia-api-v2-client';
 import { vi } from 'vitest';
 
-import { ProtopediaApiCustomClient } from '../../../fetcher/index.js';
+import {
+  normalizePrototype,
+  ProtopediaApiCustomClient,
+} from '../../../fetcher/index.js';
 import {
   PrototypeInMemoryStore,
   type PrototypeInMemoryStoreConfig,
@@ -316,6 +319,28 @@ export const makePrototype = (
   slideMode: 0,
   ...overrides,
 });
+
+/**
+ * Create a normalized prototype for testing store interactions.
+ *
+ * This helper creates a prototype and normalizes it using the same normalization
+ * logic as the production code. Use this when mocking store methods that work
+ * with normalized prototypes.
+ *
+ * @param overrides - Partial prototype data to override defaults
+ * @returns Normalized prototype object for testing
+ *
+ * @example
+ * ```typescript
+ * const normalized = makeNormalizedPrototype({ id: 42, prototypeNm: 'Test' });
+ * mockStore.setAll([normalized]);
+ * ```
+ */
+export const makeNormalizedPrototype = (
+  overrides: Partial<ResultOfListPrototypesApiResponse> = {},
+): NormalizedPrototype => {
+  return normalizePrototype(makePrototype(overrides));
+};
 
 /**
  * Creates mock functions for the API client and configures them for testing.

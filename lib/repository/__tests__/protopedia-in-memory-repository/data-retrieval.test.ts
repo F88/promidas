@@ -36,6 +36,7 @@ vi.mock('../../../store/index', async (importOriginal) => {
 
 import {
   createTestContext,
+  makeNormalizedPrototype,
   makePrototype,
   setupMocks,
 } from './test-helpers.js';
@@ -102,7 +103,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         refreshInFlight: false,
       });
       vi.mocked(mockStoreInstance.getAll).mockReturnValueOnce([
-        makePrototype({ id: 42, prototypeNm: 'random candidate' }),
+        makeNormalizedPrototype({ id: 42, prototypeNm: 'random candidate' }),
       ]);
       const repo = new ProtopediaInMemoryRepositoryImpl({
         store: mockStoreInstance,
@@ -118,9 +119,9 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
 
     it('returns one of the available prototypes when multiple exist', async () => {
       const prototypes = [
-        makePrototype({ id: 1, prototypeNm: 'alpha' }),
-        makePrototype({ id: 2, prototypeNm: 'beta' }),
-        makePrototype({ id: 3, prototypeNm: 'gamma' }),
+        makeNormalizedPrototype({ id: 1, prototypeNm: 'alpha' }),
+        makeNormalizedPrototype({ id: 2, prototypeNm: 'beta' }),
+        makeNormalizedPrototype({ id: 3, prototypeNm: 'gamma' }),
       ];
       fetchPrototypesMock.mockResolvedValueOnce({
         ok: true,
@@ -192,8 +193,8 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         refreshInFlight: false,
       });
       vi.mocked(mockStoreInstance.getAll).mockReturnValueOnce([
-        makePrototype({ id: 1 }),
-        makePrototype({ id: 2 }),
+        makeNormalizedPrototype({ id: 1 }),
+        makeNormalizedPrototype({ id: 2 }),
       ]);
       const repo = new ProtopediaInMemoryRepositoryImpl({
         store: mockStoreInstance,
@@ -224,8 +225,8 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         refreshInFlight: false,
       });
       vi.mocked(mockStoreInstance.getAll).mockReturnValueOnce([
-        makePrototype({ id: 1 }),
-        makePrototype({ id: 2 }),
+        makeNormalizedPrototype({ id: 1 }),
+        makeNormalizedPrototype({ id: 2 }),
       ]);
       const repo = new ProtopediaInMemoryRepositoryImpl({
         store: mockStoreInstance,
@@ -240,11 +241,11 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
 
     it('returns requested number of samples when enough data exists', async () => {
       const prototypes = [
-        makePrototype({ id: 1 }),
-        makePrototype({ id: 2 }),
-        makePrototype({ id: 3 }),
-        makePrototype({ id: 4 }),
-        makePrototype({ id: 5 }),
+        makeNormalizedPrototype({ id: 1 }),
+        makeNormalizedPrototype({ id: 2 }),
+        makeNormalizedPrototype({ id: 3 }),
+        makeNormalizedPrototype({ id: 4 }),
+        makeNormalizedPrototype({ id: 5 }),
       ];
       fetchPrototypesMock.mockResolvedValueOnce({
         ok: true,
@@ -275,7 +276,10 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
     });
 
     it('returns all data when size exceeds available prototypes', async () => {
-      const prototypes = [makePrototype({ id: 1 }), makePrototype({ id: 2 })];
+      const prototypes = [
+        makeNormalizedPrototype({ id: 1 }),
+        makeNormalizedPrototype({ id: 2 }),
+      ];
       fetchPrototypesMock.mockResolvedValueOnce({
         ok: true,
         data: prototypes,
@@ -306,11 +310,11 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
 
     it('returns unique samples without duplicates', async () => {
       const prototypes = [
-        makePrototype({ id: 1 }),
-        makePrototype({ id: 2 }),
-        makePrototype({ id: 3 }),
-        makePrototype({ id: 4 }),
-        makePrototype({ id: 5 }),
+        makeNormalizedPrototype({ id: 1 }),
+        makeNormalizedPrototype({ id: 2 }),
+        makeNormalizedPrototype({ id: 3 }),
+        makeNormalizedPrototype({ id: 4 }),
+        makeNormalizedPrototype({ id: 5 }),
       ];
       fetchPrototypesMock.mockResolvedValueOnce({
         ok: true,
@@ -344,9 +348,9 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
 
     it('eventually samples all prototypes over multiple calls', async () => {
       const prototypes = [
-        makePrototype({ id: 1 }),
-        makePrototype({ id: 2 }),
-        makePrototype({ id: 3 }),
+        makeNormalizedPrototype({ id: 1 }),
+        makeNormalizedPrototype({ id: 2 }),
+        makeNormalizedPrototype({ id: 3 }),
       ];
       fetchPrototypesMock.mockResolvedValueOnce({
         ok: true,
@@ -386,7 +390,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
 
     it('handles large sample sizes efficiently (>50% of total)', async () => {
       const prototypes = Array.from({ length: 10 }, (_, i) =>
-        makePrototype({ id: i + 1 }),
+        makeNormalizedPrototype({ id: i + 1 }),
       );
       fetchPrototypesMock.mockResolvedValueOnce({
         ok: true,
@@ -421,7 +425,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
 
     it('handles small sample sizes efficiently (<50% of total)', async () => {
       const prototypes = Array.from({ length: 10 }, (_, i) =>
-        makePrototype({ id: i + 1 }),
+        makeNormalizedPrototype({ id: i + 1 }),
       );
       fetchPrototypesMock.mockResolvedValueOnce({
         ok: true,
@@ -649,9 +653,9 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
 
     it('returns all prototypes when snapshot is populated', async () => {
       const testData = [
-        makePrototype({ id: 1, prototypeNm: 'First' }),
-        makePrototype({ id: 2, prototypeNm: 'Second' }),
-        makePrototype({ id: 3, prototypeNm: 'Third' }),
+        makeNormalizedPrototype({ id: 1, prototypeNm: 'First' }),
+        makeNormalizedPrototype({ id: 2, prototypeNm: 'Second' }),
+        makeNormalizedPrototype({ id: 3, prototypeNm: 'Third' }),
       ];
 
       fetchPrototypesMock.mockResolvedValueOnce({
@@ -707,7 +711,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         refreshInFlight: false,
       });
       vi.mocked(mockStoreInstance.getAll).mockReturnValueOnce([
-        makePrototype({ id: 1 }),
+        makeNormalizedPrototype({ id: 1 }),
       ]);
       const repo = new ProtopediaInMemoryRepositoryImpl({
         store: mockStoreInstance,
@@ -742,7 +746,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         refreshInFlight: false,
       });
       vi.mocked(mockStoreInstance.getAll).mockReturnValueOnce([
-        makePrototype({ id: 1, prototypeNm: 'Old' }),
+        makeNormalizedPrototype({ id: 1, prototypeNm: 'Old' }),
       ]);
       const repo = new ProtopediaInMemoryRepositoryImpl({
         store: mockStoreInstance,
@@ -775,8 +779,8 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         refreshInFlight: false,
       });
       vi.mocked(mockStoreInstance.getAll).mockReturnValueOnce([
-        makePrototype({ id: 2, prototypeNm: 'New1' }),
-        makePrototype({ id: 3, prototypeNm: 'New2' }),
+        makeNormalizedPrototype({ id: 2, prototypeNm: 'New1' }),
+        makeNormalizedPrototype({ id: 3, prototypeNm: 'New2' }),
       ]);
 
       await repo.refreshSnapshot();
@@ -812,7 +816,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
       });
       vi.mocked(mockStoreInstance.getByPrototypeId).mockImplementation((id) => {
         if (id === 9)
-          return makePrototype({ id: 9, prototypeNm: 'known entry' });
+          return makeNormalizedPrototype({ id: 9, prototypeNm: 'known entry' });
         return null; // Ensure null is returned for unknown IDs
       });
       const repo = new ProtopediaInMemoryRepositoryImpl({
@@ -849,7 +853,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         refreshInFlight: false,
       });
       vi.mocked(mockStoreInstance.getByPrototypeId).mockReturnValueOnce(
-        makePrototype({ id: 9, prototypeNm: 'known entry' }),
+        makeNormalizedPrototype({ id: 9, prototypeNm: 'known entry' }),
       );
       const repo = new ProtopediaInMemoryRepositoryImpl({
         store: mockStoreInstance,
@@ -866,9 +870,9 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
 
     it('can look up multiple prototypes from a larger snapshot', async () => {
       const prototypes = [
-        makePrototype({ id: 1, prototypeNm: 'first' }),
-        makePrototype({ id: 2, prototypeNm: 'second' }),
-        makePrototype({ id: 3, prototypeNm: 'third' }),
+        makeNormalizedPrototype({ id: 1, prototypeNm: 'first' }),
+        makeNormalizedPrototype({ id: 2, prototypeNm: 'second' }),
+        makeNormalizedPrototype({ id: 3, prototypeNm: 'third' }),
       ];
       fetchPrototypesMock.mockResolvedValueOnce({
         ok: true,

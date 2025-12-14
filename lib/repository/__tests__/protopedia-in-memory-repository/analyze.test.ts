@@ -24,6 +24,7 @@ vi.mock('../../../store/index', async (importOriginal) => {
 
 import {
   createTestContext,
+  makeNormalizedPrototype,
   makePrototype,
   setupMocks,
 } from './test-helpers.js';
@@ -41,8 +42,8 @@ describe('ProtopediaInMemoryRepositoryImpl - analysis', () => {
     const testContext = createTestContext({
       getByPrototypeId: vi
         .fn()
-        .mockImplementation((id) => makePrototype({ id })),
-      getAll: vi.fn().mockReturnValue([makePrototype({ id: 1 })]),
+        .mockImplementation((id) => makeNormalizedPrototype({ id })),
+      getAll: vi.fn().mockReturnValue([makeNormalizedPrototype({ id: 1 })]),
       getPrototypeIds: vi.fn().mockReturnValue([1]),
     });
 
@@ -83,7 +84,7 @@ describe('ProtopediaInMemoryRepositoryImpl - analysis', () => {
       });
 
       vi.mocked(mockStoreInstance.getAll).mockReturnValueOnce([
-        makePrototype({ id: 42 }),
+        makeNormalizedPrototype({ id: 42 }),
       ]);
       vi.mocked(mockStoreInstance.setAll).mockReturnValueOnce({
         dataSizeBytes: 100,
@@ -113,7 +114,15 @@ describe('ProtopediaInMemoryRepositoryImpl - analysis', () => {
         data: prototypes,
       });
 
-      vi.mocked(mockStoreInstance.getAll).mockReturnValueOnce(prototypes);
+      const normalizedPrototypes = [
+        makeNormalizedPrototype({ id: 5 }),
+        makeNormalizedPrototype({ id: 1 }),
+        makeNormalizedPrototype({ id: 10 }),
+        makeNormalizedPrototype({ id: 3 }),
+      ];
+      vi.mocked(mockStoreInstance.getAll).mockReturnValueOnce(
+        normalizedPrototypes,
+      );
       vi.mocked(mockStoreInstance.setAll).mockReturnValueOnce({
         dataSizeBytes: 500,
       });
@@ -162,8 +171,13 @@ describe('ProtopediaInMemoryRepositoryImpl - analysis', () => {
       vi.mocked(mockStoreInstance.getPrototypeIds).mockReturnValueOnce([
         100, 1, 50,
       ]);
+      const normalizedPrototypes = [
+        makeNormalizedPrototype({ id: 100 }),
+        makeNormalizedPrototype({ id: 1 }),
+        makeNormalizedPrototype({ id: 50 }),
+      ];
       vi.mocked(mockStoreInstance.getByPrototypeId).mockImplementation(
-        (id) => prototypes.find((p) => p.id === id) || null,
+        (id) => normalizedPrototypes.find((p) => p.id === id) || null,
       );
 
       const repo = new ProtopediaInMemoryRepositoryImpl({

@@ -32,6 +32,7 @@ vi.mock('../../../store/index', async (importOriginal) => {
 
 import {
   createTestContext,
+  makeNormalizedPrototype,
   makePrototype,
   setupMocks,
 } from './test-helpers.js';
@@ -47,8 +48,10 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
     vi.clearAllMocks();
 
     const testContext = createTestContext({
-      getByPrototypeId: vi.fn().mockReturnValue(makePrototype({ id: 1 })),
-      getAll: vi.fn().mockReturnValue([makePrototype({ id: 1 })]),
+      getByPrototypeId: vi
+        .fn()
+        .mockReturnValue(makeNormalizedPrototype({ id: 1 })),
+      getAll: vi.fn().mockReturnValue([makeNormalizedPrototype({ id: 1 })]),
       getPrototypeIds: vi.fn().mockReturnValue([1]),
     });
 
@@ -161,7 +164,7 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
 
       // Override getByPrototypeId for this specific test
       vi.mocked(mockStoreInstance.getByPrototypeId).mockReturnValueOnce(
-        makePrototype({ id: 100, prototypeNm: 'override test' }),
+        makeNormalizedPrototype({ id: 100, prototypeNm: 'override test' }),
       );
 
       const repo = new ProtopediaInMemoryRepositoryImpl({
@@ -312,8 +315,8 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
         refreshInFlight: false,
       });
       vi.mocked(mockStoreInstance.getByPrototypeId)
-        .mockReturnValueOnce(makePrototype({ id: 1 }))
-        .mockReturnValueOnce(makePrototype({ id: 2 }));
+        .mockReturnValueOnce(makeNormalizedPrototype({ id: 1 }))
+        .mockReturnValueOnce(makeNormalizedPrototype({ id: 2 }));
 
       const repo = new ProtopediaInMemoryRepositoryImpl({
         store: mockStoreInstance,
@@ -407,10 +410,10 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
         refreshInFlight: false,
       });
       vi.mocked(mockStoreInstance.getByPrototypeId).mockReturnValue(
-        makePrototype({ id: 1 }),
+        makeNormalizedPrototype({ id: 1 }),
       );
       vi.mocked(mockStoreInstance.getAll).mockReturnValue([
-        makePrototype({ id: 1 }),
+        makeNormalizedPrototype({ id: 1 }),
       ]);
 
       const repo = new ProtopediaInMemoryRepositoryImpl({
@@ -468,9 +471,15 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
 
       // Override getByPrototypeId for this specific test
       vi.mocked(mockStoreInstance.getByPrototypeId)
-        .mockReturnValueOnce(makePrototype({ id: 1, prototypeNm: 'first' }))
-        .mockReturnValueOnce(makePrototype({ id: 2, prototypeNm: 'second' }))
-        .mockReturnValueOnce(makePrototype({ id: 3, prototypeNm: 'third' }));
+        .mockReturnValueOnce(
+          makeNormalizedPrototype({ id: 1, prototypeNm: 'first' }),
+        )
+        .mockReturnValueOnce(
+          makeNormalizedPrototype({ id: 2, prototypeNm: 'second' }),
+        )
+        .mockReturnValueOnce(
+          makeNormalizedPrototype({ id: 3, prototypeNm: 'third' }),
+        );
 
       const repo = new ProtopediaInMemoryRepositoryImpl({
         store: mockStoreInstance,
