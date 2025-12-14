@@ -22,7 +22,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProtopediaApiCustomClient } from '../../../fetcher/index.js';
 import { ProtopediaInMemoryRepositoryImpl } from '../../protopedia-in-memory-repository.js';
 
-import { createMockStore } from './test-helpers.js';
+import { createMockStore, setupMocks } from './test-helpers.js';
 
 vi.mock('../../../fetcher/index', async (importOriginal) => {
   const actual =
@@ -86,19 +86,10 @@ const getMemoryUsage = () => {
 };
 
 describe('ProtopediaInMemoryRepositoryImpl - data access performance', () => {
-  const listPrototypesMock = vi.fn();
-  const fetchPrototypesMock = vi.fn();
+  const { listPrototypesMock, fetchPrototypesMock, resetMocks } = setupMocks();
 
   beforeEach(() => {
-    listPrototypesMock.mockReset();
-    fetchPrototypesMock.mockReset();
-
-    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
-      class {
-        listPrototypes = listPrototypesMock;
-        fetchPrototypes = fetchPrototypesMock;
-      } as any,
-    );
+    resetMocks();
   });
 
   /**

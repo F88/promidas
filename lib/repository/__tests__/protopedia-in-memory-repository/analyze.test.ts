@@ -22,7 +22,11 @@ vi.mock('../../../store/index', async (importOriginal) => {
   };
 });
 
-import { makePrototype, setupMocks } from './test-helpers.js';
+import {
+  createTestContext,
+  makePrototype,
+  setupMocks,
+} from './test-helpers.js';
 
 describe('ProtopediaInMemoryRepositoryImpl - analysis', () => {
   const { fetchPrototypesMock, resetMocks } = setupMocks();
@@ -34,47 +38,18 @@ describe('ProtopediaInMemoryRepositoryImpl - analysis', () => {
     resetMocks();
     vi.clearAllMocks();
 
-    mockStoreInstance = {
-      getConfig: vi.fn(),
-      setAll: vi.fn(),
-      getStats: vi.fn(),
-      getByPrototypeId: vi.fn(),
-      getAll: vi.fn(),
-      getPrototypeIds: vi.fn(),
-    } as unknown as PrototypeInMemoryStore;
-
-    vi.mocked(mockStoreInstance.getConfig).mockReturnValue({
-      ttlMs: 60_000,
-      maxDataSizeBytes: 10485760,
-      logLevel: 'info',
+    const testContext = createTestContext({
+      getByPrototypeId: vi
+        .fn()
+        .mockImplementation((id) => makePrototype({ id })),
+      getAll: vi.fn().mockReturnValue([makePrototype({ id: 1 })]),
+      getPrototypeIds: vi.fn().mockReturnValue([1]),
     });
-    vi.mocked(mockStoreInstance.setAll).mockReturnValue({ dataSizeBytes: 100 });
-    vi.mocked(mockStoreInstance.getStats).mockReturnValue({
-      size: 1,
-      cachedAt: new Date(),
-      isExpired: false,
-      remainingTtlMs: 50000,
-      dataSizeBytes: 100,
-      refreshInFlight: false,
-    });
-    vi.mocked(mockStoreInstance.getByPrototypeId).mockImplementation((id) =>
-      makePrototype({ id }),
-    );
-    vi.mocked(mockStoreInstance.getAll).mockReturnValue([
-      makePrototype({ id: 1 }),
-    ]);
-    vi.mocked(mockStoreInstance.getPrototypeIds).mockReturnValue([1]);
 
-    vi.mocked(PrototypeInMemoryStore).mockImplementation(
-      () => mockStoreInstance,
-    );
-
-    mockApiClientInstance = {
-      fetchPrototypes: vi.fn().mockImplementation(fetchPrototypesMock),
-    } as unknown as InstanceType<typeof ProtopediaApiCustomClient>;
-
-    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
-      () => mockApiClientInstance,
+    mockStoreInstance = testContext.mockStoreInstance;
+    mockApiClientInstance = testContext.mockApiClientInstance;
+    vi.mocked(mockApiClientInstance.fetchPrototypes).mockImplementation(
+      fetchPrototypesMock,
     );
   });
 

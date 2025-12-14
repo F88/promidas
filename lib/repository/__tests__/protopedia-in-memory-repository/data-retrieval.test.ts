@@ -34,7 +34,11 @@ vi.mock('../../../store/index', async (importOriginal) => {
   };
 });
 
-import { makePrototype, setupMocks } from './test-helpers.js';
+import {
+  createTestContext,
+  makePrototype,
+  setupMocks,
+} from './test-helpers.js';
 
 describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
   const { fetchPrototypesMock, resetMocks } = setupMocks();
@@ -46,47 +50,9 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
     resetMocks();
     vi.clearAllMocks();
 
-    mockStoreInstance = {
-      getConfig: vi.fn(),
-      setAll: vi.fn(),
-      getStats: vi.fn(),
-      getByPrototypeId: vi.fn(),
-      getAll: vi.fn(),
-      getPrototypeIds: vi.fn(),
-    } as unknown as PrototypeInMemoryStore;
-
-    // Default mock implementations for store methods (can be overridden in tests)
-    vi.mocked(mockStoreInstance.getConfig).mockReturnValue({
-      ttlMs: 60_000,
-      maxDataSizeBytes: 10485760,
-      logLevel: 'info',
-    });
-    vi.mocked(mockStoreInstance.setAll).mockReturnValue({ dataSizeBytes: 100 });
-    vi.mocked(mockStoreInstance.getStats).mockReturnValue({
-      size: 1, // Default size, can be overridden per test
-      cachedAt: new Date(),
-      isExpired: false,
-      remainingTtlMs: 50000,
-      dataSizeBytes: 100,
-      refreshInFlight: false,
-    });
-    vi.mocked(mockStoreInstance.getByPrototypeId).mockImplementation(
-      () => null,
-    ); // Default to null for unknown ids
-    vi.mocked(mockStoreInstance.getAll).mockReturnValue([]);
-    vi.mocked(mockStoreInstance.getPrototypeIds).mockReturnValue([]);
-
-    vi.mocked(PrototypeInMemoryStore).mockImplementation(
-      () => mockStoreInstance,
-    );
-
-    mockApiClientInstance = {
-      fetchPrototypes: vi.fn(),
-    } as unknown as InstanceType<typeof ProtopediaApiCustomClient>;
-
-    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
-      () => mockApiClientInstance,
-    );
+    const testContext = createTestContext();
+    mockStoreInstance = testContext.mockStoreInstance;
+    mockApiClientInstance = testContext.mockApiClientInstance;
     vi.mocked(mockApiClientInstance.fetchPrototypes).mockImplementation(
       fetchPrototypesMock,
     );

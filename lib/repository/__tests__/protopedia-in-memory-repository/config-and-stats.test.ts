@@ -65,7 +65,11 @@ vi.mock('../../../store/index', async (importOriginal) => {
   };
 });
 
-import { makePrototype, setupMocks } from './test-helpers.js';
+import {
+  createBasicMockStore,
+  makePrototype,
+  setupMocks,
+} from './test-helpers.js';
 
 describe('ProtopediaInMemoryRepositoryImpl - configuration and statistics', () => {
   const { fetchPrototypesMock, resetMocks } = setupMocks();
@@ -77,16 +81,14 @@ describe('ProtopediaInMemoryRepositoryImpl - configuration and statistics', () =
     resetMocks();
     vi.clearAllMocks();
 
-    mockStoreInstance = {
+    // Use createBasicMockStore with custom config for this test suite
+    mockStoreInstance = createBasicMockStore({
       getConfig: vi.fn().mockReturnValue({
-        // Default config for store
-        ttlMs: 1800000,
-        maxDataSizeBytes: 10485760,
-        logLevel: 'info',
+        ttlMs: 1_800_000,
+        maxDataSizeBytes: 10_485_760,
+        logLevel: 'info' as const,
       }),
-      setAll: vi.fn().mockReturnValue({ dataSizeBytes: 100 }),
       getStats: vi.fn().mockReturnValue({
-        // Default stats for store
         size: 0,
         cachedAt: null,
         isExpired: true,
@@ -94,12 +96,8 @@ describe('ProtopediaInMemoryRepositoryImpl - configuration and statistics', () =
         dataSizeBytes: 0,
         refreshInFlight: false,
       }),
-      getByPrototypeId: vi.fn().mockReturnValue(null),
-      getAll: vi.fn().mockReturnValue([]),
-      getPrototypeIds: vi.fn().mockReturnValue([]),
-    } as unknown as PrototypeInMemoryStore;
+    });
 
-    // mockImplementation for PrototypeInMemoryStore constructor
     vi.mocked(PrototypeInMemoryStore).mockImplementation(
       () => mockStoreInstance,
     );
