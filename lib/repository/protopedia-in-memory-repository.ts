@@ -278,10 +278,17 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
       this.#logLevel = resolvedLogLevel;
     }
 
+    const sanitizedApiClientOptions = apiClientOptions
+      ? { ...apiClientOptions }
+      : undefined;
+    if (sanitizedApiClientOptions?.token) {
+      sanitizedApiClientOptions.token = '***';
+    }
+
     this.#logger.info('ProtopediaInMemoryRepository constructor called', {
       repositoryConfig,
       storeConfig,
-      apiClientOptions,
+      apiClientOptions: sanitizedApiClientOptions,
     });
 
     this.#store = new PrototypeInMemoryStore(storeConfig);

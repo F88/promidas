@@ -7,6 +7,7 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { Logger } from '../../../logger/index.js';
 import { ProtopediaInMemoryRepositoryImpl } from '../../protopedia-in-memory-repository.js';
 
 vi.mock('../../../fetcher/index', async (importOriginal) => {
@@ -47,6 +48,29 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
       const repo = new ProtopediaInMemoryRepositoryImpl({});
 
       expect(repo).toBeInstanceOf(ProtopediaInMemoryRepositoryImpl);
+    });
+
+    it('masks token in logs when apiClientOptions with token is provided', () => {
+      const mockLogger = {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+      } as unknown as Logger;
+
+      new ProtopediaInMemoryRepositoryImpl({
+        repositoryConfig: { logger: mockLogger },
+        apiClientOptions: { token: 'secret-token' },
+      });
+
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        'ProtopediaInMemoryRepository constructor called',
+        expect.objectContaining({
+          apiClientOptions: expect.objectContaining({
+            token: '***',
+          }),
+        }),
+      );
     });
   });
 
