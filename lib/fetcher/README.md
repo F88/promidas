@@ -61,7 +61,7 @@ if (result.ok) {
         console.log(`タグ: ${prototype.tags.join(', ')}`);
     });
 } else {
-    console.error('エラー:', result.error.message);
+    console.error('エラー:', result.error);
 }
 ```
 
@@ -111,7 +111,7 @@ if (result.ok) {
     console.log('データ:', result.data);
 } else {
     // 失敗した場合
-    console.error('エラー:', result.error.message);
+    console.error('エラー:', result.error);
 
     if (result.status === 401) {
         console.log('認証エラーです。APIトークンを確認してください。');

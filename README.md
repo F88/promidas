@@ -135,7 +135,7 @@ import { createConsoleLogger, type Logger } from '@f88/promidas/logger';
 // API client and fetcher
 import {
     createProtopediaApiCustomClient,
-    fetchAndNormalizePrototypes,
+    normalizePrototype,
 } from '@f88/promidas/fetcher';
 
 // In-memory store
