@@ -24,7 +24,7 @@
  *   const actual = await importOriginal<typeof import('../../../fetcher/index.js')>();
  *   return {
  *     ...actual,
- *     createProtopediaApiCustomClient: vi.fn(),
+ *     ProtopediaApiCustomClient: vi.fn(),
  *   };
  * });
  *
@@ -64,7 +64,7 @@
 import type { ResultOfListPrototypesApiResponse } from 'protopedia-api-v2-client';
 import { vi } from 'vitest';
 
-import { createProtopediaApiCustomClient } from '../../../fetcher/index.js';
+import { ProtopediaApiCustomClient } from '../../../fetcher/index.js';
 
 /**
  * Helper to build minimal-but-valid upstream prototypes for testing.
@@ -123,12 +123,12 @@ export const setupMocks = () => {
     listPrototypesMock.mockReset();
     fetchPrototypesMock.mockReset();
 
-    (
-      createProtopediaApiCustomClient as unknown as ReturnType<typeof vi.fn>
-    ).mockReturnValue({
-      listPrototypes: listPrototypesMock,
-      fetchPrototypes: fetchPrototypesMock,
-    });
+    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+      class {
+        listPrototypes = listPrototypesMock;
+        fetchPrototypes = fetchPrototypesMock;
+      } as any,
+    );
   };
 
   // Initial setup

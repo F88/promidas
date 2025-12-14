@@ -58,7 +58,7 @@ import type {
 } from 'protopedia-api-v2-client';
 import type { DeepReadonly } from 'ts-essentials';
 
-import { createProtopediaApiCustomClient } from '../fetcher/index.js';
+import { ProtopediaApiCustomClient } from '../fetcher/index.js';
 import {
   ConsoleLogger,
   type Logger,
@@ -109,7 +109,7 @@ const SAMPLE_SIZE_THRESHOLD_RATIO = 0.5;
  *
  * 1. **Dependency Management**
  *    - Instantiates {@link PrototypeInMemoryStore} with provided config
- *    - Creates ProtoPedia API client via {@link createProtopediaApiCustomClient}
+ *    - Creates ProtoPedia API client via ProtopediaApiCustomClient constructor
  *    - Maintains internal state for fetch parameters
  *
  * 2. **Snapshot Operations**
@@ -164,7 +164,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
   #logger: Logger;
   #logLevel: LogLevel;
   #store: PrototypeInMemoryStore;
-  #apiClient: ReturnType<typeof createProtopediaApiCustomClient>;
+  #apiClient: ProtopediaApiCustomClient;
   #lastFetchParams: ListPrototypesParams = { ...DEFAULT_FETCH_PARAMS };
   #ongoingFetch: Promise<SnapshotOperationResult> | null = null;
 
@@ -292,7 +292,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
     });
 
     this.#store = new PrototypeInMemoryStore(storeConfig);
-    this.#apiClient = createProtopediaApiCustomClient(
+    this.#apiClient = new ProtopediaApiCustomClient(
       apiClientOptions !== undefined
         ? { protoPediaApiClientOptions: apiClientOptions }
         : undefined,

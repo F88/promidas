@@ -128,7 +128,7 @@
  *
  * ## Mocking Strategy
  *
- * We mock {@link createProtopediaApiCustomClient} to:
+ * We mock {@link ProtopediaApiCustomClient} to:
  * - Avoid real network calls during testing
  * - Control API client behavior deterministically
  * - Focus tests on factory logic, not API implementation
@@ -139,7 +139,7 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 
-import { createProtopediaApiCustomClient } from '../../fetcher/index.js';
+import { ProtopediaApiCustomClient } from '../../fetcher/index.js';
 import { createProtopediaInMemoryRepository } from '../factory.js';
 import { ProtopediaInMemoryRepositoryImpl } from '../protopedia-in-memory-repository.js';
 
@@ -148,15 +148,17 @@ vi.mock('../../fetcher/index', async (importOriginal) => {
     await importOriginal<typeof import('../../fetcher/index.js')>();
   return {
     ...actual,
-    createProtopediaApiCustomClient: vi.fn(),
+    ProtopediaApiCustomClient: vi.fn(),
   };
 });
 
 describe('createProtopediaInMemoryRepository', () => {
   it('should create a repository instance', () => {
-    vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-      listPrototypes: vi.fn(),
-    } as never);
+    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+      class {
+        listPrototypes = vi.fn();
+      } as any,
+    );
 
     const repository = createProtopediaInMemoryRepository({});
 
@@ -165,9 +167,11 @@ describe('createProtopediaInMemoryRepository', () => {
   });
 
   it('should create repository with store configuration', () => {
-    vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-      listPrototypes: vi.fn(),
-    } as never);
+    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+      class {
+        listPrototypes = vi.fn();
+      } as any,
+    );
 
     const storeConfig = { maxDataSizeBytes: 5000 };
     const repository = createProtopediaInMemoryRepository({ storeConfig });
@@ -181,9 +185,11 @@ describe('createProtopediaInMemoryRepository', () => {
   });
 
   it('should create repository with API client options', () => {
-    const mockClient = { listPrototypes: vi.fn() };
-    vi.mocked(createProtopediaApiCustomClient).mockReturnValue(
-      mockClient as never,
+    const listPrototypesMock = vi.fn();
+    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+      class {
+        listPrototypes = listPrototypesMock;
+      } as any,
     );
 
     const apiClientOptions = {
@@ -194,15 +200,17 @@ describe('createProtopediaInMemoryRepository', () => {
 
     expect(repository).toBeDefined();
     expect(repository).toBeInstanceOf(ProtopediaInMemoryRepositoryImpl);
-    expect(createProtopediaApiCustomClient).toHaveBeenCalledWith({
+    expect(ProtopediaApiCustomClient).toHaveBeenCalledWith({
       protoPediaApiClientOptions: apiClientOptions,
     });
   });
 
   it('should create repository with both configurations', () => {
-    const mockClient = { listPrototypes: vi.fn() };
-    vi.mocked(createProtopediaApiCustomClient).mockReturnValue(
-      mockClient as never,
+    const listPrototypesMock = vi.fn();
+    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+      class {
+        listPrototypes = listPrototypesMock;
+      } as any,
     );
 
     const storeConfig = { maxDataSizeBytes: 3000 };
@@ -218,15 +226,17 @@ describe('createProtopediaInMemoryRepository', () => {
         maxDataSizeBytes: 3000,
       }),
     );
-    expect(createProtopediaApiCustomClient).toHaveBeenCalledWith({
+    expect(ProtopediaApiCustomClient).toHaveBeenCalledWith({
       protoPediaApiClientOptions: apiClientOptions,
     });
   });
 
   it('should create repository without any arguments', () => {
-    vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-      listPrototypes: vi.fn(),
-    } as never);
+    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+      class {
+        listPrototypes = vi.fn();
+      } as any,
+    );
 
     const repository = createProtopediaInMemoryRepository();
 
@@ -241,9 +251,11 @@ describe('createProtopediaInMemoryRepository', () => {
   });
 
   it('should implement ProtopediaInMemoryRepository interface', () => {
-    vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-      listPrototypes: vi.fn(),
-    } as never);
+    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+      class {
+        listPrototypes = vi.fn();
+      } as any,
+    );
 
     const repository = createProtopediaInMemoryRepository({});
 
@@ -261,9 +273,11 @@ describe('createProtopediaInMemoryRepository', () => {
   });
 
   it('should create independent instances', () => {
-    vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-      listPrototypes: vi.fn(),
-    } as never);
+    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+      class {
+        listPrototypes = vi.fn();
+      } as any,
+    );
 
     const repo1 = createProtopediaInMemoryRepository({
       storeConfig: { maxDataSizeBytes: 1000 },
@@ -278,9 +292,11 @@ describe('createProtopediaInMemoryRepository', () => {
   });
 
   it('should apply default values when storeConfig is empty', () => {
-    vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-      listPrototypes: vi.fn(),
-    } as never);
+    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+      class {
+        listPrototypes = vi.fn();
+      } as any,
+    );
 
     const repository = createProtopediaInMemoryRepository({
       storeConfig: {},
@@ -292,9 +308,11 @@ describe('createProtopediaInMemoryRepository', () => {
   });
 
   it('should apply partial store configuration with ttlMs only', () => {
-    vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-      listPrototypes: vi.fn(),
-    } as never);
+    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+      class {
+        listPrototypes = vi.fn();
+      } as any,
+    );
 
     const customTtl = 5 * 60 * 1000; // 5 minutes
     const repository = createProtopediaInMemoryRepository({
@@ -307,9 +325,11 @@ describe('createProtopediaInMemoryRepository', () => {
   });
 
   it('should apply partial store configuration with maxDataSizeBytes only', () => {
-    vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-      listPrototypes: vi.fn(),
-    } as never);
+    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+      class {
+        listPrototypes = vi.fn();
+      } as any,
+    );
 
     const customSize = 5 * 1024 * 1024; // 5 MiB
     const repository = createProtopediaInMemoryRepository({
@@ -322,9 +342,11 @@ describe('createProtopediaInMemoryRepository', () => {
   });
 
   it('should pass logger in storeConfig to store', () => {
-    vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-      listPrototypes: vi.fn(),
-    } as never);
+    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+      class {
+        listPrototypes = vi.fn();
+      } as any,
+    );
 
     const mockLogger = {
       debug: vi.fn(),
@@ -343,9 +365,11 @@ describe('createProtopediaInMemoryRepository', () => {
   });
 
   it('should pass logger in apiClientOptions to API client', () => {
-    const mockClient = { listPrototypes: vi.fn() };
-    vi.mocked(createProtopediaApiCustomClient).mockReturnValue(
-      mockClient as never,
+    const listPrototypesMock = vi.fn();
+    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+      class {
+        listPrototypes = listPrototypesMock;
+      } as any,
     );
 
     const mockLogger = {
@@ -362,15 +386,17 @@ describe('createProtopediaInMemoryRepository', () => {
 
     createProtopediaInMemoryRepository({ apiClientOptions });
 
-    expect(createProtopediaApiCustomClient).toHaveBeenCalledWith({
+    expect(ProtopediaApiCustomClient).toHaveBeenCalledWith({
       protoPediaApiClientOptions: apiClientOptions,
     });
   });
 
   it('should support different loggers for store and API client', () => {
-    const mockClient = { listPrototypes: vi.fn() };
-    vi.mocked(createProtopediaApiCustomClient).mockReturnValue(
-      mockClient as never,
+    const listPrototypesMock = vi.fn();
+    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+      class {
+        listPrototypes = listPrototypesMock;
+      } as any,
     );
 
     const storeLogger = {
@@ -393,7 +419,7 @@ describe('createProtopediaInMemoryRepository', () => {
     });
 
     expect(repository).toBeDefined();
-    expect(createProtopediaApiCustomClient).toHaveBeenCalledWith({
+    expect(ProtopediaApiCustomClient).toHaveBeenCalledWith({
       protoPediaApiClientOptions: {
         token: 'test-token',
         logger: apiLogger,
@@ -402,9 +428,11 @@ describe('createProtopediaInMemoryRepository', () => {
   });
 
   it('should pass logLevel in storeConfig to store', () => {
-    vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-      listPrototypes: vi.fn(),
-    } as never);
+    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+      class {
+        listPrototypes = vi.fn();
+      } as any,
+    );
 
     const repository = createProtopediaInMemoryRepository({
       storeConfig: { logLevel: 'debug' },
@@ -415,9 +443,11 @@ describe('createProtopediaInMemoryRepository', () => {
   });
 
   it('should pass logLevel in apiClientOptions to API client', () => {
-    const mockClient = { listPrototypes: vi.fn() };
-    vi.mocked(createProtopediaApiCustomClient).mockReturnValue(
-      mockClient as never,
+    const listPrototypesMock = vi.fn();
+    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+      class {
+        listPrototypes = listPrototypesMock;
+      } as any,
     );
 
     const apiClientOptions = {
@@ -427,15 +457,17 @@ describe('createProtopediaInMemoryRepository', () => {
 
     createProtopediaInMemoryRepository({ apiClientOptions });
 
-    expect(createProtopediaApiCustomClient).toHaveBeenCalledWith({
+    expect(ProtopediaApiCustomClient).toHaveBeenCalledWith({
       protoPediaApiClientOptions: apiClientOptions,
     });
   });
 
   it('should create fresh instances on each call', () => {
-    vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-      listPrototypes: vi.fn(),
-    } as never);
+    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+      class {
+        listPrototypes = vi.fn();
+      } as any,
+    );
 
     const repo1 = createProtopediaInMemoryRepository({});
     const repo2 = createProtopediaInMemoryRepository({});
@@ -447,9 +479,11 @@ describe('createProtopediaInMemoryRepository', () => {
   });
 
   it('should handle all storeConfig options together', () => {
-    vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-      listPrototypes: vi.fn(),
-    } as never);
+    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+      class {
+        listPrototypes = vi.fn();
+      } as any,
+    );
 
     const mockLogger = {
       debug: vi.fn(),
@@ -473,9 +507,7 @@ describe('createProtopediaInMemoryRepository', () => {
 
   it('should handle all apiClientOptions together', () => {
     const mockClient = { listPrototypes: vi.fn() };
-    vi.mocked(createProtopediaApiCustomClient)
-      .mockClear()
-      .mockReturnValue(mockClient as never);
+    vi.mocked(ProtopediaApiCustomClient).mockClear();
 
     const mockLogger = {
       debug: vi.fn(),
@@ -493,30 +525,34 @@ describe('createProtopediaInMemoryRepository', () => {
 
     createProtopediaInMemoryRepository({ apiClientOptions });
 
-    expect(createProtopediaApiCustomClient).toHaveBeenCalledWith({
+    expect(ProtopediaApiCustomClient).toHaveBeenCalledWith({
       protoPediaApiClientOptions: apiClientOptions,
     });
-    expect(createProtopediaApiCustomClient).toHaveBeenCalledTimes(1);
+    expect(ProtopediaApiCustomClient).toHaveBeenCalledTimes(1);
   });
 
   it('should call API client factory exactly once per repository', () => {
-    vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-      listPrototypes: vi.fn(),
-    } as never);
+    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+      class {
+        listPrototypes = vi.fn();
+      } as any,
+    );
 
-    vi.mocked(createProtopediaApiCustomClient).mockClear();
+    vi.mocked(ProtopediaApiCustomClient).mockClear();
 
     createProtopediaInMemoryRepository({
       apiClientOptions: { token: 'test' },
     });
 
-    expect(createProtopediaApiCustomClient).toHaveBeenCalledTimes(1);
+    expect(ProtopediaApiCustomClient).toHaveBeenCalledTimes(1);
   });
 
   it('should create repository with only storeConfig when apiClientOptions omitted', () => {
-    vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-      listPrototypes: vi.fn(),
-    } as never);
+    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+      class {
+        listPrototypes = vi.fn();
+      } as any,
+    );
 
     const repository = createProtopediaInMemoryRepository({
       storeConfig: { ttlMs: 5000 },
@@ -528,9 +564,11 @@ describe('createProtopediaInMemoryRepository', () => {
   });
 
   it('should create repository with only apiClientOptions when storeConfig omitted', () => {
-    vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-      listPrototypes: vi.fn(),
-    } as never);
+    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+      class {
+        listPrototypes = vi.fn();
+      } as any,
+    );
 
     const repository = createProtopediaInMemoryRepository({
       apiClientOptions: { token: 'test' },
@@ -538,7 +576,7 @@ describe('createProtopediaInMemoryRepository', () => {
 
     expect(repository).toBeDefined();
     expect(repository).toBeInstanceOf(ProtopediaInMemoryRepositoryImpl);
-    expect(createProtopediaApiCustomClient).toHaveBeenCalledWith({
+    expect(ProtopediaApiCustomClient).toHaveBeenCalledWith({
       protoPediaApiClientOptions: {
         token: 'test',
       },
@@ -547,9 +585,11 @@ describe('createProtopediaInMemoryRepository', () => {
 
   describe('edge cases', () => {
     it('should handle very large ttlMs value', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const largeTtl = Number.MAX_SAFE_INTEGER;
       const repository = createProtopediaInMemoryRepository({
@@ -560,9 +600,11 @@ describe('createProtopediaInMemoryRepository', () => {
     });
 
     it('should handle maximum allowed maxDataSizeBytes value', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       // Maximum allowed is 30 MiB (31457280 bytes)
       const maxAllowedSize = 30 * 1024 * 1024;
@@ -574,9 +616,11 @@ describe('createProtopediaInMemoryRepository', () => {
     });
 
     it('should throw error when maxDataSizeBytes exceeds limit', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const tooLargeSize = 31 * 1024 * 1024; // 31 MiB (exceeds 30 MiB limit)
 
@@ -588,9 +632,11 @@ describe('createProtopediaInMemoryRepository', () => {
     });
 
     it('should handle zero ttlMs value', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const repository = createProtopediaInMemoryRepository({
         storeConfig: { ttlMs: 0 },
@@ -600,9 +646,11 @@ describe('createProtopediaInMemoryRepository', () => {
     });
 
     it('should handle minimum positive ttlMs value', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const repository = createProtopediaInMemoryRepository({
         storeConfig: { ttlMs: 1 },
@@ -612,9 +660,11 @@ describe('createProtopediaInMemoryRepository', () => {
     });
 
     it('should handle empty string token in apiClientOptions', () => {
-      const mockClient = { listPrototypes: vi.fn() };
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue(
-        mockClient as never,
+      const listPrototypesMock = vi.fn();
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = listPrototypesMock;
+        } as any,
       );
 
       const repository = createProtopediaInMemoryRepository({
@@ -622,7 +672,7 @@ describe('createProtopediaInMemoryRepository', () => {
       });
 
       expect(repository).toBeDefined();
-      expect(createProtopediaApiCustomClient).toHaveBeenCalledWith({
+      expect(ProtopediaApiCustomClient).toHaveBeenCalledWith({
         protoPediaApiClientOptions: {
           token: '',
         },
@@ -630,9 +680,11 @@ describe('createProtopediaInMemoryRepository', () => {
     });
 
     it('should handle multiple repositories with same configuration', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const config = { storeConfig: { ttlMs: 60000 } };
       const repo1 = createProtopediaInMemoryRepository(config);
@@ -644,9 +696,11 @@ describe('createProtopediaInMemoryRepository', () => {
     });
 
     it('should not mutate input configuration objects', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const storeConfig = { ttlMs: 5000, maxDataSizeBytes: 1000 };
       const apiClientOptions = {
@@ -666,9 +720,7 @@ describe('createProtopediaInMemoryRepository', () => {
   describe('type safety', () => {
     it('should accept valid logLevel values', () => {
       const mockClient = { listPrototypes: vi.fn() };
-      vi.mocked(createProtopediaApiCustomClient)
-        .mockClear()
-        .mockReturnValue(mockClient as never);
+      vi.mocked(ProtopediaApiCustomClient).mockClear();
 
       const levels: Array<'debug' | 'info' | 'warn' | 'error' | 'silent'> = [
         'debug',
@@ -684,16 +736,12 @@ describe('createProtopediaInMemoryRepository', () => {
         });
       });
 
-      expect(createProtopediaApiCustomClient).toHaveBeenCalledTimes(
-        levels.length,
-      );
+      expect(ProtopediaApiCustomClient).toHaveBeenCalledTimes(levels.length);
     });
 
     it('should accept custom baseUrl in apiClientOptions', () => {
       const mockClient = { listPrototypes: vi.fn() };
-      vi.mocked(createProtopediaApiCustomClient)
-        .mockClear()
-        .mockReturnValue(mockClient as never);
+      vi.mocked(ProtopediaApiCustomClient).mockClear();
 
       const customUrls = [
         'https://api.example.com',
@@ -708,7 +756,7 @@ describe('createProtopediaInMemoryRepository', () => {
         });
       });
 
-      expect(createProtopediaApiCustomClient).toHaveBeenCalledTimes(
+      expect(ProtopediaApiCustomClient).toHaveBeenCalledTimes(
         customUrls.length,
       );
     });
@@ -717,9 +765,13 @@ describe('createProtopediaInMemoryRepository', () => {
   describe('error handling', () => {
     it('should propagate errors from API client factory', () => {
       const factoryError = new Error('Failed to create API client');
-      vi.mocked(createProtopediaApiCustomClient).mockImplementation(() => {
-        throw factoryError;
-      });
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          constructor() {
+            throw factoryError;
+          }
+        } as any,
+      );
 
       expect(() => {
         createProtopediaInMemoryRepository({
@@ -729,9 +781,11 @@ describe('createProtopediaInMemoryRepository', () => {
     });
 
     it('should accept negative maxDataSizeBytes (no validation at factory level)', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       // Factory doesn't validate - passes through to store
       // Store constructor will handle validation
@@ -744,9 +798,11 @@ describe('createProtopediaInMemoryRepository', () => {
     });
 
     it('should accept negative ttlMs value (no validation at factory level)', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       // Factory doesn't validate - passes through to store
       const repository = createProtopediaInMemoryRepository({
@@ -761,9 +817,7 @@ describe('createProtopediaInMemoryRepository', () => {
   describe('realistic usage scenarios', () => {
     it('should create production-like repository with token', () => {
       const mockClient = { listPrototypes: vi.fn() };
-      vi.mocked(createProtopediaApiCustomClient)
-        .mockClear()
-        .mockReturnValue(mockClient as never);
+      vi.mocked(ProtopediaApiCustomClient).mockClear();
 
       const repository = createProtopediaInMemoryRepository({
         storeConfig: {
@@ -778,7 +832,7 @@ describe('createProtopediaInMemoryRepository', () => {
 
       expect(repository).toBeDefined();
       expect(repository.getConfig().ttlMs).toBe(60 * 60 * 1000);
-      expect(createProtopediaApiCustomClient).toHaveBeenCalledWith({
+      expect(ProtopediaApiCustomClient).toHaveBeenCalledWith({
         protoPediaApiClientOptions: {
           token: 'prod-token-abc123',
           logLevel: 'warn',
@@ -788,9 +842,7 @@ describe('createProtopediaInMemoryRepository', () => {
 
     it('should create development-like repository with custom logger', () => {
       const mockClient = { listPrototypes: vi.fn() };
-      vi.mocked(createProtopediaApiCustomClient)
-        .mockClear()
-        .mockReturnValue(mockClient as never);
+      vi.mocked(ProtopediaApiCustomClient).mockClear();
 
       const devLogger = {
         debug: vi.fn(),
@@ -813,7 +865,7 @@ describe('createProtopediaInMemoryRepository', () => {
 
       expect(repository).toBeDefined();
       expect(repository.getConfig().ttlMs).toBe(5 * 60 * 1000);
-      expect(createProtopediaApiCustomClient).toHaveBeenCalledWith({
+      expect(ProtopediaApiCustomClient).toHaveBeenCalledWith({
         protoPediaApiClientOptions: {
           token: 'dev-token-xyz789',
           logLevel: 'debug',
@@ -824,9 +876,7 @@ describe('createProtopediaInMemoryRepository', () => {
 
     it('should create minimal configuration for quick prototyping', () => {
       const mockClient = { listPrototypes: vi.fn() };
-      vi.mocked(createProtopediaApiCustomClient)
-        .mockClear()
-        .mockReturnValue(mockClient as never);
+      vi.mocked(ProtopediaApiCustomClient).mockClear();
 
       const repository = createProtopediaInMemoryRepository({
         apiClientOptions: { token: 'quick-test-token' },
@@ -841,9 +891,7 @@ describe('createProtopediaInMemoryRepository', () => {
 
     it('should create repository for testing with short TTL', () => {
       const mockClient = { listPrototypes: vi.fn() };
-      vi.mocked(createProtopediaApiCustomClient)
-        .mockClear()
-        .mockReturnValue(mockClient as never);
+      vi.mocked(ProtopediaApiCustomClient).mockClear();
 
       const repository = createProtopediaInMemoryRepository({
         storeConfig: {
@@ -861,9 +909,11 @@ describe('createProtopediaInMemoryRepository', () => {
     });
 
     it('should create multiple repositories for different environments', () => {
-      const mockClient = { listPrototypes: vi.fn() };
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue(
-        mockClient as never,
+      const listPrototypesMock = vi.fn();
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = listPrototypesMock;
+        } as any,
       );
 
       const prodRepo = createProtopediaInMemoryRepository({
@@ -891,9 +941,11 @@ describe('createProtopediaInMemoryRepository', () => {
 
   describe('configuration validation', () => {
     it('should accept smallest practical ttlMs value', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const repository = createProtopediaInMemoryRepository({
         storeConfig: { ttlMs: 100 }, // 100ms
@@ -903,9 +955,11 @@ describe('createProtopediaInMemoryRepository', () => {
     });
 
     it('should accept largest practical ttlMs value', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
       const repository = createProtopediaInMemoryRepository({
@@ -916,9 +970,11 @@ describe('createProtopediaInMemoryRepository', () => {
     });
 
     it('should accept minimum practical maxDataSizeBytes', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const repository = createProtopediaInMemoryRepository({
         storeConfig: { maxDataSizeBytes: 1024 }, // 1 KB
@@ -928,9 +984,11 @@ describe('createProtopediaInMemoryRepository', () => {
     });
 
     it('should handle commonly used ttlMs values', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const commonTtls = [
         { name: '1 minute', value: 60 * 1000 },
@@ -950,9 +1008,11 @@ describe('createProtopediaInMemoryRepository', () => {
     });
 
     it('should handle commonly used maxDataSizeBytes values', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const commonSizes = [
         { name: '1 MB', value: 1024 * 1024 },
@@ -973,9 +1033,11 @@ describe('createProtopediaInMemoryRepository', () => {
 
   describe('repository method availability', () => {
     it('should expose all required repository methods', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const repository = createProtopediaInMemoryRepository();
 
@@ -1000,8 +1062,11 @@ describe('createProtopediaInMemoryRepository', () => {
           data: { prototypes: [] },
         }),
       };
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue(
-        mockClient as never,
+      const listPrototypesMock = mockClient.listPrototypes;
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = listPrototypesMock;
+        } as any,
       );
 
       const repository = createProtopediaInMemoryRepository({
@@ -1027,8 +1092,11 @@ describe('createProtopediaInMemoryRepository', () => {
           data: { prototypes: [] },
         }),
       };
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue(
-        mockClient as never,
+      const listPrototypesMock = mockClient.listPrototypes;
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = listPrototypesMock;
+        } as any,
       );
 
       const repository = createProtopediaInMemoryRepository({
@@ -1059,9 +1127,11 @@ describe('createProtopediaInMemoryRepository', () => {
 
   describe('zero and boundary values', () => {
     it('should handle ttlMs of 0 (immediate expiration)', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const repository = createProtopediaInMemoryRepository({
         storeConfig: { ttlMs: 0 },
@@ -1074,9 +1144,11 @@ describe('createProtopediaInMemoryRepository', () => {
     });
 
     it('should handle maxDataSizeBytes of 0', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const repository = createProtopediaInMemoryRepository({
         storeConfig: { maxDataSizeBytes: 0 },
@@ -1086,9 +1158,11 @@ describe('createProtopediaInMemoryRepository', () => {
     });
 
     it('should handle fractional ttlMs value', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const repository = createProtopediaInMemoryRepository({
         storeConfig: { ttlMs: 1500.75 },
@@ -1099,9 +1173,11 @@ describe('createProtopediaInMemoryRepository', () => {
     });
 
     it('should handle very large ttlMs value', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const oneYearMs = 365 * 24 * 60 * 60 * 1000;
       const repository = createProtopediaInMemoryRepository({
@@ -1112,9 +1188,11 @@ describe('createProtopediaInMemoryRepository', () => {
     });
 
     it('should handle maxDataSizeBytes at exact limit', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const MAX_SIZE = 30 * 1024 * 1024; // 30 MiB
       const repository = createProtopediaInMemoryRepository({
@@ -1127,9 +1205,11 @@ describe('createProtopediaInMemoryRepository', () => {
 
   describe('configuration object immutability', () => {
     it('should not be affected by mutations to storeConfig after creation', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const storeConfig = { ttlMs: 5000, maxDataSizeBytes: 5000000 };
       const repository = createProtopediaInMemoryRepository({ storeConfig });
@@ -1145,9 +1225,7 @@ describe('createProtopediaInMemoryRepository', () => {
 
     it('should not be affected by mutations to apiClientOptions after creation', () => {
       const mockClient = { listPrototypes: vi.fn() };
-      vi.mocked(createProtopediaApiCustomClient)
-        .mockClear()
-        .mockReturnValue(mockClient as never);
+      vi.mocked(ProtopediaApiCustomClient).mockClear();
 
       const apiClientOptions: { token: string; logLevel: 'info' | 'debug' } = {
         token: 'original-token',
@@ -1158,8 +1236,7 @@ describe('createProtopediaInMemoryRepository', () => {
       });
 
       // Get the call arguments
-      const callArgs = vi.mocked(createProtopediaApiCustomClient).mock
-        .calls[0]?.[0];
+      const callArgs = vi.mocked(ProtopediaApiCustomClient).mock.calls[0]?.[0];
       expect(callArgs?.protoPediaApiClientOptions?.token).toBe(
         'original-token',
       );
@@ -1169,11 +1246,11 @@ describe('createProtopediaInMemoryRepository', () => {
       apiClientOptions.logLevel = 'debug';
 
       // Create another repository
-      vi.mocked(createProtopediaApiCustomClient).mockClear();
+      vi.mocked(ProtopediaApiCustomClient).mockClear();
       createProtopediaInMemoryRepository({ apiClientOptions });
 
       // Should use the mutated values (proving the factory reads current state)
-      const newCallArgs = vi.mocked(createProtopediaApiCustomClient).mock
+      const newCallArgs = vi.mocked(ProtopediaApiCustomClient).mock
         .calls[0]?.[0];
       expect(newCallArgs?.protoPediaApiClientOptions?.token).toBe(
         'modified-token',
@@ -1182,9 +1259,11 @@ describe('createProtopediaInMemoryRepository', () => {
     });
 
     it('should return independent config objects', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const repository = createProtopediaInMemoryRepository({
         storeConfig: { ttlMs: 3000 },
@@ -1203,16 +1282,14 @@ describe('createProtopediaInMemoryRepository', () => {
   describe('API client integration verification', () => {
     it('should pass token through to API client', () => {
       const mockClient = { listPrototypes: vi.fn() };
-      vi.mocked(createProtopediaApiCustomClient)
-        .mockClear()
-        .mockReturnValue(mockClient as never);
+      vi.mocked(ProtopediaApiCustomClient).mockClear();
 
       const testToken = 'secret-api-token-12345';
       createProtopediaInMemoryRepository({
         apiClientOptions: { token: testToken },
       });
 
-      expect(createProtopediaApiCustomClient).toHaveBeenCalledWith(
+      expect(ProtopediaApiCustomClient).toHaveBeenCalledWith(
         expect.objectContaining({
           protoPediaApiClientOptions: expect.objectContaining({
             token: testToken,
@@ -1230,9 +1307,7 @@ describe('createProtopediaInMemoryRepository', () => {
         error: vi.fn(),
       };
 
-      vi.mocked(createProtopediaApiCustomClient)
-        .mockClear()
-        .mockReturnValue(mockClient as never);
+      vi.mocked(ProtopediaApiCustomClient).mockClear();
 
       const apiOptions = {
         token: 'test-token',
@@ -1243,7 +1318,7 @@ describe('createProtopediaInMemoryRepository', () => {
 
       createProtopediaInMemoryRepository({ apiClientOptions: apiOptions });
 
-      expect(createProtopediaApiCustomClient).toHaveBeenCalledWith({
+      expect(ProtopediaApiCustomClient).toHaveBeenCalledWith({
         protoPediaApiClientOptions: {
           token: 'test-token',
           logLevel: 'debug',
@@ -1255,21 +1330,21 @@ describe('createProtopediaInMemoryRepository', () => {
 
     it('should handle omitted API client options gracefully', () => {
       const mockClient = { listPrototypes: vi.fn() };
-      vi.mocked(createProtopediaApiCustomClient)
-        .mockClear()
-        .mockReturnValue(mockClient as never);
+      vi.mocked(ProtopediaApiCustomClient).mockClear();
 
       createProtopediaInMemoryRepository({ storeConfig: { ttlMs: 1000 } });
 
-      expect(createProtopediaApiCustomClient).toHaveBeenCalledWith(undefined);
+      expect(ProtopediaApiCustomClient).toHaveBeenCalledWith(undefined);
     });
   });
 
   describe('repository return values', () => {
     it('should return correct types from synchronous methods', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const repository = createProtopediaInMemoryRepository();
 
@@ -1295,9 +1370,11 @@ describe('createProtopediaInMemoryRepository', () => {
     });
 
     it('should return null for getPrototypeFromSnapshotByPrototypeId when prototype not found', async () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const repository = createProtopediaInMemoryRepository();
 
@@ -1307,9 +1384,11 @@ describe('createProtopediaInMemoryRepository', () => {
     });
 
     it('should return analysis with null values when snapshot is empty', async () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const repository = createProtopediaInMemoryRepository();
 
@@ -1320,9 +1399,11 @@ describe('createProtopediaInMemoryRepository', () => {
     });
 
     it('should return empty array for getRandomSampleFromSnapshot when snapshot is empty', async () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const repository = createProtopediaInMemoryRepository();
 
@@ -1333,9 +1414,11 @@ describe('createProtopediaInMemoryRepository', () => {
 
   describe('stress testing', () => {
     it('should handle rapid creation of many instances', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const count = 1000;
       const repositories = Array.from({ length: count }, () =>
@@ -1360,9 +1443,11 @@ describe('createProtopediaInMemoryRepository', () => {
     });
 
     it('should throw TypeError when storeConfig is null', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       expect(() =>
         // @ts-expect-error Testing runtime behavior for JS users
@@ -1373,9 +1458,11 @@ describe('createProtopediaInMemoryRepository', () => {
 
   describe('type inheritance', () => {
     it('should return instance of ProtopediaInMemoryRepositoryImpl', () => {
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue({
-        listPrototypes: vi.fn(),
-      } as never);
+      vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+        class {
+          listPrototypes = vi.fn();
+        } as any,
+      );
 
       const repository = createProtopediaInMemoryRepository();
       expect(repository).toBeInstanceOf(ProtopediaInMemoryRepositoryImpl);

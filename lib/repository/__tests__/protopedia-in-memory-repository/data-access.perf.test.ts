@@ -19,7 +19,7 @@
 import type { ResultOfListPrototypesApiResponse } from 'protopedia-api-v2-client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createProtopediaApiCustomClient } from '../../../fetcher/index.js';
+import { ProtopediaApiCustomClient } from '../../../fetcher/index.js';
 import { ProtopediaInMemoryRepositoryImpl } from '../../protopedia-in-memory-repository.js';
 
 vi.mock('../../../fetcher/index', async (importOriginal) => {
@@ -27,7 +27,7 @@ vi.mock('../../../fetcher/index', async (importOriginal) => {
     await importOriginal<typeof import('../../../fetcher/index.js')>();
   return {
     ...actual,
-    createProtopediaApiCustomClient: vi.fn(),
+    ProtopediaApiCustomClient: vi.fn(),
   };
 });
 
@@ -91,12 +91,12 @@ describe('ProtopediaInMemoryRepositoryImpl - data access performance', () => {
     listPrototypesMock.mockReset();
     fetchPrototypesMock.mockReset();
 
-    (
-      createProtopediaApiCustomClient as unknown as ReturnType<typeof vi.fn>
-    ).mockReturnValue({
-      listPrototypes: listPrototypesMock,
-      fetchPrototypes: fetchPrototypesMock,
-    });
+    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+      class {
+        listPrototypes = listPrototypesMock;
+        fetchPrototypes = fetchPrototypesMock;
+      } as any,
+    );
   });
 
   /**
