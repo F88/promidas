@@ -8,9 +8,6 @@
  *
  * ## Core Components
  *
- * ### API Client
- *
- * - {@link createProtopediaApiCustomClient} — Factory to create a configured API client.
  * - {@link ProtopediaApiCustomClient} — Class-based client with managed logger and high-level methods.
  * - {@link ProtopediaApiCustomClientConfig} — Configuration options including logger and SDK client settings.
  *
@@ -45,9 +42,9 @@
  *
  * @example
  * ```typescript
- * import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+ * import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
  *
- * const client = createProtopediaApiCustomClient({
+ * const client = new ProtopediaApiCustomClient({
  *   protoPediaApiClientOptions: {
  *     token: process.env.PROTOPEDIA_API_TOKEN,
  *   },
