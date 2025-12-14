@@ -29,7 +29,7 @@ ProtoPedia の Web API にアクセスして、プロトタイプ情報を取得
 
 ```typescript
 import {
-    createProtopediaApiCustomClient,
+    ProtopediaApiCustomClient,
     type NormalizedPrototype,
 } from '@f88/promidas/fetcher';
 ```
@@ -37,10 +37,10 @@ import {
 ## 🚀 簡単な使い方
 
 ```typescript
-import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
 
 // 1. API クライアントを作成
-const client = createProtopediaApiCustomClient({
+const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
         token: process.env.PROTOPEDIA_API_TOKEN, // あなたの API トークン
     },
@@ -75,9 +75,9 @@ if (result.ok) {
 ### API クライアントの作成
 
 ```typescript
-import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
 
-const client = createProtopediaApiCustomClient({
+const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
         token: 'your-api-token', // API トークン (必須)
         timeoutMs: 30000, // タイムアウト (ミリ秒, オプション)

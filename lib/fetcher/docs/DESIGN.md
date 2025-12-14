@@ -340,20 +340,20 @@ async fetchPrototypes(
 
 ```typescript
 // Pattern 1: logLevel only
-const client = createProtopediaApiCustomClient({
+const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: { token },
     logLevel: 'debug', // Creates ConsoleLogger internally
 });
 
 // Pattern 2: Custom logger + logLevel
-const client = createProtopediaApiCustomClient({
+const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: { token },
     logger: myLogger,
     logLevel: 'warn', // Updates logger's level if mutable
 });
 
 // Pattern 3: Custom logger only
-const client = createProtopediaApiCustomClient({
+const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: { token },
     logger: myLogger, // Uses logger's existing level
 });
@@ -577,14 +577,14 @@ if (result.ok) {
 **Integration Strategy**:
 
 1. Accept any client implementing `ListPrototypesClient`
-2. Provide factory (`createProtopediaApiCustomClient`) for convenience
+2. Provide `ProtopediaApiCustomClient` class for convenience
 3. Allow custom configurations (fetch, timeout, logger)
 
 **Example**:
 
 ```typescript
 // Create client with custom configuration
-const client = createProtopediaApiCustomClient({
+const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
         token: process.env.TOKEN,
         baseUrl: 'https://api.protopedia.net',
@@ -633,7 +633,7 @@ async setupSnapshot(params: ListPrototypesParams) {
 **Example (Next.js)**:
 
 ```typescript
-const customClientForNextJs = createProtopediaApiCustomClient({
+const customClientForNextJs = new ProtopediaApiCustomClient({
     token: process.env.PROTOPEDIA_API_TOKEN,
     fetch: async (url, init) => {
         return await globalThis.fetch(url, {
