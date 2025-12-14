@@ -70,7 +70,6 @@ export type { NormalizedPrototype } from '../types/index.js';
 export type { Logger, LogLevel } from '../logger/index.js';
 
 // API Client
-export { createProtopediaApiCustomClient } from './client/factory.js';
 export { ProtopediaApiCustomClient } from './client/protopedia-api-custom-client.js';
 export type { ProtopediaApiCustomClientConfig } from './client/config.js';
 
