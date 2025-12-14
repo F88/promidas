@@ -114,7 +114,7 @@ describe('ProtopediaApiCustomClient - Error Handling - ProtoPediaApiError', () =
     await client.fetchPrototypes({ offset: 0, limit: 10 });
 
     expect(mockLogger.warn).toHaveBeenCalledWith(
-      'HTTP error when calling ProtoPedia API',
+      'Unauthorized',
       expect.objectContaining({
         ok: false,
         status: 401,

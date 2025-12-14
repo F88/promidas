@@ -13,25 +13,9 @@
  * This split improves test maintainability without fragmenting the implementation.
  */
 import { ProtoPediaApiError } from 'protopedia-api-v2-client';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { handleApiError } from '../../../../utils/errors/handler.js';
-
-vi.mock('../../../../../../logger', () => ({
-  createConsoleLogger: () => ({
-    warn: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn(),
-  }),
-}));
-
-const mockLogger = {
-  warn: vi.fn(),
-  error: vi.fn(),
-  info: vi.fn(),
-  debug: vi.fn(),
-};
 
 describe('handleApiError - ProtoPediaApiError handling', () => {
   describe('4xx client errors', () => {
@@ -46,7 +30,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Bad Request',
       });
 
-      const result = handleApiError(apiError, mockLogger);
+      const result = handleApiError(apiError);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -66,7 +50,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Bad Request',
       });
 
-      const result = handleApiError(apiError, mockLogger);
+      const result = handleApiError(apiError);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -86,7 +70,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Unauthorized',
       });
 
-      const result = handleApiError(apiError, mockLogger);
+      const result = handleApiError(apiError);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -108,7 +92,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Not Found',
       });
 
-      const result = handleApiError(apiError, mockLogger);
+      const result = handleApiError(apiError);
 
       expect(result).toEqual({
         ok: false,
@@ -137,7 +121,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Not Found',
       });
 
-      const result = handleApiError(apiError, mockLogger);
+      const result = handleApiError(apiError);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -159,7 +143,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Not Found',
       });
 
-      const result = handleApiError(apiError, mockLogger);
+      const result = handleApiError(apiError);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -179,7 +163,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'URI Too Long',
       });
 
-      const result = handleApiError(apiError, mockLogger);
+      const result = handleApiError(apiError);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -199,7 +183,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Too Many Requests',
       });
 
-      const result = handleApiError(apiError, mockLogger);
+      const result = handleApiError(apiError);
 
       expect(result).toEqual({
         ok: false,
@@ -228,7 +212,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Client Closed Request',
       });
 
-      const result = handleApiError(apiError, mockLogger);
+      const result = handleApiError(apiError);
 
       expect(result).toEqual({
         ok: false,
@@ -259,7 +243,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: '',
       });
 
-      const result = handleApiError(apiError, mockLogger);
+      const result = handleApiError(apiError);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -279,7 +263,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Internal Server Error',
       });
 
-      const result = handleApiError(apiError, mockLogger);
+      const result = handleApiError(apiError);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -299,7 +283,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Bad Gateway',
       });
 
-      const result = handleApiError(apiError, mockLogger);
+      const result = handleApiError(apiError);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -322,7 +306,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Service Unavailable',
       });
 
-      const result = handleApiError(apiError, mockLogger);
+      const result = handleApiError(apiError);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {

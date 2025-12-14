@@ -12,30 +12,14 @@
  *
  * This split improves test maintainability without fragmenting the implementation.
  */
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { handleApiError } from '../../../../utils/errors/handler.js';
-
-vi.mock('../../../../../../logger', () => ({
-  createConsoleLogger: () => ({
-    warn: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn(),
-  }),
-}));
-
-const mockLogger = {
-  warn: vi.fn(),
-  error: vi.fn(),
-  info: vi.fn(),
-  debug: vi.fn(),
-};
 
 describe('handleApiError - AbortError handling', () => {
   it('maps AbortError to network error without status', () => {
     const abortError = new DOMException('Aborted', 'AbortError');
-    const result = handleApiError(abortError, mockLogger);
+    const result = handleApiError(abortError);
 
     expect(result).toEqual({
       ok: false,
@@ -46,7 +30,7 @@ describe('handleApiError - AbortError handling', () => {
 
   it('logs diagnostic information for AbortError', () => {
     const abortError = new DOMException('Operation aborted', 'AbortError');
-    const result = handleApiError(abortError, mockLogger);
+    const result = handleApiError(abortError);
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -58,8 +42,8 @@ describe('handleApiError - AbortError handling', () => {
     const abortError1 = new DOMException('Timeout 1', 'AbortError');
     const abortError2 = new DOMException('Timeout 2', 'AbortError');
 
-    const result1 = handleApiError(abortError1, mockLogger);
-    const result2 = handleApiError(abortError2, mockLogger);
+    const result1 = handleApiError(abortError1);
+    const result2 = handleApiError(abortError2);
 
     expect(result1).toEqual(result2);
     expect(result1.ok).toBe(false);

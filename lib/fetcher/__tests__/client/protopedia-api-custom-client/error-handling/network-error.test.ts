@@ -103,7 +103,7 @@ describe('ProtopediaApiCustomClient - Error Handling - Network Errors', () => {
     await client.fetchPrototypes({ offset: 0, limit: 10 });
 
     expect(mockLogger.error).toHaveBeenCalledWith(
-      'Unexpected error while calling ProtoPedia API',
+      'Network failure',
       expect.objectContaining({
         ok: false,
         error: 'Network failure',

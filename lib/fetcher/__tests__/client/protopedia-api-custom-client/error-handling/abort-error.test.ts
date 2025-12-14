@@ -48,7 +48,7 @@ describe('ProtopediaApiCustomClient - Error Handling - AbortError', () => {
       expect(result.status).toBeUndefined();
       expect(result.details).toEqual({});
     }
-    expect(mockLogger.warn).toHaveBeenCalled();
+    expect(mockLogger.error).toHaveBeenCalled();
   });
 
   it('logs AbortError with correct message', async () => {
@@ -64,8 +64,8 @@ describe('ProtopediaApiCustomClient - Error Handling - AbortError', () => {
     const client = new ProtopediaApiCustomClient({ logger: mockLogger });
     await client.fetchPrototypes({ offset: 0, limit: 10 });
 
-    expect(mockLogger.warn).toHaveBeenCalledWith(
-      'Upstream request aborted (timeout)',
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      'Upstream request timed out',
       expect.objectContaining({
         ok: false,
         error: 'Upstream request timed out',

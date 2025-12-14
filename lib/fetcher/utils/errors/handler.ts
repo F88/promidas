@@ -34,7 +34,6 @@ const ERROR_MESSAGES = {
   UNKNOWN: 'Failed to fetch prototypes',
 } as const;
 
-import { ConsoleLogger, type Logger } from '../../../logger/index.js';
 import type { NetworkFailure } from '../../types/prototype-api.types.js';
 import type { FetchPrototypesResult } from '../../types/result.types.js';
 
@@ -172,15 +171,10 @@ function createFailureResult(
  * // }
  * ```
  */
-export function handleApiError(
-  error: unknown,
-  logger: Logger,
-): FetchPrototypesResult {
+export function handleApiError(error: unknown): FetchPrototypesResult {
   // Handle AbortError (timeout) - network error, no status
   if (isAbortError(error)) {
     const result = createFailureResult(ERROR_MESSAGES.TIMEOUT, {});
-
-    logger.warn('Upstream request aborted (timeout)', result);
 
     return result;
   }
@@ -200,8 +194,6 @@ export function handleApiError(
       },
       error.status,
     );
-
-    logger.warn('HTTP error when calling ProtoPedia API', result);
 
     return result;
   }
@@ -248,8 +240,6 @@ export function handleApiError(
 
     const result = createFailureResult(message, details, status);
 
-    logger.warn('HTTP error when calling ProtoPedia API', result);
-
     return result;
   }
 
@@ -273,8 +263,6 @@ export function handleApiError(
   }
 
   const result = createFailureResult(message, details);
-
-  logger.error('Unexpected error while calling ProtoPedia API', result);
 
   return result;
 }
