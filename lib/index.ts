@@ -3,16 +3,18 @@
  *
  * ## Quick Start
  *
- * For most use cases, use the high-level Repository:
+ * For most use cases, use the Builder to create a Repository:
  *
  * @example
  * ```typescript
- * import { createPromidasRepository } from '@f88/promidas';
+ * import { PromidasRepositoryBuilder } from '@f88/promidas';
  *
- * const repo = createPromidasRepository({
- *   storeConfig: { ttlMs: 30 * 60 * 1000 },
- *   apiClientOptions: { token: process.env.PROTOPEDIA_API_V2_TOKEN },
- * });
+ * const repo = new PromidasRepositoryBuilder()
+ *   .setStoreConfig({ ttlMs: 30 * 60 * 1000 })
+ *   .setApiClientConfig({
+ *     protoPediaApiClientOptions: { token: process.env.PROTOPEDIA_API_V2_TOKEN }
+ *   })
+ *   .build();
  *
  * await repo.setupSnapshot({ limit: 100 });
  * const prototype = await repo.getRandomPrototypeFromSnapshot();
@@ -45,8 +47,8 @@
  * // In-memory store
  * import { PrototypeInMemoryStore } from '@f88/promidas/store';
  *
- * // Repository (same as root import)
- * import { createPromidasRepository } from '@f88/promidas/repository';
+ * // Repository builder
+ * import { PromidasRepositoryBuilder } from '@f88/promidas';
  * ```
  *
  * ## Available Subpath Exports
@@ -56,12 +58,11 @@
  * - `@f88/promidas/logger` — Logger interface and implementations
  * - `@f88/promidas/fetcher` — API client and data fetching utilities
  * - `@f88/promidas/store` — In-memory store implementation
- * - `@f88/promidas/repository` — High-level repository factory
  *
  * @packageDocumentation
  */
 
-// High-level Repository (most common use case)
+// Builder for creating repository instances
 export {
   // Builder for advanced use cases
   PromidasRepositoryBuilder,
@@ -81,5 +82,3 @@ export {
   type ProtopediaInMemoryRepository,
   type ProtopediaInMemoryRepositoryConfig,
 } from './builder.js';
-
-export { createPromidasRepository } from './factory.js';

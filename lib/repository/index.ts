@@ -197,10 +197,7 @@ export type {
  * import { createPromidasRepository } from '@f88/promidas/repository';
  * ```
  */
-export {
-  createPromidasRepository,
-  type CreatePromidasRepositoryOptions,
-} from '../factory.js';
+// Factory export removed - use PromidasRepositoryBuilder from root instead
 
 /**
  * Implementation class for the in-memory repository.

@@ -4,7 +4,7 @@ import {
 } from 'protopedia-api-v2-client';
 
 import {
-  createPromidasRepository,
+  PromidasRepositoryBuilder,
   type PrototypeInMemoryStoreConfig,
 } from '../lib/index.js';
 
@@ -30,10 +30,12 @@ async function main() {
     token,
     ...(logLevel && { logLevel }),
   };
-  const repo = createPromidasRepository({
-    storeConfig: prototypeInMemoryStoreConfig,
-    apiClientOptions: protoPediaApiClientOptions,
-  });
+  const repo = new PromidasRepositoryBuilder()
+    .setStoreConfig(prototypeInMemoryStoreConfig)
+    .setApiClientConfig({
+      protoPediaApiClientOptions: protoPediaApiClientOptions,
+    })
+    .build();
   console.log('✓ Repository created with 60s TTL\n');
 
   // Test 2: Setup initial snapshot with 5 prototypes
