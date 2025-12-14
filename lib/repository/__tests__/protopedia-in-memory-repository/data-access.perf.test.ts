@@ -22,6 +22,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProtopediaApiCustomClient } from '../../../fetcher/index.js';
 import { ProtopediaInMemoryRepositoryImpl } from '../../protopedia-in-memory-repository.js';
 
+import { createMockStore } from './test-helpers.js';
+
 vi.mock('../../../fetcher/index', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('../../../fetcher/index.js')>();
@@ -139,7 +141,14 @@ describe('ProtopediaInMemoryRepositoryImpl - data access performance', () => {
 
     fetchPrototypesMock.mockResolvedValueOnce({ ok: true, data });
 
-    const repo = new ProtopediaInMemoryRepositoryImpl();
+    const store = createMockStore();
+    const apiClient = new ProtopediaApiCustomClient() as any;
+
+    const repo = new ProtopediaInMemoryRepositoryImpl({
+      store,
+      apiClient,
+      repositoryConfig: {},
+    });
 
     // Setup snapshot (excluded from perf measurement)
     await repo.setupSnapshot({});

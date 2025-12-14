@@ -14,22 +14,19 @@
  *
  * ## Usage Pattern
  *
- * **IMPORTANT**: Each test file must include the `vi.mock()` call at the top level
- * before importing this module.
+ * **IMPORTANT**:
+ * - Tests under `protopedia-in-memory-repository/` should NOT use
+ *   `createProtopediaInMemoryRepository`.
+ * - Prefer explicit dependency injection when constructing
+ *   `ProtopediaInMemoryRepositoryImpl`.
+ * - If you use {@link setupMocks}, each test file must include the `vi.mock()`
+ *   call at the top level before importing this module.
  *
  * @example
  * ```typescript
- * // Step 1: Mock at top level (before imports)
- * vi.mock('../../../fetcher/index', async (importOriginal) => {
- *   const actual = await importOriginal<typeof import('../../../fetcher/index.js')>();
- *   return {
- *     ...actual,
- *     ProtopediaApiCustomClient: vi.fn(),
- *   };
- * });
- *
- * // Step 2: Import helpers after mock setup
- * import { makePrototype, setupMocks } from './test-helpers.js';
+ * import { vi } from 'vitest';
+ * import { ProtopediaInMemoryRepositoryImpl } from '../../protopedia-in-memory-repository.js';
+ * import { createMockStore, makePrototype, setupMocks } from './test-helpers.js';
  *
  * describe('My tests', () => {
  *   const { fetchPrototypesMock, resetMocks } = setupMocks();
@@ -39,11 +36,21 @@
  *   });
  *
  *   it('should work', async () => {
+ *     const store = createMockStore({ ttlMs: 30_000 });
+ *     const apiClient = { fetchPrototypes: fetchPrototypesMock };
+ *
+ *     const repo = new ProtopediaInMemoryRepositoryImpl({
+ *       store,
+ *       apiClient,
+ *       repositoryConfig: {},
+ *     });
+ *
  *     fetchPrototypesMock.mockResolvedValueOnce({
  *       ok: true,
  *       data: [makePrototype({ id: 42 })],
  *     });
- *     // ... test code
+ *
+ *     await repo.setupSnapshot({});
  *   });
  * });
  * ```
@@ -65,6 +72,88 @@ import type { ResultOfListPrototypesApiResponse } from 'protopedia-api-v2-client
 import { vi } from 'vitest';
 
 import { ProtopediaApiCustomClient } from '../../../fetcher/index.js';
+import type {
+  PrototypeInMemoryStore,
+  PrototypeInMemoryStoreConfig,
+} from '../../../store/index.js';
+import type { NormalizedPrototype } from '../../../types/index.js';
+
+/**
+ * Create a mock store instance with required methods.
+ */
+export const createMockStore = (
+  configOverrides: Partial<PrototypeInMemoryStoreConfig> = {},
+): PrototypeInMemoryStore => {
+  const mockData = new Map<number, NormalizedPrototype>();
+  let cachedAt: Date | null = null;
+  let cachedArray: NormalizedPrototype[] = [];
+
+  const resolvedConfig: Omit<
+    Required<PrototypeInMemoryStoreConfig>,
+    'logger'
+  > = {
+    ttlMs: configOverrides.ttlMs ?? 1_800_000,
+    maxDataSizeBytes: configOverrides.maxDataSizeBytes ?? 10_485_760,
+    logLevel: configOverrides.logLevel ?? 'info',
+  };
+
+  const getRemainingTtlMs = (): number => {
+    if (cachedAt === null) {
+      return 0;
+    }
+    const elapsedMs = Date.now() - cachedAt.getTime();
+    const remaining = resolvedConfig.ttlMs - elapsedMs;
+    return Math.max(0, remaining);
+  };
+
+  const getIsExpired = (): boolean => {
+    if (cachedAt === null) {
+      return true;
+    }
+    return getRemainingTtlMs() === 0;
+  };
+
+  return {
+    getConfig: vi.fn().mockReturnValue(resolvedConfig),
+    get size() {
+      return mockData.size;
+    },
+    setAll: vi.fn((prototypes: NormalizedPrototype[]) => {
+      mockData.clear();
+      for (const proto of prototypes) {
+        mockData.set(proto.id, proto);
+      }
+      cachedArray = prototypes;
+      cachedAt = new Date();
+      return { dataSizeBytes: 1000 };
+    }),
+    getByPrototypeId: vi.fn((id: number) => mockData.get(id) ?? null),
+    getAll: vi.fn(() => cachedArray),
+    getPrototypeIds: vi.fn(() => Array.from(mockData.keys())),
+    clear: vi.fn(() => {
+      mockData.clear();
+      cachedArray = [];
+      cachedAt = null;
+    }),
+    isExpired: vi.fn(() => getIsExpired()),
+    getCachedAt: vi.fn(() => cachedAt),
+    getStats: vi.fn(() => ({
+      size: mockData.size,
+      cachedAt: cachedAt,
+      isExpired: getIsExpired(),
+      remainingTtlMs: getRemainingTtlMs(),
+      dataSizeBytes: 1000,
+      refreshInFlight: false,
+    })),
+    getSnapshot: vi.fn(() => ({
+      data: cachedArray,
+      cachedAt: cachedAt,
+      isExpired: getIsExpired(),
+    })),
+    runExclusive: vi.fn(async (task) => await task()),
+    isRefreshInFlight: vi.fn().mockReturnValue(false),
+  } as any;
+};
 
 /**
  * Helper to build minimal-but-valid upstream prototypes for testing.
