@@ -706,18 +706,18 @@ const customClientForNextJs = createProtopediaApiCustomClient({
 
 **Trade-off**: Less discoverability vs. better flexibility
 
-### 5. Why Separate Error Message Construction?
+### 5. Why Pre-format Error Messages?
 
-**Decision**: `constructDisplayMessage()` as standalone utility
+**Decision**: Format error messages internally during error handling
 
 **Reasoning**:
 
-- Testable message formatting logic
-- Consistent error presentation
-- Easier to internationalize later
-- Separates presentation from error handling
+- Simpler API - users get ready-to-display messages
+- Consistent error presentation across all error types
+- No need to import additional utilities
+- Error details still available separately if needed
 
-**Trade-off**: Extra function vs. better separation of concerns
+**Trade-off**: Less customization vs. simpler usage
 
 ---
 

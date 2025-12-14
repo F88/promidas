@@ -58,10 +58,7 @@ import type {
 } from 'protopedia-api-v2-client';
 import type { DeepReadonly } from 'ts-essentials';
 
-import {
-  constructDisplayMessage,
-  createProtopediaApiCustomClient,
-} from '../fetcher/index.js';
+import { createProtopediaApiCustomClient } from '../fetcher/index.js';
 import {
   ConsoleLogger,
   type Logger,

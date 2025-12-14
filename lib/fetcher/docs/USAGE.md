@@ -270,19 +270,27 @@ if (!result.ok) {
 processPrototypes(result.data);
 ```
 
-### Error Message Construction
+### Error Message Format
 
-```typescript
-import { constructDisplayMessage } from '@f88/promidas/fetcher';
+Error messages are pre-formatted and ready for display:
 
-// Network error
-const msg1 = constructDisplayMessage('ECONNREFUSED');
-// "Network error: ECONNREFUSED"
+````typescript
+const result = await client.fetchPrototypes(params);
 
-// HTTP error
-const msg2 = constructDisplayMessage('Not Found', 404);
-// "API request failed with status 404: Not Found"
-```
+if (!result.ok) {
+    // Network error example
+    console.error(result.error);
+    // "Upstream request timed out"
+
+    // HTTP error example (when status is 404)
+    console.error(result.error);
+    // "Not Found: Resource not found"
+
+    // Status code is available separately
+    if (result.status) {
+        console.error(`HTTP ${result.status}`);
+    }
+}
 
 ## Logger Configuration
 
@@ -319,7 +327,7 @@ const client3 = createProtopediaApiCustomClient({
     },
     logger, // Uses logger's existing level
 });
-```
+````
 
 ### Logger Levels
 

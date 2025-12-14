@@ -170,30 +170,9 @@ describe('subpath exports', () => {
     it('should export fetcher functions and types', async () => {
       const fetcher = await import('@f88/promidas/fetcher');
 
-      // Main functions
-      expect(fetcher).toHaveProperty('fetchAndNormalizePrototypes');
-      expect(typeof fetcher.fetchAndNormalizePrototypes).toBe('function');
-
-      expect(fetcher).toHaveProperty('normalizePrototype');
-      expect(typeof fetcher.normalizePrototype).toBe('function');
-
-      expect(fetcher).toHaveProperty('normalizeProtoPediaTimestamp');
-      expect(typeof fetcher.normalizeProtoPediaTimestamp).toBe('function');
-
-      // Utilities
-      expect(fetcher).toHaveProperty('splitPipeSeparatedString');
-      expect(typeof fetcher.splitPipeSeparatedString).toBe('function');
-
       // API client factory
       expect(fetcher).toHaveProperty('createProtopediaApiCustomClient');
       expect(typeof fetcher.createProtopediaApiCustomClient).toBe('function');
-
-      // Error handling utilities
-      expect(fetcher).toHaveProperty('constructDisplayMessage');
-      expect(typeof fetcher.constructDisplayMessage).toBe('function');
-
-      expect(fetcher).toHaveProperty('resolveErrorMessage');
-      expect(typeof fetcher.resolveErrorMessage).toBe('function');
 
       // Re-exported types for convenience (NormalizedPrototype is type-only)
       // Logger and LogLevel are also type-only exports
@@ -256,7 +235,7 @@ describe('subpath exports', () => {
 
       // All modules are independent and functional
       expect(utils.parseProtoPediaTimestamp).toBeDefined();
-      expect(fetcher.fetchAndNormalizePrototypes).toBeDefined();
+      expect(fetcher.createProtopediaApiCustomClient).toBeDefined();
       expect(repository.createProtopediaInMemoryRepository).toBeDefined();
     });
   });

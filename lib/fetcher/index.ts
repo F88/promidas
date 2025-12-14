@@ -23,16 +23,6 @@
  * - {@link UpstreamPrototype} — Raw API response type from protopedia-api-v2-client.
  * - {@link NormalizedPrototype} — Standardized, type-safe prototype data model.
  *
- * ### Utilities
- *
- * - {@link normalizeProtoPediaTimestamp} — Convert ProtoPedia JST timestamps to UTC ISO 8601.
- * - {@link splitPipeSeparatedString} — Parse pipe-separated strings into arrays.
- *
- * ### Error Handling
- *
- * - {@link constructDisplayMessage} — Format error messages for user display.
- * - {@link resolveErrorMessage} — Extract error messages from various error types.
- *
  * ### Logging
  *
  * - {@link Logger} — Logger interface compatible with protopedia-api-v2-client.
@@ -84,18 +74,5 @@ export type { ProtopediaApiCustomClientConfig } from './client/config.js';
 export type { ProtoPediaApiClientOptions } from 'protopedia-api-v2-client';
 export type { ListPrototypesParams } from 'protopedia-api-v2-client';
 
-// Fetching & Normalization
+// Result Types
 export type { FetchPrototypesResult } from './types/result.types.js';
-
-// Data Types
-export type { UpstreamPrototype } from './types/prototype-api.types.js';
-
-// Utilities
-export {
-  normalizePrototype,
-  normalizeProtoPediaTimestamp,
-  splitPipeSeparatedString,
-} from './utils/index.js';
-
-// Error Handling
-export { resolveErrorMessage, constructDisplayMessage } from './utils/index.js';
