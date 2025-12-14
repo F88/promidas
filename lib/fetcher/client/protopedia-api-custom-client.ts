@@ -128,11 +128,66 @@ export class ProtopediaApiCustomClient {
     try {
       const upstream = await this.#client.listPrototypes(params);
 
-      const data: NormalizedPrototype[] = Array.isArray(upstream.results)
-        ? upstream.results.map((value) =>
-            normalizePrototype(value as UpstreamPrototype),
-          )
-        : [];
+      let data: NormalizedPrototype[] = [];
+      if (!Array.isArray(upstream.results)) {
+        this.#logger.warn(
+          'Upstream API response "results" is not an array. Returning empty data.',
+          {
+            upstreamResults: upstream.results,
+            params,
+          },
+        );
+        // data remains empty array as initialized
+      } else {
+        data = upstream.results.map((value, index) => {
+          const original = value as UpstreamPrototype;
+          const normalized = normalizePrototype(original);
+
+          // Check for date normalization failures
+          // If the normalized value is the same as the original (and not null/undefined)
+          // but doesn't look like a normalized UTC ISO string (ending in 'Z'), it likely failed parsing.
+          const context = { prototypeId: original.id, index };
+
+          if (
+            original.createDate &&
+            normalized.createDate === original.createDate &&
+            !normalized.createDate.endsWith('Z')
+          ) {
+            this.#logger.warn('Failed to parse and normalize createDate', {
+              ...context,
+              originalValue: original.createDate,
+            });
+          }
+
+          if (
+            original.updateDate &&
+            normalized.updateDate === original.updateDate &&
+            !normalized.updateDate.endsWith('Z')
+          ) {
+            this.#logger.warn('Failed to parse and normalize updateDate', {
+              ...context,
+              originalValue: original.updateDate,
+            });
+          }
+
+          if (
+            original.releaseDate &&
+            normalized.releaseDate === original.releaseDate &&
+            !normalized.releaseDate.endsWith('Z')
+          ) {
+            this.#logger.warn('Failed to parse and normalize releaseDate', {
+              ...context,
+              originalValue: original.releaseDate,
+            });
+          }
+
+          return normalized;
+        });
+      }
+
+      this.#logger.debug(`Successfully fetched ${data.length} prototypes.`, {
+        params,
+      });
 
       return { ok: true, data };
     } catch (error) {
