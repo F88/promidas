@@ -273,27 +273,23 @@ export class PrototypeInMemoryStore {
 
       // Start with 2 bytes for "[]" and 1 byte for each comma (N-1 commas)
       let totalBytes = 2 + (data.length - 1);
-      const useBuffer = typeof Buffer !== 'undefined';
-      const useTextEncoder = !useBuffer && typeof TextEncoder !== 'undefined';
-      const encoder = useTextEncoder ? new TextEncoder() : null;
 
-      if (!useBuffer && !useTextEncoder) {
+      if (typeof Buffer !== 'undefined') {
+        for (const item of data) {
+          totalBytes += Buffer.byteLength(JSON.stringify(item), 'utf8');
+        }
+      } else if (typeof TextEncoder !== 'undefined') {
+        const encoder = new TextEncoder();
+        for (const item of data) {
+          totalBytes += encoder.encode(JSON.stringify(item)).length;
+        }
+      } else {
         // Fallback for environments without Buffer/TextEncoder (should not happen in Node.js)
         this.logger.warn(
           'Neither Buffer nor TextEncoder found for size estimation. Returning 0.',
           {},
         );
         return 0;
-      }
-
-      for (const item of data) {
-        const serializedItem = JSON.stringify(item);
-        if (useBuffer) {
-          totalBytes += Buffer.byteLength(serializedItem, 'utf8');
-        } else if (encoder) {
-          totalBytes += encoder.encode(serializedItem).length;
-        }
-        // No else needed here; if neither is available, we already returned 0.
       }
       return totalBytes;
     } catch (error) {
@@ -372,6 +368,14 @@ export class PrototypeInMemoryStore {
     this.prototypeIdIndex = new Map(
       prototypes.map((prototype) => [prototype.id, prototype]),
     );
+
+    // Warn if duplicate IDs were detected in the input array
+    if (this.prototypeIdIndex.size !== prototypes.length) {
+      this.logger.warn('Duplicate prototype IDs detected in snapshot', {
+        inputCount: prototypes.length,
+        storedCount: this.prototypeIdIndex.size,
+      });
+    }
 
     // Reconstruct prototypes array from the map to ensure consistency and uniqueness by ID.
     // This will also ensure that `getAll().length` matches `this.size`.
