@@ -242,12 +242,12 @@ export class PromidasRepositoryBuilder {
    */
   build(): ProtopediaInMemoryRepository {
     try {
-      // Ensure shared logger exists if no explicit loggers were provided
+      // Ensure shared logger exists if it will be needed by any component.
       if (
-        !this.#storeConfig.logger &&
-        !this.#apiClientConfig.logger &&
-        !this.#repositoryConfig.logger &&
-        !this.#sharedLogger
+        !this.#sharedLogger &&
+        (!this.#storeConfig.logger ||
+          !this.#apiClientConfig.logger ||
+          !this.#repositoryConfig.logger)
       ) {
         // Determine log level priority: repository > store > apiClient > default > 'info'
         const logLevel =
@@ -259,29 +259,21 @@ export class PromidasRepositoryBuilder {
         this.#sharedLogger = new ConsoleLogger(logLevel);
       }
 
-      // Inject shared logger into configs that don't have explicit loggers
-      const storeConfig: PrototypeInMemoryStoreConfig = this.#storeConfig.logger
-        ? this.#storeConfig
-        : {
-            ...this.#storeConfig,
-            logger: this.#sharedLogger!,
-          };
+      // Inject shared logger into configs that don't have an explicit logger.
+      const storeConfig: PrototypeInMemoryStoreConfig = {
+        ...this.#storeConfig,
+        logger: this.#storeConfig.logger ?? this.#sharedLogger!,
+      };
 
-      const apiClientConfig: ProtopediaApiCustomClientConfig = this
-        .#apiClientConfig.logger
-        ? this.#apiClientConfig
-        : {
-            ...this.#apiClientConfig,
-            logger: this.#sharedLogger!,
-          };
+      const apiClientConfig: ProtopediaApiCustomClientConfig = {
+        ...this.#apiClientConfig,
+        logger: this.#apiClientConfig.logger ?? this.#sharedLogger!,
+      };
 
-      const repositoryConfig: ProtopediaInMemoryRepositoryConfig = this
-        .#repositoryConfig.logger
-        ? this.#repositoryConfig
-        : {
-            ...this.#repositoryConfig,
-            logger: this.#sharedLogger!,
-          };
+      const repositoryConfig: ProtopediaInMemoryRepositoryConfig = {
+        ...this.#repositoryConfig,
+        logger: this.#repositoryConfig.logger ?? this.#sharedLogger!,
+      };
 
       const store = new PrototypeInMemoryStore(storeConfig);
 

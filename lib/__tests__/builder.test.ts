@@ -513,7 +513,7 @@ describe('PromidasRepositoryBuilder', () => {
       expect(config.logLevel).toBe('info');
     });
 
-    it('should create shared logger only when no explicit loggers are provided', () => {
+    it('should create shared logger when some components lack explicit loggers', () => {
       const customLogger = {
         debug: vi.fn(),
         info: vi.fn(),
@@ -529,11 +529,12 @@ describe('PromidasRepositoryBuilder', () => {
         .setRepositoryConfig({ logLevel: 'warn' })
         .build();
 
-      // Repository should be created successfully
+      // Repository should be created successfully even when only one component has a logger
       expect(repo).toBeDefined();
 
-      // Store uses custom logger, repository uses shared logger with 'warn' level
-      // (verified by console output)
+      // Store uses custom logger, apiClient and repository use shared logger with 'warn' level
+      // This verifies the fix for the bug where shared logger wasn't created
+      // when at least one component had an explicit logger
     });
 
     it('should reuse the same builder instance across multiple build calls', () => {
