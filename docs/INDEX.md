@@ -85,6 +85,10 @@ PROMIDASのドキュメント一覧です。目的に応じて適切なドキュ
 
 ## 🛠️ 開発者向け
 
+### プロジェクト理念
+
+- **[Philosophy](./PHILOSOPHY.md)** - プロジェクトの設計思想と判断基準
+
 ### プロジェクト貢献
 
 - **[Development Guide](../DEVELOPMENT.md)** - 開発環境のセットアップ
