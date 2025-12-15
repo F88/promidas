@@ -31,7 +31,7 @@ describe('PromidasRepositoryBuilder - Error Logging', () => {
     );
   });
 
-  it.skip('logs error when build fails with shared logger', () => {
+  it('logs error when build fails with shared logger', () => {
     const mockLogger = {
       info: vi.fn(),
       warn: vi.fn(),
@@ -39,6 +39,11 @@ describe('PromidasRepositoryBuilder - Error Logging', () => {
       debug: vi.fn(),
       level: 'info' as const,
     };
+
+    // Spy on console.error since shared logger uses ConsoleLogger
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
 
     const builder = new PromidasRepositoryBuilder()
       .setDefaultLogLevel('debug')
@@ -48,12 +53,19 @@ describe('PromidasRepositoryBuilder - Error Logging', () => {
       });
 
     expect(() => builder.build()).toThrow();
-    expect(mockLogger.error).toHaveBeenCalledWith(
+
+    // Shared logger (ConsoleLogger) should log the error
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
       'Failed to build ProtopediaInMemoryRepository',
       expect.objectContaining({
         error: expect.any(Object),
       }),
     );
+
+    // apiClient logger should NOT be used for error logging
+    expect(mockLogger.error).not.toHaveBeenCalled();
+
+    consoleErrorSpy.mockRestore();
   });
 
   it('logs error to console when no logger is available', () => {
