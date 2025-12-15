@@ -15,6 +15,7 @@ import {
   ProtopediaApiCustomClient,
   type ProtopediaApiCustomClientConfig,
 } from './fetcher/index.js';
+import { ConsoleLogger } from './logger/console-logger.js';
 import type { Logger, LogLevel } from './logger/index.js';
 import { ProtopediaInMemoryRepositoryImpl } from './repository/protopedia-in-memory-repository.js';
 import type {
@@ -70,6 +71,12 @@ export class PromidasRepositoryBuilder {
   #repositoryConfig: ProtopediaInMemoryRepositoryConfig = {};
 
   /**
+   * Shared logger instance used across all components when no explicit logger is provided.
+   * Created lazily during build() to ensure consistent logging across Store, API Client, and Repository.
+   */
+  #sharedLogger?: Logger;
+
+  /**
    * Set configuration for the in-memory store.
    *
    * Multiple calls will merge configurations (later values override earlier ones).
@@ -118,22 +125,67 @@ export class PromidasRepositoryBuilder {
    * This method creates new instances of dependencies (Store, API Client)
    * based on the accumulated configuration.
    *
+   * When no explicit logger is provided in any configuration, a shared ConsoleLogger
+   * instance is created and used across all components for consistent logging and
+   * memory efficiency.
+   *
    * @throws {Error} If any dependency fails to initialize.
    */
   build(): ProtopediaInMemoryRepository {
     try {
-      const store = new PrototypeInMemoryStore(this.#storeConfig);
+      // Ensure shared logger exists if no explicit loggers were provided
+      if (
+        !this.#storeConfig.logger &&
+        !this.#apiClientConfig.logger &&
+        !this.#repositoryConfig.logger &&
+        !this.#sharedLogger
+      ) {
+        // Determine log level priority: repository > store > apiClient > 'info'
+        const logLevel =
+          this.#repositoryConfig.logLevel ??
+          this.#storeConfig.logLevel ??
+          this.#apiClientConfig.logLevel ??
+          'info';
+        this.#sharedLogger = new ConsoleLogger(logLevel);
+      }
 
-      const apiClient = new ProtopediaApiCustomClient(this.#apiClientConfig);
+      // Inject shared logger into configs that don't have explicit loggers
+      const storeConfig: PrototypeInMemoryStoreConfig = this.#storeConfig.logger
+        ? this.#storeConfig
+        : {
+            ...this.#storeConfig,
+            logger: this.#sharedLogger!,
+          };
+
+      const apiClientConfig: ProtopediaApiCustomClientConfig = this
+        .#apiClientConfig.logger
+        ? this.#apiClientConfig
+        : {
+            ...this.#apiClientConfig,
+            logger: this.#sharedLogger!,
+          };
+
+      const repositoryConfig: ProtopediaInMemoryRepositoryConfig = this
+        .#repositoryConfig.logger
+        ? this.#repositoryConfig
+        : {
+            ...this.#repositoryConfig,
+            logger: this.#sharedLogger!,
+          };
+
+      const store = new PrototypeInMemoryStore(storeConfig);
+
+      const apiClient = new ProtopediaApiCustomClient(apiClientConfig);
 
       return new ProtopediaInMemoryRepositoryImpl({
         store,
         apiClient,
-        repositoryConfig: this.#repositoryConfig,
+        repositoryConfig,
       });
     } catch (error) {
       // Log the error before re-throwing, ensuring sensitive data is sanitized
-      const logger = this.#repositoryConfig.logger ?? console;
+      const logger =
+        this.#repositoryConfig.logger ?? this.#sharedLogger ?? console;
       if (typeof logger.error === 'function') {
         logger.error(
           'Failed to build ProtopediaInMemoryRepository',
