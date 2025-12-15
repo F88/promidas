@@ -30,7 +30,7 @@ ProtoPedia API Ver 2.0 · Apiary
 - [TOKENの特性](#tokenの特性)
 - [リスクレベル別ガイドライン](#リスクレベル別ガイドライン)
 - [判断の指針](#判断の指針)
-- [PROMIDASの対応範囲](#promidasの対応範囲)
+- [PROMIDAS](#promidas)
 
 ## 重要な前提
 
