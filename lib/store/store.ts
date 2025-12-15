@@ -14,6 +14,7 @@ import {
   createConsoleLogger,
 } from '../logger/index.js';
 import type { NormalizedPrototype } from '../types/index.js';
+import { sanitizeDataForLogging } from '../utils/index.js'; // 追加
 
 const DEFAULT_TTL_MS = 30 * 60 * 1_000; // 30 minutes
 const DEFAULT_DATA_SIZE_BYTES = 10 * 1024 * 1024; // 10 MiB
@@ -294,7 +295,7 @@ export class PrototypeInMemoryStore {
       return totalBytes;
     } catch (error) {
       this.logger.warn('Failed to estimate payload size, defaulting to 0', {
-        error,
+        error: sanitizeDataForLogging(error),
       });
     }
     return 0;
@@ -315,7 +316,7 @@ export class PrototypeInMemoryStore {
         await task();
       } catch (error) {
         this.logger.error('PrototypeInMemoryStore refresh task failed', {
-          error,
+          error: sanitizeDataForLogging(error),
         });
         throw error;
       } finally {
