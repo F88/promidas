@@ -8,5 +8,6 @@
  */
 
 export * from './converters/index.js';
+export * from './deep-merge.js';
 export * from './logger-utils.js';
 export * from './time/index.js';
