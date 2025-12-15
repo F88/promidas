@@ -165,11 +165,34 @@ const SAMPLE_SIZE_THRESHOLD_RATIO = 0.5;
  * @see {@link createPromidasRepository} for the recommended factory
  */
 export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepository {
+  /**
+   * Internal logger instance.
+   */
   #logger: Logger;
+
+  /**
+   * Log level for the repository.
+   */
   #logLevel: LogLevel;
+
+  /**
+   * Underlying in-memory store instance.
+   */
   #store: PrototypeInMemoryStore;
+
+  /**
+   * Underlying API client instance.
+   */
   #apiClient: ProtopediaApiCustomClient;
+
+  /**
+   * Cache of the last successful fetch parameters.
+   */
   #lastFetchParams: ListPrototypesParams = { ...DEFAULT_FETCH_PARAMS };
+
+  /**
+   * Ongoing fetch promise for concurrency control.
+   */
   #ongoingFetch: Promise<SnapshotOperationResult> | null = null;
 
   /**
