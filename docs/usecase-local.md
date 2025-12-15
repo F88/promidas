@@ -94,9 +94,9 @@ export PROTOPEDIA_API_TOKEN="your-token-here"
 npm install dotenv
 ```
 
-```javascript
+```properties
 // .env
-PROTOPEDIA_API_TOKEN = your - token - here;
+PROTOPEDIA_API_TOKEN=your-token-here
 ```
 
 ### 3. 最小限のスクリプト
