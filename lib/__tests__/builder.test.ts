@@ -45,7 +45,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PromidasRepositoryBuilder } from '../builder.js';
-import { ProtopediaApiCustomClient } from '../fetcher/index.js';
 import {
   createConsoleLogger,
   type Logger,
