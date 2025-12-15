@@ -13,6 +13,7 @@ export default [
       '**/*.d.ts',
       '__tests__/**',
       'vitest.exports.config.ts',
+      'docs/.vitepress/**',
     ],
   },
   {

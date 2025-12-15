@@ -41,3 +41,7 @@ sample-data
 
 # Development
 scripts/sample-data/
+
+# VitePress build outputs
+docs/.vitepress/cache
+docs/.vitepress/dist

@@ -42,10 +42,13 @@
     "prebuild": "npm run clean",
     "prepublishOnly": "npm run build",
     "typecheck": "tsc --project tsconfig.dev.json --noEmit",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "dependencies": {
-    "zod": "^4.1.13"
+    "zod": "^4.2.0"
   },
   "peerDependencies": {
     "protopedia-api-v2-client": "^3.0.0"
@@ -58,7 +61,7 @@
     "@typescript-eslint/parser": "^8.49.0",
     "@vitest/coverage-v8": "^4.0.15",
     "@vitest/ui": "^4.0.15",
-    "eslint": "^9.39.1",
+    "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
     "prettier": "^3.7.4",
@@ -66,6 +69,7 @@
     "rimraf": "^6.1.2",
     "ts-essentials": "^10.1.1",
     "typescript": "^5.9.3",
+    "vitepress": "^1.6.4",
     "vitest": "^4.0.15"
   },
   "files": [
