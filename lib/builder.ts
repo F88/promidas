@@ -27,70 +27,7 @@ import {
   type PrototypeInMemoryStats,
   type PrototypeInMemoryStoreConfig,
 } from './store/index.js';
-import { sanitizeDataForLogging } from './utils/index.js';
-
-/**
- * Deep merge utility for configuration objects.
- * Recursively merges nested objects while preserving function references.
- * Objects containing function properties are replaced rather than merged.
- *
- * @param target - Target object
- * @param source - Source object to merge from
- * @returns Merged object
- */
-function deepMerge<T extends Record<string, unknown>>(
-  target: T,
-  source: Partial<T>,
-): T {
-  const result = { ...target };
-
-  for (const key in source) {
-    const sourceValue = source[key];
-    const targetValue = target[key];
-
-    // If source value is not an object or is an array, directly assign
-    if (
-      !sourceValue ||
-      typeof sourceValue !== 'object' ||
-      Array.isArray(sourceValue)
-    ) {
-      result[key] = sourceValue as T[Extract<keyof T, string>];
-      continue;
-    }
-
-    // If source contains functions, directly assign (don't merge)
-    if (Object.values(sourceValue).some((val) => typeof val === 'function')) {
-      result[key] = sourceValue as T[Extract<keyof T, string>];
-      continue;
-    }
-
-    // If target doesn't have this key or target value is not an object, directly assign
-    if (
-      !targetValue ||
-      typeof targetValue !== 'object' ||
-      Array.isArray(targetValue)
-    ) {
-      result[key] = sourceValue as T[Extract<keyof T, string>];
-      continue;
-    }
-
-    // Both are plain objects without functions - deep merge
-    result[key] = deepMerge(
-      targetValue as Record<string, unknown>,
-      sourceValue as Record<string, unknown>,
-    ) as T[Extract<keyof T, string>];
-  }
-
-  return result;
-}
-
-/**
- * Configuration options for the API client wrapper within the builder.
- */
-export interface ApiClientWrapperConfig {
-  logger?: Logger;
-  logLevel?: LogLevel;
-}
+import { deepMerge, sanitizeDataForLogging } from './utils/index.js';
 
 // Re-export types used in builder methods
 export type {
