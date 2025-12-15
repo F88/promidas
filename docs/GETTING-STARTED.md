@@ -54,10 +54,15 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。パ
 
 ### TOKENの取得方法
 
-1. ProtoPedia API Ver 2.0のドキュメントにアクセス:
-   **[ProtoPedia API Ver 2.0 · Apiary](https://protopediav2.docs.apiary.io/)**
+1. **ProtoPedia APIドキュメント**にアクセス:
+    - **[ProtoPedia API Ver 2.0 · Apiary](https://protopediav2.docs.apiary.io/)**
+    - ドキュメントに記載されている「Bearer Tokenの発行」セクションを参照
 
-2. ドキュメントに記載されている手順に従ってTOKENを取得してください
+2. **アプリケーション/素材用 API TOKEN**を取得:
+
+`作品・開発素材一覧 API` を使用するための `APIトークン`を取得してください。
+
+⚠️ **PROMIDASが使用するのは「アプリケーション/素材用 API」の APIトークンで**。イベント作品用のTOKENとは異なります。
 
 ### セキュリティの基礎
 
@@ -74,7 +79,10 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。パ
 - バックエンド(サーバー)でのみTOKENを使用
 - Secrets管理やサーバー環境変数を使用
 
-詳細は[ユースケース](./USECASE.md)の「実行場所とセキュリティ」を参照してください。
+**詳しくは以下をご覧ください:**
+
+- **[セキュリティガイドライン](./SECURITY.md)**: TOKEN管理とセキュリティのベストプラクティス
+- **[ユースケース](./USECASE.md)**: 実行場所とセキュリティの基礎
 
 ## インストール
 

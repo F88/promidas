@@ -16,7 +16,7 @@ instructions-for-ais:
 
 # セキュリティガイドライン
 
-📢  ProtoPedia API Ver 2.0 で利用する `Bearer Token` についての正確な情報は、必ず公式ドキュメントを参照してください。
+📢 ProtoPedia API Ver 2.0 で利用する `Bearer Token` についての正確な情報は、必ず公式ドキュメントを参照してください。
 (PROMIDASの作者は ProtoPedia API Ver 2.0 の開発者ではありません)
 
 ProtoPedia API Ver 2.0 · Apiary

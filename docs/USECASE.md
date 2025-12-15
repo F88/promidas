@@ -87,20 +87,10 @@ PROMIDASを使う前に、**どこでコードを実行するか**を決める�
 
 BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。このTOKENを持っている人は、あなたのアカウントでAPIを使用できます。
 
-- **TOKENの取得方法**: [ProtoPedia API Ver 2.0 · Apiary](https://protopediav2.docs.apiary.io/) を参照
-- **セキュリティの基礎**: 詳細は[Getting Started](./GETTING-STARTED.md)の「ProtoPedia API Ver 2.0について」を参照
+**詳しくは以下をご覧ください:**
 
-### ベストプラクティス
-
-**チーム利用時:**
-
-- 各メンバーが自分のTOKENを使用すること
-- TOKENの共有は避ける
-
-**Webアプリ開発時:**
-
-- フロントエンド(ブラウザで実行されるコード)に絶対にTOKENを書かない
-- バックエンド(サーバー)でのみTOKENを使用する
+- **[セキュリティガイドライン](./SECURITY.md)**: TOKEN管理とセキュリティのベストプラクティス
+- **[Getting Started](./GETTING-STARTED.md)**: TOKENの取得方法と基本的な使い方
 
 ## ユースケース例
 
