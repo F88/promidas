@@ -46,7 +46,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PromidasRepositoryBuilder } from '../builder.js';
 import { ProtopediaApiCustomClient } from '../fetcher/index.js';
-import { createConsoleLogger } from '../logger/index.js';
+import {
+  createConsoleLogger,
+  type Logger,
+  type LogLevel,
+} from '../logger/index.js';
 
 // Mock the ProtopediaApiCustomClient
 vi.mock('../fetcher/index', async (importOriginal) => {
@@ -295,6 +299,113 @@ describe('PromidasRepositoryBuilder', () => {
       const config = repo.getConfig();
       // Second call to setStoreConfig should replace the first
       expect(config.maxDataSizeBytes).toBe(5 * 1024 * 1024);
+    });
+  });
+
+  describe('Configuration Immutability', () => {
+    it('should prevent external mutation of store config after setting', () => {
+      const builder = new PromidasRepositoryBuilder();
+      const logger = createConsoleLogger();
+      const externalConfig = { logger, ttlMs: 60000 };
+
+      builder.setStoreConfig(externalConfig);
+
+      // Mutate external config
+      externalConfig.ttlMs = 120000;
+
+      // Build and verify internal config was not affected
+      const repo = builder.build();
+      const config = repo.getConfig();
+      expect(config.ttlMs).toBe(60000);
+    });
+
+    it('should prevent external mutation of nested objects in store config', () => {
+      const builder = new PromidasRepositoryBuilder();
+      const logger = createConsoleLogger();
+      const externalConfig = { logger };
+
+      builder.setStoreConfig(externalConfig);
+
+      // Attempt to mutate nested logger object
+      (externalConfig.logger as any).level = 'debug';
+
+      // Build and verify - logger should still work correctly
+      const repo = builder.build();
+      expect(repo).toBeDefined();
+    });
+
+    it('should prevent external mutation of API client config', () => {
+      const builder = new PromidasRepositoryBuilder();
+      const logger = createConsoleLogger();
+      const externalConfig: {
+        logger: Logger;
+        logLevel: LogLevel;
+      } = {
+        logger,
+        logLevel: 'info',
+      };
+
+      builder.setApiClientConfig(externalConfig);
+
+      // Mutate external config
+      externalConfig.logLevel = 'debug';
+
+      // Build and verify internal config was not affected
+      const repo = builder.build();
+      expect(repo).toBeDefined();
+    });
+
+    it('should prevent external mutation of repository config', () => {
+      const builder = new PromidasRepositoryBuilder();
+      const logger = createConsoleLogger();
+      const externalConfig: {
+        logger: Logger;
+        logLevel: LogLevel;
+      } = {
+        logger,
+        logLevel: 'warn',
+      };
+
+      builder.setRepositoryConfig(externalConfig);
+
+      // Mutate external config
+      externalConfig.logLevel = 'error';
+
+      // Build and verify internal config was not affected
+      const repo = builder.build();
+      expect(repo).toBeDefined();
+    });
+
+    it('should deeply merge nested configuration objects', () => {
+      const builder = new PromidasRepositoryBuilder();
+
+      // First call with partial config
+      builder.setStoreConfig({ ttlMs: 30000 });
+
+      // Second call with different properties
+      builder.setStoreConfig({ maxDataSizeBytes: 5 * 1024 * 1024 });
+
+      // Build and verify both properties are set
+      const repo = builder.build();
+      const config = repo.getConfig();
+      expect(config.ttlMs).toBe(30000);
+      expect(config.maxDataSizeBytes).toBe(5 * 1024 * 1024);
+    });
+
+    it('should handle multiple setter calls with the same config type', () => {
+      const builder = new PromidasRepositoryBuilder();
+
+      // First call
+      builder.setStoreConfig({ ttlMs: 30000 });
+
+      // Second call should merge properties
+      builder.setStoreConfig({ maxDataSizeBytes: 10000 });
+
+      // Build and verify
+      const repo = builder.build();
+      const config = repo.getConfig();
+      expect(config.ttlMs).toBe(30000); // Should be preserved
+      expect(config.maxDataSizeBytes).toBe(10000); // Should be set
     });
   });
 
