@@ -20,6 +20,7 @@ import {
   type LogLevel,
 } from '../../logger/index.js';
 import type { NormalizedPrototype } from '../../types/index.js';
+import { sanitizeDataForLogging } from '../../utils/index.js'; // 追加
 import type {
   NetworkFailure,
   UpstreamPrototype,
@@ -88,18 +89,9 @@ export class ProtopediaApiCustomClient {
       this.#logLevel = resolvedLogLevel;
     }
 
-    // Sanitize config for logging to avoid exposing tokens
-    const sanitizedConfig = config ? { ...config } : config;
-    if (sanitizedConfig?.protoPediaApiClientOptions?.token) {
-      sanitizedConfig.protoPediaApiClientOptions = {
-        ...sanitizedConfig.protoPediaApiClientOptions,
-        token: '***',
-      };
-    }
-
     this.#logger.info(
       'ProtopediaApiCustomClient constructor called',
-      sanitizedConfig,
+      sanitizeDataForLogging(config),
     );
 
     // Create underlying protopedia-api-v2-client
@@ -194,10 +186,11 @@ export class ProtopediaApiCustomClient {
       const errorResult = handleApiError(error);
       // Log based on the errorResult (always an error result from handleApiError)
       if (!errorResult.ok) {
+        const sanitizedError = sanitizeDataForLogging(errorResult);
         if (errorResult.status === undefined || errorResult.status >= 500) {
-          this.#logger.error(errorResult.error, errorResult);
+          this.#logger.error(errorResult.error, sanitizedError);
         } else {
-          this.#logger.warn(errorResult.error, errorResult);
+          this.#logger.warn(errorResult.error, sanitizedError);
         }
       }
       return errorResult;
