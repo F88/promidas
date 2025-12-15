@@ -66,6 +66,7 @@
     "rimraf": "^6.1.2",
     "ts-essentials": "^10.1.1",
     "typescript": "^5.9.3",
+    "vitepress": "^1.6.4",
     "vitest": "^4.0.15"
   },
   "files": [
