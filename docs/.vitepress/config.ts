@@ -48,7 +48,7 @@ export default defineConfig({
           },
           {
             text: 'Contributing',
-            link: '/CONTRIBUTING',
+            link: 'https://github.com/F88/promidas/blob/main/CONTRIBUTING.md',
           },
         ],
       },
