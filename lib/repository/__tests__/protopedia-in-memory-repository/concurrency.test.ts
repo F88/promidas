@@ -32,7 +32,7 @@ vi.mock('../../../store/index', async (importOriginal) => {
   };
 });
 
-import { createMockStore, makePrototype, setupMocks } from './test-helpers.js';
+import { createMockStore, makePrototype } from './test-helpers.js';
 
 type Deferred<T> = {
   promise: Promise<T>;

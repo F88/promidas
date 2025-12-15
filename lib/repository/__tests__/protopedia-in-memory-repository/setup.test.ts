@@ -101,7 +101,7 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
         debug: vi.fn(),
       } as unknown as Logger;
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({
+      new ProtopediaInMemoryRepositoryImpl({
         store: mockStoreInstance,
         apiClient: mockApiClientInstance,
         repositoryConfig: { logger: mockLogger },

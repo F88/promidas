@@ -86,7 +86,7 @@ const getMemoryUsage = () => {
 };
 
 describe('ProtopediaInMemoryRepositoryImpl - data access performance', () => {
-  const { listPrototypesMock, fetchPrototypesMock, resetMocks } = setupMocks();
+  const { fetchPrototypesMock, resetMocks } = setupMocks();
 
   beforeEach(() => {
     resetMocks();

@@ -10,7 +10,6 @@
 import {
   createProtoPediaClient,
   type ListPrototypesParams,
-  ProtoPediaApiError,
   type ProtoPediaApiClient,
 } from 'protopedia-api-v2-client';
 
