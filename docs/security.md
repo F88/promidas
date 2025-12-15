@@ -20,7 +20,7 @@ instructions-for-ais:
 (PROMIDASの作者は ProtoPedia API Ver 2.0 の開発者ではありません)
 
 ProtoPedia API Ver 2.0 · Apiary
-<https://protopediav2.docs.apiary.io/>
+[ProtoPedia API Ver 2.0 · Apiary](https://protopediav2.docs.apiary.io/)
 
 このドキュメントでは、`Bearer Token` の適切な取り扱いとセキュリティに関する推奨事項を説明します。
 
