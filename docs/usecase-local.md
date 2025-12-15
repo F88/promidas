@@ -4,8 +4,8 @@ title: Local Script Use Cases
 title-en: Local Script Use Cases
 title-ja: ローカルスクリプト向けユースケース
 related:
-    - ./USECASE.md "Use Cases Overview"
-    - ./USECASE-WEBAPP.md "Server Execution Use Cases"
+    - ./usecase.md "Use Cases Overview"
+    - ./usecase-webapp.md "Server Execution Use Cases"
     - ../lib/repository/README.md "Repository Module"
 instructions-for-ais:
     - This document should be written in Japanese.

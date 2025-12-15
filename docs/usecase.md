@@ -5,9 +5,9 @@ title-en: Use Cases
 title-ja: ユースケース
 related:
     - ../README.md "Project Overview"
-    - ./GETTING-STARTED.md "Getting Started"
-    - ./USECASE-LOCAL.md "Local Execution Use Cases"
-    - ./USECASE-WEBAPP.md "Server Execution Use Cases"
+    - ./getting-started.md "Getting Started"
+    - ./usecase-local.md "Local Execution Use Cases"
+    - ./usecase-webapp.md "Server Execution Use Cases"
     - ../DEVELOPMENT.md "Development Guide"
 instructions-for-ais:
     - This document should be written in Japanese.
@@ -89,8 +89,8 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。こ
 
 **詳しくは以下をご覧ください:**
 
-- **[セキュリティガイドライン](./SECURITY.md)**: TOKEN管理とセキュリティのベストプラクティス
-- **[Getting Started](./GETTING-STARTED.md)**: TOKENの取得方法と基本的な使い方
+- **[セキュリティガイドライン](./security.md)**: TOKEN管理とセキュリティのベストプラクティス
+- **[Getting Started](./getting-started.md)**: TOKENの取得方法と基本的な使い方
 
 ## ユースケース例
 
@@ -124,7 +124,7 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。こ
 - **中級**: ツール開発やフレームワークの知識が必要
 - **上級**: セキュリティ、バックエンド開発の深い知識が必要
 
-**注意**: サーバー上でのTOKEN管理が必要です。詳細は[サーバー実行向けユースケース](./USECASE-WEBAPP.md)を参照してください。
+**注意**: サーバー上でのTOKEN管理が必要です。詳細は[サーバー実行向けユースケース](./usecase-webapp.md)を参照してください。
 
 ## 実行環境別の判断基準
 
@@ -144,7 +144,7 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。こ
 
 ### はじめる前に
 
-**[Getting Started](./GETTING-STARTED.md)**
+**[Getting Started](./getting-started.md)**
 
 - ProtoPedia API Ver 2.0について
 - BEARER TOKENの取得方法
@@ -154,7 +154,7 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。こ
 
 ### ローカル実行の詳細
 
-**[ローカル実行向けユースケース](./USECASE-LOCAL.md)**
+**[ローカル実行向けユースケース](./usecase-local.md)**
 
 - データ分析・調査の詳細
 - ツール開発のパターン
@@ -163,7 +163,7 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。こ
 
 ### サーバー実行の詳細
 
-**[サーバー実行向けユースケース](./USECASE-WEBAPP.md)** (準備中)
+**[サーバー実行向けユースケース](./usecase-webapp.md)** (準備中)
 
 - Webアプリケーション開発
 - TOKEN管理のベストプラクティス
@@ -176,9 +176,9 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。こ
 ### 初心者の方へ
 
 1. **このドキュメントを読む** - 実行場所とセキュリティを理解する
-2. **[Getting Started](./GETTING-STARTED.md)を読む** - TOKENの取得と基本的な使い方を学ぶ
-3. **ローカルで試す** - [ローカル実行向けユースケース](./USECASE-LOCAL.md)を参考に安全に実験
-4. **必要なら応用へ** - Webアプリ開発が必要な場合のみ[サーバー実行](./USECASE-WEBAPP.md)へ進む
+2. **[Getting Started](./getting-started.md)を読む** - TOKENの取得と基本的な使い方を学ぶ
+3. **ローカルで試す** - [ローカル実行向けユースケース](./usecase-local.md)を参考に安全に実験
+4. **必要なら応用へ** - Webアプリ開発が必要な場合のみ[サーバー実行](./usecase-webapp.md)へ進む
 
 ### 重要な注意点
 

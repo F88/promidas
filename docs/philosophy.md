@@ -4,7 +4,7 @@ title: Project Philosophy
 title-en: Project Philosophy
 title-ja: プロジェクトの哲学
 related:
-    - ./INDEX.md "Documentation Index"
+    - ./index.md "Documentation Index"
     - ../README.md "Project Overview"
     - ../CONTRIBUTING.md "Contributing Guide"
 instructions-for-ais:
@@ -205,8 +205,8 @@ PROMIDASは、特に**BEARER TOKENのセキュリティ**を重視します。
 
 ドキュメントでセキュリティリスクを**繰り返し警告**:
 
-- [ユースケース](./USECASE.md)で実行場所の重要性を説明
-- [Getting Started](./GETTING-STARTED.md)でTOKENの危険性を説明
+- [ユースケース](./usecase.md)で実行場所の重要性を説明
+- [Getting Started](./getting-started.md)でTOKENの危険性を説明
 - ローカル実行(安全)から始める学習パスを推奨
 
 ### 安全なデフォルト
@@ -222,7 +222,7 @@ const repo = createPromidasRepository({
 
 ### サーバー実行への警告
 
-[サーバー実行向けドキュメント](./USECASE-WEBAPP.md)で明確に警告:
+[サーバー実行向けドキュメント](./usecase-webapp.md)で明確に警告:
 
 - フロントエンドでTOKENを使わない
 - バックエンドでのみ使用する
@@ -280,7 +280,7 @@ PROMIDASの哲学は以下の原則に基づいています:
 
 ## 関連ドキュメント
 
-- **[ドキュメント一覧](./INDEX.md)** - すべてのドキュメント
+- **[ドキュメント一覧](./index.md)** - すべてのドキュメント
 - **[Contributing Guide](../CONTRIBUTING.md)** - プロジェクトへの貢献
 - **[Design Documents](../lib/repository/docs/DESIGN.md)** - 詳細な設計ドキュメント
 

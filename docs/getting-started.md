@@ -4,8 +4,8 @@ title: Getting Started
 title-en: Getting Started
 title-ja: はじめに
 related:
-    - ./USECASE.md "Use Cases"
-    - ./USECASE-LOCAL.md "Local Execution Use Cases"
+    - ./usecase.md "Use Cases"
+    - ./usecase-local.md "Local Execution Use Cases"
     - ../README.md "Project Overview"
 instructions-for-ais:
     - This document should be written in Japanese.
@@ -30,11 +30,11 @@ instructions-for-ais:
 
 ## まず読んでください
 
-⚠️ **コードを書く前に、必ず[ユースケース](./USECASE.md)を読んでください**
+⚠️ **コードを書く前に、必ず[ユースケース](./usecase.md)を読んでください**
 
 PROMIDASの使用には**BEARER TOKEN**が必要です。実行場所(ローカル/サーバー)によってセキュリティリスクが大きく異なるため、自分の用途に合った使い方を理解することが重要です。
 
-**特にAPI初心者の方は、[ユースケース](./USECASE.md)の「実行場所とセキュリティ」セクションを必ず読んでください。**
+**特にAPI初心者の方は、[ユースケース](./usecase.md)の「実行場所とセキュリティ」セクションを必ず読んでください。**
 
 ## ProtoPedia API Ver 2.0について
 
@@ -81,8 +81,8 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。パ
 
 **詳しくは以下をご覧ください:**
 
-- **[セキュリティガイドライン](./SECURITY.md)**: TOKEN管理とセキュリティのベストプラクティス
-- **[ユースケース](./USECASE.md)**: 実行場所とセキュリティの基礎
+- **[セキュリティガイドライン](./security.md)**: TOKEN管理とセキュリティのベストプラクティス
+- **[ユースケース](./usecase.md)**: 実行場所とセキュリティの基礎
 
 ## インストール
 
@@ -335,7 +335,7 @@ console.log(`Expires at: ${stats.expiresAt}`);
 
 まずは安全なローカル実行から始めましょう:
 
-1. **[ローカル実行向けユースケース](./USECASE-LOCAL.md)**を読む
+1. **[ローカル実行向けユースケース](./usecase-local.md)**を読む
 2. サンプルコードを試す
 3. 自分の用途に合わせてカスタマイズ
 
@@ -349,11 +349,11 @@ console.log(`Expires at: ${stats.expiresAt}`);
 
 **重要**: Webアプリ開発に進む前に、以下を必ず理解してください:
 
-1. [ユースケース](./USECASE.md)の「実行場所とセキュリティ」
-2. [ローカル実行](./USECASE-LOCAL.md)での基礎知識
+1. [ユースケース](./usecase.md)の「実行場所とセキュリティ」
+2. [ローカル実行](./usecase-local.md)での基礎知識
 3. セキュリティとTOKEN管理の基本
 
-その後、[サーバー実行向けユースケース](./USECASE-WEBAPP.md)へ進んでください。
+その後、[サーバー実行向けユースケース](./usecase-webapp.md)へ進んでください。
 
 ## サポート
 
@@ -361,7 +361,7 @@ console.log(`Expires at: ${stats.expiresAt}`);
 
 - **[GitHub Issues](https://github.com/F88/promidas/issues)**: バグ報告・機能リクエスト
 - **[GitHub Discussions](https://github.com/F88/promidas/discussions)**: 質問・議論
-- **[ドキュメント一覧](./INDEX.md)**: すべてのドキュメント
+- **[ドキュメント一覧](./index.md)**: すべてのドキュメント
 
 ## ライセンス
 

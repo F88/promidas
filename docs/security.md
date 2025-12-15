@@ -4,9 +4,9 @@ title: Security Guidelines
 title-en: Security Guidelines
 title-ja: セキュリティガイドライン
 related:
-    - ./USECASE.md "Use Cases"
-    - ./GETTING-STARTED.md "Getting Started"
-    - ./USECASE-WEBAPP.md "Server Execution Use Cases"
+    - ./usecase.md "Use Cases"
+    - ./getting-started.md "Getting Started"
+    - ./usecase-webapp.md "Server Execution Use Cases"
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.
@@ -164,9 +164,9 @@ PROMIDASは `GET https://protopedia.net/v2/api/prototype/list`（作品一覧取
 
 ### 関連ドキュメント
 
-- **[ユースケース](./USECASE.md)**: 実行場所とセキュリティの基礎
-- **[Getting Started](./GETTING-STARTED.md)**: TOKENの取得と環境設定
-- **[サーバー実行向けユースケース](./USECASE-WEBAPP.md)**: サーバー環境での実装パターン
+- **[ユースケース](./usecase.md)**: 実行場所とセキュリティの基礎
+- **[Getting Started](./getting-started.md)**: TOKENの取得と環境設定
+- **[サーバー実行向けユースケース](./usecase-webapp.md)**: サーバー環境での実装パターン
 
 ### 公式リソース
 

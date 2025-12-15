@@ -16,12 +16,12 @@ PROMIDASのドキュメント一覧です。目的に応じて適切なドキュ
 
 ### 初めての方へ
 
-1. **[ユースケース](./USECASE.md)** - まずここから
+1. **[ユースケース](./usecase.md)** - まずここから
     - 実行場所(ローカル/サーバー)とセキュリティについて理解する
     - 自分の用途に合ったユースケースを選ぶ
     - API初心者の方は特に重要
 
-2. **[Getting Started](./GETTING-STARTED.md)** - 基本的な使い方
+2. **[Getting Started](./getting-started.md)** - 基本的な使い方
     - ProtoPedia API Ver 2.0について
     - BEARER TOKENの取得方法
     - インストールと初期設定
@@ -37,7 +37,7 @@ PROMIDASのドキュメント一覧です。目的に応じて適切なドキュ
 
 ### ローカル実行(安全・初心者向け)
 
-- **[ローカル実行向けユースケース](./USECASE-LOCAL.md)**
+- **[ローカル実行向けユースケース](./usecase-local.md)**
     - データ分析・調査
     - ツール開発
     - 設定パターンとサンプルコード
@@ -45,7 +45,7 @@ PROMIDASのドキュメント一覧です。目的に応じて適切なドキュ
 
 ### サーバー実行(セキュリティ知識必須)
 
-- **[サーバー実行向けユースケース](./USECASE-WEBAPP.md)** (準備中)
+- **[サーバー実行向けユースケース](./usecase-webapp.md)** (準備中)
     - Webアプリケーション開発
     - TOKEN管理のベストプラクティス
     - CI/CD統合
@@ -87,7 +87,7 @@ PROMIDASのドキュメント一覧です。目的に応じて適切なドキュ
 
 ### プロジェクト理念
 
-- **[Philosophy](./PHILOSOPHY.md)** - プロジェクトの設計思想と判断基準
+- **[Philosophy](./philosophy.md)** - プロジェクトの設計思想と判断基準
 
 ### プロジェクト貢献
 
@@ -116,18 +116,18 @@ PROMIDASのドキュメント一覧です。目的に応じて適切なドキュ
 
 ### どのドキュメントから読めば良いですか?
 
-1. 初めての方: [ユースケース](./USECASE.md) → [Getting Started](./GETTING-STARTED.md)
-2. ローカルで試したい: [ローカル実行向けユースケース](./USECASE-LOCAL.md)
-3. Webアプリに組み込みたい: まず[ローカル実行](./USECASE-LOCAL.md)で基礎を学んでから[サーバー実行](./USECASE-WEBAPP.md)へ
+1. 初めての方: [ユースケース](./usecase.md) → [Getting Started](./getting-started.md)
+2. ローカルで試したい: [ローカル実行向けユースケース](./usecase-local.md)
+3. Webアプリに組み込みたい: まず[ローカル実行](./usecase-local.md)で基礎を学んでから[サーバー実行](./usecase-webapp.md)へ
 4. APIリファレンスが見たい: 各モジュールの[Usage Guide](#-モジュール別リファレンス)
 
 ### API初心者ですが大丈夫ですか?
 
-はい、[ユースケース](./USECASE.md)と[Getting Started](./GETTING-STARTED.md)でAPI初心者向けに基礎から説明しています。特にBEARER TOKENの扱いとセキュリティについて理解してから使い始めることをお勧めします。
+はい、[ユースケース](./usecase.md)と[Getting Started](./getting-started.md)でAPI初心者向けに基礎から説明しています。特にBEARER TOKENの扱いとセキュリティについて理解してから使い始めることをお勧めします。
 
 ### すぐにコードを試したいのですが?
 
-[Getting Started](./GETTING-STARTED.md)に最小限のコード例があります。ただし、**必ず先に[ユースケース](./USECASE.md)で実行場所とセキュリティを確認してください**。
+[Getting Started](./getting-started.md)に最小限のコード例があります。ただし、**必ず先に[ユースケース](./usecase.md)で実行場所とセキュリティを確認してください**。
 
 ## 📄 ライセンス
 

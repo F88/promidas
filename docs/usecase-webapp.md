@@ -4,9 +4,9 @@ title: Server Execution Use Cases
 title-en: Server Execution Use Cases
 title-ja: サーバー実行向けユースケース
 related:
-    - ./USECASE.md "Use Cases Overview"
-    - ./USECASE-LOCAL.md "Local Execution Use Cases"
-    - ./GETTING-STARTED.md "Getting Started"
+    - ./usecase.md "Use Cases Overview"
+    - ./usecase-local.md "Local Execution Use Cases"
+    - ./getting-started.md "Getting Started"
     - ../lib/repository/README.md "Repository Module"
 instructions-for-ais:
     - This document should be written in Japanese.
@@ -25,9 +25,9 @@ Webアプリケーション開発やCI/CD統合など、サーバー上でPROMID
 
 このドキュメントを読む前に、以下を必ず理解してください:
 
-1. **[ユースケース](./USECASE.md)** - 実行場所とセキュリティの基礎
-2. **[Getting Started](./GETTING-STARTED.md)** - BEARER TOKENとAPIの基本
-3. **[ローカル実行向けユースケース](./USECASE-LOCAL.md)** - PROMIDASの基本的な使い方
+1. **[ユースケース](./usecase.md)** - 実行場所とセキュリティの基礎
+2. **[Getting Started](./getting-started.md)** - BEARER TOKENとAPIの基本
+3. **[ローカル実行向けユースケース](./usecase-local.md)** - PROMIDASの基本的な使い方
 
 特に、**BEARER TOKENのセキュリティリスク**を理解せずにWebアプリ開発を始めることは危険です。
 
@@ -35,7 +35,7 @@ Webアプリケーション開発やCI/CD統合など、サーバー上でPROMID
 
 ⚠️ **サーバー実行では、 `Bearer Token` のセキュリティ管理が非常に重要です**
 
-詳細なセキュリティガイドラインは **[セキュリティガイドライン](./SECURITY.md)** を必ずお読みください。
+詳細なセキュリティガイドラインは **[セキュリティガイドライン](./security.md)** を必ずお読みください。
 
 ### 重要なポイント
 
@@ -67,7 +67,7 @@ export async function GET() {
 }
 ```
 
-詳細なリスク分析、判断基準、実装パターンは **[セキュリティガイドライン](./SECURITY.md)** をご覧ください。
+詳細なリスク分析、判断基準、実装パターンは **[セキュリティガイドライン](./security.md)** をご覧ください。
 
 ## 準備中の内容
 

@@ -57,12 +57,12 @@ This project extracts and generalizes the data-fetching and in-memory data manag
 
 ## 📚 Documentation
 
-**[📖 Documentation Index](docs/INDEX.md)** - Complete documentation guide
+**[📖 Documentation Index](docs/index.md)** - Complete documentation guide
 
 For first-time users:
 
-1. **[Use Cases](docs/USECASE.md)** - Understand execution environments and security
-2. **[Getting Started](docs/GETTING-STARTED.md)** - Installation and basic usage
+1. **[Use Cases](docs/usecase.md)** - Understand execution environments and security
+2. **[Getting Started](docs/getting-started.md)** - Installation and basic usage
 
 ## 🌐 Demo
 
