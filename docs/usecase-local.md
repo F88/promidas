@@ -501,37 +501,6 @@ const chartData = {
 console.log(JSON.stringify(chartData, null, 2));
 ```
 
-### ライセンス別集計
-
-```typescript
-import { createPromidasRepository } from '@f88/promidas';
-
-const repo = createPromidasRepository({
-    apiClientOptions: { token: process.env.PROTOPEDIA_API_TOKEN },
-});
-
-await repo.setupSnapshot({ limit: 10000 });
-const allData = await repo.getAllFromSnapshot();
-
-const licenseCounts = allData.reduce(
-    (acc, p) => {
-        const license = p.license || 'Unknown';
-        acc[license] = (acc[license] || 0) + 1;
-        return acc;
-    },
-    {} as Record<string, number>,
-);
-
-console.log('License distribution:', licenseCounts);
-
-// パーセンテージも表示
-const total = allData.length;
-for (const [license, count] of Object.entries(licenseCounts)) {
-    const percentage = ((count / total) * 100).toFixed(2);
-    console.log(`${license}: ${count} (${percentage}%)`);
-}
-```
-
 ## よくある質問
 
 ### Q1. データ取得に時間がかかる
