@@ -6,7 +6,7 @@ title-ja: プロジェクトの哲学
 related:
     - ./index.md "Documentation Index"
     - ../README.md "Project Overview"
-    - ../CONTRIBUTING.md "Contributing Guide"
+    - https://github.com/F88/promidas/blob/main/CONTRIBUTING.md "Contributing Guide"
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.
@@ -281,9 +281,9 @@ PROMIDASの哲学は以下の原則に基づいています:
 ## 関連ドキュメント
 
 - **[ドキュメント一覧](./index.md)** - すべてのドキュメント
-- **[Contributing Guide](../CONTRIBUTING.md)** - プロジェクトへの貢献
-- **[Design Documents](../lib/repository/docs/DESIGN.md)** - 詳細な設計ドキュメント
+- **[Contributing Guide](https://github.com/F88/promidas/blob/main/CONTRIBUTING.md)** - プロジェクトへの貢献
+- **[Design Documents](https://github.com/F88/promidas/blob/main/lib/repository/docs/DESIGN.md)** - 詳細な設計ドキュメント
 
 ## ライセンス
 
-MIT License - 詳細は[LICENSE](../LICENSE)を参照してください。
+MIT License - 詳細は[LICENSE](https://github.com/F88/promidas/blob/main/LICENSE)を参照してください。

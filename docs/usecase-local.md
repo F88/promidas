@@ -6,7 +6,7 @@ title-ja: ローカルスクリプト向けユースケース
 related:
     - ./usecase.md "Use Cases Overview"
     - ./usecase-webapp.md "Server Execution Use Cases"
-    - ../lib/repository/README.md "Repository Module"
+    - https://github.com/F88/promidas/blob/main/lib/repository/README.md "Repository Module"
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.
@@ -622,9 +622,9 @@ const prototypes: NormalizedPrototype[] = await repo.getAllFromSnapshot();
 
 ## 次のステップ
 
-- [Repository Usage Guide](../lib/repository/docs/USAGE.md): より高度な使い方
-- [Application Integration Use Cases](./USECASE-APPLICATION.md): アプリケーション組み込み向けガイド
-- [Repository Design Document](../lib/repository/docs/DESIGN.md): 内部アーキテクチャ
+- [Repository Usage Guide](https://github.com/F88/promidas/blob/main/lib/repository/docs/USAGE.md): より高度な使い方
+- Application Integration Use Cases: アプリケーション組み込み向けガイド（準備中）
+- [Repository Design Document](https://github.com/F88/promidas/blob/main/lib/repository/docs/DESIGN.md): 内部アーキテクチャ
 
 ## サポート
 

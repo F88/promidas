@@ -8,7 +8,7 @@ related:
     - ./getting-started.md "Getting Started"
     - ./usecase-local.md "Local Execution Use Cases"
     - ./usecase-webapp.md "Server Execution Use Cases"
-    - ../DEVELOPMENT.md "Development Guide"
+    - https://github.com/F88/promidas/blob/main/DEVELOPMENT.md "Development Guide"
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.
@@ -190,17 +190,17 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。こ
 
 ### モジュール別ドキュメント
 
-- **[Repository Module](../lib/repository/README.md)**: Repository APIの詳細
-- **[Store Module](../lib/store/README.md)**: In-memoryストレージの仕組み
-- **[Fetcher Module](../lib/fetcher/README.md)**: APIクライアントとデータ取得
-- **[Logger Module](../lib/logger/README.md)**: ロギングのカスタマイズ
-- **[Utils Module](../lib/utils/README.md)**: ユーティリティ関数
+- **[Repository Module](https://github.com/F88/promidas/blob/main/lib/repository/README.md)**: Repository APIの詳細
+- **[Store Module](https://github.com/F88/promidas/blob/main/lib/store/README.md)**: In-memoryストレージの仕組み
+- **[Fetcher Module](https://github.com/F88/promidas/blob/main/lib/fetcher/README.md)**: APIクライアントとデータ取得
+- **[Logger Module](https://github.com/F88/promidas/blob/main/lib/logger/README.md)**: ロギングのカスタマイズ
+- **[Utils Module](https://github.com/F88/promidas/blob/main/lib/utils/README.md)**: ユーティリティ関数
 
 ### プロジェクト情報
 
-- **[Development Guide](../DEVELOPMENT.md)**: 開発環境のセットアップ
-- **[Contributing Guide](../CONTRIBUTING.md)**: プロジェクトへの貢献方法
-- **[Changelog](../CHANGELOG.md)**: バージョンごとの変更履歴
+- **[Development Guide](https://github.com/F88/promidas/blob/main/DEVELOPMENT.md)**: 開発環境のセットアップ
+- **[Contributing Guide](https://github.com/F88/promidas/blob/main/CONTRIBUTING.md)**: プロジェクトへの貢献方法
+- **[Changelog](https://github.com/F88/promidas/blob/main/CHANGELOG.md)**: バージョンごとの変更履歴
 
 ## サポート
 
@@ -209,4 +209,4 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。こ
 
 ## ライセンス
 
-MIT License - 詳細は[LICENSE](./LICENSE)を参照してください。
+MIT License - 詳細は[LICENSE](https://github.com/F88/promidas/blob/main/LICENSE)を参照してください。

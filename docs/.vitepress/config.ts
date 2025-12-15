@@ -115,6 +115,8 @@ export default defineConfig({
     lineNumbers: true,
   },
 
+  ignoreDeadLinks: false,
+
   head: [
     [
       'link',

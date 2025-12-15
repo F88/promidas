@@ -121,13 +121,13 @@ npm install dotenv
 
 2. プロジェクトルートに`.env`ファイルを作成:
 
-```env
+```properties
 PROTOPEDIA_API_TOKEN=your-token-here
 ```
 
 3. **重要**: `.gitignore`に`.env`を追加:
 
-```gitignore
+```docker
 # .gitignore
 .env
 ```
@@ -341,9 +341,9 @@ console.log(`Expires at: ${stats.expiresAt}`);
 
 ### より詳しく学ぶ
 
-- **[Repository Module README](../lib/repository/README.md)**: Repository APIの詳細
-- **[Repository Usage Guide](../lib/repository/docs/USAGE.md)**: 実装パターンとサンプルコード
-- **[Repository Design Document](../lib/repository/docs/DESIGN.md)**: 内部アーキテクチャと設計思想
+- **[Repository Module README](https://github.com/F88/promidas/blob/main/lib/repository/README.md)**: Repository APIの詳細
+- **[Repository Usage Guide](https://github.com/F88/promidas/blob/main/lib/repository/docs/USAGE.md)**: 実装パターンとサンプルコード
+- **[Repository Design Document](https://github.com/F88/promidas/blob/main/lib/repository/docs/DESIGN.md)**: 内部アーキテクチャと設計思想
 
 ### Webアプリ開発へ進む場合
 
@@ -365,4 +365,4 @@ console.log(`Expires at: ${stats.expiresAt}`);
 
 ## ライセンス
 
-MIT License - 詳細は[LICENSE](../LICENSE)を参照してください。
+MIT License - 詳細は[LICENSE](https://github.com/F88/promidas/blob/main/LICENSE)を参照してください。

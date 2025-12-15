@@ -7,7 +7,7 @@ related:
     - ./usecase.md "Use Cases Overview"
     - ./usecase-local.md "Local Execution Use Cases"
     - ./getting-started.md "Getting Started"
-    - ../lib/repository/README.md "Repository Module"
+    - https://github.com/F88/promidas/blob/main/lib/repository/README.md "Repository Module"
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.
@@ -204,8 +204,8 @@ if (!result.ok) {
 
 より詳細な実装パターンは、以下のドキュメントを参照してください:
 
-- **[Repository Usage Guide](../lib/repository/docs/USAGE.md)**: 実装パターンとサンプルコード
-- **[Repository Design Document](../lib/repository/docs/DESIGN.md)**: 内部アーキテクチャ
+- **[Repository Usage Guide](https://github.com/F88/promidas/blob/main/lib/repository/docs/USAGE.md)**: 実装パターンとサンプルコード
+- **[Repository Design Document](https://github.com/F88/promidas/blob/main/lib/repository/docs/DESIGN.md)**: 内部アーキテクチャ
 
 ## よくある質問
 
@@ -224,4 +224,4 @@ TBD
 
 ## ライセンス
 
-MIT License - 詳細は[LICENSE](../LICENSE)を参照してください。
+MIT License - 詳細は[LICENSE](https://github.com/F88/promidas/blob/main/LICENSE)を参照してください。

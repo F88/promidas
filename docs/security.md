@@ -146,7 +146,7 @@ export async function GET() {
 PROTOPEDIA_API_TOKEN=your-token-here
 ```
 
-```gitignore
+```docker
 # .gitignore
 .env
 .env.local
@@ -183,4 +183,4 @@ PROMIDASは `GET https://protopedia.net/v2/api/prototype/list`（作品一覧取
 
 ## ライセンス
 
-MIT License - 詳細は[LICENSE](../LICENSE)を参照してください。
+MIT License - 詳細は[LICENSE](https://github.com/F88/promidas/blob/main/LICENSE)を参照してください。
