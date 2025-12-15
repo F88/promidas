@@ -90,6 +90,72 @@ export async function GET() {
 - [ ] パフォーマンス最適化
 - [ ] 監視とロギング
 
+## 典型的なユースケース
+
+### SPA (Single Page Application)
+
+TBD
+
+### サーバーサイドAPI
+
+TBD
+
+### バックグラウンドワーカー
+
+TBD
+
+## データ更新戦略
+
+### 起動時のみ更新
+
+TBD
+
+### 定期的な更新
+
+TBD
+
+### TTL監視による自動更新
+
+TBD
+
+## エラーハンドリング詳細
+
+### ネットワークエラー
+
+TBD
+
+### リトライ戦略
+
+TBD
+
+### 監視とアラート
+
+TBD
+
+## パフォーマンス最適化
+
+### 推奨データ量
+
+TBD
+
+### メモリ管理
+
+TBD
+
+### 並行制御
+
+TBD
+
+## フレームワーク統合例
+
+### Next.js統合
+
+TBD
+
+### Remix統合
+
+TBD
+
 ## 暫定的なガイドライン
 
 ### TOKEN管理
@@ -148,6 +214,14 @@ if (!result.ok) {
 
 - **[Repository Usage Guide](../lib/repository/docs/USAGE.md)**: 実装パターンとサンプルコード
 - **[Repository Design Document](../lib/repository/docs/DESIGN.md)**: 内部アーキテクチャ
+
+## よくある質問
+
+TBD
+
+## チェックリスト
+
+TBD
 
 ## サポート
 
