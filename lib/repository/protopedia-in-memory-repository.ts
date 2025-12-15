@@ -71,6 +71,7 @@ import {
   type PrototypeInMemoryStoreConfig,
 } from '../store/index.js';
 import type { NormalizedPrototype } from '../types/index.js';
+import { sanitizeDataForLogging } from '../utils/index.js'; // 追加
 
 import { prototypeIdSchema, sampleSizeSchema } from './schemas/validation.js';
 import type {
@@ -204,7 +205,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
     }
 
     this.#logger.info('ProtopediaInMemoryRepository constructor called', {
-      repositoryConfig,
+      repositoryConfig: sanitizeDataForLogging(repositoryConfig),
       storeConfig: store.getConfig(),
     });
 
