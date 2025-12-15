@@ -202,7 +202,7 @@ const allData = await repo.getAllFromSnapshot();
 // ステータス別の集計
 const statusCounts = allData.reduce(
     (acc, p) => {
-        const statusName = ['開発中', 'アイデア', 'パーツ', '完成'][p.status];
+        const statusName = ({ 0: '未定義', 1: 'アイデア', 2: '開発中', 3: '完成', 4: '部品化' })[p.status] || `不明 (${p.status})`;
         acc[statusName] = (acc[statusName] || 0) + 1;
         return acc;
     },
