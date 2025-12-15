@@ -13,51 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking Changes
 
-#### Logger Module Redesign
+#### `createConsoleLogger()` No Longer Accepts Parameters
 
-The logger interface and factory functions have been redesigned to support runtime log level changes and align with modern logging library patterns.
-
-##### Logger Interface Remains Method-Only
-
-The `Logger` interface has **not changed** and does not include a `level` property:
-
-```typescript
-// v0.7.0 and v0.8.0 (unchanged)
-export interface Logger {
-    debug: (message: string, meta?: unknown) => void;
-    info: (message: string, meta?: unknown) => void;
-    warn: (message: string, meta?: unknown) => void;
-    error: (message: string, meta?: unknown) => void;
-}
-```
-
-However, the provided `ConsoleLogger` implementation now includes a **mutable `level` property** that can be dynamically updated:
-
-```typescript
-const logger = new ConsoleLogger('info');
-logger.level = 'debug'; // Runtime level change is now possible
-```
-
-**For Custom Logger Implementations:**
-
-The `Logger` interface does not require a `level` property. However, if you want to support runtime log level changes (used by `logLevel` configuration options), you can optionally add a mutable `level` property:
-
-```typescript
-// Optional: Add level property for runtime level changes
-const myLogger: Logger = {
-    level: 'info' as LogLevel, // Optional property
-    debug: (msg) => console.debug(msg),
-    info: (msg) => console.info(msg),
-    warn: (msg) => console.warn(msg),
-    error: (msg) => console.error(msg),
-};
-```
-
-The library checks for the `level` property dynamically using `'level' in logger` before attempting to modify it.
-
-##### `createConsoleLogger()` No Longer Accepts Parameters
-
-For specific log levels, use the `ConsoleLogger` constructor directly:
+The `createConsoleLogger()` factory function no longer accepts log level parameters. For specific log levels, use the `ConsoleLogger` constructor directly:
 
 ```typescript
 // Before (v0.7.0)
@@ -65,10 +23,18 @@ const logger = createConsoleLogger('debug');
 
 // After (v0.8.0)
 const logger = new ConsoleLogger('debug');
-// OR set level dynamically
-const logger = createConsoleLogger();
-logger.level = 'debug';
 ```
+
+The `ConsoleLogger` implementation now includes a mutable `level` property for runtime log level changes:
+
+```typescript
+const logger = new ConsoleLogger('info');
+logger.level = 'debug'; // Runtime level change
+```
+
+**For Custom Logger Implementations:**
+
+The `Logger` interface does not require a `level` property. To support runtime log level changes (used by `logLevel` configuration options), optionally add a mutable `level` property. The library checks dynamically using `'level' in logger`.
 
 **Files affected:**
 
@@ -76,11 +42,9 @@ logger.level = 'debug';
 - `lib/logger/factory.ts` (new - separated factory functions)
 - Test files reorganized for better structure
 
-#### Repository Module Changes
+#### Main Module Now Exports Builder Instead of Factory Function
 
-##### Main Module Now Exports Builder Instead of Factory Function
-
-The `createProtopediaInMemoryRepository()` factory function has been removed from the main module in favor of `PromidasRepositoryBuilder`.
+The `createProtopediaInMemoryRepository()` factory function has been removed from the main module in favor of `PromidasRepositoryBuilder`:
 
 ```typescript
 // Before (v0.7.0)
@@ -108,14 +72,7 @@ const repo = createProtopediaInMemoryRepository({
 });
 ```
 
-**Migration:**
-
-- Use `PromidasRepositoryBuilder` for complex configurations (recommended)
-- Or import factory function from `@f88/promidas/repository` subpath
-
-#### Fetcher Module Cleanup
-
-##### Removed `fetchAndNormalizePrototypes()` Standalone Function
+#### Removed `fetchAndNormalizePrototypes()` Standalone Function
 
 Use the client method instead for better logger lifecycle management:
 
@@ -137,8 +94,6 @@ const client = createProtopediaApiCustomClient({
 });
 const result = await client.fetchPrototypes({ limit: 100 });
 ```
-
-**Migration:** Replace `fetchAndNormalizePrototypes(client, params)` with `client.fetchPrototypes(params)`
 
 **Files removed:**
 
