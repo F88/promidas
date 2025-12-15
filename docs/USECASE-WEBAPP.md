@@ -1,0 +1,161 @@
+---
+lang: ja
+title: Server Execution Use Cases
+title-en: Server Execution Use Cases
+title-ja: サーバー実行向けユースケース
+related:
+    - ./USECASE.md "Use Cases Overview"
+    - ./USECASE-LOCAL.md "Local Execution Use Cases"
+    - ./GETTING-STARTED.md "Getting Started"
+    - ../lib/repository/README.md "Repository Module"
+instructions-for-ais:
+    - This document should be written in Japanese.
+    - Use half-width characters for numbers, letters, and symbols.
+    - Prohibit updating this front-matter.
+    - Prohibit updating title line (1st line) in this document.
+---
+
+# サーバー実行向けユースケース
+
+⚠️ **このドキュメントは準備中です**
+
+Webアプリケーション開発やCI/CD統合など、サーバー上でPROMIDASを実行するためのガイドを準備中です。
+
+## 前提条件
+
+このドキュメントを読む前に、以下を必ず理解してください:
+
+1. **[ユースケース](./USECASE.md)** - 実行場所とセキュリティの基礎
+2. **[Getting Started](./GETTING-STARTED.md)** - BEARER TOKENとAPIの基本
+3. **[ローカル実行向けユースケース](./USECASE-LOCAL.md)** - PROMIDASの基本的な使い方
+
+特に、**BEARER TOKENのセキュリティリスク**を理解せずにWebアプリ開発を始めることは危険です。
+
+## セキュリティ警告
+
+⚠️ **重要**: サーバー実行では以下のセキュリティリスクがあります
+
+### 絶対にしてはいけないこと
+
+❌ **フロントエンド(ブラウザ)でTOKENを使用する**
+
+```typescript
+// ❌ 危険 - ブラウザで実行されるコード
+const repo = createPromidasRepository({
+    apiClientOptions: {
+        token: 'your-token-here', // TOKENが誰でも見られる!
+    },
+});
+```
+
+ブラウザのDevToolsで誰でもTOKENを見ることができます。これは非常に危険です。
+
+❌ **環境変数をクライアントサイドに露出する**
+
+```typescript
+// ❌ 危険 - Next.jsなどでクライアント側に露出
+// NEXT_PUBLIC_ プレフィックスを使わない!
+const token = process.env.NEXT_PUBLIC_PROTOPEDIA_TOKEN;
+```
+
+### 正しいアーキテクチャ
+
+✅ **バックエンド(サーバー)でのみTOKENを使用する**
+
+```typescript
+// ✅ 安全 - サーバーサイドでのみ実行
+// Next.js API Routes, Server Components, getServerSideProps等
+export async function GET() {
+    const repo = createPromidasRepository({
+        apiClientOptions: {
+            token: process.env.PROTOPEDIA_API_TOKEN, // サーバー環境変数
+        },
+    });
+
+    const data = await repo.getAllFromSnapshot();
+    return Response.json(data);
+}
+```
+
+## 準備中の内容
+
+以下の内容を準備中です:
+
+- [ ] Webアプリケーション開発パターン
+- [ ] Next.js統合ガイド
+- [ ] Remix統合ガイド
+- [ ] CI/CD統合 (GitHub Actions等)
+- [ ] TOKEN管理のベストプラクティス
+- [ ] エラーハンドリングとリトライ戦略
+- [ ] パフォーマンス最適化
+- [ ] 監視とロギング
+
+## 暫定的なガイドライン
+
+### TOKEN管理
+
+**GitHub Actions:**
+
+```yaml
+# .github/workflows/fetch-data.yml
+env:
+  PROTOPEDIA_API_TOKEN: ${{ secrets.PROTOPEDIA_API_TOKEN }}
+```
+
+**Vercel:**
+
+```bash
+# Environment Variables設定でTOKENを追加
+PROTOPEDIA_API_TOKEN=your-token-here
+```
+
+**Docker:**
+
+```bash
+docker run -e PROTOPEDIA_API_TOKEN=your-token-here your-image
+```
+
+### TTL設定
+
+サーバー実行では、データ更新頻度に応じてTTLを設定してください:
+
+```typescript
+const repo = createPromidasRepository({
+    storeConfig: {
+        ttlMs: 30 * 60 * 1000, // 30分ごとに更新
+    },
+    apiClientOptions: {
+        token: process.env.PROTOPEDIA_API_TOKEN,
+    },
+});
+```
+
+### エラーハンドリング
+
+長時間稼働するアプリケーションでは、堅牢なエラーハンドリングが必要です:
+
+```typescript
+const result = await repo.setupSnapshot({ limit: 10000 });
+if (!result.ok) {
+    console.error('Failed to setup snapshot:', result.error);
+    // リトライ戦略やフォールバック処理を実装
+}
+```
+
+## さらに詳しく
+
+より詳細な実装パターンは、以下のドキュメントを参照してください:
+
+- **[Repository Usage Guide](../lib/repository/docs/USAGE.md)**: 実装パターンとサンプルコード
+- **[Repository Design Document](../lib/repository/docs/DESIGN.md)**: 内部アーキテクチャ
+
+## サポート
+
+質問や議論は:
+
+- **[GitHub Issues](https://github.com/F88/promidas/issues)**: バグ報告・機能リクエスト
+- **[GitHub Discussions](https://github.com/F88/promidas/discussions)**: 質問・議論
+
+## ライセンス
+
+MIT License - 詳細は[LICENSE](../LICENSE)を参照してください。

@@ -55,6 +55,15 @@ This repository provides a modular toolset for managing ProtoPedia data, consist
 
 This project extracts and generalizes the data-fetching and in-memory data management capabilities originally implemented in [F88/mugen-protopedia](https://github.com/F88/mugen-protopedia/), providing them as a standalone, reusable library for various applications.
 
+## 📚 Documentation
+
+**[📖 Documentation Index](docs/INDEX.md)** - Complete documentation guide
+
+For first-time users:
+
+1. **[Use Cases](docs/USECASE.md)** - Understand execution environments and security
+2. **[Getting Started](docs/GETTING-STARTED.md)** - Installation and basic usage
+
 ## ProtoPedia API Ver 2.0
 
 This library uses ProtoPedia API Ver 2.0.
