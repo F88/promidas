@@ -101,6 +101,12 @@ PROMIDASのドキュメント一覧です。目的に応じて適切なドキュ
 
 ## 🔗 外部リソース
 
+### デモサイト
+
+- **[PROMIDAS Demo](https://f88.github.io/PROMIDAS-demo/)** - 実際の動作デモ (作成中)
+
+### 公式リソース
+
 - **[ProtoPedia API Ver 2.0 · Apiary](https://protopediav2.docs.apiary.io/)** - API仕様とTOKEN取得
 - **[GitHub Repository](https://github.com/F88/promidas)** - ソースコード
 - **[GitHub Issues](https://github.com/F88/promidas/issues)** - バグ報告・機能リクエスト

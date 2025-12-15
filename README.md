@@ -64,6 +64,10 @@ For first-time users:
 1. **[Use Cases](docs/USECASE.md)** - Understand execution environments and security
 2. **[Getting Started](docs/GETTING-STARTED.md)** - Installation and basic usage
 
+## 🌐 Demo
+
+**[PROMIDAS Demo](https://f88.github.io/PROMIDAS-demo/)** - Live demonstration (Work in Progress)
+
 ## ProtoPedia API Ver 2.0
 
 This library uses ProtoPedia API Ver 2.0.
