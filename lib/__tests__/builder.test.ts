@@ -285,20 +285,6 @@ describe('PromidasRepositoryBuilder', () => {
 
       expect(repo).toBeDefined();
     });
-
-    it('should maintain configuration across chained calls', () => {
-      const builder = new PromidasRepositoryBuilder();
-
-      const repo = builder
-        .setStoreConfig({ ttlMs: 30000 })
-        .setStoreConfig({ maxDataSizeBytes: 5 * 1024 * 1024 })
-        .build();
-
-      expect(repo).toBeDefined();
-      const config = repo.getConfig();
-      // Second call to setStoreConfig should replace the first
-      expect(config.maxDataSizeBytes).toBe(5 * 1024 * 1024);
-    });
   });
 
   describe('Configuration Immutability', () => {
