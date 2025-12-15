@@ -3,16 +3,18 @@
  *
  * ## Quick Start
  *
- * For most use cases, use the high-level Repository:
+ * For most use cases, use the Builder to create a Repository:
  *
  * @example
  * ```typescript
- * import { createProtopediaInMemoryRepository } from '@f88/promidas';
+ * import { PromidasRepositoryBuilder } from '@f88/promidas';
  *
- * const repo = createProtopediaInMemoryRepository({
- *   storeConfig: { ttlMs: 30 * 60 * 1000 },
- *   apiClientOptions: { token: process.env.PROTOPEDIA_API_V2_TOKEN },
- * });
+ * const repo = new PromidasRepositoryBuilder()
+ *   .setStoreConfig({ ttlMs: 30 * 60 * 1000 })
+ *   .setApiClientConfig({
+ *     protoPediaApiClientOptions: { token: process.env.PROTOPEDIA_API_V2_TOKEN }
+ *   })
+ *   .build();
  *
  * await repo.setupSnapshot({ limit: 100 });
  * const prototype = await repo.getRandomPrototypeFromSnapshot();
@@ -39,15 +41,14 @@
  *
  * // API client and data fetching
  * import {
- *   createProtopediaApiCustomClient,
- *   fetchAndNormalizePrototypes
+ *   createProtopediaApiCustomClient
  * } from '@f88/promidas/fetcher';
  *
  * // In-memory store
  * import { PrototypeInMemoryStore } from '@f88/promidas/store';
  *
- * // Repository (same as root import)
- * import { createProtopediaInMemoryRepository } from '@f88/promidas/repository';
+ * // Repository builder
+ * import { PromidasRepositoryBuilder } from '@f88/promidas';
  * ```
  *
  * ## Available Subpath Exports
@@ -57,17 +58,27 @@
  * - `@f88/promidas/logger` — Logger interface and implementations
  * - `@f88/promidas/fetcher` — API client and data fetching utilities
  * - `@f88/promidas/store` — In-memory store implementation
- * - `@f88/promidas/repository` — High-level repository factory
  *
  * @packageDocumentation
  */
 
-// High-level Repository (most common use case)
+// Builder for creating repository instances
 export {
-  createProtopediaInMemoryRepository,
-  type CreateProtopediaInMemoryRepositoryOptions,
-  type ProtopediaInMemoryRepository,
-  type ProtopediaInMemoryRepositoryStats,
-  type PrototypeAnalysisResult,
+  // Builder for advanced use cases
+  PromidasRepositoryBuilder,
+
+  // Re-exported from Store module for convenience
   type PrototypeInMemoryStoreConfig,
-} from './repository/index.js';
+  type PrototypeInMemoryStats,
+
+  // Re-exported from Logger module for convenience
+  // type Logger,
+  // type LogLevel,
+
+  // Re-exported from Fetcher module for convenience
+  type ProtoPediaApiClientOptions,
+
+  // Re-exported from Repository module for convenience
+  type ProtopediaInMemoryRepository,
+  type ProtopediaInMemoryRepositoryConfig,
+} from './builder.js';

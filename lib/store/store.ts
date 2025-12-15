@@ -7,8 +7,14 @@
  */
 import type { DeepReadonly } from 'ts-essentials';
 
-import { type Logger, createConsoleLogger } from '../logger/index.js';
+import {
+  ConsoleLogger,
+  type Logger,
+  type LogLevel,
+  createConsoleLogger,
+} from '../logger/index.js';
 import type { NormalizedPrototype } from '../types/index.js';
+import { sanitizeDataForLogging } from '../utils/index.js'; // 追加
 
 const DEFAULT_TTL_MS = 30 * 60 * 1_000; // 30 minutes
 const DEFAULT_DATA_SIZE_BYTES = 10 * 1024 * 1024; // 10 MiB
@@ -18,12 +24,41 @@ const MAX_DATA_SIZE_BYTES = 30 * 1024 * 1024; // 30 MiB
  * Configuration options for the PrototypeInMemoryStore.
  */
 export type PrototypeInMemoryStoreConfig = {
-  /** TTL in milliseconds after which the cached snapshot is considered expired. */
+  /**
+   * TTL in milliseconds after which the cached snapshot is considered expired.
+   * @default 1800000 (30 minutes)
+   */
   ttlMs?: number;
-  /** Maximum allowed data size in bytes for storing snapshots. */
+
+  /**
+   * Maximum allowed data size in bytes for storing snapshots.
+   * @default 10485760 (10 MiB)
+   */
   maxDataSizeBytes?: number;
-  /** Custom logger instance. Defaults to console logger with 'info' level. */
+
+  /**
+   * Custom logger instance.
+   *
+   * @remarks
+   * - If provided, the logger will be used as-is (NOT modified)
+   * - If provided, the `logLevel` option is IGNORED
+   * - To use a custom logger with a specific level, configure it before passing
+   *
+   * @default undefined (creates ConsoleLogger)
+   */
   logger?: Logger;
+
+  /**
+   * Log level for creating a default ConsoleLogger.
+   *
+   * @remarks
+   * - Only used when `logger` is NOT provided
+   * - Creates a new ConsoleLogger with this level
+   * - IGNORED if `logger` is provided
+   *
+   * @default 'info'
+   */
+  logLevel?: LogLevel;
 };
 
 /**
@@ -48,7 +83,7 @@ export type PrototypeInMemoryStats = {
 
 type RefreshTask = () => Promise<void>;
 
-type Snapshot = {
+export type Snapshot = {
   data: readonly DeepReadonly<NormalizedPrototype>[];
   cachedAt: Date | null;
   isExpired: boolean;
@@ -63,6 +98,8 @@ type Snapshot = {
  */
 export class PrototypeInMemoryStore {
   private readonly logger: Logger;
+
+  private readonly logLevel: LogLevel;
 
   private readonly ttlMs: number;
 
@@ -92,8 +129,10 @@ export class PrototypeInMemoryStore {
    * @param config.maxDataSizeBytes - Maximum allowed size for cached data in bytes.
    *   Defaults to 10 MiB (10,485,760 bytes). Must not exceed 30 MiB.
    *   If a snapshot exceeds this limit, setAll() will reject it.
-   * @param config.logger - Optional logger instance for store operations.
-   *   If not provided, a default console logger at 'info' level is created.
+   * @param config.logger - Optional custom logger instance. If not provided,
+   *   a default ConsoleLogger is created. NOTE: The logger will NOT be modified.
+   * @param config.logLevel - Log level for the default logger. Only used when
+   *   `logger` is not provided. IGNORED if `logger` is provided.
    *
    * @throws {Error} When maxDataSizeBytes exceeds MAX_DATA_SIZE_BYTES (30 MiB)
    */
@@ -101,6 +140,7 @@ export class PrototypeInMemoryStore {
     ttlMs = DEFAULT_TTL_MS,
     maxDataSizeBytes = DEFAULT_DATA_SIZE_BYTES,
     logger,
+    logLevel,
   }: PrototypeInMemoryStoreConfig = {}) {
     // Throw if maxDataSizeBytes exceeds the hard limit
     if (maxDataSizeBytes > MAX_DATA_SIZE_BYTES) {
@@ -113,11 +153,27 @@ export class PrototypeInMemoryStore {
     this.ttlMs = ttlMs;
     this.maxDataSizeBytes = maxDataSizeBytes;
 
-    this.logger = logger ?? createConsoleLogger('info');
+    // Fastify-style logger configuration
+    if (logger) {
+      // Custom logger provided
+      this.logger = logger;
+      this.logLevel = logLevel ?? 'info';
+      // If logLevel is specified, update logger's level property (if mutable)
+      if (logLevel !== undefined && 'level' in logger) {
+        (logger as { level: LogLevel }).level = logLevel;
+      }
+    } else {
+      // No custom logger → create ConsoleLogger with logLevel
+      const resolvedLogLevel = logLevel ?? 'info';
+      this.logger = new ConsoleLogger(resolvedLogLevel);
+      this.logLevel = resolvedLogLevel;
+    }
 
-    this.logger.info('PrototypeInMemoryStore initialized', {
-      ttlMs: this.ttlMs,
-      maxDataSizeBytes: this.maxDataSizeBytes,
+    this.logger.info('PrototypeInMemoryStore constructor called', {
+      ttlMs,
+      maxDataSizeBytes,
+      logger: logger ? 'custom' : undefined,
+      logLevel,
     });
   }
 
@@ -131,6 +187,7 @@ export class PrototypeInMemoryStore {
     return {
       ttlMs: this.ttlMs,
       maxDataSizeBytes: this.maxDataSizeBytes,
+      logLevel: this.logLevel,
     };
   }
 
@@ -198,19 +255,47 @@ export class PrototypeInMemoryStore {
     };
   }
 
-  /** Estimate JSON payload size for logging and guardrails. */
-  private estimateSize(data: NormalizedPrototype[]): number {
+  /**
+   * Estimates the JSON payload size of an array of NormalizedPrototypes in bytes.
+   *
+   * This method calculates the size by iteratively serializing each item and summing their byte lengths,
+   * along with the overhead for array brackets and commas. This approach minimizes memory usage
+   * by avoiding the creation of a single large JSON string for the entire array, thus reducing
+   * the risk of out-of-memory errors, especially with large datasets.
+   *
+   * @param data - The array of NormalizedPrototypes to estimate the size for.
+   * @returns The estimated size in bytes of the JSON-serialized data, or 0 if estimation fails.
+   */
+  private estimateSize(data: readonly NormalizedPrototype[]): number {
     try {
-      const serialized = JSON.stringify(data);
+      if (data.length === 0) {
+        return 2; // "[]"
+      }
+
+      // Start with 2 bytes for "[]" and 1 byte for each comma (N-1 commas)
+      let totalBytes = 2 + (data.length - 1);
+
       if (typeof Buffer !== 'undefined') {
-        return Buffer.byteLength(serialized, 'utf8');
+        for (const item of data) {
+          totalBytes += Buffer.byteLength(JSON.stringify(item), 'utf8');
+        }
+      } else if (typeof TextEncoder !== 'undefined') {
+        const encoder = new TextEncoder();
+        for (const item of data) {
+          totalBytes += encoder.encode(JSON.stringify(item)).length;
+        }
+      } else {
+        // Fallback for environments without Buffer/TextEncoder (should not happen in Node.js)
+        this.logger.warn(
+          'Neither Buffer nor TextEncoder found for size estimation. Returning 0.',
+          {},
+        );
+        return 0;
       }
-      if (typeof TextEncoder !== 'undefined') {
-        return new TextEncoder().encode(serialized).length;
-      }
+      return totalBytes;
     } catch (error) {
       this.logger.warn('Failed to estimate payload size, defaulting to 0', {
-        error,
+        error: sanitizeDataForLogging(error),
       });
     }
     return 0;
@@ -231,7 +316,7 @@ export class PrototypeInMemoryStore {
         await task();
       } catch (error) {
         this.logger.error('PrototypeInMemoryStore refresh task failed', {
-          error,
+          error: sanitizeDataForLogging(error),
         });
         throw error;
       } finally {
@@ -279,16 +364,23 @@ export class PrototypeInMemoryStore {
       return null;
     }
 
-    // Create shallow copy to prevent external array mutations
-    const prototypesCopy = [...prototypes];
-
     // Build O(1) lookup index by prototype ID
+    // Note: If duplicate IDs are present in the input array, the last one wins.
     this.prototypeIdIndex = new Map(
-      prototypesCopy.map((prototype) => [prototype.id, prototype]),
+      prototypes.map((prototype) => [prototype.id, prototype]),
     );
 
-    // Store copied array for ordered access
-    this.prototypes = prototypesCopy;
+    // Warn if duplicate IDs were detected in the input array
+    if (this.prototypeIdIndex.size !== prototypes.length) {
+      this.logger.warn('Duplicate prototype IDs detected in snapshot', {
+        inputCount: prototypes.length,
+        storedCount: this.prototypeIdIndex.size,
+      });
+    }
+
+    // Reconstruct prototypes array from the map to ensure consistency and uniqueness by ID.
+    // This will also ensure that `getAll().length` matches `this.size`.
+    this.prototypes = Array.from(this.prototypeIdIndex.values());
 
     // Update cache metadata
     this.cachedAt = new Date();

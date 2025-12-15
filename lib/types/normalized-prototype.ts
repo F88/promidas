@@ -25,7 +25,7 @@
  *
  * - {@link normalizePrototype} - Function that transforms raw API data into this type
  * - {@link PrototypeInMemoryStore} - Store implementation using this type
- * - {@link fetchAndNormalizePrototypes} - Fetcher function returning this type
+ * - {@link ProtopediaApiCustomClient.fetchPrototypes} - Method that fetches and returns this type
  *
  * @module
  */

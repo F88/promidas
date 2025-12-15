@@ -40,6 +40,11 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ProtopediaApiCustomClient } from '../../../fetcher/index.js';
+import {
+  PrototypeInMemoryStore,
+  type PrototypeInMemoryStoreConfig,
+} from '../../../store/index.js';
 import { ProtopediaInMemoryRepositoryImpl } from '../../protopedia-in-memory-repository.js';
 
 vi.mock('../../../fetcher/index', async (importOriginal) => {
@@ -47,39 +52,108 @@ vi.mock('../../../fetcher/index', async (importOriginal) => {
     await importOriginal<typeof import('../../../fetcher/index.js')>();
   return {
     ...actual,
-    createProtopediaApiCustomClient: vi.fn(),
+    ProtopediaApiCustomClient: vi.fn(),
   };
 });
 
-import { makePrototype, setupMocks } from './test-helpers.js';
+vi.mock('../../../store/index', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../../store/index.js')>();
+  return {
+    ...actual,
+    PrototypeInMemoryStore: vi.fn(),
+  };
+});
+
+import {
+  createBasicMockStore,
+  makePrototype,
+  setupMocks,
+} from './test-helpers.js';
 
 describe('ProtopediaInMemoryRepositoryImpl - configuration and statistics', () => {
   const { fetchPrototypesMock, resetMocks } = setupMocks();
 
+  let mockStoreInstance: PrototypeInMemoryStore;
+  let mockApiClientInstance: InstanceType<typeof ProtopediaApiCustomClient>;
+
   beforeEach(() => {
     resetMocks();
+    vi.clearAllMocks();
+
+    // Use createBasicMockStore with custom config for this test suite
+    mockStoreInstance = createBasicMockStore({
+      getConfig: vi.fn().mockReturnValue({
+        ttlMs: 1_800_000,
+        maxDataSizeBytes: 10_485_760,
+        logLevel: 'info' as const,
+      }),
+      getStats: vi.fn().mockReturnValue({
+        size: 0,
+        cachedAt: null,
+        isExpired: true,
+        remainingTtlMs: 0,
+        dataSizeBytes: 0,
+        refreshInFlight: false,
+      }),
+    });
+
+    vi.mocked(PrototypeInMemoryStore).mockImplementation(
+      () => mockStoreInstance,
+    );
+
+    mockApiClientInstance = {
+      fetchPrototypes: vi.fn(),
+    } as unknown as InstanceType<typeof ProtopediaApiCustomClient>;
+
+    vi.mocked(ProtopediaApiCustomClient).mockImplementation(
+      () => mockApiClientInstance,
+    );
+    vi.mocked(mockApiClientInstance.fetchPrototypes).mockImplementation(
+      fetchPrototypesMock,
+    );
   });
 
   describe('getConfig', () => {
     it('returns store configuration with custom TTL', () => {
-      const repo = new ProtopediaInMemoryRepositoryImpl({ ttlMs: 120_000 }, {});
+      vi.mocked(mockStoreInstance.getConfig).mockReturnValue({
+        ttlMs: 120_000,
+        maxDataSizeBytes: 10485760, // Default value
+        logLevel: 'info', // Default value
+      });
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {},
+      });
 
       const config = repo.getConfig();
       expect(config.ttlMs).toBe(120_000);
     });
 
     it('returns configuration with custom maxDataSizeBytes', () => {
-      const repo = new ProtopediaInMemoryRepositoryImpl(
-        { maxDataSizeBytes: 5_000_000 },
-        {},
-      );
+      vi.mocked(mockStoreInstance.getConfig).mockReturnValue({
+        ttlMs: 1800000, // Default value
+        maxDataSizeBytes: 5_000_000,
+        logLevel: 'info', // Default value
+      });
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {},
+      });
 
       const config = repo.getConfig();
       expect(config.maxDataSizeBytes).toBe(5_000_000);
     });
 
     it('returns configuration with default values', () => {
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      // beforeEach で設定されたデフォルト値がそのまま使用される
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {},
+      });
 
       const config = repo.getConfig();
       expect(config.ttlMs).toBeDefined();
@@ -89,7 +163,19 @@ describe('ProtopediaInMemoryRepositoryImpl - configuration and statistics', () =
 
   describe('getStats', () => {
     it('returns null cachedAt and size 0 before any snapshot is created', () => {
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      vi.mocked(mockStoreInstance.getStats).mockReturnValueOnce({
+        size: 0,
+        cachedAt: null,
+        isExpired: true,
+        remainingTtlMs: 0,
+        dataSizeBytes: 0,
+        refreshInFlight: false,
+      });
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {},
+      });
 
       const stats = repo.getStats();
       expect(stats.cachedAt).toBeNull();
@@ -106,7 +192,34 @@ describe('ProtopediaInMemoryRepositoryImpl - configuration and statistics', () =
         ],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      vi.mocked(mockStoreInstance.setAll).mockReturnValueOnce({
+        dataSizeBytes: 100,
+      });
+      vi.mocked(mockStoreInstance.getStats)
+        .mockReturnValueOnce({
+          // For initial setupSnapshot call
+          size: 1,
+          cachedAt: new Date(),
+          isExpired: false,
+          remainingTtlMs: 50000,
+          dataSizeBytes: 100,
+          refreshInFlight: false,
+        })
+        .mockReturnValueOnce({
+          // For subsequent getStats call
+          size: 1,
+          cachedAt: new Date(), // Set to a Date object
+          isExpired: false,
+          remainingTtlMs: 50000,
+          dataSizeBytes: 100,
+          refreshInFlight: false,
+        });
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {},
+      });
       await repo.setupSnapshot({});
 
       const stats = repo.getStats();
@@ -127,7 +240,32 @@ describe('ProtopediaInMemoryRepositoryImpl - configuration and statistics', () =
         ],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      vi.mocked(mockStoreInstance.setAll).mockReturnValueOnce({
+        dataSizeBytes: 500,
+      });
+      vi.mocked(mockStoreInstance.getStats).mockReturnValueOnce({
+        // For initial setupSnapshot call
+        size: 5,
+        cachedAt: new Date(),
+        isExpired: false,
+        remainingTtlMs: 50000,
+        dataSizeBytes: 500,
+        refreshInFlight: false,
+      });
+      vi.mocked(mockStoreInstance.getStats).mockReturnValueOnce({
+        // For subsequent getStats call
+        size: 5, // Expected size
+        cachedAt: new Date(),
+        isExpired: false,
+        remainingTtlMs: 50000,
+        dataSizeBytes: 500,
+        refreshInFlight: false,
+      });
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {},
+      });
       await repo.setupSnapshot({});
 
       const stats = repo.getStats();
@@ -145,7 +283,54 @@ describe('ProtopediaInMemoryRepositoryImpl - configuration and statistics', () =
           data: [makePrototype({ id: 2 })],
         });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      // Mock getStats calls for various stages of the test
+      // getStats is called 4 times: after each setAll (2x) and by test (2x)
+      vi.mocked(mockStoreInstance.setAll).mockReturnValue({
+        dataSizeBytes: 100,
+      });
+      vi.mocked(mockStoreInstance.getStats)
+        .mockReturnValueOnce({
+          // After first setAll in setupSnapshot
+          size: 1,
+          cachedAt: new Date(2023, 0, 1),
+          isExpired: false,
+          remainingTtlMs: 50000,
+          dataSizeBytes: 100,
+          refreshInFlight: false,
+        })
+        .mockReturnValueOnce({
+          // Test calls getStats() - return same value
+          size: 1,
+          cachedAt: new Date(2023, 0, 1),
+          isExpired: false,
+          remainingTtlMs: 50000,
+          dataSizeBytes: 100,
+          refreshInFlight: false,
+        })
+        .mockReturnValueOnce({
+          // After second setAll in refreshSnapshot (updated timestamp)
+          size: 1,
+          cachedAt: new Date(2023, 0, 2),
+          isExpired: false,
+          remainingTtlMs: 50000,
+          dataSizeBytes: 100,
+          refreshInFlight: false,
+        })
+        .mockReturnValueOnce({
+          // Test calls getStats() again - return updated value
+          size: 1,
+          cachedAt: new Date(2023, 0, 2),
+          isExpired: false,
+          remainingTtlMs: 50000,
+          dataSizeBytes: 100,
+          refreshInFlight: false,
+        });
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {},
+      });
       await repo.setupSnapshot({});
 
       const stats1 = repo.getStats();
@@ -172,7 +357,41 @@ describe('ProtopediaInMemoryRepositoryImpl - configuration and statistics', () =
         data: [makePrototype({ id: 1 })],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({ ttlMs: 1000 }, {});
+      vi.mocked(mockStoreInstance.getConfig).mockReturnValueOnce({
+        // For repo.getConfig()
+        ttlMs: 1000,
+        maxDataSizeBytes: 10485760,
+        logLevel: 'info',
+      });
+      vi.mocked(mockStoreInstance.setAll).mockReturnValueOnce({
+        dataSizeBytes: 100,
+      });
+      // getStats is called twice: once after setAll, once by test
+      vi.mocked(mockStoreInstance.getStats)
+        .mockReturnValueOnce({
+          // After setAll in setupSnapshot
+          size: 1,
+          cachedAt: new Date(),
+          isExpired: false,
+          remainingTtlMs: 50000,
+          dataSizeBytes: 100,
+          refreshInFlight: false,
+        })
+        .mockReturnValueOnce({
+          // Test calls getStats()
+          size: 1,
+          cachedAt: new Date(),
+          isExpired: false,
+          remainingTtlMs: 50000,
+          dataSizeBytes: 100,
+          refreshInFlight: false,
+        });
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {},
+      });
       await repo.setupSnapshot({});
 
       const stats = repo.getStats();
@@ -185,7 +404,24 @@ describe('ProtopediaInMemoryRepositoryImpl - configuration and statistics', () =
         data: [makePrototype({ id: 1 }), makePrototype({ id: 2 })],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      vi.mocked(mockStoreInstance.setAll).mockReturnValueOnce({
+        dataSizeBytes: 200,
+      });
+      const currentStats = {
+        size: 2,
+        cachedAt: new Date(),
+        isExpired: false,
+        remainingTtlMs: 50000,
+        dataSizeBytes: 200,
+        refreshInFlight: false,
+      };
+      vi.mocked(mockStoreInstance.getStats).mockReturnValue(currentStats); // Return same stats object
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {},
+      });
       await repo.setupSnapshot({});
 
       const stats1 = repo.getStats();
@@ -194,12 +430,17 @@ describe('ProtopediaInMemoryRepositoryImpl - configuration and statistics', () =
 
       expect(stats1.size).toBe(stats2.size);
       expect(stats2.size).toBe(stats3.size);
-      expect(stats1.cachedAt).toBe(stats2.cachedAt);
-      expect(stats2.cachedAt).toBe(stats3.cachedAt);
+      expect(stats1.cachedAt).toEqual(stats2.cachedAt);
+      expect(stats2.cachedAt).toEqual(stats3.cachedAt);
     });
 
     it('returns consistent cached state when empty', () => {
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      // beforeEach のデフォルトモック設定で十分
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {},
+      });
       const stats = repo.getStats();
 
       expect(stats.cachedAt).toBeNull();

@@ -4,11 +4,37 @@
  * This module provides logging utilities and types:
  * - {@link Logger} — Logger interface for custom logging implementations.
  * - {@link LogLevel} — Log level type for controlling verbosity.
- * - {@link createConsoleLogger} — Factory to create a console-based logger.
+ * - {@link ConsoleLogger} — Console-based logger class with mutable level.
+ * - {@link createConsoleLogger} — Factory to create a console logger with default 'info' level.
  * - {@link createNoopLogger} — Factory to create a no-op logger.
+ *
+ * @example
+ * ```typescript
+ * // Using the factory (default 'info' level)
+ * const logger = createConsoleLogger();
+ * logger.info('Application started');
+ * logger.level = 'debug'; // Change level dynamically
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Using the constructor for specific level
+ * const debugLogger = new ConsoleLogger('debug');
+ * debugLogger.debug('Detailed debug info');
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // With Repository/Store (recommended pattern)
+ * const logger = createConsoleLogger();
+ * const repo = createProtopediaInMemoryRepository({
+ *   storeConfig: { logger, logLevel: 'debug' }
+ * });
+ * ```
  *
  * @module
  */
 
 export type { Logger, LogLevel } from './logger.types.js';
-export { createConsoleLogger, createNoopLogger } from './logger.js';
+export { ConsoleLogger } from './console-logger.js';
+export { createConsoleLogger, createNoopLogger } from './factory.js';

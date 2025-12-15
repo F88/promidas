@@ -8,30 +8,21 @@
  *
  * ## Core Components
  *
- * ### API Client
+ * - {@link ProtopediaApiCustomClient} — Class-based client with managed logger and high-level methods.
+ * - {@link ProtopediaApiCustomClientConfig} — Configuration options including logger and SDK client settings.
  *
- * - {@link createProtopediaApiCustomClient} — Factory to create a configured API client.
- * - {@link ProtopediaApiCustomClient} — The client interface with helper methods.
- * - {@link ProtoPediaApiClientOptions} — Configuration options for the API client.
+ * ### Dependencies
+ *
+ * Types from `protopedia-api-v2-client` should be imported directly from the package:
+ * - `ProtoPediaApiClientOptions` — SDK client options.
+ * - `ListPrototypesParams` — Query parameters for listing prototypes.
  *
  * ### Data Fetching & Normalization
  *
- * - {@link fetchAndNormalizePrototypes} — Fetch and normalize prototypes from any compatible client.
- * - {@link ListPrototypesClient} — Interface for clients that can list prototypes.
  * - {@link FetchPrototypesResult} — Discriminated union result type for fetch operations.
  * - {@link normalizePrototype} — Transform raw API data to {@link NormalizedPrototype}.
  * - {@link UpstreamPrototype} — Raw API response type from protopedia-api-v2-client.
  * - {@link NormalizedPrototype} — Standardized, type-safe prototype data model.
- *
- * ### Utilities
- *
- * - {@link normalizeProtoPediaTimestamp} — Convert ProtoPedia JST timestamps to UTC ISO 8601.
- * - {@link splitPipeSeparatedString} — Parse pipe-separated strings into arrays.
- *
- * ### Error Handling
- *
- * - {@link constructDisplayMessage} — Format error messages for user display.
- * - {@link resolveErrorMessage} — Extract error messages from various error types.
  *
  * ### Logging
  *
@@ -51,16 +42,16 @@
  *
  * @example
  * ```typescript
- * import {
- *   createProtopediaApiCustomClient,
- *   fetchAndNormalizePrototypes,
- * } from '@f88/promidas/fetcher';
+ * import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
  *
- * const client = createProtopediaApiCustomClient({
- *   token: process.env.PROTOPEDIA_API_TOKEN,
+ * const client = new ProtopediaApiCustomClient({
+ *   protoPediaApiClientOptions: {
+ *     token: process.env.PROTOPEDIA_API_TOKEN,
+ *   },
+ *   logLevel: 'debug',
  * });
  *
- * const result = await fetchAndNormalizePrototypes(client, { limit: 10 });
+ * const result = await client.fetchPrototypes({ limit: 10 });
  *
  * if (result.ok) {
  *   console.log(`Fetched ${result.data.length} prototypes`);
@@ -76,28 +67,11 @@ export type { NormalizedPrototype } from '../types/index.js';
 export type { Logger, LogLevel } from '../logger/index.js';
 
 // API Client
-export {
-  createProtopediaApiCustomClient,
-  type ProtoPediaApiClientOptions,
-  type ProtopediaApiCustomClient,
-} from './protopedia-api-custom-client.js';
+export { ProtopediaApiCustomClient } from './client/protopedia-api-custom-client.js';
+export type { ProtopediaApiCustomClientConfig } from './client/config.js';
 
-// Fetching & Normalization
-export {
-  fetchAndNormalizePrototypes,
-  type ListPrototypesClient,
-} from './fetch-prototypes.js';
+// Result Types
 export type { FetchPrototypesResult } from './types/result.types.js';
-
-// Data Types
 export type { UpstreamPrototype } from './types/prototype-api.types.js';
 
-// Utilities
-export {
-  normalizePrototype,
-  normalizeProtoPediaTimestamp,
-  splitPipeSeparatedString,
-} from './utils/index.js';
-
-// Error Handling
-export { resolveErrorMessage, constructDisplayMessage } from './utils/index.js';
+export { normalizePrototype } from './utils/normalize-prototype.js';

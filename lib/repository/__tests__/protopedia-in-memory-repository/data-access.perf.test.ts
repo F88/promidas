@@ -19,15 +19,17 @@
 import type { ResultOfListPrototypesApiResponse } from 'protopedia-api-v2-client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createProtopediaApiCustomClient } from '../../../fetcher/index.js';
+import { ProtopediaApiCustomClient } from '../../../fetcher/index.js';
 import { ProtopediaInMemoryRepositoryImpl } from '../../protopedia-in-memory-repository.js';
+
+import { createMockStore, setupMocks } from './test-helpers.js';
 
 vi.mock('../../../fetcher/index', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('../../../fetcher/index.js')>();
   return {
     ...actual,
-    createProtopediaApiCustomClient: vi.fn(),
+    ProtopediaApiCustomClient: vi.fn(),
   };
 });
 
@@ -84,19 +86,10 @@ const getMemoryUsage = () => {
 };
 
 describe('ProtopediaInMemoryRepositoryImpl - data access performance', () => {
-  const listPrototypesMock = vi.fn();
-  const fetchPrototypesMock = vi.fn();
+  const { fetchPrototypesMock, resetMocks } = setupMocks();
 
   beforeEach(() => {
-    listPrototypesMock.mockReset();
-    fetchPrototypesMock.mockReset();
-
-    (
-      createProtopediaApiCustomClient as unknown as ReturnType<typeof vi.fn>
-    ).mockReturnValue({
-      listPrototypes: listPrototypesMock,
-      fetchPrototypes: fetchPrototypesMock,
-    });
+    resetMocks();
   });
 
   /**
@@ -139,7 +132,14 @@ describe('ProtopediaInMemoryRepositoryImpl - data access performance', () => {
 
     fetchPrototypesMock.mockResolvedValueOnce({ ok: true, data });
 
-    const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+    const store = createMockStore();
+    const apiClient = new ProtopediaApiCustomClient() as any;
+
+    const repo = new ProtopediaInMemoryRepositoryImpl({
+      store,
+      apiClient,
+      repositoryConfig: {},
+    });
 
     // Setup snapshot (excluded from perf measurement)
     await repo.setupSnapshot({});
@@ -219,64 +219,4 @@ describe('ProtopediaInMemoryRepositoryImpl - data access performance', () => {
       await runPerfCase(count);
     },
   );
-
-  it('compares reduce vs for-loop for analyzePrototypes', async () => {
-    const sizes = [1_000, 5_000, 10_000];
-
-    for (const count of sizes) {
-      // Setup ProtopediaInMemoryRepositoryImpl instance with test data
-      const prototypes = Array.from({ length: count }, (_, index) =>
-        makePrototype({ id: index + 1 }),
-      );
-
-      const mockClient = {
-        fetchPrototypes: vi.fn().mockResolvedValue({
-          ok: true,
-          data: prototypes,
-        }),
-      };
-
-      vi.mocked(createProtopediaApiCustomClient).mockReturnValue(
-        mockClient as any,
-      );
-
-      const repo = new ProtopediaInMemoryRepositoryImpl({
-        maxDataSizeBytes: 30 * 1024 * 1024,
-      });
-
-      await repo.setupSnapshot({ limit: count });
-
-      // Get normalized prototypes from the repository
-      const normalizedPrototypes = await Promise.all(
-        Array.from({ length: count }, (_, i) =>
-          repo.getPrototypeFromSnapshotByPrototypeId(i + 1),
-        ),
-      ).then((results) => results.filter((p) => p !== null));
-
-      // Measure public methods performance
-      // Note: analyzePrototypesWithReduce and analyzePrototypesWithForLoop
-      // are public methods exposed for testing and benchmarking purposes
-      const reduceStats = await measure(() => {
-        repo.analyzePrototypesWithReduce(normalizedPrototypes);
-      }, 50);
-
-      const forLoopStats = await measure(() => {
-        repo.analyzePrototypesWithForLoop(normalizedPrototypes);
-      }, 50);
-
-      console.log(
-        `Repository analyzePrototypes (${count.toLocaleString()} items):`,
-      );
-      console.log(`  reduce:   median=${reduceStats.median.toFixed(3)}ms`);
-      console.log(`  for-loop: median=${forLoopStats.median.toFixed(3)}ms`);
-      console.log(
-        `  speedup:  ${(reduceStats.median / forLoopStats.median).toFixed(2)}x`,
-      );
-
-      // Verify correctness - both methods should produce identical results
-      expect(repo.analyzePrototypesWithReduce(normalizedPrototypes)).toEqual(
-        repo.analyzePrototypesWithForLoop(normalizedPrototypes),
-      );
-    }
-  });
 });

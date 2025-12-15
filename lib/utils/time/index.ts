@@ -11,7 +11,6 @@
  * import {
  *   parseProtoPediaTimestamp,
  *   parseW3cDtfTimestamp,
- *   normalizeProtoPediaTimestamp,
  *   JST_OFFSET_MS,
  * } from '@f88/promidas/utils/time';
  *
@@ -21,10 +20,6 @@
  *
  * // Parse W3C-DTF format
  * parseW3cDtfTimestamp('2025-11-14T12:03:07+09:00');
- * // => '2025-11-14T03:03:07.000Z'
- *
- * // Normalize any supported format
- * normalizeProtoPediaTimestamp('2025-11-14 12:03:07.0');
  * // => '2025-11-14T03:03:07.000Z'
  * ```
  */

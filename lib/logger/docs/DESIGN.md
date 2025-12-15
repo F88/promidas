@@ -96,9 +96,9 @@ export type Logger = {
 **Implementations**:
 
 ```typescript
-// Console logger with level filtering
-export const createConsoleLogger = (level: LogLevel = 'info'): Logger => {
-    // Returns Logger instance
+// Console logger with default 'info' level
+export const createConsoleLogger = (): ConsoleLogger => {
+    return new ConsoleLogger('info');
 };
 
 // Silent logger for production or tests
@@ -239,14 +239,14 @@ const createLogMethod = (
 **Usage**:
 
 ```typescript
-export const createConsoleLogger = (level: LogLevel = 'info'): Logger => {
-    return {
-        debug: createLogMethod(level, 'debug', getConsoleFn('debug')),
-        info: createLogMethod(level, 'info', getConsoleFn('info')),
-        warn: createLogMethod(level, 'warn', getConsoleFn('warn')),
-        error: createLogMethod(level, 'error', getConsoleFn('error')),
-    };
+// createConsoleLogger creates a ConsoleLogger with 'info' level
+export const createConsoleLogger = (): ConsoleLogger => {
+    return new ConsoleLogger('info');
 };
+
+// For specific levels, use the constructor directly
+const debugLogger = new ConsoleLogger('debug');
+const errorLogger = new ConsoleLogger('error');
 ```
 
 **Benefits**:
@@ -390,39 +390,40 @@ export type Logger = {
 import { createProtoPediaClient } from 'protopedia-api-v2-client';
 import { createConsoleLogger } from '@f88/promidas/logger';
 
-const logger = createConsoleLogger('debug');
+const logger = createConsoleLogger();
 const apiClient = createProtoPediaClient({
     token: 'your-token',
-    logger: logger, // Direct assignment, no conversion
+    logger,
+    logLevel: 'debug', // SDK will update logger.level if mutable
 });
 ```
 
-### No Level Property
+### No Level Property in Interface
 
 **Design Decision**: Logger interface does NOT expose `level` property
 
 **Reasoning**:
 
 1. Level is implementation detail
-2. Immutable after creation (no runtime changes)
+2. ConsoleLogger has mutable `level` property, but it's not part of the interface
 3. Simpler interface (4 methods only)
 4. Matches protopedia-api-v2-client contract
 
-**If you need runtime level changes**:
+**Level Management**:
 
-Create new logger instance instead:
+ConsoleLogger supports runtime level changes through its mutable `level` property:
 
 ```typescript
-// Production mode
-let logger = createConsoleLogger('error');
+const logger = createConsoleLogger();
+logger.level = 'error'; // Production mode
 
-// Debug mode (create new instance)
+// Debug mode
 if (process.env.DEBUG) {
-    logger = createConsoleLogger('debug');
+    logger.level = 'debug'; // Update level dynamically
 }
 ```
 
-**Trade-off**: No dynamic level changes vs. simpler interface
+**Pattern**: Use `logLevel` parameter when integrating with Repository/Store/Fetcher, which will update the logger's level if mutable.
 
 ## Design Decisions Log
 

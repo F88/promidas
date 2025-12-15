@@ -15,3 +15,7 @@ storybook-static/
 package-lock.json
 renovate.json
 tools/prompts/*
+
+# Temporary ignore files
+# lib/fetcher/__tests__/api-client-factory.test.ts
+# lib/repository/__tests__/protopedia-in-memory-repository/

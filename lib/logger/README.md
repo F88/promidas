@@ -39,7 +39,7 @@ import type { Logger, LogLevel } from '@f88/promidas/logger';
 ```typescript
 import { createConsoleLogger } from '@f88/promidas/logger';
 
-// ロガーを作成
+// ロガーを作成 (デフォルト level: 'info')
 const logger = createConsoleLogger();
 
 // ログを出力
@@ -51,14 +51,18 @@ logger.error('データの取得に失敗しました');
 ### デバッグ用の詳細ログ
 
 ```typescript
-import { createConsoleLogger, LogLevel } from '@f88/promidas/logger';
+import { createConsoleLogger, ConsoleLogger } from '@f88/promidas/logger';
 
 // デバッグレベルのロガー (開発中に便利)
-const logger = createConsoleLogger({ level: LogLevel.Debug });
+const logger = new ConsoleLogger('debug');
 
 logger.debug('詳細なデバッグ情報'); // 開発中のみ表示
 logger.info('通常の情報');
 logger.error('エラー情報');
+
+// または level プロパティで動的に変更
+const logger2 = createConsoleLogger();
+logger2.level = 'debug';
 ```
 
 ## 📚 詳しく知りたい方へ
@@ -85,15 +89,18 @@ LogLevel.Error; // エラー
 ### コンソール出力
 
 ```typescript
-import { createConsoleLogger } from '@f88/promidas/logger';
+import { createConsoleLogger, ConsoleLogger } from '@f88/promidas/logger';
 
-const logger = createConsoleLogger({
-    level: LogLevel.Info, // Info 以上のログを出力
-});
+// Info 以上のログを出力
+const logger = new ConsoleLogger('info');
 
 logger.debug('これは表示されません'); // Debug < Info
 logger.info('これは表示されます'); // Info = Info
 logger.error('これも表示されます'); // Error > Info
+
+// 動的にレベルを変更
+logger.level = 'debug';
+logger.debug('今度は表示されます');
 ```
 
 ### ログ出力を無効化
@@ -133,14 +140,14 @@ const fileLogger: Logger = {
 ### 開発中
 
 ```typescript
-const logger = createConsoleLogger({ level: LogLevel.Debug });
+const logger = new ConsoleLogger('debug');
 // すべてのログが見られるので、デバッグしやすい
 ```
 
 ### 本番環境
 
 ```typescript
-const logger = createConsoleLogger({ level: LogLevel.Warn });
+const logger = new ConsoleLogger('warn');
 // 警告とエラーのみ記録して、ノイズを減らす
 ```
 
@@ -154,9 +161,10 @@ const logger = createNoopLogger();
 ## 📝 実用例
 
 ```typescript
-import { createConsoleLogger, LogLevel } from '@f88/promidas/logger';
+import { createConsoleLogger } from '@f88/promidas/logger';
 
-const logger = createConsoleLogger({ level: LogLevel.Info });
+const logger = createConsoleLogger();
+logger.level = 'info';
 
 async function fetchData() {
     logger.info('データ取得を開始します');

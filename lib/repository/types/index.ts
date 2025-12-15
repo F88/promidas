@@ -8,7 +8,7 @@ export type { PrototypeAnalysisResult } from './analysis.types.js';
 
 export type {
   ProtopediaInMemoryRepository,
-  CreateProtopediaInMemoryRepository,
+  ProtopediaInMemoryRepositoryConfig,
 } from './repository.types.js';
 
 export type {

@@ -37,19 +37,19 @@ This document describes the architecture, design decisions, and implementation p
                           │
                           ▼
 ┌─────────────────────────────────────────────────────────┐
-│  Fetcher Layer                                          │
-│  - fetchAndNormalizePrototypes()                        │
-│  - Result type transformation                           │
-│  - Error message construction                           │
+│  ProtopediaApiCustomClient (Class)                      │
+│  - fetchPrototypes() (high-level method)                │
+│  - listPrototypes() (raw API access)                    │
+│  - Logger management (Fastify-style)                    │
 └─────────────────────────────────────────────────────────┘
                           │
         ┌─────────────────┴─────────────────┐
         ▼                                   ▼
 ┌───────────────────────┐         ┌───────────────────────┐
-│  API Client Layer     │         │  Normalization Layer  │
-│  - HTTP operations    │         │  - Data transformation│
-│  - Request building   │         │  - Type conversion    │
-│  - Response parsing   │         │  - Field mapping      │
+│  Fetcher Functions    │         │  Normalization Layer  │
+│  - fetchAndNormalize  │         │  - Data transformation│
+│  - Error handling     │         │  - Type conversion    │
+│  - Result types       │         │  - Field mapping      │
 └───────────────────────┘         └───────────────────────┘
         │
         ▼
@@ -61,9 +61,9 @@ This document describes the architecture, design decisions, and implementation p
 
 ### Dependency Flow
 
-- **Consumer → Fetcher**: Requests normalized prototype data
-- **Fetcher → API Client**: Delegates HTTP operations
-- **Fetcher → Normalization**: Transforms raw API responses
+- **Consumer → ProtopediaApiCustomClient**: Requests normalized prototype data
+- **Client → listPrototypes**: Delegates HTTP operations to API client
+- **Client → Normalization**: Transforms raw API responses
 - **API Client → HTTP**: Network communication with ProtoPedia API
 
 ### Responsibility Separation
@@ -76,35 +76,101 @@ This document describes the architecture, design decisions, and implementation p
 
 ## Design Patterns
 
-### 1. Adapter Pattern
+### 1. Client-Based Pattern
 
-**Purpose**: Adapt the official API client to application needs
+**Purpose**: Encapsulate API client and provide normalized data access
 
 **Implementation**:
 
 ```typescript
-// Minimal interface for listing prototypes
-export interface ListPrototypesClient {
-    listPrototypes(
+// Client class encapsulates API access and normalization
+export class ProtopediaApiCustomClient {
+    async fetchPrototypes(
         params: ListPrototypesParams,
-    ): Promise<ApiResult<ResultOfListPrototypesApiResponse>>;
-}
+    ): Promise<FetchPrototypesResult> {
+        // Handles API call, error handling, and normalization
+    }
 
-// Consumer doesn't depend on full client implementation
-export async function fetchAndNormalizePrototypes(
-    client: ListPrototypesClient,
-    params: ListPrototypesParams,
-): Promise<FetchPrototypesResult>;
+    async listPrototypes(params: ListPrototypesParams) {
+        // Direct access to raw API response
+    }
+}
 ```
 
 **Benefits**:
 
-- Decouples from specific client implementation
-- Enables testing with mock clients
-- Future-proof against client API changes
-- Supports alternative clients with same interface
+- Single source of truth for API interactions
+- Proper logger lifecycle management
+- Clear separation between normalized and raw API access
+- Testable with standard mocking approaches
 
-### 2. Result Type Pattern
+### 2. Class-Based Client Architecture
+
+**Purpose**: Proper state management for logger and client lifecycle
+
+**Implementation**:
+
+```typescript
+// Client class with managed logger instance
+export class ProtopediaApiCustomClient {
+    readonly #client: ProtoPediaApiClient;
+    readonly #logger: Logger;
+    readonly #logLevel: LogLevel;
+
+    constructor(config?: ProtopediaApiCustomClientConfig | null) {
+        // Fastify-style logger configuration
+        // ...logger setup...
+
+        // SDK client creation (separate from our logger)
+        this.#client = createProtoPediaClient(
+            config?.protoPediaApiClientOptions ?? {},
+        );
+    }
+
+    async fetchPrototypes(
+        params: ListPrototypesParams,
+    ): Promise<FetchPrototypesResult> {
+        // Internally handles API call and normalization
+        const apiResult = await this.#client.listPrototypes(params);
+        // ... error handling and normalization ...
+        return result;
+    }
+
+    async listPrototypes(params: ListPrototypesParams) {
+        return this.#client.listPrototypes(params);
+    }
+}
+```
+
+**Configuration Structure**:
+
+```typescript
+export type ProtopediaApiCustomClientConfig = {
+    // SDK client configuration (nested)
+    protoPediaApiClientOptions?: ProtoPediaApiClientOptions;
+    // Our logger configuration (top-level)
+    logger?: Logger;
+    logLevel?: LogLevel;
+};
+```
+
+**Design Rationale**:
+
+- **Nested Config**: Clear separation between SDK settings and our logger
+- **Independent Loggers**: SDK client and our error handler use separate logger instances
+    - SDK client logging controlled via `protoPediaApiClientOptions.logger`
+    - Error diagnostics use the class's managed logger
+- **Private Fields**: Encapsulation via `#field` syntax
+- **Explicit Methods**: Only expose `fetchPrototypes()` and `listPrototypes()`
+
+**Benefits**:
+
+- Proper logger lifecycle management
+- Constructor logging for debugging instantiation
+- Logger passed throughout the call chain (client → fetcher → error handler)
+- Consistent with lib/store and lib/repository architecture
+
+### 3. Result Type Pattern
 
 **Purpose**: Type-safe error handling without exceptions
 
@@ -227,11 +293,11 @@ if (!result.ok) {
 ### Error Flow
 
 ```typescript
-async function fetchAndNormalizePrototypes(
-    client: ListPrototypesClient,
+// Within ProtopediaApiCustomClient.fetchPrototypes()
+async fetchPrototypes(
     params: ListPrototypesParams,
 ): Promise<FetchPrototypesResult> {
-    const apiResult = await client.listPrototypes(params);
+    const apiResult = await this.#client.listPrototypes(params);
 
     // API client already returns Result type
     if (!apiResult.ok) {
@@ -263,6 +329,80 @@ async function fetchAndNormalizePrototypes(
 **Trade-off**: Slightly larger error objects vs. complete diagnostic information
 
 **Decision**: Complete context is more valuable for debugging
+
+## Logger Management
+
+### Fastify-Style Logger Configuration
+
+**Design Pattern**: Follows Fastify's logger configuration approach
+
+**Three Configuration Patterns**:
+
+```typescript
+// Pattern 1: logLevel only
+const client = new ProtopediaApiCustomClient({
+    protoPediaApiClientOptions: { token },
+    logLevel: 'debug', // Creates ConsoleLogger internally
+});
+
+// Pattern 2: Custom logger + logLevel
+const client = new ProtopediaApiCustomClient({
+    protoPediaApiClientOptions: { token },
+    logger: myLogger,
+    logLevel: 'warn', // Updates logger's level if mutable
+});
+
+// Pattern 3: Custom logger only
+const client = new ProtopediaApiCustomClient({
+    protoPediaApiClientOptions: { token },
+    logger: myLogger, // Uses logger's existing level
+});
+```
+
+**Logger Resolution Logic**:
+
+```typescript
+constructor(config?: ProtopediaApiCustomClientConfig | null) {
+    const { protoPediaApiClientOptions = {}, logger, logLevel } = config ?? {};
+
+    if (logger) {
+        this.#logger = logger;
+        this.#logLevel = logLevel ?? 'info';
+        // If logLevel specified, update logger's level (if mutable)
+        if (logLevel !== undefined && 'level' in logger) {
+            (logger as { level: LogLevel }).level = logLevel;
+        }
+    } else {
+        const resolvedLogLevel = logLevel ?? 'info';
+        this.#logger = new ConsoleLogger(resolvedLogLevel);
+        this.#logLevel = resolvedLogLevel;
+    }
+}
+```
+
+**Logger Usage Throughout Call Chain**:
+
+```plaintext
+ProtopediaApiCustomClient
+  └─> fetchPrototypes()
+      └─> handleApiError(error, this.#logger)
+          └─> this.#logger.error() for diagnostics
+```
+
+**Design Rationale**:
+
+- **Separation of Concerns**: SDK client logging vs. our error diagnostics
+    - `protoPediaApiClientOptions.logger` → SDK HTTP operation logging
+    - Class-managed logger → Error handler diagnostics
+- **Constructor Logging**: All config logged at 'info' level for debugging
+- **Consistent Pattern**: Aligns with lib/store and lib/repository
+
+**Benefits**:
+
+- Flexible logger configuration
+- No fixed logger in error handler
+- Constructor visibility for debugging
+- Logger available throughout the call chain
 
 ## Normalization Approach
 
@@ -401,7 +541,7 @@ class FullClient implements ListPrototypesClient {
 **Example**:
 
 ```typescript
-const result = await fetchAndNormalizePrototypes(client, params);
+const result = await client.fetchPrototypes(params);
 
 if (result.ok) {
     // TypeScript knows: result.data is NormalizedPrototype[]
@@ -422,8 +562,8 @@ if (result.ok) {
 
 **Categories**:
 
-1. **Public API types**: `FetchPrototypesResult`, `ListPrototypesClient`
-2. **Configuration types**: `ProtoPediaApiClientOptions`
+1. **Public API types**: `FetchPrototypesResult`, `ProtopediaApiCustomClient`
+2. **Configuration types**: `ProtopediaApiCustomClientConfig`
 3. **Helper types**: `Logger`, `LogLevel` (re-exported from logger)
 
 **Location**: `lib/fetcher/index.ts` (single entry point)
@@ -437,27 +577,23 @@ if (result.ok) {
 **Integration Strategy**:
 
 1. Accept any client implementing `ListPrototypesClient`
-2. Provide factory (`createProtopediaApiCustomClient`) for convenience
+2. Provide `ProtopediaApiCustomClient` class for convenience
 3. Allow custom configurations (fetch, timeout, logger)
 
 **Example**:
 
 ```typescript
-// Option 1: Use library's factory
-const client = createProtopediaApiCustomClient({
-    token: process.env.TOKEN,
-    baseUrl: 'https://api.protopedia.net',
+// Create client with custom configuration
+const client = new ProtopediaApiCustomClient({
+    protoPediaApiClientOptions: {
+        token: process.env.TOKEN,
+        baseUrl: 'https://api.protopedia.net',
+    },
     logLevel: 'error',
 });
 
-// Option 2: Bring your own client
-import { createProtoPediaClient } from 'protopedia-api-v2-client';
-const customClient = createProtoPediaClient({
-    /* custom config */
-});
-
-// Both work the same
-const result = await fetchAndNormalizePrototypes(client, params);
+// Use client's methods
+const result = await client.fetchPrototypes(params);
 ```
 
 ### With Repository Layer
@@ -469,7 +605,7 @@ const result = await fetchAndNormalizePrototypes(client, params);
 ```typescript
 // Repository expects FetchPrototypesResult
 async setupSnapshot(params: ListPrototypesParams) {
-  const fetchResult = await fetchAndNormalizePrototypes(this.#apiClient, params);
+  const fetchResult = await this.#apiClient.fetchPrototypes(params);
 
   if (!fetchResult.ok) {
     return {
@@ -497,7 +633,7 @@ async setupSnapshot(params: ListPrototypesParams) {
 **Example (Next.js)**:
 
 ```typescript
-const customClientForNextJs = createProtopediaApiCustomClient({
+const customClientForNextJs = new ProtopediaApiCustomClient({
     token: process.env.PROTOPEDIA_API_TOKEN,
     fetch: async (url, init) => {
         return await globalThis.fetch(url, {
@@ -570,18 +706,18 @@ const customClientForNextJs = createProtopediaApiCustomClient({
 
 **Trade-off**: Less discoverability vs. better flexibility
 
-### 5. Why Separate Error Message Construction?
+### 5. Why Pre-format Error Messages?
 
-**Decision**: `constructDisplayMessage()` as standalone utility
+**Decision**: Format error messages internally during error handling
 
 **Reasoning**:
 
-- Testable message formatting logic
-- Consistent error presentation
-- Easier to internationalize later
-- Separates presentation from error handling
+- Simpler API - users get ready-to-display messages
+- Consistent error presentation across all error types
+- No need to import additional utilities
+- Error details still available separately if needed
 
-**Trade-off**: Extra function vs. better separation of concerns
+**Trade-off**: Less customization vs. simpler usage
 
 ---
 

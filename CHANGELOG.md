@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD024 -->
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -7,7 +9,165 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking Changes
+
+#### Logger Module Redesign
+
+The logger interface and factory functions have been redesigned to support runtime log level changes and align with modern logging library patterns.
+
+##### Logger Interface Remains Method-Only
+
+The `Logger` interface has **not changed** and does not include a `level` property:
+
+```typescript
+// v0.7.0 and v0.8.0 (unchanged)
+export interface Logger {
+    debug: (message: string, meta?: unknown) => void;
+    info: (message: string, meta?: unknown) => void;
+    warn: (message: string, meta?: unknown) => void;
+    error: (message: string, meta?: unknown) => void;
+}
+```
+
+However, the provided `ConsoleLogger` implementation now includes a **mutable `level` property** that can be dynamically updated:
+
+```typescript
+const logger = new ConsoleLogger('info');
+logger.level = 'debug'; // Runtime level change is now possible
+```
+
+**For Custom Logger Implementations:**
+
+The `Logger` interface does not require a `level` property. However, if you want to support runtime log level changes (used by `logLevel` configuration options), you can optionally add a mutable `level` property:
+
+```typescript
+// Optional: Add level property for runtime level changes
+const myLogger: Logger = {
+    level: 'info' as LogLevel, // Optional property
+    debug: (msg) => console.debug(msg),
+    info: (msg) => console.info(msg),
+    warn: (msg) => console.warn(msg),
+    error: (msg) => console.error(msg),
+};
+```
+
+The library checks for the `level` property dynamically using `'level' in logger` before attempting to modify it.
+
+##### `createConsoleLogger()` No Longer Accepts Parameters
+
+For specific log levels, use the `ConsoleLogger` constructor directly:
+
+```typescript
+// Before (v0.7.0)
+const logger = createConsoleLogger('debug');
+
+// After (v0.8.0)
+const logger = new ConsoleLogger('debug');
+// OR set level dynamically
+const logger = createConsoleLogger();
+logger.level = 'debug';
+```
+
+**Files affected:**
+
+- `lib/logger/console-logger.ts` (renamed from `logger.ts`)
+- `lib/logger/factory.ts` (new - separated factory functions)
+- Test files reorganized for better structure
+
+#### Repository Module Changes
+
+##### Main Module Now Exports Builder Instead of Factory Function
+
+The `createProtopediaInMemoryRepository()` factory function has been removed from the main module in favor of `PromidasRepositoryBuilder`.
+
+```typescript
+// Before (v0.7.0)
+import { createProtopediaInMemoryRepository } from '@f88/promidas';
+
+const repo = createProtopediaInMemoryRepository({
+    storeConfig: { ttlMs: 30000 },
+    apiClientOptions: { token: 'xxx' },
+});
+
+// After (v0.8.0) - Option 1: Use Builder (Recommended)
+import { PromidasRepositoryBuilder } from '@f88/promidas';
+
+const repo = new PromidasRepositoryBuilder()
+    .setStoreConfig({ ttlMs: 30000 })
+    .setApiClientConfig({ protoPediaApiClientOptions: { token: 'xxx' } })
+    .build();
+
+// After (v0.8.0) - Option 2: Import from subpath
+import { createProtopediaInMemoryRepository } from '@f88/promidas/repository';
+
+const repo = createProtopediaInMemoryRepository({
+    storeConfig: { ttlMs: 30000 },
+    apiClientOptions: { token: 'xxx' },
+});
+```
+
+**Migration:**
+
+- Use `PromidasRepositoryBuilder` for complex configurations (recommended)
+- Or import factory function from `@f88/promidas/repository` subpath
+
+#### Fetcher Module Cleanup
+
+##### Removed `fetchAndNormalizePrototypes()` Standalone Function
+
+Use the client method instead for better logger lifecycle management:
+
+```typescript
+// Before (v0.7.0)
+import {
+    fetchAndNormalizePrototypes,
+    createProtopediaApiCustomClient,
+} from '@f88/promidas/fetcher';
+
+const client = createProtopediaApiCustomClient({ token: 'xxx' });
+const result = await fetchAndNormalizePrototypes(client, { limit: 100 });
+
+// After (v0.8.0)
+import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+
+const client = createProtopediaApiCustomClient({
+    protoPediaApiClientOptions: { token: 'xxx' },
+});
+const result = await client.fetchPrototypes({ limit: 100 });
+```
+
+**Migration:** Replace `fetchAndNormalizePrototypes(client, params)` with `client.fetchPrototypes(params)`
+
+**Files removed:**
+
+- `lib/fetcher/fetch-prototypes.ts`
+- `lib/fetcher/__tests__/fetch-prototypes.test.ts`
+
 ### Added
+
+- **PromidasRepositoryBuilder**: Introduced fluent builder interface for constructing repository instances with step-by-step configuration (#32)
+    - Provides alternative to factory function for complex configuration scenarios
+    - Supports shared logger pattern for memory efficiency across all components
+    - Log level priority management (repository > store > apiClient > default)
+    - Deep merge support for multiple configuration calls
+    - Configuration immutability protection
+    - Comprehensive test coverage with 209 tests covering all configuration scenarios
+    - Exported from main module: `import { PromidasRepositoryBuilder } from '@f88/promidas'`
+
+    ```typescript
+    // Basic usage
+    const repo = new PromidasRepositoryBuilder().build();
+
+    // Advanced configuration
+    const repo = new PromidasRepositoryBuilder()
+        .setDefaultLogLevel('debug')
+        .setStoreConfig({ ttlMs: 60000 })
+        .setApiClientConfig({
+            protoPediaApiClientOptions: { token: 'xxx' },
+        })
+        .setRepositoryConfig({ logLevel: 'info' })
+        .build();
+    ```
 
 - **Repository Concurrency Control**: Implemented Promise Coalescing pattern for `setupSnapshot()` and `refreshSnapshot()` to prevent duplicate API requests during concurrent calls (#17)
     - Multiple concurrent calls now share a single in-flight request
@@ -21,6 +181,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Added English technical documentation in `USAGE.md` and `DESIGN.md`
     - Documented design rationale for logger-only configuration approach
     - Noted current limitations and future considerations
+
+- **Repository Configuration Structure**: Unified repository factory function signature for better consistency (#32)
+    - Consolidated all configuration into a single options object
+    - Added `ProtopediaInMemoryRepositoryConfig` type for repository-level logging
+    - Improved separation of concerns: repositoryConfig, storeConfig, and apiClientOptions
+    - Updated documentation (DESIGN.md, USAGE.md) to reflect new patterns
+    - All 182 repository tests updated and passing
+    - No breaking changes to public API (backward compatible)
 
 ## [0.7.0] - 2025-12-13
 

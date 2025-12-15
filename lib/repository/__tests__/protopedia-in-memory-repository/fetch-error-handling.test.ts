@@ -58,14 +58,27 @@ vi.mock('../../../fetcher/index', async (importOriginal) => {
     await importOriginal<typeof import('../../../fetcher/index.js')>();
   return {
     ...actual,
-    createProtopediaApiCustomClient: vi.fn(),
+    ProtopediaApiCustomClient: vi.fn(),
   };
 });
 
-import { makePrototype, setupMocks } from './test-helpers.js';
+import { createMockStore, makePrototype, setupMocks } from './test-helpers.js';
 
 describe('ProtopediaInMemoryRepositoryImpl - fetch error handling', () => {
   const { fetchPrototypesMock, resetMocks } = setupMocks();
+
+  const createRepo = () => {
+    const store = createMockStore();
+    const apiClient = {
+      fetchPrototypes: fetchPrototypesMock,
+    };
+
+    return new ProtopediaInMemoryRepositoryImpl({
+      store: store as any,
+      apiClient: apiClient as any,
+      repositoryConfig: {},
+    });
+  };
 
   beforeEach(() => {
     resetMocks();
@@ -82,7 +95,7 @@ describe('ProtopediaInMemoryRepositoryImpl - fetch error handling', () => {
         },
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = createRepo();
 
       const result = await repo.setupSnapshot({});
 
@@ -104,7 +117,7 @@ describe('ProtopediaInMemoryRepositoryImpl - fetch error handling', () => {
         },
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = createRepo();
 
       const result = await repo.setupSnapshot({});
 
@@ -121,7 +134,7 @@ describe('ProtopediaInMemoryRepositoryImpl - fetch error handling', () => {
         new Error('ECONNREFUSED: Connection refused'),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = createRepo();
 
       const result = await repo.setupSnapshot({});
 
@@ -139,7 +152,7 @@ describe('ProtopediaInMemoryRepositoryImpl - fetch error handling', () => {
           data: [makePrototype({ id: 1, prototypeNm: 'success' })],
         });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = createRepo();
 
       const failResult = await repo.setupSnapshot({});
       expect(failResult.ok).toBe(false);
@@ -172,7 +185,7 @@ describe('ProtopediaInMemoryRepositoryImpl - fetch error handling', () => {
           data: [makePrototype({ id: 2, prototypeNm: 'recovered' })],
         });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = createRepo();
       await repo.setupSnapshot({});
 
       const failResult = await repo.refreshSnapshot();
@@ -207,7 +220,7 @@ describe('ProtopediaInMemoryRepositoryImpl - fetch error handling', () => {
           data: [makePrototype({ id: 3, prototypeNm: 'new' })],
         });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = createRepo();
       await repo.setupSnapshot({});
 
       let stats = repo.getStats();

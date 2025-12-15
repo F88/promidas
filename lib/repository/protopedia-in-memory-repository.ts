@@ -39,7 +39,7 @@
  *
  * ## Usage Recommendation
  *
- * **Use the factory function** {@link createProtopediaInMemoryRepository}
+ * **Use the factory function** {@link createPromidasRepository}
  * instead of direct instantiation. The factory provides better dependency
  * injection and configuration management.
  *
@@ -49,7 +49,7 @@
  * - Framework integration
  *
  * @module
- * @see {@link createProtopediaInMemoryRepository} for the factory function
+ * @see {@link createPromidasRepository} for the factory function
  * @see {@link ProtopediaInMemoryRepository} for the public interface
  */
 import type {
@@ -58,19 +58,24 @@ import type {
 } from 'protopedia-api-v2-client';
 import type { DeepReadonly } from 'ts-essentials';
 
+import { ProtopediaApiCustomClient } from '../fetcher/index.js';
 import {
-  constructDisplayMessage,
-  createProtopediaApiCustomClient,
-} from '../fetcher/index.js';
+  ConsoleLogger,
+  type Logger,
+  type LogLevel,
+  createConsoleLogger,
+} from '../logger/index.js';
 import {
   PrototypeInMemoryStore,
   type PrototypeInMemoryStats,
   type PrototypeInMemoryStoreConfig,
 } from '../store/index.js';
 import type { NormalizedPrototype } from '../types/index.js';
+import { sanitizeDataForLogging } from '../utils/index.js'; // 追加
 
 import { prototypeIdSchema, sampleSizeSchema } from './schemas/validation.js';
 import type {
+  ProtopediaInMemoryRepositoryConfig,
   PrototypeAnalysisResult,
   SnapshotOperationResult,
 } from './types/index.js';
@@ -104,8 +109,7 @@ const SAMPLE_SIZE_THRESHOLD_RATIO = 0.5;
  * ## Responsibilities
  *
  * 1. **Dependency Management**
- *    - Instantiates {@link PrototypeInMemoryStore} with provided config
- *    - Creates ProtoPedia API client via {@link createProtopediaApiCustomClient}
+ *    - Receives {@link PrototypeInMemoryStore} and {@link ProtopediaApiCustomClient} via DI
  *    - Maintains internal state for fetch parameters
  *
  * 2. **Snapshot Operations**
@@ -143,86 +147,93 @@ const SAMPLE_SIZE_THRESHOLD_RATIO = 0.5;
  *
  * ## Usage
  *
- * **Recommended**: Use {@link createProtopediaInMemoryRepository} factory
+ * **Recommended**: Use {@link createPromidasRepository} factory
  *
  * **Direct instantiation** (advanced):
  * ```typescript
- * const repo = new ProtopediaInMemoryRepositoryImpl(
- *   { ttlSeconds: 3600, maxDataSizeBytes: 10485760 },
- *   { baseURL: 'https://protopedia.example.com' }
- * );
+ * // Dependencies must be created manually
+ * const store = new PrototypeInMemoryStore({ ... });
+ * const client = new ProtopediaApiCustomClient({ ... });
+ *
+ * const repo = new ProtopediaInMemoryRepositoryImpl({
+ *   store,
+ *   apiClient: client
+ * });
  * ```
  *
  * @see {@link ProtopediaInMemoryRepository} for the public interface contract
- * @see {@link createProtopediaInMemoryRepository} for the recommended factory
+ * @see {@link createPromidasRepository} for the recommended factory
  */
 export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepository {
+  /**
+   * Internal logger instance.
+   */
+  #logger: Logger;
+
+  /**
+   * Log level for the repository.
+   */
+  #logLevel: LogLevel;
+
+  /**
+   * Underlying in-memory store instance.
+   */
   #store: PrototypeInMemoryStore;
-  #apiClient: ReturnType<typeof createProtopediaApiCustomClient>;
+
+  /**
+   * Underlying API client instance.
+   */
+  #apiClient: ProtopediaApiCustomClient;
+
+  /**
+   * Cache of the last successful fetch parameters.
+   */
   #lastFetchParams: ListPrototypesParams = { ...DEFAULT_FETCH_PARAMS };
+
+  /**
+   * Ongoing fetch promise for concurrency control.
+   */
   #ongoingFetch: Promise<SnapshotOperationResult> | null = null;
 
   /**
    * Creates a new ProtoPedia in-memory repository instance.
    *
-   * Initializes the repository with configured store and API client.
-   * Each component can have independent logger configuration for granular observability.
-   *
-   * @param storeConfig - Configuration for the underlying in-memory store
-   *   - `ttlSeconds` - Time-to-live for snapshot expiration (optional)
-   *   - `maxDataSizeBytes` - Memory guard to prevent excessive data (optional)
-   *   - `logger` - Custom logger for store operations (optional)
-   *
-   * @param protopediaApiClientOptions - Configuration for the ProtoPedia HTTP client
-   *   - `baseURL` - API endpoint URL (optional, uses default if omitted)
-   *   - `logger` - Custom logger for API operations (optional)
-   *   - Additional client-specific options
-   *
-   * @remarks
-   * **Logger Independence**: Store and API client loggers are independent.
-   * This allows fine-grained control over logging verbosity for different concerns.
-   *
-   * @example
-   * ```typescript
-   * // Minimal setup with defaults
-   * const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
-   *
-   * // Production setup with TTL and memory limits
-   * const repo = new ProtopediaInMemoryRepositoryImpl(
-   *   {
-   *     ttlSeconds: 3600,           // 1 hour
-   *     maxDataSizeBytes: 10485760, // 10MB
-   *   },
-   *   {
-   *     baseURL: 'https://protopedia.example.com',
-   *   }
-   * );
-   *
-   * // Shared logger for both components
-   * const logger = createConsoleLogger('debug');
-   * const repo = new ProtopediaInMemoryRepositoryImpl(
-   *   { logger },
-   *   { logger }
-   * );
-   *
-   * // Independent loggers for granular control
-   * const storeLogger = createLogger({ minLevel: 'debug', prefix: '[Store]' });
-   * const apiLogger = createLogger({ minLevel: 'info', prefix: '[API]' });
-   * const repo = new ProtopediaInMemoryRepositoryImpl(
-   *   { logger: storeLogger },
-   *   { logger: apiLogger }
-   * );
-   * ```
-   *
-   * @see {@link PrototypeInMemoryStoreConfig} for store configuration details
-   * @see {@link ProtoPediaApiClientOptions} for API client configuration
+   * @param dependencies - Dependency injection object
+   * @param dependencies.store - Pre-configured in-memory store instance
+   * @param dependencies.apiClient - Pre-configured API client instance
+   * @param dependencies.repositoryConfig - Repository-level configuration (optional)
    */
-  constructor(
-    storeConfig: PrototypeInMemoryStoreConfig = {},
-    apiClientOptions?: ProtoPediaApiClientOptions,
-  ) {
-    this.#store = new PrototypeInMemoryStore(storeConfig);
-    this.#apiClient = createProtopediaApiCustomClient(apiClientOptions);
+  constructor({
+    store,
+    apiClient,
+    repositoryConfig = {},
+  }: {
+    store: PrototypeInMemoryStore;
+    apiClient: ProtopediaApiCustomClient;
+    repositoryConfig?: ProtopediaInMemoryRepositoryConfig;
+  }) {
+    // Fastify-style logger configuration for repository
+    const { logger, logLevel } = repositoryConfig;
+    if (logger) {
+      this.#logger = logger;
+      this.#logLevel = logLevel ?? 'info';
+      // If logLevel is specified, update logger's level property (if mutable)
+      if (logLevel !== undefined && 'level' in logger) {
+        (logger as { level: LogLevel }).level = logLevel;
+      }
+    } else {
+      const resolvedLogLevel = logLevel ?? 'info';
+      this.#logger = new ConsoleLogger(resolvedLogLevel);
+      this.#logLevel = resolvedLogLevel;
+    }
+
+    this.#logger.info('ProtopediaInMemoryRepository constructor called', {
+      repositoryConfig: sanitizeDataForLogging(repositoryConfig),
+      storeConfig: store.getConfig(),
+    });
+
+    this.#store = store;
+    this.#apiClient = apiClient;
   }
 
   /**
@@ -487,39 +498,6 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
       if (id < min) min = id;
       if (id > max) max = id;
     }
-
-    return { min, max };
-  }
-
-  /**
-   * Analyze prototypes to extract ID range (minimum and maximum).
-   *
-   * Uses a reduce implementation for more declarative code style.
-   * May perform better with small datasets (~1,000 items) due to JIT optimization.
-   *
-   * @param prototypes - Array of prototypes to analyze
-   * @returns Object containing min and max IDs, or null values if array is empty
-   */
-  analyzePrototypesWithReduce(
-    prototypes: readonly DeepReadonly<NormalizedPrototype>[],
-  ): PrototypeAnalysisResult {
-    if (prototypes.length === 0) {
-      return { min: null, max: null };
-    }
-
-    const firstId = prototypes[0]!.id;
-    const { min, max } = prototypes.reduce(
-      (acc, prototype) => {
-        if (prototype.id < acc.min) {
-          acc.min = prototype.id;
-        }
-        if (prototype.id > acc.max) {
-          acc.max = prototype.id;
-        }
-        return acc;
-      },
-      { min: firstId, max: firstId },
-    );
 
     return { min, max };
   }

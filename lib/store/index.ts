@@ -22,6 +22,7 @@ export {
   PrototypeInMemoryStore,
   type PrototypeInMemoryStats,
   type PrototypeInMemoryStoreConfig,
+  type Snapshot as PrototypeInMemorySnapshot,
 } from './store.js';
 
 export type { NormalizedPrototype } from '../types/index.js';

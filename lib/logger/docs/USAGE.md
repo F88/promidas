@@ -34,12 +34,16 @@ This document provides comprehensive usage examples and best practices for the l
 ```typescript
 import { createConsoleLogger } from '@f88/promidas/logger';
 
-const logger = createConsoleLogger('info');
+const logger = createConsoleLogger();
 
-logger.debug('This will not appear (level is info)');
+logger.debug('This will not appear (default level is info)');
 logger.info('Application started');
 logger.warn('Deprecated API used', { api: '/v1/users' });
 logger.error('Failed to connect', { error: 'ECONNREFUSED' });
+
+// To change level, update the level property
+logger.level = 'debug';
+logger.debug('Now this will appear');
 ```
 
 ### Import Options
@@ -86,21 +90,24 @@ Levels from most to least verbose:
 **Development**:
 
 ```typescript
-const logger = createConsoleLogger('debug');
+const logger = createConsoleLogger();
+logger.level = 'debug';
 // Shows all messages including debug info
 ```
 
 **Production**:
 
 ```typescript
-const logger = createConsoleLogger('error');
+const logger = createConsoleLogger();
+logger.level = 'error';
 // Only shows errors, reducing noise
 ```
 
 **Testing**:
 
 ```typescript
-const logger = createConsoleLogger('silent');
+const logger = createConsoleLogger();
+logger.level = 'silent';
 // Or use createNoopLogger() for zero overhead
 ```
 
@@ -114,9 +121,12 @@ import { createConsoleLogger } from '@f88/promidas/logger';
 // Default level is 'info'
 const logger1 = createConsoleLogger();
 
-// Explicit level
-const logger2 = createConsoleLogger('debug');
-const logger3 = createConsoleLogger('error');
+// Set level after creation
+const logger2 = createConsoleLogger();
+logger2.level = 'debug';
+
+const logger3 = createConsoleLogger();
+logger3.level = 'error';
 ```
 
 ### Using Metadata
@@ -156,7 +166,8 @@ const getLogLevel = (): LogLevel => {
     return 'info';
 };
 
-const logger = createConsoleLogger(getLogLevel());
+const logger = createConsoleLogger();
+logger.level = getLogLevel();
 ```
 
 ### Multiple Loggers for Different Modules
@@ -165,11 +176,17 @@ const logger = createConsoleLogger(getLogLevel());
 import { createConsoleLogger } from '@f88/promidas/logger';
 
 // Different log levels per concern
-const storeLogger = createConsoleLogger('warn'); // Less verbose
-const apiLogger = createConsoleLogger('debug'); // More verbose
+const logger = createConsoleLogger();
 
-const store = createStore({ logger: storeLogger });
-const apiClient = createApiClient({ logger: apiLogger });
+const store = createStore({
+    logger,
+    logLevel: 'warn', // Less verbose
+});
+
+const apiClient = createApiClient({
+    logger,
+    logLevel: 'debug', // More verbose
+});
 ```
 
 ## No-op Logger
@@ -199,8 +216,13 @@ import { createConsoleLogger, createNoopLogger } from '@f88/promidas/logger';
 
 const logger =
     process.env.ENABLE_LOGGING === 'true'
-        ? createConsoleLogger('info')
+        ? createConsoleLogger()
         : createNoopLogger();
+
+// Set level if logger is console logger
+if ('level' in logger) {
+    logger.level = 'info';
+}
 ```
 
 ## Custom Loggers
@@ -297,14 +319,17 @@ describe('MyService', () => {
 import { createProtopediaInMemoryRepository } from '@f88/promidas/repository';
 import { createConsoleLogger } from '@f88/promidas/logger';
 
-const storeLogger = createConsoleLogger('warn');
-const apiLogger = createConsoleLogger('debug');
+const logger = createConsoleLogger();
 
 const repository = createProtopediaInMemoryRepository({
-    storeConfig: { logger: storeLogger },
+    storeConfig: {
+        logger,
+        logLevel: 'warn',
+    },
     apiClientOptions: {
         token: process.env.PROTOPEDIA_API_TOKEN,
-        logger: apiLogger,
+        logger,
+        logLevel: 'debug',
     },
 });
 ```
@@ -315,11 +340,12 @@ const repository = createProtopediaInMemoryRepository({
 import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
 import { createConsoleLogger } from '@f88/promidas/logger';
 
-const logger = createConsoleLogger('info');
+const logger = createConsoleLogger();
 
 const client = createProtopediaApiCustomClient({
     token: process.env.PROTOPEDIA_API_TOKEN,
     logger,
+    logLevel: 'info',
 });
 ```
 
@@ -329,11 +355,12 @@ const client = createProtopediaApiCustomClient({
 import { createProtoPediaClient } from 'protopedia-api-v2-client';
 import { createConsoleLogger } from '@f88/promidas/logger';
 
-const logger = createConsoleLogger('debug');
+const logger = createConsoleLogger();
 
 const client = createProtoPediaClient({
     token: process.env.PROTOPEDIA_API_TOKEN,
-    logger, // Compatible interface
+    logger,
+    logLevel: 'debug',
 });
 ```
 
@@ -345,7 +372,7 @@ import { createProtopediaInMemoryRepository } from '@f88/promidas/repository';
 import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
 
 // Single logger instance
-const logger = createConsoleLogger('info');
+const logger = createConsoleLogger();
 
 // Shared across all components
 const apiClient = createProtopediaApiCustomClient({
@@ -418,19 +445,21 @@ logger.info('User action', { userId, action }); // Structured metadata
 **❌ Bad**:
 
 ```typescript
-const logger = createConsoleLogger('debug'); // Hardcoded
+const logger = createConsoleLogger(); // No environment consideration
+logger.level = 'debug'; // Hardcoded
 ```
 
 **✅ Good**:
 
 ```typescript
+const logger = createConsoleLogger();
 const level =
     process.env.NODE_ENV === 'production'
         ? 'error'
         : process.env.DEBUG
           ? 'debug'
           : 'info';
-const logger = createConsoleLogger(level);
+logger.level = level;
 ```
 
 ### 5. Use No-op Logger in Tests
@@ -438,7 +467,8 @@ const logger = createConsoleLogger(level);
 **❌ Bad**:
 
 ```typescript
-const logger = createConsoleLogger('silent'); // Still has overhead
+const logger = createConsoleLogger();
+logger.level = 'silent'; // Still has overhead
 ```
 
 **✅ Good**:
@@ -447,25 +477,26 @@ const logger = createConsoleLogger('silent'); // Still has overhead
 const logger = createNoopLogger(); // Zero overhead
 ```
 
-### 6. Don't Change Logger After Creation
+### 6. Change Logger Level When Needed
 
-**❌ Bad**:
-
-```typescript
-// Logger level cannot be changed after creation
-logger.level = 'debug'; // ❌ Type error (no level property)
-```
-
-**✅ Good**:
+ConsoleLogger has a mutable `level` property that can be updated:
 
 ```typescript
-// Create new logger instance if level needs to change
-let logger = createConsoleLogger('info');
+const logger = createConsoleLogger();
+logger.level = 'info';
 
+// Later, increase verbosity for debugging
 if (enableDebugMode) {
-    logger = createConsoleLogger('debug');
+    logger.level = 'debug';
+}
+
+// Reduce verbosity in production
+if (process.env.NODE_ENV === 'production') {
+    logger.level = 'error';
 }
 ```
+
+Note: Only ConsoleLogger has a mutable level property. The base Logger interface does not define it.
 
 ### 7. Avoid Expensive Computations in Log Calls
 

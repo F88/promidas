@@ -7,1267 +7,796 @@
 import type { ProtoPediaApiClientOptions } from 'protopedia-api-v2-client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { PrototypeInMemoryStoreConfig } from '../../../store/index.js';
+import { ProtopediaApiCustomClient } from '../../../fetcher/index.js';
+import {
+  PrototypeInMemoryStore,
+  type PrototypeInMemoryStoreConfig,
+} from '../../../store/index.js';
 import { ProtopediaInMemoryRepositoryImpl } from '../../protopedia-in-memory-repository.js';
 
-import { createMockFetchPrototypesSuccess } from './test-helpers.js';
+vi.mock('../../../fetcher/index', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../../fetcher/index.js')>();
+  return {
+    ...actual,
+    ProtopediaApiCustomClient: vi.fn(),
+  };
+});
 
-describe('ProtopediaInMemoryRepository - Concurrency Control', () => {
-  let storeConfig: PrototypeInMemoryStoreConfig;
-  let apiClientOptions: ProtoPediaApiClientOptions;
+vi.mock('../../../store/index', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../../store/index.js')>();
+  return {
+    ...actual,
+    PrototypeInMemoryStore: vi.fn(),
+  };
+});
 
-  beforeEach(() => {
-    storeConfig = { ttlMs: 30000 };
-    apiClientOptions = { token: 'test-token' };
-    vi.clearAllMocks();
+import { createMockStore, makePrototype } from './test-helpers.js';
+
+type Deferred<T> = {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+  reject: (reason?: unknown) => void;
+};
+
+const createDeferred = <T>(): Deferred<T> => {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
   });
 
-  describe('setupSnapshot concurrency', () => {
-    it('coalesces multiple concurrent setupSnapshot calls into a single API request', async () => {
-      const fetchSpy = vi.fn(
-        createMockFetchPrototypesSuccess([
-          { id: 1, prototypeNm: 'Prototype 1' },
-        ]),
-      );
+  return { promise, resolve, reject };
+};
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
-      });
+describe('ProtopediaInMemoryRepositoryImpl - concurrency (coalescing)', () => {
+  const createRepo = (fetchPrototypes: (params: any) => any) => {
+    const store = createMockStore({ ttlMs: 30_000 });
+    const apiClient = { fetchPrototypes };
 
-      const params = { offset: 0, limit: 10 };
+    const logger = {
+      info: vi.fn(),
+      debug: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    };
 
-      // Call setupSnapshot 3 times concurrently
-      const [result1, result2, result3] = await Promise.all([
-        repo.setupSnapshot(params),
-        repo.setupSnapshot(params),
-        repo.setupSnapshot(params),
+    return new ProtopediaInMemoryRepositoryImpl({
+      store: store as any,
+      apiClient: apiClient as any,
+      repositoryConfig: { logger: logger as any },
+    });
+  };
+
+  describe('basic coalescing behavior', () => {
+    it('coalesces concurrent setupSnapshot calls into 1 request', async () => {
+      const deferred = createDeferred<any>();
+      const fetchPrototypesMock = vi
+        .fn()
+        .mockImplementation(() => deferred.promise);
+
+      const repo = createRepo(fetchPrototypesMock);
+
+      const pending = Promise.all([
+        repo.setupSnapshot({} as any),
+        repo.setupSnapshot({} as any),
+        repo.setupSnapshot({} as any),
       ]);
 
-      // All should succeed
-      expect(result1.ok).toBe(true);
-      expect(result2.ok).toBe(true);
-      expect(result3.ok).toBe(true);
+      await Promise.resolve();
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
 
-      // But only one API call should have been made
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it('returns the same result to all concurrent callers', async () => {
-      const mockData = [
-        { id: 1, prototypeNm: 'Test Prototype' },
-        { id: 2, prototypeNm: 'Another Prototype' },
-      ];
-
-      const fetchSpy = vi.fn(createMockFetchPrototypesSuccess(mockData));
-
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      deferred.resolve({
+        ok: true,
+        data: [makePrototype({ id: 1, prototypeNm: 'p1' })],
       });
 
-      const params = { offset: 0, limit: 10 };
+      const [r1, r2, r3] = await pending;
+      expect(r1).toEqual(r2);
+      expect(r2).toEqual(r3);
+    });
 
-      const [result1, result2, result3] = await Promise.all([
-        repo.setupSnapshot(params),
-        repo.setupSnapshot(params),
-        repo.setupSnapshot(params),
+    it('coalesces setupSnapshot even with different params', async () => {
+      const deferred = createDeferred<any>();
+      const fetchPrototypesMock = vi
+        .fn()
+        .mockImplementation(() => deferred.promise);
+      const repo = createRepo(fetchPrototypesMock);
+
+      const pending = Promise.all([
+        repo.setupSnapshot({ offset: 0, limit: 10 } as any),
+        repo.setupSnapshot({ offset: 0, limit: 100 } as any),
       ]);
 
-      // All results should be identical
-      expect(result1).toEqual(result2);
-      expect(result2).toEqual(result3);
+      await Promise.resolve();
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
 
-      // Verify all got the correct data
-      if (result1.ok) {
-        expect(result1.stats.size).toBe(2);
-      }
-    });
-
-    it('coalesces concurrent calls even with different parameters', async () => {
-      const fetchSpy = vi.fn(
-        createMockFetchPrototypesSuccess([
-          { id: 1, prototypeNm: 'Prototype 1' },
-        ]),
-      );
-
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      deferred.resolve({
+        ok: true,
+        data: [makePrototype({ id: 1, prototypeNm: 'p1' })],
       });
 
-      // Call with different parameters concurrently
-      const [result1, result2] = await Promise.all([
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-        repo.setupSnapshot({ offset: 0, limit: 100 }), // Different limit
-      ]);
-
-      expect(result1.ok).toBe(true);
-      expect(result2.ok).toBe(true);
-
-      // Only one API call - uses first caller's parameters
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-
-      // Both receive the same result
-      expect(result1).toEqual(result2);
+      const [r1, r2] = await pending;
+      expect(r1).toEqual(r2);
     });
-  });
 
-  describe('refreshSnapshot concurrency', () => {
-    it('coalesces multiple concurrent refreshSnapshot calls into a single API request', async () => {
-      const fetchSpy = vi.fn(
-        createMockFetchPrototypesSuccess([{ id: 1, prototypeNm: 'Initial' }]),
-      );
-
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+    it('coalesces concurrent refreshSnapshot calls into 1 request', async () => {
+      const fetchPrototypesMock = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        data: [makePrototype({ id: 1, prototypeNm: 'initial' })],
       });
 
-      // Initial setup
-      await repo.setupSnapshot({ offset: 0, limit: 10 });
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      const repo = createRepo(fetchPrototypesMock);
+      await repo.setupSnapshot({ offset: 0, limit: 10 } as any);
+      fetchPrototypesMock.mockClear();
 
-      fetchSpy.mockClear();
+      const deferred = createDeferred<any>();
+      fetchPrototypesMock.mockImplementation(() => deferred.promise);
 
-      // Call refreshSnapshot 3 times concurrently
-      const [result1, result2, result3] = await Promise.all([
+      const pending = Promise.all([
         repo.refreshSnapshot(),
         repo.refreshSnapshot(),
         repo.refreshSnapshot(),
       ]);
 
-      expect(result1.ok).toBe(true);
-      expect(result2.ok).toBe(true);
-      expect(result3.ok).toBe(true);
+      await Promise.resolve();
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
 
-      // Only one API call for refresh
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it('returns the same result to all concurrent refresh callers', async () => {
-      const fetchSpy = vi.fn(
-        createMockFetchPrototypesSuccess([
-          { id: 1, prototypeNm: 'Refreshed Data' },
-        ]),
-      );
-
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      deferred.resolve({
+        ok: true,
+        data: [makePrototype({ id: 2, prototypeNm: 'refreshed' })],
       });
 
-      await repo.setupSnapshot({ offset: 0, limit: 10 });
-      fetchSpy.mockClear();
+      const [r1, r2, r3] = await pending;
+      expect(r1).toEqual(r2);
+      expect(r2).toEqual(r3);
+    });
 
-      const [result1, result2, result3] = await Promise.all([
-        repo.refreshSnapshot(),
-        repo.refreshSnapshot(),
+    it('coalesces setupSnapshot and refreshSnapshot when overlapping', async () => {
+      const deferred = createDeferred<any>();
+      const fetchPrototypesMock = vi
+        .fn()
+        .mockImplementation(() => deferred.promise);
+      const repo = createRepo(fetchPrototypesMock);
+
+      const pending = Promise.all([
+        repo.setupSnapshot({ offset: 0, limit: 10 } as any),
         repo.refreshSnapshot(),
       ]);
 
-      // All results should be identical
-      expect(result1).toEqual(result2);
-      expect(result2).toEqual(result3);
-    });
-  });
+      await Promise.resolve();
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
 
-  describe('mixed setupSnapshot and refreshSnapshot concurrency', () => {
-    it('coalesces setup and refresh calls when called concurrently', async () => {
-      const fetchSpy = vi.fn(
-        createMockFetchPrototypesSuccess([{ id: 1, prototypeNm: 'Data' }]),
-      );
-
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      deferred.resolve({
+        ok: true,
+        data: [makePrototype({ id: 1, prototypeNm: 'p1' })],
       });
 
-      // Mix setup and refresh calls
-      const [result1, result2, result3] = await Promise.all([
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-        repo.refreshSnapshot(),
-        repo.setupSnapshot({ offset: 0, limit: 50 }),
+      const [r1, r2] = await pending;
+      expect(r1).toEqual(r2);
+    });
+
+    it('coalesces requests with empty data response', async () => {
+      const fetchPrototypesMock = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        data: [],
+      });
+
+      const repo = createRepo(fetchPrototypesMock);
+
+      const [r1, r2, r3] = await Promise.all([
+        repo.setupSnapshot({} as any),
+        repo.setupSnapshot({} as any),
+        repo.setupSnapshot({} as any),
       ]);
 
-      expect(result1.ok).toBe(true);
-      expect(result2.ok).toBe(true);
-      expect(result3.ok).toBe(true);
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
+      expect(r1.ok).toBe(true);
+      expect(r1).toBe(r2);
+      expect(r2).toBe(r3);
 
-      // Only one API call total
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-
-      // All receive same result
-      expect(result1).toEqual(result2);
-      expect(result2).toEqual(result3);
-    });
-  });
-
-  describe('sequential calls after completion', () => {
-    it('allows sequential calls to execute separately after previous call completes', async () => {
-      const fetchSpy = vi.fn(
-        createMockFetchPrototypesSuccess([{ id: 1, prototypeNm: 'First' }]),
-      );
-
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
-      });
-
-      // First call
-      await repo.setupSnapshot({ offset: 0, limit: 10 });
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-
-      // Second call after first completes
-      await repo.refreshSnapshot();
-      expect(fetchSpy).toHaveBeenCalledTimes(2);
-
-      // Third call after second completes
-      await repo.refreshSnapshot();
-      expect(fetchSpy).toHaveBeenCalledTimes(3);
-    });
-
-    it('allows new concurrent batch after previous batch completes', async () => {
-      const fetchSpy = vi.fn(
-        createMockFetchPrototypesSuccess([{ id: 1, prototypeNm: 'Data' }]),
-      );
-
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
-      });
-
-      // First concurrent batch
-      await Promise.all([
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-      ]);
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-
-      fetchSpy.mockClear();
-
-      // Second concurrent batch after first completes
-      await Promise.all([
-        repo.refreshSnapshot(),
-        repo.refreshSnapshot(),
-        repo.refreshSnapshot(),
-      ]);
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('error handling in concurrent scenarios', () => {
-    it('propagates the same error to all concurrent callers', async () => {
-      const fetchSpy = vi.fn(() =>
-        Promise.resolve(
-          new Response(JSON.stringify({ error: 'API Error' }), {
-            status: 500,
-          }),
-        ),
-      );
-
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
-      });
-
-      const [result1, result2, result3] = await Promise.all([
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-      ]);
-
-      // All should have failed with the same error
-      expect(result1.ok).toBe(false);
-      expect(result2.ok).toBe(false);
-      expect(result3.ok).toBe(false);
-
-      // Only one API call was made
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-
-      // All should have the same error
-      expect(result1).toEqual(result2);
-      expect(result2).toEqual(result3);
-    });
-
-    it('resets lock after error allowing subsequent calls', async () => {
-      let callCount = 0;
-      const fetchSpy = vi.fn(() => {
-        callCount++;
-        if (callCount === 1) {
-          // First call fails
-          return Promise.resolve(
-            new Response(JSON.stringify({ error: 'API Error' }), {
-              status: 500,
-            }),
-          );
-        }
-        // Subsequent calls succeed
-        return createMockFetchPrototypesSuccess([
-          { id: 1, prototypeNm: 'Success' },
-        ])();
-      });
-
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
-      });
-
-      // First batch - should fail
-      const failedResults = await Promise.all([
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-      ]);
-
-      expect(failedResults[0].ok).toBe(false);
-      expect(failedResults[1].ok).toBe(false);
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-
-      fetchSpy.mockClear();
-
-      // Second call - should succeed with new fetch
-      const successResult = await repo.setupSnapshot({ offset: 0, limit: 10 });
-      expect(successResult.ok).toBe(true);
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('race condition prevention', () => {
-    it('prevents last-write-wins race condition', async () => {
-      let resolveFirst: (() => void) | null = null;
-      let resolveSecond: (() => void) | null = null;
-
-      const firstPromise = new Promise<void>((resolve) => {
-        resolveFirst = resolve;
-      });
-      const secondPromise = new Promise<void>((resolve) => {
-        resolveSecond = resolve;
-      });
-
-      let callNumber = 0;
-      const fetchSpy = vi.fn(() => {
-        callNumber++;
-        if (callNumber === 1) {
-          // First call - wait for control
-          return firstPromise.then(() =>
-            createMockFetchPrototypesSuccess([
-              { id: 1, prototypeNm: 'First' },
-            ])(),
-          );
-        }
-        // This should never be called due to coalescing
-        return secondPromise.then(() =>
-          createMockFetchPrototypesSuccess([
-            { id: 2, prototypeNm: 'Second' },
-          ])(),
-        );
-      });
-
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
-      });
-
-      // Start two concurrent calls
-      const promise1 = repo.setupSnapshot({ offset: 0, limit: 10 });
-      const promise2 = repo.setupSnapshot({ offset: 0, limit: 10 });
-
-      // Resolve first call
-      resolveFirst!();
-
-      const [result1, result2] = await Promise.all([promise1, promise2]);
-
-      // Both should succeed
-      expect(result1.ok).toBe(true);
-      expect(result2.ok).toBe(true);
-
-      // Only one API call should have been made
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-
-      // Both should have the same data
-      expect(result1).toEqual(result2);
-    });
-  });
-
-  describe('stress testing', () => {
-    it('handles many concurrent calls efficiently', async () => {
-      const fetchSpy = vi.fn(
-        createMockFetchPrototypesSuccess([
-          { id: 1, prototypeNm: 'Stress Test' },
-        ]),
-      );
-
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
-      });
-
-      // Create 100 concurrent calls
-      const promises = Array.from({ length: 100 }, () =>
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-      );
-
-      const results = await Promise.all(promises);
-
-      // All should succeed
-      expect(results.every((r) => r.ok)).toBe(true);
-
-      // Only one API call should have been made
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-
-      // All results should be identical
-      const firstResult = results[0];
-      results.forEach((r) => {
-        expect(r).toEqual(firstResult);
-      });
-    });
-
-    it('handles rapid sequential batches without leaking promises', async () => {
-      const fetchSpy = vi.fn(
-        createMockFetchPrototypesSuccess([
-          { id: 1, prototypeNm: 'Batch Test' },
-        ]),
-      );
-
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
-      });
-
-      // Run 10 batches of concurrent calls
-      for (let i = 0; i < 10; i++) {
-        const promises = Array.from({ length: 5 }, () =>
-          repo.setupSnapshot({ offset: 0, limit: 10 }),
-        );
-        await Promise.all(promises);
-      }
-
-      // Should have made exactly 10 API calls (one per batch)
-      expect(fetchSpy).toHaveBeenCalledTimes(10);
-    });
-  });
-
-  describe('edge cases', () => {
-    it('handles empty response data correctly', async () => {
-      const fetchSpy = vi.fn(createMockFetchPrototypesSuccess([]));
-
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
-      });
-
-      const [result1, result2] = await Promise.all([
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-      ]);
-
-      expect(result1.ok).toBe(true);
-      expect(result2.ok).toBe(true);
-
-      if (result1.ok) {
-        expect(result1.stats.size).toBe(0);
-      }
-
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it('handles concurrent calls with existing data in store', async () => {
-      const fetchSpy = vi.fn(
-        createMockFetchPrototypesSuccess([{ id: 1, prototypeNm: 'Existing' }]),
-      );
-
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
-      });
-
-      // Initial setup with data
-      await repo.setupSnapshot({ offset: 0, limit: 10 });
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-
-      fetchSpy.mockClear();
-      fetchSpy.mockImplementation(
-        createMockFetchPrototypesSuccess([{ id: 2, prototypeNm: 'Updated' }]),
-      );
-
-      // Concurrent refresh calls
-      const [result1, result2] = await Promise.all([
-        repo.refreshSnapshot(),
-        repo.refreshSnapshot(),
-      ]);
-
-      expect(result1.ok).toBe(true);
-      expect(result2.ok).toBe(true);
-
-      // Only one API call for the refresh
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-
-      // Data should be updated
-      if (result1.ok) {
-        expect(result1.stats.size).toBe(1);
-      }
-    });
-
-    it('handles promise rejection in concurrent scenarios', async () => {
-      const fetchSpy = vi.fn(() =>
-        Promise.reject(new Error('Network failure')),
-      );
-
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
-      });
-
-      const [result1, result2, result3] = await Promise.all([
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-      ]);
-
-      // All should fail
-      expect(result1.ok).toBe(false);
-      expect(result2.ok).toBe(false);
-      expect(result3.ok).toBe(false);
-
-      // Only one API call
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-
-      // All should have the same error
-      expect(result1).toEqual(result2);
-      expect(result2).toEqual(result3);
-    });
-  });
-
-  describe('isolation between repository instances', () => {
-    it('maintains independent locks for separate repository instances', async () => {
-      const fetchSpy1 = vi.fn(
-        createMockFetchPrototypesSuccess([{ id: 1, prototypeNm: 'Repo 1' }]),
-      );
-      const fetchSpy2 = vi.fn(
-        createMockFetchPrototypesSuccess([{ id: 2, prototypeNm: 'Repo 2' }]),
-      );
-
-      const repo1 = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy1 as unknown as typeof fetch,
-      });
-
-      const repo2 = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy2 as unknown as typeof fetch,
-      });
-
-      // Concurrent calls on different instances should not interfere
-      const [result1a, result1b, result2a, result2b] = await Promise.all([
-        repo1.setupSnapshot({ offset: 0, limit: 10 }),
-        repo1.setupSnapshot({ offset: 0, limit: 10 }),
-        repo2.setupSnapshot({ offset: 0, limit: 10 }),
-        repo2.setupSnapshot({ offset: 0, limit: 10 }),
-      ]);
-
-      expect(result1a.ok).toBe(true);
-      expect(result1b.ok).toBe(true);
-      expect(result2a.ok).toBe(true);
-      expect(result2b.ok).toBe(true);
-
-      // Each repository should have made one API call
-      expect(fetchSpy1).toHaveBeenCalledTimes(1);
-      expect(fetchSpy2).toHaveBeenCalledTimes(1);
-
-      // Results within same repository should be identical
-      expect(result1a).toEqual(result1b);
-      expect(result2a).toEqual(result2b);
-
-      // Verify each repository has different data
-      const data1 = await repo1.getAllFromSnapshot();
-      const data2 = await repo2.getAllFromSnapshot();
-      expect(data1).toHaveLength(1);
-      expect(data2).toHaveLength(1);
-      expect(data1[0]?.id).toBe(1);
-      expect(data2[0]?.id).toBe(2);
-    });
-  });
-
-  describe('mixed success and failure scenarios', () => {
-    it('handles transition from error to success correctly', async () => {
-      let isFirstCall = true;
-      const fetchSpy = vi.fn(() => {
-        if (isFirstCall) {
-          isFirstCall = false;
-          return Promise.resolve(
-            new Response(JSON.stringify({ error: 'Temporary Error' }), {
-              status: 503,
-            }),
-          );
-        }
-        return createMockFetchPrototypesSuccess([
-          { id: 1, prototypeNm: 'Recovered' },
-        ])();
-      });
-
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
-      });
-
-      // First batch - should fail
-      const [fail1, fail2] = await Promise.all([
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-      ]);
-
-      expect(fail1.ok).toBe(false);
-      expect(fail2.ok).toBe(false);
-
-      // Second batch - should succeed
-      const [success1, success2] = await Promise.all([
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-      ]);
-
-      expect(success1.ok).toBe(true);
-      expect(success2.ok).toBe(true);
-
-      // Total of 2 API calls (one per batch)
-      expect(fetchSpy).toHaveBeenCalledTimes(2);
-    });
-  });
-
-  describe('timing and ordering', () => {
-    it('preserves call order for sequential operations', async () => {
-      const callOrder: number[] = [];
-      const fetchSpy = vi.fn(() => {
-        const callNum = fetchSpy.mock.calls.length;
-        callOrder.push(callNum);
-        return createMockFetchPrototypesSuccess([
-          { id: callNum, prototypeNm: `Call ${callNum}` },
-        ])();
-      });
-
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
-      });
-
-      // Sequential calls
-      await repo.setupSnapshot({ offset: 0, limit: 10 });
-      await repo.refreshSnapshot();
-      await repo.refreshSnapshot();
-
-      expect(callOrder).toEqual([1, 2, 3]);
-      expect(fetchSpy).toHaveBeenCalledTimes(3);
-    });
-
-    it('completes all concurrent calls when first call is delayed', async () => {
-      let resolveDelayed: (() => void) | null = null;
-      const delayedPromise = new Promise<void>((resolve) => {
-        resolveDelayed = resolve;
-      });
-
-      const fetchSpy = vi.fn(() =>
-        delayedPromise.then(() =>
-          createMockFetchPrototypesSuccess([
-            { id: 1, prototypeNm: 'Delayed' },
-          ])(),
-        ),
-      );
-
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
-      });
-
-      // Start multiple concurrent calls
-      const promises = [
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-      ];
-
-      // Wait a bit to ensure all promises are registered
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
-      // Release the delayed fetch
-      resolveDelayed!();
-
-      const results = await Promise.all(promises);
-
-      // All should complete successfully
-      expect(results.every((r) => r.ok)).toBe(true);
-
-      // Only one API call
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('timeout and cancellation scenarios', () => {
-    it('handles timeout during concurrent fetch operations', async () => {
-      let timeoutId: NodeJS.Timeout | null = null;
-      const fetchSpy = vi.fn(
-        () =>
-          new Promise((resolve) => {
-            // Simulate a long-running request
-            timeoutId = setTimeout(() => {
-              resolve(
-                createMockFetchPrototypesSuccess([
-                  { id: 1, prototypeNm: 'Delayed Response' },
-                ])(),
-              );
-            }, 100);
-          }),
-      );
-
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
-      });
-
-      // Start multiple concurrent calls that will all wait
-      const promises = [
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-      ];
-
-      const results = await Promise.all(promises);
-
-      // All should complete successfully
-      expect(results.every((r) => r.ok)).toBe(true);
-
-      // Only one API call despite the delay
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-
-      // Cleanup
-      if (timeoutId) clearTimeout(timeoutId);
-    });
-
-    it('handles concurrent calls when first call times out', async () => {
-      let callCount = 0;
-      const fetchSpy = vi.fn(() => {
-        callCount++;
-        if (callCount === 1) {
-          // First call simulates timeout by rejecting after delay
-          return new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Request timeout')), 50);
-          });
-        }
-        // Subsequent calls succeed
-        return createMockFetchPrototypesSuccess([
-          { id: 1, prototypeNm: 'Success after timeout' },
-        ])();
-      });
-
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
-      });
-
-      // First batch - should timeout
-      const [fail1, fail2] = await Promise.all([
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-      ]);
-
-      expect(fail1.ok).toBe(false);
-      expect(fail2.ok).toBe(false);
-
-      // Second call - should succeed
-      const success = await repo.setupSnapshot({ offset: 0, limit: 10 });
-      expect(success.ok).toBe(true);
-
-      expect(fetchSpy).toHaveBeenCalledTimes(2);
-    });
-  });
-
-  describe('memory and resource constraints', () => {
-    it('handles memory constraints with large concurrent requests', async () => {
-      // Create a large dataset that might exceed limits
-      const largeData = Array.from({ length: 1000 }, (_, i) => ({
-        id: i,
-        prototypeNm: `Prototype ${i}`.repeat(100), // Make it large
-      }));
-
-      const fetchSpy = vi.fn(createMockFetchPrototypesSuccess(largeData));
-
-      // Use smaller maxDataSizeBytes to test limits
-      const repo = new ProtopediaInMemoryRepositoryImpl(
-        { ttlMs: 30000, maxDataSizeBytes: 1024 * 100 }, // 100KB limit
-        {
-          ...apiClientOptions,
-          fetch: fetchSpy as unknown as typeof fetch,
-        },
-      );
-
-      const [result1, result2, result3] = await Promise.all([
-        repo.setupSnapshot({ offset: 0, limit: 1000 }),
-        repo.setupSnapshot({ offset: 0, limit: 1000 }),
-        repo.setupSnapshot({ offset: 0, limit: 1000 }),
-      ]);
-
-      // All should succeed (fetch succeeds) but store update is skipped
-      expect(result1.ok).toBe(true);
-      expect(result2.ok).toBe(true);
-      expect(result3.ok).toBe(true);
-
-      // Only one API call despite concurrent requests
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-
-      // All results should be identical
-      expect(result1).toEqual(result2);
-      expect(result2).toEqual(result3);
-    });
-
-    it('correctly handles store capacity across concurrent updates', async () => {
-      const fetchSpy = vi.fn(
-        createMockFetchPrototypesSuccess([
-          { id: 1, prototypeNm: 'Data' },
-          { id: 2, prototypeNm: 'More Data' },
-        ]),
-      );
-
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
-      });
-
-      // Multiple concurrent setups
-      const results = await Promise.all([
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-      ]);
-
-      // All should succeed
-      expect(results.every((r) => r.ok)).toBe(true);
-
-      // Store should have correct size
       const stats = repo.getStats();
-      expect(stats.size).toBe(2);
+      expect(stats.size).toBe(0);
+    });
 
-      // Only one API call
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
+    it('returns same result object reference for all coalesced calls', async () => {
+      const fetchPrototypesMock = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        data: [makePrototype({ id: 1, prototypeNm: 'shared' })],
+      });
+
+      const repo = createRepo(fetchPrototypesMock);
+
+      const [r1, r2, r3] = await Promise.all([
+        repo.setupSnapshot({} as any),
+        repo.setupSnapshot({} as any),
+        repo.setupSnapshot({} as any),
+      ]);
+
+      expect(r1).toBe(r2);
+      expect(r2).toBe(r3);
+    });
+
+    it('coalesces exactly 2 concurrent requests correctly', async () => {
+      const deferred = createDeferred<any>();
+      const fetchPrototypesMock = vi
+        .fn()
+        .mockImplementation(() => deferred.promise);
+      const repo = createRepo(fetchPrototypesMock);
+
+      const pending = Promise.all([
+        repo.setupSnapshot({} as any),
+        repo.setupSnapshot({} as any),
+      ]);
+
+      await Promise.resolve();
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
+
+      deferred.resolve({
+        ok: true,
+        data: [makePrototype({ id: 1, prototypeNm: 'two-requests' })],
+      });
+
+      const [r1, r2] = await pending;
+      expect(r1).toBe(r2);
+      expect(r1.ok).toBe(true);
     });
   });
 
-  describe('state consistency and partial failures', () => {
-    it('maintains consistent state when concurrent calls encounter store errors', async () => {
-      const fetchSpy = vi.fn(
-        createMockFetchPrototypesSuccess([{ id: 1, prototypeNm: 'Test Data' }]),
-      );
+  describe('error handling', () => {
+    it('propagates errors to all concurrent requests when fetch fails', async () => {
+      const deferred = createDeferred<any>();
+      const fetchPrototypesMock = vi
+        .fn()
+        .mockImplementation(() => deferred.promise);
+      const repo = createRepo(fetchPrototypesMock);
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
-      });
-
-      // First attempt - fetch succeeds but we'll verify state
-      const results = await Promise.all([
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
+      const pending = Promise.all([
+        repo.setupSnapshot({} as any),
+        repo.setupSnapshot({} as any),
+        repo.setupSnapshot({} as any),
       ]);
 
-      expect(results.every((r) => r.ok)).toBe(true);
+      await Promise.resolve();
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
 
-      // Verify state is consistent
-      const data1 = await repo.getAllFromSnapshot();
-      expect(data1).toHaveLength(1);
+      deferred.reject(new Error('Network failure'));
 
-      // Second batch should work independently
-      fetchSpy.mockClear();
-      const results2 = await Promise.all([
-        repo.refreshSnapshot(),
-        repo.refreshSnapshot(),
-      ]);
-
-      expect(results2.every((r) => r.ok)).toBe(true);
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it('preserves previous data when concurrent update fails', async () => {
-      let callCount = 0;
-      const fetchSpy = vi.fn(() => {
-        callCount++;
-        if (callCount === 1) {
-          // First call succeeds
-          return createMockFetchPrototypesSuccess([
-            { id: 1, prototypeNm: 'Initial Data' },
-          ])();
-        }
-        // Second call fails
-        return Promise.resolve(
-          new Response(JSON.stringify({ error: 'Update Failed' }), {
-            status: 500,
-          }),
-        );
-      });
-
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
-      });
-
-      // Initial setup
-      const setupResult = await repo.setupSnapshot({ offset: 0, limit: 10 });
-      expect(setupResult.ok).toBe(true);
-
-      // Get initial data
-      const initialData = await repo.getAllFromSnapshot();
-      expect(initialData).toHaveLength(1);
-      expect(initialData[0]?.id).toBe(1);
-
-      // Failed concurrent update
-      const [fail1, fail2] = await Promise.all([
-        repo.refreshSnapshot(),
-        repo.refreshSnapshot(),
-      ]);
-
-      expect(fail1.ok).toBe(false);
-      expect(fail2.ok).toBe(false);
-
-      // Previous data should still be intact
-      const preservedData = await repo.getAllFromSnapshot();
-      expect(preservedData).toHaveLength(1);
-      expect(preservedData[0]?.id).toBe(1);
-      expect(preservedData[0]?.prototypeNm).toBe('Initial Data');
-    });
-  });
-
-  describe('observability and metrics during concurrency', () => {
-    it('provides correct stats during concurrent operations', async () => {
-      let resolveDelayed: (() => void) | null = null;
-      const delayedPromise = new Promise<void>((resolve) => {
-        resolveDelayed = resolve;
-      });
-
-      const fetchSpy = vi.fn(() =>
-        delayedPromise.then(() =>
-          createMockFetchPrototypesSuccess([
-            { id: 1, prototypeNm: 'Data' },
-            { id: 2, prototypeNm: 'More Data' },
-          ])(),
-        ),
-      );
-
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
-      });
-
-      // Start concurrent operations
-      const promises = [
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-      ];
-
-      // Check stats while operations are in flight
-      const statsDuringFetch = repo.getStats();
-      expect(statsDuringFetch.size).toBe(0); // No data yet
-      expect(statsDuringFetch.refreshInFlight).toBe(false); // Our impl doesn't track this
-
-      // Complete the operations
-      resolveDelayed!();
-      const results = await Promise.all(promises);
-
-      expect(results.every((r) => r.ok)).toBe(true);
-
-      // Check final stats
-      const finalStats = repo.getStats();
-      expect(finalStats.size).toBe(2);
-
-      const firstResult = results[0];
-      if (firstResult && firstResult.ok) {
-        expect(firstResult.stats.size).toBe(2);
+      const [r1, r2, r3] = await pending;
+      expect(r1.ok).toBe(false);
+      expect(r2.ok).toBe(false);
+      expect(r3.ok).toBe(false);
+      if (!r1.ok && !r2.ok && !r3.ok) {
+        expect(r1.error).toBe('Network failure');
+        expect(r2.error).toBe('Network failure');
+        expect(r3.error).toBe('Network failure');
       }
     });
 
-    it('reports consistent config across concurrent calls', async () => {
-      const fetchSpy = vi.fn(
-        createMockFetchPrototypesSuccess([{ id: 1, prototypeNm: 'Test' }]),
-      );
+    it('handles ok: false API responses correctly for concurrent requests', async () => {
+      const deferred = createDeferred<any>();
+      const fetchPrototypesMock = vi
+        .fn()
+        .mockImplementation(() => deferred.promise);
+      const repo = createRepo(fetchPrototypesMock);
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      const pending = Promise.all([
+        repo.setupSnapshot({} as any),
+        repo.setupSnapshot({} as any),
+        repo.setupSnapshot({} as any),
+      ]);
+
+      await Promise.resolve();
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
+
+      deferred.resolve({
+        ok: false,
+        status: 503,
+        error: 'Service unavailable',
+        details: { res: { code: 'SERVICE_UNAVAILABLE' } },
       });
 
-      // Get config before, during, and after concurrent operations
-      const configBefore = repo.getConfig();
+      const [r1, r2, r3] = await pending;
+      expect(r1.ok).toBe(false);
+      expect(r2.ok).toBe(false);
+      expect(r3.ok).toBe(false);
+      if (!r1.ok && !r2.ok && !r3.ok) {
+        expect(r1.status).toBe(503);
+        expect(r2.error).toBe('Service unavailable');
+        expect(r3.code).toBe('SERVICE_UNAVAILABLE');
+      }
+    });
 
-      const promises = [
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-      ];
+    it('preserves store state when concurrent requests fail', async () => {
+      const fetchPrototypesMock = vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          data: [makePrototype({ id: 1, prototypeNm: 'initial' })],
+        })
+        .mockRejectedValueOnce(new Error('Network failure'));
 
-      const configDuring = repo.getConfig();
+      const repo = createRepo(fetchPrototypesMock);
 
-      await Promise.all(promises);
+      await repo.setupSnapshot({} as any);
+      const initialStats = repo.getStats();
+      expect(initialStats.size).toBe(1);
 
-      const configAfter = repo.getConfig();
+      const results = await Promise.all([
+        repo.refreshSnapshot(),
+        repo.refreshSnapshot(),
+        repo.refreshSnapshot(),
+      ]);
 
-      // All configs should be identical
-      expect(configBefore).toEqual(configDuring);
-      expect(configDuring).toEqual(configAfter);
-      expect(configBefore.ttlMs).toBe(30000);
+      expect(results.every((r) => r.ok === false)).toBe(true);
+
+      const finalStats = repo.getStats();
+      expect(finalStats.size).toBe(1);
+
+      const proto = await repo.getPrototypeFromSnapshotByPrototypeId(1);
+      expect(proto?.prototypeNm).toBe('initial');
+    });
+
+    it('handles different error types consistently across concurrent requests', async () => {
+      const deferred = createDeferred<any>();
+      const fetchPrototypesMock = vi
+        .fn()
+        .mockImplementation(() => deferred.promise);
+      const repo = createRepo(fetchPrototypesMock);
+
+      const pending = Promise.all([
+        repo.setupSnapshot({} as any),
+        repo.setupSnapshot({} as any),
+        repo.setupSnapshot({} as any),
+      ]);
+
+      await Promise.resolve();
+
+      deferred.reject(new TypeError('Invalid response format'));
+
+      const results = await pending;
+      expect(results.every((r) => r.ok === false)).toBe(true);
+      if (!results[0].ok && !results[1].ok && !results[2].ok) {
+        expect(results[0].error).toBe('Invalid response format');
+        expect(results[1].error).toBe('Invalid response format');
+        expect(results[2].error).toBe('Invalid response format');
+      }
     });
   });
 
-  describe('complex interleaved patterns', () => {
-    it('handles complex interleaved setup/refresh patterns correctly', async () => {
-      const fetchSpy = vi.fn(
-        createMockFetchPrototypesSuccess([{ id: 1, prototypeNm: 'Data' }]),
-      );
+  describe('sequential vs concurrent operations', () => {
+    it('allows new requests after coalesced operation completes', async () => {
+      const fetchPrototypesMock = vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          data: [makePrototype({ id: 1, prototypeNm: 'batch1' })],
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          data: [makePrototype({ id: 2, prototypeNm: 'batch2' })],
+        });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
-      });
+      const repo = createRepo(fetchPrototypesMock);
 
-      // Complex pattern: setup -> concurrent refresh -> setup -> concurrent refresh
-      await repo.setupSnapshot({ offset: 0, limit: 10 });
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      await Promise.all([
+        repo.setupSnapshot({} as any),
+        repo.setupSnapshot({} as any),
+      ]);
 
-      fetchSpy.mockClear();
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
 
       await Promise.all([repo.refreshSnapshot(), repo.refreshSnapshot()]);
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
 
-      fetchSpy.mockClear();
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(2);
+    });
 
-      await repo.setupSnapshot({ offset: 0, limit: 20 });
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
+    it('processes multiple sequential batches of concurrent requests', async () => {
+      const fetchPrototypesMock = vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          data: [makePrototype({ id: 1, prototypeNm: 'batch1' })],
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          data: [makePrototype({ id: 2, prototypeNm: 'batch2' })],
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          data: [makePrototype({ id: 3, prototypeNm: 'batch3' })],
+        });
 
-      fetchSpy.mockClear();
+      const repo = createRepo(fetchPrototypesMock);
+
+      await Promise.all([
+        repo.setupSnapshot({} as any),
+        repo.setupSnapshot({} as any),
+      ]);
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
 
       await Promise.all([
         repo.refreshSnapshot(),
         repo.refreshSnapshot(),
         repo.refreshSnapshot(),
       ]);
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(2);
 
-      // Total: 4 API calls for the entire pattern
+      await Promise.all([repo.refreshSnapshot(), repo.refreshSnapshot()]);
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(3);
     });
 
-    it('correctly handles overlapping setup and refresh waves', async () => {
-      let callNumber = 0;
-      const fetchSpy = vi.fn(() => {
-        callNumber++;
-        return createMockFetchPrototypesSuccess([
-          { id: callNumber, prototypeNm: `Wave ${callNumber}` },
-        ])();
-      });
+    it('handles rapid sequential requests without coalescing', async () => {
+      const fetchPrototypesMock = vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          data: [makePrototype({ id: 1, prototypeNm: 'first' })],
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          data: [makePrototype({ id: 2, prototypeNm: 'second' })],
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          data: [makePrototype({ id: 3, prototypeNm: 'third' })],
+        });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
-      });
+      const repo = createRepo(fetchPrototypesMock);
 
-      // First wave
-      const wave1 = await Promise.all([
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
-        repo.setupSnapshot({ offset: 0, limit: 10 }),
+      await repo.setupSnapshot({} as any);
+      await repo.refreshSnapshot();
+      await repo.refreshSnapshot();
+
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(3);
+    });
+
+    it('handles race condition where request completes during another setup', async () => {
+      const deferred1 = createDeferred<any>();
+      const deferred2 = createDeferred<any>();
+
+      const fetchPrototypesMock = vi
+        .fn()
+        .mockImplementationOnce(() => deferred1.promise)
+        .mockImplementationOnce(() => deferred2.promise);
+
+      const repo = createRepo(fetchPrototypesMock);
+
+      const batch1 = Promise.all([
+        repo.setupSnapshot({} as any),
+        repo.setupSnapshot({} as any),
       ]);
 
-      expect(wave1.every((r) => r.ok)).toBe(true);
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      await Promise.resolve();
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
 
-      // Second wave overlapping with different method
-      const wave2 = await Promise.all([
+      deferred1.resolve({
+        ok: true,
+        data: [makePrototype({ id: 1, prototypeNm: 'batch1' })],
+      });
+
+      await batch1;
+
+      const batch2 = Promise.all([
         repo.refreshSnapshot(),
-        repo.setupSnapshot({ offset: 0, limit: 20 }),
         repo.refreshSnapshot(),
       ]);
 
-      expect(wave2.every((r) => r.ok)).toBe(true);
-      expect(fetchSpy).toHaveBeenCalledTimes(2); // One more call
+      await Promise.resolve();
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(2);
 
-      // Verify final state
-      const finalData = await repo.getAllFromSnapshot();
-      expect(finalData).toHaveLength(1);
-      expect(finalData[0]?.id).toBe(2); // From second wave
+      deferred2.resolve({
+        ok: true,
+        data: [makePrototype({ id: 2, prototypeNm: 'batch2' })],
+      });
+
+      await batch2;
+
+      const proto = await repo.getPrototypeFromSnapshotByPrototypeId(2);
+      expect(proto?.prototypeNm).toBe('batch2');
     });
   });
 
-  describe('real-world usage patterns', () => {
-    it('handles typical user workflow: initial load -> periodic refresh', async () => {
-      let callNumber = 0;
-      const fetchSpy = vi.fn(() => {
-        callNumber++;
-        return createMockFetchPrototypesSuccess([
-          { id: callNumber, prototypeNm: `Data version ${callNumber}` },
-        ])();
-      });
+  describe('parameter handling', () => {
+    it('uses parameters from first request when coalescing', async () => {
+      const deferred = createDeferred<any>();
+      const fetchPrototypesMock = vi
+        .fn()
+        .mockImplementation(() => deferred.promise);
+      const repo = createRepo(fetchPrototypesMock);
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
-      });
-
-      // Simulate app startup - initial load
-      const initialLoad = await repo.setupSnapshot({ offset: 0, limit: 100 });
-      expect(initialLoad.ok).toBe(true);
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-
-      // Simulate periodic auto-refresh (every 30 seconds in real app)
-      for (let i = 0; i < 5; i++) {
-        fetchSpy.mockClear();
-        const refreshResult = await repo.refreshSnapshot();
-        expect(refreshResult.ok).toBe(true);
-        expect(fetchSpy).toHaveBeenCalledTimes(1);
-      }
-
-      // Total: 6 API calls (1 initial + 5 refreshes)
-      expect(callNumber).toBe(6);
-
-      // Verify final data
-      const finalData = await repo.getAllFromSnapshot();
-      expect(finalData).toHaveLength(1);
-      expect(finalData[0]?.prototypeNm).toBe('Data version 6');
-    });
-
-    it('handles user-triggered refresh during auto-refresh', async () => {
-      let resolveAutoRefresh: (() => void) | null = null;
-      const autoRefreshPromise = new Promise<void>((resolve) => {
-        resolveAutoRefresh = resolve;
-      });
-
-      let callCount = 0;
-      const fetchSpy = vi.fn(() => {
-        callCount++;
-        if (callCount === 2) {
-          // Second call (auto-refresh) is delayed
-          return autoRefreshPromise.then(() =>
-            createMockFetchPrototypesSuccess([
-              { id: 2, prototypeNm: 'Auto-refresh data' },
-            ])(),
-          );
-        }
-        return createMockFetchPrototypesSuccess([
-          { id: callCount, prototypeNm: `Call ${callCount}` },
-        ])();
-      });
-
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
-      });
-
-      // Initial setup
-      await repo.setupSnapshot({ offset: 0, limit: 100 });
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-
-      fetchSpy.mockClear();
-
-      // Auto-refresh starts (delayed)
-      const autoRefresh = repo.refreshSnapshot();
-
-      // User clicks refresh button while auto-refresh is in progress
-      const userRefresh = repo.refreshSnapshot();
-
-      // Complete the auto-refresh
-      resolveAutoRefresh!();
-
-      const [autoResult, userResult] = await Promise.all([
-        autoRefresh,
-        userRefresh,
+      const pending = Promise.all([
+        repo.setupSnapshot({ offset: 10, limit: 20 } as any),
+        repo.setupSnapshot({ offset: 50, limit: 100 } as any),
       ]);
 
-      // Both should succeed with the same result
-      expect(autoResult.ok).toBe(true);
-      expect(userResult.ok).toBe(true);
-      expect(autoResult).toEqual(userResult);
-
-      // Only one API call despite two refresh requests
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it('handles rapid parameter changes in UI', async () => {
-      const fetchSpy = vi.fn(
-        createMockFetchPrototypesSuccess([
-          { id: 1, prototypeNm: 'Search results' },
-        ]),
+      await Promise.resolve();
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
+      expect(fetchPrototypesMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          offset: 10,
+          limit: 20,
+        }),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      deferred.resolve({
+        ok: true,
+        data: [makePrototype({ id: 1, prototypeNm: 'first-params' })],
       });
 
-      // User types rapidly in search box, triggering multiple setupSnapshot calls
-      // before debounce would kick in
-      const rapidChanges = await Promise.all([
-        repo.setupSnapshot({ offset: 0, limit: 10 }), // "a"
-        repo.setupSnapshot({ offset: 0, limit: 20 }), // "ab"
-        repo.setupSnapshot({ offset: 0, limit: 30 }), // "abc"
-        repo.setupSnapshot({ offset: 0, limit: 40 }), // "abcd"
-        repo.setupSnapshot({ offset: 0, limit: 50 }), // "abcde"
+      await pending;
+    });
+
+    it('correctly handles refreshSnapshot params after setupSnapshot with different params', async () => {
+      const fetchPrototypesMock = vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          data: [makePrototype({ id: 1, prototypeNm: 'initial' })],
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          data: [makePrototype({ id: 2, prototypeNm: 'refreshed' })],
+        });
+
+      const repo = createRepo(fetchPrototypesMock);
+
+      await repo.setupSnapshot({ offset: 100, limit: 50 } as any);
+
+      expect(fetchPrototypesMock).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ offset: 100, limit: 50 }),
+      );
+
+      await Promise.all([
+        repo.refreshSnapshot(),
+        repo.refreshSnapshot(),
+        repo.refreshSnapshot(),
       ]);
 
-      // All should succeed
-      expect(rapidChanges.every((r) => r.ok)).toBe(true);
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(2);
+      expect(fetchPrototypesMock).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ offset: 100, limit: 50 }),
+      );
+    });
+  });
 
-      // Only one API call (first caller's parameters)
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-
-      // All results should be identical
-      const firstResult = rapidChanges[0];
-      rapidChanges.forEach((r) => {
-        expect(r).toEqual(firstResult);
+  describe('store state management', () => {
+    it('updates store state correctly after coalesced operations', async () => {
+      const fetchPrototypesMock = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        data: [
+          makePrototype({ id: 1, prototypeNm: 'proto1' }),
+          makePrototype({ id: 2, prototypeNm: 'proto2' }),
+        ],
       });
 
-      // Verify the API was called with the first parameter set
-      const firstCallArg = (
-        fetchSpy.mock.calls as unknown as Array<[string]>
-      )[0]?.[0];
-      expect(firstCallArg).toMatch(/limit=10/);
+      const repo = createRepo(fetchPrototypesMock);
+
+      await Promise.all([
+        repo.setupSnapshot({} as any),
+        repo.setupSnapshot({} as any),
+        repo.setupSnapshot({} as any),
+      ]);
+
+      const stats = repo.getStats();
+      expect(stats.size).toBe(2);
+      expect(stats.cachedAt).not.toBeNull();
+
+      const proto1 = await repo.getPrototypeFromSnapshotByPrototypeId(1);
+      const proto2 = await repo.getPrototypeFromSnapshotByPrototypeId(2);
+
+      expect(proto1?.prototypeNm).toBe('proto1');
+      expect(proto2?.prototypeNm).toBe('proto2');
     });
 
-    it('handles window focus/blur causing refresh cycles', async () => {
-      const fetchSpy = vi.fn(
-        createMockFetchPrototypesSuccess([
-          { id: 1, prototypeNm: 'Fresh data' },
-        ]),
+    it('maintains separate cachedAt timestamps across batches', async () => {
+      const fetchPrototypesMock = vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          data: [makePrototype({ id: 1, prototypeNm: 'batch1' })],
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          data: [makePrototype({ id: 2, prototypeNm: 'batch2' })],
+        });
+
+      const repo = createRepo(fetchPrototypesMock);
+
+      await Promise.all([
+        repo.setupSnapshot({} as any),
+        repo.setupSnapshot({} as any),
+      ]);
+      const stats1 = repo.getStats();
+      const cachedAt1 = stats1.cachedAt;
+
+      await new Promise((resolve) => setTimeout(resolve, 5));
+
+      await Promise.all([repo.refreshSnapshot(), repo.refreshSnapshot()]);
+      const stats2 = repo.getStats();
+      const cachedAt2 = stats2.cachedAt;
+
+      expect(cachedAt1).not.toBeNull();
+      expect(cachedAt2).not.toBeNull();
+      expect(cachedAt2!.getTime()).toBeGreaterThan(cachedAt1!.getTime());
+    });
+  });
+
+  describe('scale and performance', () => {
+    it('coalesces large number of concurrent requests efficiently', async () => {
+      const deferred = createDeferred<any>();
+      const fetchPrototypesMock = vi
+        .fn()
+        .mockImplementation(() => deferred.promise);
+      const repo = createRepo(fetchPrototypesMock);
+
+      const pending = Promise.all(
+        Array.from({ length: 50 }, () => repo.setupSnapshot({} as any)),
       );
 
-      const repo = new ProtopediaInMemoryRepositoryImpl(storeConfig, {
-        ...apiClientOptions,
-        fetch: fetchSpy as unknown as typeof fetch,
+      await Promise.resolve();
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
+
+      deferred.resolve({
+        ok: true,
+        data: [makePrototype({ id: 1, prototypeNm: 'coalesced' })],
       });
 
-      // Initial setup
-      await repo.setupSnapshot({ offset: 0, limit: 100 });
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      const results = await pending;
+      expect(results).toHaveLength(50);
+      expect(results.every((r) => r.ok === true)).toBe(true);
+    });
 
-      fetchSpy.mockClear();
+    it('coalesces exactly 100 concurrent requests efficiently', async () => {
+      const deferred = createDeferred<any>();
+      const fetchPrototypesMock = vi
+        .fn()
+        .mockImplementation(() => deferred.promise);
+      const repo = createRepo(fetchPrototypesMock);
 
-      // Simulate rapid window focus/blur events
-      // (browser tab switching, window switching, etc.)
-      const focusBlurCycle = async () => {
-        await Promise.all([
-          repo.refreshSnapshot(), // focus event
-          repo.refreshSnapshot(), // blur event
-          repo.refreshSnapshot(), // focus event again
-        ]);
-      };
+      const pending = Promise.all(
+        Array.from({ length: 100 }, () => repo.setupSnapshot({} as any)),
+      );
 
-      // Multiple cycles
-      await focusBlurCycle();
-      expect(fetchSpy).toHaveBeenCalledTimes(1); // Coalesced into one
+      await Promise.resolve();
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
 
-      fetchSpy.mockClear();
+      deferred.resolve({
+        ok: true,
+        data: [makePrototype({ id: 1, prototypeNm: 'hundred' })],
+      });
 
-      // Second cycle after first completes
-      await focusBlurCycle();
-      expect(fetchSpy).toHaveBeenCalledTimes(1); // New batch, one call
+      const results = await pending;
+      expect(results).toHaveLength(100);
 
-      fetchSpy.mockClear();
+      const firstResult = results[0];
+      expect(results.every((r) => r === firstResult)).toBe(true);
+    });
 
-      // Third cycle
-      await focusBlurCycle();
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
+    it('handles concurrent requests with large dataset response', async () => {
+      const largeDataset = Array.from({ length: 1000 }, (_, i) =>
+        makePrototype({ id: i + 1, prototypeNm: `proto-${i + 1}` }),
+      );
 
-      // Total: 3 API calls for 3 separate focus/blur cycles
-      // (9 refresh requests total, coalesced to 3)
+      const fetchPrototypesMock = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        data: largeDataset,
+      });
+
+      const repo = createRepo(fetchPrototypesMock);
+
+      const results = await Promise.all([
+        repo.setupSnapshot({} as any),
+        repo.setupSnapshot({} as any),
+        repo.setupSnapshot({} as any),
+      ]);
+
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
+      expect(results[0]).toBe(results[1]);
+
+      const stats = repo.getStats();
+      expect(stats.size).toBe(1000);
+
+      const proto1 = await repo.getPrototypeFromSnapshotByPrototypeId(1);
+      const proto500 = await repo.getPrototypeFromSnapshotByPrototypeId(500);
+      const proto1000 = await repo.getPrototypeFromSnapshotByPrototypeId(1000);
+
+      expect(proto1?.prototypeNm).toBe('proto-1');
+      expect(proto500?.prototypeNm).toBe('proto-500');
+      expect(proto1000?.prototypeNm).toBe('proto-1000');
+    });
+  });
+
+  describe('edge cases and timing', () => {
+    it('handles concurrent requests during very long-running fetch', async () => {
+      const deferred = createDeferred<any>();
+      const fetchPrototypesMock = vi
+        .fn()
+        .mockImplementation(() => deferred.promise);
+      const repo = createRepo(fetchPrototypesMock);
+
+      const r1 = repo.setupSnapshot({} as any);
+      await Promise.resolve();
+
+      const r2 = repo.setupSnapshot({} as any);
+      await Promise.resolve();
+
+      const r3 = repo.setupSnapshot({} as any);
+      await Promise.resolve();
+
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
+
+      deferred.resolve({
+        ok: true,
+        data: [makePrototype({ id: 99, prototypeNm: 'delayed' })],
+      });
+
+      const [result1, result2, result3] = await Promise.all([r1, r2, r3]);
+      expect(result1).toBe(result2);
+      expect(result2).toBe(result3);
+    });
+
+    it('handles setupSnapshot followed by immediate refreshSnapshot before completion', async () => {
+      const deferred = createDeferred<any>();
+      const fetchPrototypesMock = vi
+        .fn()
+        .mockImplementation(() => deferred.promise);
+      const repo = createRepo(fetchPrototypesMock);
+
+      const setup1 = repo.setupSnapshot({} as any);
+      const setup2 = repo.setupSnapshot({} as any);
+
+      const refresh1 = repo.refreshSnapshot();
+      const refresh2 = repo.refreshSnapshot();
+
+      await Promise.resolve();
+
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
+
+      deferred.resolve({
+        ok: true,
+        data: [makePrototype({ id: 5, prototypeNm: 'mixed' })],
+      });
+
+      const results = await Promise.all([setup1, setup2, refresh1, refresh2]);
+      expect(results[0]).toBe(results[1]);
+      expect(results[1]).toBe(results[2]);
+      expect(results[2]).toBe(results[3]);
+    });
+
+    it('handles interleaved setupSnapshot and refreshSnapshot calls', async () => {
+      const fetchPrototypesMock = vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          data: [makePrototype({ id: 1, prototypeNm: 'initial' })],
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          data: [makePrototype({ id: 2, prototypeNm: 'refreshed' })],
+        });
+
+      const repo = createRepo(fetchPrototypesMock);
+
+      await Promise.all([
+        repo.setupSnapshot({ offset: 0, limit: 10 } as any),
+        repo.setupSnapshot({ offset: 0, limit: 10 } as any),
+      ]);
+
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
+
+      await Promise.all([
+        repo.setupSnapshot({ offset: 0, limit: 10 } as any),
+        repo.refreshSnapshot(),
+        repo.refreshSnapshot(),
+      ]);
+
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(2);
     });
   });
 });

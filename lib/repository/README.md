@@ -29,7 +29,7 @@ API から取得したプロトタイプ情報をメモリに保存して、素�
 
 ```typescript
 import {
-    createProtopediaInMemoryRepository,
+    createPromidasRepository,
     type NormalizedPrototype,
     type Logger,
 } from '@f88/promidas/repository';
@@ -38,16 +38,16 @@ import {
 または、ルートからもインポートできます:
 
 ```typescript
-import { createProtopediaInMemoryRepository } from '@f88/promidas';
+import { createPromidasRepository } from '@f88/promidas';
 ```
 
 ## 🚀 簡単な使い方
 
 ```typescript
-import { createProtopediaInMemoryRepository } from '@f88/promidas';
+import { createPromidasRepository } from '@f88/promidas';
 
 // 1. リポジトリを作成
-const repository = createProtopediaInMemoryRepository({
+const repository = createPromidasRepository({
     storeConfig: { ttlMs: 30 * 60 * 1000 }, // ストア設定: 30分のTTL
     apiClientOptions: { token: process.env.PROTOPEDIA_API_TOKEN }, // APIクライアント設定
 });

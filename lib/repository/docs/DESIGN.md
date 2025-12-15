@@ -39,7 +39,7 @@ This document describes the architecture, design decisions, and implementation p
                           ▼
 ┌─────────────────────────────────────────────────────────┐
 │  Factory Layer                                          │
-│  - createProtopediaInMemoryRepository()                 │
+│  - createPromidasRepository()                 │
 │  - Dependency injection                                 │
 │  - Configuration validation                             │
 └─────────────────────────────────────────────────────────┘
@@ -99,11 +99,15 @@ export interface ProtopediaInMemoryRepository {
 }
 
 // Implementation is hidden behind factory
-export const createProtopediaInMemoryRepository = ({
+export const createPromidasRepository = ({
     storeConfig = {},
     apiClientOptions,
-}: CreateProtopediaInMemoryRepositoryOptions = {}): ProtopediaInMemoryRepository => {
-    return new ProtopediaInMemoryRepositoryImpl(storeConfig, apiClientOptions);
+}: CreatePromidasRepositoryOptions = {}): ProtopediaInMemoryRepository => {
+    return new ProtopediaInMemoryRepositoryImpl({
+        repositoryConfig: {},
+        storeConfig,
+        apiClientOptions,
+    });
 };
 ```
 
@@ -488,6 +492,6 @@ Not supported. Would require significant redesign. Use multiple repository insta
 
 ---
 
-**Document Version**: 1.0.0
-**Last Updated**: 2025-12-10
-**Related Issues**: #12, #13, #14, #15, #17-#21
+**Document Version**: 1.1.0
+**Last Updated**: 2025-12-13
+**Related Issues**: #12, #13, #14, #15, #17-#21, #32

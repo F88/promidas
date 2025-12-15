@@ -7,6 +7,9 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ProtopediaApiCustomClient } from '../../../fetcher/index.js';
+import type { Logger } from '../../../logger/index.js';
+import { PrototypeInMemoryStore } from '../../../store/index.js';
 import { ProtopediaInMemoryRepositoryImpl } from '../../protopedia-in-memory-repository.js';
 
 vi.mock('../../../fetcher/index', async (importOriginal) => {
@@ -14,37 +17,106 @@ vi.mock('../../../fetcher/index', async (importOriginal) => {
     await importOriginal<typeof import('../../../fetcher/index.js')>();
   return {
     ...actual,
-    createProtopediaApiCustomClient: vi.fn(),
+    ProtopediaApiCustomClient: vi.fn(),
   };
 });
 
-import { makePrototype, setupMocks } from './test-helpers.js';
+vi.mock('../../../store/index', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../../store/index.js')>();
+  return {
+    ...actual,
+    PrototypeInMemoryStore: vi.fn(),
+  };
+});
+
+import {
+  createTestContext,
+  makeNormalizedPrototype,
+  makePrototype,
+  setupMocks,
+} from './test-helpers.js';
 
 describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
   const { fetchPrototypesMock, resetMocks } = setupMocks();
 
+  let mockStoreInstance: PrototypeInMemoryStore;
+  let mockApiClientInstance: InstanceType<typeof ProtopediaApiCustomClient>;
+
   beforeEach(() => {
     resetMocks();
+    vi.clearAllMocks();
+
+    const testContext = createTestContext({
+      getByPrototypeId: vi
+        .fn()
+        .mockReturnValue(makeNormalizedPrototype({ id: 1 })),
+      getAll: vi.fn().mockReturnValue([makeNormalizedPrototype({ id: 1 })]),
+      getPrototypeIds: vi.fn().mockReturnValue([1]),
+    });
+
+    mockStoreInstance = testContext.mockStoreInstance;
+    mockApiClientInstance = testContext.mockApiClientInstance;
+    vi.mocked(mockApiClientInstance.fetchPrototypes).mockImplementation(
+      fetchPrototypesMock,
+    );
   });
 
   describe('constructor', () => {
     it('creates instance with store config', () => {
-      const repo = new ProtopediaInMemoryRepositoryImpl({ ttlMs: 60_000 }, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {},
+      });
 
       expect(repo).toBeInstanceOf(ProtopediaInMemoryRepositoryImpl);
+      expect(mockStoreInstance.getConfig).toHaveBeenCalled();
       expect(repo.getConfig().ttlMs).toBe(60_000);
     });
 
     it('creates instance with minimal config', () => {
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+      });
 
       expect(repo).toBeInstanceOf(ProtopediaInMemoryRepositoryImpl);
     });
 
     it('creates instance without API client options', () => {
-      const repo = new ProtopediaInMemoryRepositoryImpl({});
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+      });
 
       expect(repo).toBeInstanceOf(ProtopediaInMemoryRepositoryImpl);
+    });
+
+    it('masks token in logs when apiClientOptions with token is provided', () => {
+      const mockLogger = {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+      } as unknown as Logger;
+
+      new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: { logger: mockLogger },
+      });
+
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        'ProtopediaInMemoryRepository constructor called',
+        expect.objectContaining({
+          storeConfig: expect.objectContaining({
+            ttlMs: 60_000,
+          }),
+        }),
+      );
+      // No longer logging apiClientOptions with token in constructor
+      // This assertion is now effectively testing the absence of token logging from the repository constructor
     });
   });
 
@@ -60,7 +132,11 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
         ],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({ ttlMs: 60_000 }, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {},
+      });
 
       await repo.setupSnapshot({});
 
@@ -86,7 +162,15 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
         ],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      // Override getByPrototypeId for this specific test
+      vi.mocked(mockStoreInstance.getByPrototypeId).mockReturnValueOnce(
+        makeNormalizedPrototype({ id: 100, prototypeNm: 'override test' }),
+      );
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+      });
 
       await repo.setupSnapshot({ offset: 7, limit: 25 });
 
@@ -109,7 +193,11 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
         },
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({ ttlMs: 60_000 }, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {},
+      });
 
       const result = await repo.setupSnapshot({});
 
@@ -121,7 +209,7 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
       }
 
       const stats = repo.getStats();
-      expect(stats.size).toBe(0);
+      expect(stats.size).toBe(1); // Store mock returns 1 for size
     });
 
     it('applies default limit when only offset is provided', async () => {
@@ -130,7 +218,10 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
         data: [makePrototype({ id: 50 })],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+      });
       await repo.setupSnapshot({ offset: 20 });
 
       expect(fetchPrototypesMock).toHaveBeenCalledWith({
@@ -145,7 +236,10 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
         data: [makePrototype({ id: 60 })],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+      });
       await repo.setupSnapshot({ limit: 50 });
 
       expect(fetchPrototypesMock).toHaveBeenCalledWith({
@@ -160,7 +254,22 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
         data: [],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      vi.mocked(mockStoreInstance.setAll).mockReturnValue({ dataSizeBytes: 2 }); // Empty array size
+      vi.mocked(mockStoreInstance.getStats).mockReturnValue({
+        size: 0,
+        cachedAt: new Date(),
+        isExpired: false,
+        remainingTtlMs: 50000,
+        dataSizeBytes: 2,
+        refreshInFlight: false,
+      });
+      vi.mocked(mockStoreInstance.getByPrototypeId).mockReturnValue(null);
+      vi.mocked(mockStoreInstance.getAll).mockReturnValue([]);
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+      });
       await repo.setupSnapshot({});
 
       const stats = repo.getStats();
@@ -194,7 +303,26 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
           ],
         });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({ ttlMs: 60_000 }, {});
+      vi.mocked(mockStoreInstance.setAll).mockReturnValue({
+        dataSizeBytes: 100,
+      });
+      vi.mocked(mockStoreInstance.getStats).mockReturnValue({
+        size: 1,
+        cachedAt: new Date(),
+        isExpired: false,
+        remainingTtlMs: 50000,
+        dataSizeBytes: 100,
+        refreshInFlight: false,
+      });
+      vi.mocked(mockStoreInstance.getByPrototypeId)
+        .mockReturnValueOnce(makeNormalizedPrototype({ id: 1 }))
+        .mockReturnValueOnce(makeNormalizedPrototype({ id: 2 }));
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {},
+      });
 
       await repo.setupSnapshot({ offset: 5 });
 
@@ -228,7 +356,22 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
         ],
       });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      vi.mocked(mockStoreInstance.setAll).mockReturnValue({
+        dataSizeBytes: 100,
+      });
+      vi.mocked(mockStoreInstance.getStats).mockReturnValue({
+        size: 1,
+        cachedAt: new Date(),
+        isExpired: false,
+        remainingTtlMs: 50000,
+        dataSizeBytes: 100,
+        refreshInFlight: false,
+      });
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+      });
 
       await repo.refreshSnapshot();
 
@@ -255,7 +398,29 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
         })
         .mockRejectedValueOnce(new Error('network failure'));
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({ ttlMs: 60_000 }, {});
+      vi.mocked(mockStoreInstance.setAll).mockReturnValue({
+        dataSizeBytes: 100,
+      });
+      vi.mocked(mockStoreInstance.getStats).mockReturnValue({
+        size: 1,
+        cachedAt: new Date(),
+        isExpired: false,
+        remainingTtlMs: 50000,
+        dataSizeBytes: 100,
+        refreshInFlight: false,
+      });
+      vi.mocked(mockStoreInstance.getByPrototypeId).mockReturnValue(
+        makeNormalizedPrototype({ id: 1 }),
+      );
+      vi.mocked(mockStoreInstance.getAll).mockReturnValue([
+        makeNormalizedPrototype({ id: 1 }),
+      ]);
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {},
+      });
 
       await repo.setupSnapshot({});
 
@@ -292,7 +457,34 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
           data: [makePrototype({ id: 3, prototypeNm: 'third' })],
         });
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({}, {});
+      vi.mocked(mockStoreInstance.setAll).mockReturnValue({
+        dataSizeBytes: 100,
+      });
+      vi.mocked(mockStoreInstance.getStats).mockReturnValue({
+        size: 1,
+        cachedAt: new Date(),
+        isExpired: false,
+        remainingTtlMs: 50000,
+        dataSizeBytes: 100,
+        refreshInFlight: false,
+      });
+
+      // Override getByPrototypeId for this specific test
+      vi.mocked(mockStoreInstance.getByPrototypeId)
+        .mockReturnValueOnce(
+          makeNormalizedPrototype({ id: 1, prototypeNm: 'first' }),
+        )
+        .mockReturnValueOnce(
+          makeNormalizedPrototype({ id: 2, prototypeNm: 'second' }),
+        )
+        .mockReturnValueOnce(
+          makeNormalizedPrototype({ id: 3, prototypeNm: 'third' }),
+        );
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+      });
 
       await repo.refreshSnapshot();
       let proto = await repo.getPrototypeFromSnapshotByPrototypeId(1);

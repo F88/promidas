@@ -29,8 +29,7 @@ ProtoPedia の Web API にアクセスして、プロトタイプ情報を取得
 
 ```typescript
 import {
-    createProtopediaApiCustomClient,
-    fetchAndNormalizePrototypes,
+    ProtopediaApiCustomClient,
     type NormalizedPrototype,
 } from '@f88/promidas/fetcher';
 ```
@@ -38,18 +37,18 @@ import {
 ## 🚀 簡単な使い方
 
 ```typescript
-import {
-    createProtopediaApiCustomClient,
-    fetchAndNormalizePrototypes,
-} from '@f88/promidas/fetcher';
+import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
 
 // 1. API クライアントを作成
-const client = createProtopediaApiCustomClient({
-    token: process.env.PROTOPEDIA_API_TOKEN, // あなたの API トークン
+const client = new ProtopediaApiCustomClient({
+    protoPediaApiClientOptions: {
+        token: process.env.PROTOPEDIA_API_TOKEN, // あなたの API トークン
+    },
+    logLevel: 'info', // ログレベル (オプション)
 });
 
 // 2. データを取得
-const result = await fetchAndNormalizePrototypes(client, {
+const result = await client.fetchPrototypes({
     limit: 10, // 最大10件取得
 });
 
@@ -62,7 +61,7 @@ if (result.ok) {
         console.log(`タグ: ${prototype.tags.join(', ')}`);
     });
 } else {
-    console.error('エラー:', result.error.message);
+    console.error('エラー:', result.error);
 }
 ```
 
@@ -76,26 +75,27 @@ if (result.ok) {
 ### API クライアントの作成
 
 ```typescript
-import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
 
-const client = createProtopediaApiCustomClient({
-    token: 'your-api-token', // API トークン (必須)
-    timeout: 30000, // タイムアウト (ミリ秒, オプション)
+const client = new ProtopediaApiCustomClient({
+    protoPediaApiClientOptions: {
+        token: 'your-api-token', // API トークン (必須)
+        timeoutMs: 30000, // タイムアウト (ミリ秒, オプション)
+    },
+    logLevel: 'debug', // ログレベル (オプション)
 });
 ```
 
 ### データの取得
 
 ```typescript
-import { fetchAndNormalizePrototypes } from '@f88/promidas/fetcher';
-
 // 基本的な取得
-const result = await fetchAndNormalizePrototypes(client, {
+const result = await client.fetchPrototypes({
     limit: 100, // 取得件数
 });
 
 // 検索条件を指定
-const filtered = await fetchAndNormalizePrototypes(client, {
+const filtered = await client.fetchPrototypes({
     limit: 50,
     status: 'active', // 公開中のもののみ
 });
@@ -104,18 +104,21 @@ const filtered = await fetchAndNormalizePrototypes(client, {
 ### エラーハンドリング
 
 ```typescript
-const result = await fetchAndNormalizePrototypes(client, { limit: 10 });
+const result = await client.fetchPrototypes({ limit: 10 });
 
 if (result.ok) {
     // 成功した場合
     console.log('データ:', result.data);
 } else {
     // 失敗した場合
-    console.error('エラーの種類:', result.error.type);
-    console.error('メッセージ:', result.error.message);
+    console.error('エラー:', result.error);
 
-    if (result.error.type === 'network_failure') {
-        console.log('ネットワークエラーです。接続を確認してください。');
+    if (result.status === 401) {
+        console.log('認証エラーです。APIトークンを確認してください。');
+    } else if (result.status === 500) {
+        console.log(
+            'サーバーエラーです。しばらく待ってから再試行してください。',
+        );
     }
 }
 ```
@@ -128,13 +131,13 @@ if (result.ok) {
 
 ## ⚙️ 取得されるデータ
 
-fetchAndNormalizePrototypes で取得できるデータの例:
+`client.fetchPrototypes()` で取得できるデータの例:
 
 ```typescript
 {
-  id: 12345,
-  name: 'サンプルプロトタイプ',
-  status: 'active',           // 型安全な値
+  prototypeId: 12345,
+  prototypeNm: 'サンプルプロトタイプ',
+  status: 1,                  // ステータスコード
   tags: ['IoT', 'Arduino'],   // 配列に変換済み
   createDate: '2025-12-12T01:00:00.000Z',  // UTC に変換済み
   // ... その他多数のフィールド
