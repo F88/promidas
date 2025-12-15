@@ -99,7 +99,7 @@ export async function GET() {
 ```yaml
 # .github/workflows/fetch-data.yml
 env:
-  PROTOPEDIA_API_TOKEN: ${{ secrets.PROTOPEDIA_API_TOKEN }}
+    PROTOPEDIA_API_TOKEN: ${{ secrets.PROTOPEDIA_API_TOKEN }}
 ```
 
 **Vercel:**
