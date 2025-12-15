@@ -58,15 +58,33 @@ describe('logger-utils', () => {
       ]);
     });
 
-    it('should not affect fields that contain "token" as substring', () => {
+    it('should redact fields containing "token" as substring', () => {
       const data = {
-        tokenizer: 'value',
-        accessToken: 'value', // Only exact 'token' match is redacted based on current implementation?
-        // Let's verify the implementation. The current implementation checks key === 'token'.
-        // So 'accessToken' should NOT be redacted.
+        tokenizer: 'value', // Should not be redacted (doesn't mean sensitive) - wait, our logic includes 'token', so 'tokenizer' contains 'token'. It WILL be redacted.
+        // If we want to avoid 'tokenizer', we should be more specific. But for now, substring match is safer.
+        accessToken: 'value',
       };
       const sanitized = sanitizeDataForLogging(data);
-      expect(sanitized).toEqual(data);
+      expect(sanitized).toEqual({
+        tokenizer: '***',
+        accessToken: '***',
+      });
+    });
+
+    it('should redact other sensitive keywords (password, secret, credential)', () => {
+      const data = {
+        userPassword: '123',
+        clientSecret: 'abc',
+        myCredentials: 'xyz',
+        publicId: '1',
+      };
+      const sanitized = sanitizeDataForLogging(data);
+      expect(sanitized).toEqual({
+        userPassword: '***',
+        clientSecret: '***',
+        myCredentials: '***',
+        publicId: '1',
+      });
     });
 
     it('should handle Error objects', () => {
@@ -85,13 +103,170 @@ describe('logger-utils', () => {
       expect(sanitized.context).toEqual({ token: '***' });
     });
 
-    it('should handle circular references gracefully (by throwing JSON error currently)', () => {
-      // The current implementation uses JSON.stringify/parse, so it will throw on circular refs.
-      // This is acceptable for simple logging utils, but we should verify the behavior.
+    it('should handle circular references gracefully', () => {
       const obj: any = { a: 1 };
       obj.self = obj;
 
-      expect(() => sanitizeDataForLogging(obj)).toThrow();
+      const sanitized = sanitizeDataForLogging(obj) as any;
+      expect(sanitized.a).toBe(1);
+      expect(sanitized.self).toBe('[Circular]');
+    });
+
+    it('should preserve non-serializable values as strings', () => {
+      const data = {
+        func: () => {},
+        namedFunc: function test() {},
+        sym: Symbol('test'),
+        bigint: 123n,
+      };
+      const sanitized = sanitizeDataForLogging(data) as any;
+
+      expect(sanitized.func).toContain('[Function');
+      expect(sanitized.namedFunc).toBe('[Function: test]');
+      expect(sanitized.sym).toBe('Symbol(test)');
+      expect(sanitized.bigint).toBe('123n');
+    });
+
+    it('should prevent prototype pollution by skipping dangerous keys', () => {
+      // Create object with dangerous keys as own properties using Object.defineProperty
+      // to ensure they are enumerable own properties, not inherited
+      const maliciousData: any = {
+        normalKey: 'value',
+        safeKey: 'safe',
+      };
+
+      // Manually add dangerous keys using Object.defineProperty to make them enumerable
+      Object.defineProperty(maliciousData, 'constructor', {
+        value: { dangerous: true },
+        enumerable: true,
+        configurable: true,
+      });
+      Object.defineProperty(maliciousData, 'prototype', {
+        value: { harmful: true },
+        enumerable: true,
+        configurable: true,
+      });
+
+      const sanitized = sanitizeDataForLogging(maliciousData) as any;
+
+      expect(sanitized.normalKey).toBe('value');
+      expect(sanitized.safeKey).toBe('safe');
+      // These dangerous keys should be filtered out during sanitization
+      expect(sanitized).not.toHaveProperty('constructor');
+      expect(sanitized).not.toHaveProperty('prototype');
+      // Verify that sanitized object doesn't have dangerous keys as own properties
+      expect(Object.keys(sanitized)).not.toContain('constructor');
+      expect(Object.keys(sanitized)).not.toContain('prototype');
+    });
+
+    it('should limit recursion depth to prevent stack overflow', () => {
+      // Create a deeply nested object (exactly at MAX_DEPTH = 100)
+      let deepObj: any = { value: 'deep' };
+      for (let i = 0; i < 100; i++) {
+        deepObj = { nested: deepObj };
+      }
+
+      const sanitized = sanitizeDataForLogging(deepObj) as any;
+
+      // Navigate through the sanitized object
+      let current = sanitized;
+      let depth = 0;
+      while (current && typeof current === 'object' && current.nested) {
+        current = current.nested;
+        depth++;
+      }
+
+      // Should hit max depth and return '[Max Depth Exceeded]'
+      expect(current).toBe('[Max Depth Exceeded]');
+      // Depth should be exactly at MAX_DEPTH (100)
+      expect(depth).toBe(100);
+    });
+
+    it('should handle case-insensitive sensitive key matching', () => {
+      const data = {
+        TOKEN: 'uppercase',
+        Token: 'titlecase',
+        token: 'lowercase',
+        MyApiToken: 'mixed',
+        API_PASSWORD: 'pw',
+        secretKey: 'sk',
+        UserCredential: 'uc',
+        authHeader: 'ah',
+      };
+
+      const sanitized = sanitizeDataForLogging(data) as any;
+
+      expect(sanitized.TOKEN).toBe('***');
+      expect(sanitized.Token).toBe('***');
+      expect(sanitized.token).toBe('***');
+      expect(sanitized.MyApiToken).toBe('***');
+      expect(sanitized.API_PASSWORD).toBe('***');
+      expect(sanitized.secretKey).toBe('***');
+      expect(sanitized.UserCredential).toBe('***');
+      expect(sanitized.authHeader).toBe('***');
+    });
+
+    it('should handle deeply nested arrays and objects together', () => {
+      const data = {
+        users: [
+          {
+            name: 'Alice',
+            auth: { password: 'alice-pw', token: 'alice-token' },
+          },
+          {
+            name: 'Bob',
+            auth: { password: 'bob-pw', apiKey: 'normal-key' },
+          },
+        ],
+      };
+
+      const sanitized = sanitizeDataForLogging(data) as any;
+
+      expect(sanitized.users).toBeDefined();
+      expect(sanitized.users[0]).toBeDefined();
+      expect(sanitized.users[0].name).toBe('Alice');
+      expect(sanitized.users[0].auth).toBe('***'); // 'auth' is a sensitive key
+      expect(sanitized.users[1].name).toBe('Bob');
+      expect(sanitized.users[1].auth).toBe('***'); // 'auth' is a sensitive key
+    });
+
+    it('should not sanitize inherited properties', () => {
+      const proto = { inheritedToken: 'should-not-appear' };
+      const obj = Object.create(proto);
+      obj.ownToken = 'own-secret';
+      obj.normalKey = 'value';
+
+      const sanitized = sanitizeDataForLogging(obj) as any;
+
+      expect(sanitized.ownToken).toBe('***');
+      expect(sanitized.normalKey).toBe('value');
+      // Inherited properties should not appear in sanitized output
+      expect(sanitized.inheritedToken).toBeUndefined();
+    });
+
+    it('should handle empty objects and arrays', () => {
+      expect(sanitizeDataForLogging({})).toEqual({});
+      expect(sanitizeDataForLogging([])).toEqual([]);
+    });
+
+    it('should handle mixed circular and sensitive data', () => {
+      const obj: any = {
+        name: 'test',
+        apiToken: 'secret',
+        nested: {
+          password: 'pw',
+        },
+      };
+      obj.circular = obj;
+      obj.nested.parent = obj;
+
+      const sanitized = sanitizeDataForLogging(obj) as any;
+
+      expect(sanitized.name).toBe('test');
+      expect(sanitized.apiToken).toBe('***');
+      expect(sanitized.nested.password).toBe('***');
+      expect(sanitized.circular).toBe('[Circular]');
+      expect(sanitized.nested.parent).toBe('[Circular]');
     });
   });
 });
