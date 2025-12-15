@@ -15,40 +15,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The logger interface and factory functions have been redesigned to support runtime log level changes and align with modern logging library patterns.
 
-##### Logger Interface Now Requires `level` Property
+##### Logger Interface Remains Method-Only
 
-All logger implementations must include a mutable `level` property:
+The `Logger` interface has **not changed** and does not include a `level` property:
 
 ```typescript
-// Before (v0.7.0)
-export type Logger = {
-    debug: (message: string) => void;
-    info: (message: string) => void;
-    warn: (message: string) => void;
-    error: (message: string) => void;
-};
-
-// After (v0.8.0)
+// v0.7.0 and v0.8.0 (unchanged)
 export interface Logger {
-    level: LogLevel; // NEW: Required mutable property
-    debug: (message: string) => void;
-    info: (message: string) => void;
-    warn: (message: string) => void;
-    error: (message: string) => void;
+    debug: (message: string, meta?: unknown) => void;
+    info: (message: string, meta?: unknown) => void;
+    warn: (message: string, meta?: unknown) => void;
+    error: (message: string, meta?: unknown) => void;
 }
 ```
 
-**Migration:** Add `level` property to custom logger implementations:
+However, the provided `ConsoleLogger` implementation now includes a **mutable `level` property** that can be dynamically updated:
 
 ```typescript
+const logger = new ConsoleLogger('info');
+logger.level = 'debug'; // Runtime level change is now possible
+```
+
+**For Custom Logger Implementations:**
+
+The `Logger` interface does not require a `level` property. However, if you want to support runtime log level changes (used by `logLevel` configuration options), you can optionally add a mutable `level` property:
+
+```typescript
+// Optional: Add level property for runtime level changes
 const myLogger: Logger = {
-    level: 'info', // Add this
+    level: 'info' as LogLevel, // Optional property
     debug: (msg) => console.debug(msg),
     info: (msg) => console.info(msg),
     warn: (msg) => console.warn(msg),
     error: (msg) => console.error(msg),
 };
 ```
+
+The library checks for the `level` property dynamically using `'level' in logger` before attempting to modify it.
 
 ##### `createConsoleLogger()` No Longer Accepts Parameters
 
