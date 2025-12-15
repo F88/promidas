@@ -11,6 +11,7 @@
 
 import type { ProtoPediaApiClientOptions } from 'protopedia-api-v2-client';
 
+// Logger types
 import {
   ProtopediaApiCustomClient,
   type ProtopediaApiCustomClientConfig,
@@ -20,12 +21,14 @@ import { ProtopediaInMemoryRepositoryImpl } from './repository/protopedia-in-mem
 import type {
   ProtopediaInMemoryRepository,
   ProtopediaInMemoryRepositoryConfig,
+  PrototypeAnalysisResult,
 } from './repository/types/index.js';
 import {
   PrototypeInMemoryStore,
   type PrototypeInMemoryStats,
   type PrototypeInMemoryStoreConfig,
 } from './store/index.js';
+import { sanitizeDataForLogging } from './utils/index.js';
 
 /**
  * Configuration options for the API client wrapper within the builder.
@@ -41,12 +44,16 @@ export type {
   PrototypeInMemoryStoreConfig,
   PrototypeInMemoryStats,
 
+  // API Client
+  ProtopediaApiCustomClient,
+  ProtopediaApiCustomClientConfig,
   // Custom API client
   ProtoPediaApiClientOptions,
 
   // Repository
   ProtopediaInMemoryRepository,
   ProtopediaInMemoryRepositoryConfig,
+  PrototypeAnalysisResult,
 };
 
 /**
@@ -59,7 +66,9 @@ export type {
  * ```typescript
  * const repo = new PromidasRepositoryBuilder()
  *   .setStoreConfig({ ttlMs: 60000 })
- *   .setApiClientOptions({ token: 'my-token' })
+ *   .setApiClientConfig({
+ *     protoPediaApiClientOptions: { token: 'my-token' }
+ *   })
  *   .build();
  * ```
  */
@@ -72,10 +81,12 @@ export class PromidasRepositoryBuilder {
   /**
    * Set configuration for the in-memory store.
    *
+   * Multiple calls will merge configurations (later values override earlier ones).
+   *
    * @param config - Store configuration (TTL, max size, logger, etc.)
    */
   setStoreConfig(config: PrototypeInMemoryStoreConfig): this {
-    this.#storeConfig = config;
+    this.#storeConfig = { ...this.#storeConfig, ...config };
     return this;
   }
 
@@ -83,20 +94,24 @@ export class PromidasRepositoryBuilder {
    * Set configuration for the ProtopediaApiCustomClient wrapper.
    * Allows configuring the logger used by the client wrapper itself.
    *
+   * Multiple calls will merge configurations (later values override earlier ones).
+   *
    * @param config - Wrapper configuration (logger, logLevel)
    */
   setApiClientConfig(config: ProtopediaApiCustomClientConfig): this {
-    this.#apiClientConfig = config;
+    this.#apiClientConfig = { ...this.#apiClientConfig, ...config };
     return this;
   }
 
   /**
    * Set configuration for the Repository itself.
    *
+   * Multiple calls will merge configurations (later values override earlier ones).
+   *
    * @param config - Repository configuration (logger, etc.)
    */
   setRepositoryConfig(config: ProtopediaInMemoryRepositoryConfig): this {
-    this.#repositoryConfig = config;
+    this.#repositoryConfig = { ...this.#repositoryConfig, ...config };
     return this;
   }
 
@@ -120,10 +135,13 @@ export class PromidasRepositoryBuilder {
         repositoryConfig: this.#repositoryConfig,
       });
     } catch (error) {
-      // Log the error before re-throwing
+      // Log the error before re-throwing, ensuring sensitive data is sanitized
       const logger = this.#repositoryConfig.logger ?? console;
       if (typeof logger.error === 'function') {
-        logger.error('Failed to build ProtopediaInMemoryRepository', { error });
+        logger.error(
+          'Failed to build ProtopediaInMemoryRepository',
+          sanitizeDataForLogging({ error }),
+        );
       }
       throw error;
     }
