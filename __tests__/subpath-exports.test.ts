@@ -79,14 +79,17 @@ describe('subpath exports', () => {
   });
 
   describe('@f88/promidas (root)', () => {
-    it('should export Repository module only', async () => {
+    it('should export PromidasRepositoryBuilder', async () => {
       const root = await import('@f88/promidas');
 
-      // Should export Repository factory and types
-      expect(root).toHaveProperty('createPromidasRepository');
-      expect(typeof root.createPromidasRepository).toBe('function');
+      // Should export Builder class
+      expect(root).toHaveProperty('PromidasRepositoryBuilder');
+      expect(typeof root.PromidasRepositoryBuilder).toBe('function');
 
-      // Should NOT export other modules (breaking change in v0)
+      // Should NOT export factory function (moved to /repository subpath)
+      expect(root).not.toHaveProperty('createPromidasRepository');
+
+      // Should NOT export other modules
       expect(root).not.toHaveProperty('fetchAndNormalizePrototypes');
       expect(root).not.toHaveProperty('createConsoleLogger');
       expect(root).not.toHaveProperty('parseProtoPediaTimestamp');
@@ -167,12 +170,16 @@ describe('subpath exports', () => {
   });
 
   describe('@f88/promidas/fetcher', () => {
-    it('should export fetcher functions and types', async () => {
+    it('should export fetcher class', async () => {
       const fetcher = await import('@f88/promidas/fetcher');
 
-      // API client factory
-      expect(fetcher).toHaveProperty('createProtopediaApiCustomClient');
-      expect(typeof fetcher.createProtopediaApiCustomClient).toBe('function');
+      // API client class
+      expect(fetcher).toHaveProperty('ProtopediaApiCustomClient');
+      expect(typeof fetcher.ProtopediaApiCustomClient).toBe('function');
+
+      // Utility function
+      expect(fetcher).toHaveProperty('normalizePrototype');
+      expect(typeof fetcher.normalizePrototype).toBe('function');
 
       // Re-exported types for convenience (NormalizedPrototype is type-only)
       // Logger and LogLevel are also type-only exports
@@ -200,41 +207,35 @@ describe('subpath exports', () => {
   });
 
   describe('@f88/promidas/repository', () => {
-    it('should export repository factory and re-exported types', async () => {
+    it('should export repository types', async () => {
       const repository = await import('@f88/promidas/repository');
 
-      expect(repository).toHaveProperty('createPromidasRepository');
-      expect(typeof repository.createPromidasRepository).toBe('function');
+      // Repository module exports types only (no factory function in current implementation)
+      // The factory function was moved to the Builder pattern in main module
+      // This module provides type definitions for use with Builder
+      // Note: Type-only exports don't have runtime values to test
 
-      // Note: Actual instantiation requires PROTOPEDIA_API_V2_TOKEN
-      // So we only verify the factory exists and is callable
-
-      // Re-exported types for convenience (NormalizedPrototype, Logger, LogLevel)
-      // Note: These are type-only exports, so no runtime values to test
-      // Users can import types like: import type { NormalizedPrototype } from '@f88/promidas/repository'
+      // Verify the module loads without errors
+      expect(repository).toBeDefined();
     });
   });
 
   describe('integration: root vs subpath exports', () => {
-    it('should provide same Repository from root and subpath', async () => {
+    it('should provide Builder from root', async () => {
       const root = await import('@f88/promidas');
-      const repository = await import('@f88/promidas/repository');
 
-      // Same factory function
-      expect(root.createPromidasRepository).toBe(
-        repository.createPromidasRepository,
-      );
+      // Builder in root
+      expect(root.PromidasRepositoryBuilder).toBeDefined();
+      expect(typeof root.PromidasRepositoryBuilder).toBe('function');
     });
 
     it('should allow using multiple subpaths together', async () => {
       const utils = await import('@f88/promidas/utils');
       const fetcher = await import('@f88/promidas/fetcher');
-      const repository = await import('@f88/promidas/repository');
 
       // All modules are independent and functional
       expect(utils.parseProtoPediaTimestamp).toBeDefined();
       expect(fetcher.ProtopediaApiCustomClient).toBeDefined();
-      expect(repository.createPromidasRepository).toBeDefined();
     });
   });
 });
