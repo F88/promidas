@@ -44,7 +44,7 @@ export default defineConfig({
         items: [
           {
             text: 'Development Guide',
-            link: '/DEVELOPMENT',
+            link: 'https://github.com/F88/promidas/blob/main/DEVELOPMENT.md',
           },
           {
             text: 'Contributing',
