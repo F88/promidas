@@ -58,11 +58,11 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。パ
     - **[ProtoPedia API Ver 2.0 · Apiary](https://protopediav2.docs.apiary.io/)**
     - ドキュメントに記載されている「Bearer Tokenの発行」セクションを参照
 
-2. **アプリケーション/素材用 API TOKEN**を取得:
+2. **`APIトークン` を取得:
 
 `作品・開発素材一覧 API` を使用するための `APIトークン`を取得してください。
 
-⚠️ **PROMIDASが使用するのは「アプリケーション/素材用 API」の APIトークンです**。イベント作品用のTOKENとは異なります。
+⚠️ **PROMIDASが使用するのは `作品・開発素材一覧 API`の APIトークン です**。 `イベント作品 API` の APIトークン とは異なります。
 
 ### セキュリティの基礎
 
