@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD024 -->
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -9,70 +11,160 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking Changes
 
-- **Removed Deprecated Standalone Function**: Removed `fetchAndNormalizePrototypes()` function from exports (#32)
-    - Use `ProtopediaApiCustomClient.fetchPrototypes()` instead
-    - The standalone function was deprecated as part of the logger redesign
-    - Client-based approach provides better logger lifecycle management
+#### Logger Module Redesign
 
-    ```typescript
-    // Before (v0.7.0 and earlier)
-    import {
-        fetchAndNormalizePrototypes,
-        createProtopediaApiCustomClient,
-    } from '@f88/promidas/fetcher';
+The logger interface and factory functions have been redesigned to support runtime log level changes and align with modern logging library patterns.
 
-    const client = createProtopediaApiCustomClient({ token: 'xxx' });
-    const result = await fetchAndNormalizePrototypes(client, { limit: 100 });
+##### Logger Interface Now Requires `level` Property
 
-    // After (v0.8.0)
-    import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+All logger implementations must include a mutable `level` property:
 
-    const client = createProtopediaApiCustomClient({
-        protoPediaApiClientOptions: { token: 'xxx' },
-    });
-    const result = await client.fetchPrototypes({ limit: 100 });
-    ```
+```typescript
+// Before (v0.7.0)
+export type Logger = {
+    debug: (message: string) => void;
+    info: (message: string) => void;
+    warn: (message: string) => void;
+    error: (message: string) => void;
+};
 
-    **Migration Guide:**
-    - Replace `fetchAndNormalizePrototypes(client, params)` with `client.fetchPrototypes(params)`
-    - Update imports to remove `fetchAndNormalizePrototypes`
-    - Update client creation to use nested config: `{ protoPediaApiClientOptions: { token } }`
+// After (v0.8.0)
+export interface Logger {
+    level: LogLevel; // NEW: Required mutable property
+    debug: (message: string) => void;
+    info: (message: string) => void;
+    warn: (message: string) => void;
+    error: (message: string) => void;
+}
+```
 
-    **Files Removed:**
-    - `lib/fetcher/fetch-prototypes.ts`
-    - `lib/fetcher/__tests__/fetch-prototypes.test.ts`
+**Migration:** Add `level` property to custom logger implementations:
 
-- **Logger API Simplification**: Simplified `createConsoleLogger()` to always create loggers with default 'info' level (#32)
-    - `createConsoleLogger()` no longer accepts a `level` parameter
-    - For specific log levels, use `new ConsoleLogger(level)` directly
-    - `ConsoleLogger` class is now exported for direct instantiation
-    - This change enforces the separation of logger creation from level configuration, aligning with the Fastify-style pattern used throughout the project
-    - Module structure improved: factory functions separated into `factory.ts`, tests split into focused files
+```typescript
+const myLogger: Logger = {
+    level: 'info', // Add this
+    debug: (msg) => console.debug(msg),
+    info: (msg) => console.info(msg),
+    warn: (msg) => console.warn(msg),
+    error: (msg) => console.error(msg),
+};
+```
 
-    ```typescript
-    // Before (v0.7.0 and earlier)
-    const logger = createConsoleLogger('debug');
+##### `createConsoleLogger()` No Longer Accepts Parameters
 
-    // After (v0.8.0)
-    const logger = new ConsoleLogger('debug');
-    // OR use default and change level later
-    const logger = createConsoleLogger();
-    logger.level = 'debug';
-    ```
+For specific log levels, use the `ConsoleLogger` constructor directly:
 
-    **Migration Guide:**
-    - Replace `createConsoleLogger('level')` with `new ConsoleLogger('level')`
-    - Or use `createConsoleLogger()` and set `logger.level = 'level'` if dynamic
-    - When using with Repository/Store, prefer the pattern: `createConsoleLogger()` + `logLevel` option
+```typescript
+// Before (v0.7.0)
+const logger = createConsoleLogger('debug');
 
-    **Files Affected:**
-    - `lib/logger/console-logger.ts` (renamed from `logger.ts`)
-    - `lib/logger/factory.ts` (new - separated factory functions)
-    - `lib/logger/__tests__/console-logger.test.ts` (new - class tests)
-    - `lib/logger/__tests__/factory.test.ts` (new - factory tests)
-    - `lib/logger/__tests__/logger.test.ts` (removed - split into above)
+// After (v0.8.0)
+const logger = new ConsoleLogger('debug');
+// OR set level dynamically
+const logger = createConsoleLogger();
+logger.level = 'debug';
+```
+
+**Files affected:**
+
+- `lib/logger/console-logger.ts` (renamed from `logger.ts`)
+- `lib/logger/factory.ts` (new - separated factory functions)
+- Test files reorganized for better structure
+
+#### Repository Module Changes
+
+##### Main Module Now Exports Builder Instead of Factory Function
+
+The `createProtopediaInMemoryRepository()` factory function has been removed from the main module in favor of `PromidasRepositoryBuilder`.
+
+```typescript
+// Before (v0.7.0)
+import { createProtopediaInMemoryRepository } from '@f88/promidas';
+
+const repo = createProtopediaInMemoryRepository({
+    storeConfig: { ttlMs: 30000 },
+    apiClientOptions: { token: 'xxx' },
+});
+
+// After (v0.8.0) - Option 1: Use Builder (Recommended)
+import { PromidasRepositoryBuilder } from '@f88/promidas';
+
+const repo = new PromidasRepositoryBuilder()
+    .setStoreConfig({ ttlMs: 30000 })
+    .setApiClientConfig({ protoPediaApiClientOptions: { token: 'xxx' } })
+    .build();
+
+// After (v0.8.0) - Option 2: Import from subpath
+import { createProtopediaInMemoryRepository } from '@f88/promidas/repository';
+
+const repo = createProtopediaInMemoryRepository({
+    storeConfig: { ttlMs: 30000 },
+    apiClientOptions: { token: 'xxx' },
+});
+```
+
+**Migration:**
+
+- Use `PromidasRepositoryBuilder` for complex configurations (recommended)
+- Or import factory function from `@f88/promidas/repository` subpath
+
+#### Fetcher Module Cleanup
+
+##### Removed `fetchAndNormalizePrototypes()` Standalone Function
+
+Use the client method instead for better logger lifecycle management:
+
+```typescript
+// Before (v0.7.0)
+import {
+    fetchAndNormalizePrototypes,
+    createProtopediaApiCustomClient,
+} from '@f88/promidas/fetcher';
+
+const client = createProtopediaApiCustomClient({ token: 'xxx' });
+const result = await fetchAndNormalizePrototypes(client, { limit: 100 });
+
+// After (v0.8.0)
+import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+
+const client = createProtopediaApiCustomClient({
+    protoPediaApiClientOptions: { token: 'xxx' },
+});
+const result = await client.fetchPrototypes({ limit: 100 });
+```
+
+**Migration:** Replace `fetchAndNormalizePrototypes(client, params)` with `client.fetchPrototypes(params)`
+
+**Files removed:**
+
+- `lib/fetcher/fetch-prototypes.ts`
+- `lib/fetcher/__tests__/fetch-prototypes.test.ts`
 
 ### Added
+
+- **PromidasRepositoryBuilder**: Introduced fluent builder interface for constructing repository instances with step-by-step configuration (#32)
+    - Provides alternative to factory function for complex configuration scenarios
+    - Supports shared logger pattern for memory efficiency across all components
+    - Log level priority management (repository > store > apiClient > default)
+    - Deep merge support for multiple configuration calls
+    - Configuration immutability protection
+    - Comprehensive test coverage with 209 tests covering all configuration scenarios
+    - Exported from main module: `import { PromidasRepositoryBuilder } from '@f88/promidas'`
+
+    ```typescript
+    // Basic usage
+    const repo = new PromidasRepositoryBuilder().build();
+
+    // Advanced configuration
+    const repo = new PromidasRepositoryBuilder()
+        .setDefaultLogLevel('debug')
+        .setStoreConfig({ ttlMs: 60000 })
+        .setApiClientConfig({
+            protoPediaApiClientOptions: { token: 'xxx' },
+        })
+        .setRepositoryConfig({ logLevel: 'info' })
+        .build();
+    ```
 
 - **Repository Concurrency Control**: Implemented Promise Coalescing pattern for `setupSnapshot()` and `refreshSnapshot()` to prevent duplicate API requests during concurrent calls (#17)
     - Multiple concurrent calls now share a single in-flight request
