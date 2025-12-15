@@ -7,6 +7,7 @@ export default defineConfig({
     'In-memory snapshot manager for ProtoPedia prototypes with TTL and efficient data access',
   lang: 'ja',
   base: '/promidas/',
+  appearance: true, // or 'dark' for dark by default, 'force-dark' to force dark mode
 
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
