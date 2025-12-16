@@ -32,7 +32,7 @@ This document describes the architecture, design decisions, and implementation p
 
 ```plaintext
 ┌─────────────────────────────────────────────────────────┐
-│  Consumer Code (Repository, Application)               │
+│  Consumer Code (Repository, Application)                │
 └─────────────────────────────────────────────────────────┘
                           │
                           ▼
@@ -46,10 +46,10 @@ This document describes the architecture, design decisions, and implementation p
         ┌─────────────────┴─────────────────┐
         ▼                                   ▼
 ┌───────────────────────┐         ┌───────────────────────┐
-│  Fetcher Functions    │         │  Normalization Layer  │
-│  - fetchAndNormalize  │         │  - Data transformation│
-│  - Error handling     │         │  - Type conversion    │
-│  - Result types       │         │  - Field mapping      │
+│  ProtopediaApi        │         │  Normalization Layer  │
+│  CustomClient         │         │  - Data transformation│
+│  - fetchPrototypes    │         │  - Type conversion    │
+│  - Error handling     │         │  - Field mapping      │
 └───────────────────────┘         └───────────────────────┘
         │
         ▼
@@ -131,7 +131,7 @@ export class ProtopediaApiCustomClient {
         params: ListPrototypesParams,
     ): Promise<FetchPrototypesResult> {
         // Internally handles API call and normalization
-        const apiResult = await this.#client.listPrototypes(params);
+        const upstream = await this.#client.listPrototypes(params);
         // ... error handling and normalization ...
         return result;
     }
@@ -179,7 +179,14 @@ export type ProtopediaApiCustomClientConfig = {
 ```typescript
 export type FetchPrototypesResult =
     | { ok: true; data: NormalizedPrototype[] }
-    | { ok: false; error: string; status?: number; details?: ApiErrorDetails };
+    | FetchPrototypesFailure;
+
+type FetchPrototypesFailure = {
+    ok: false;
+    error: string;
+} & Omit<NetworkFailure, 'error'>;
+
+// This includes: status?: number, details: { req?: {...}, res?: {...} }
 ```
 
 **Benefits**:
@@ -198,7 +205,60 @@ export type FetchPrototypesResult =
 
 **Decision**: Type safety outweighs convenience for library code
 
-### 3. Normalization Layer
+### 4. User-Agent Management
+
+**Purpose**: Identify requests from promidas library for API provider analytics and debugging
+
+**Implementation**:
+
+```typescript
+constructor(config?: ProtopediaApiCustomClientConfig | null) {
+    const { protoPediaApiClientOptions = {}, logger, logLevel } = config ?? {};
+
+    // Set ProtopediaApiCustomClient User-Agent if not provided
+    const userAgent =
+        protoPediaApiClientOptions.userAgent ??
+        `ProtopediaApiCustomClient/${VERSION} (promidas)`;
+
+    this.#client = createProtoPediaClient({
+        ...protoPediaApiClientOptions,
+        userAgent,
+    });
+}
+```
+
+**User-Agent Format**:
+
+```text
+ProtopediaApiCustomClient/{version} (promidas)
+```
+
+Example: `ProtopediaApiCustomClient/0.9.0 (promidas)`
+
+**Design Rationale**:
+
+- **Automatic**: No configuration required from users
+- **Identifiable**: API provider can track promidas library usage
+- **Versioned**: Includes library version for debugging
+- **Overridable**: Users can provide custom User-Agent if needed
+
+**Benefits**:
+
+- API provider can identify requests from promidas library
+- Enables analytics on library adoption and usage patterns
+- Helps with troubleshooting library-specific issues
+- Default behavior works out-of-the-box
+- Power users retain full control via explicit configuration
+
+**Comparison with SDK Default**:
+
+| Source                         | User-Agent                                    |
+| ------------------------------ | --------------------------------------------- |
+| SDK (protopedia-api-v2-client) | `ProtoPedia API Ver 2.0 Node.js Client/3.0.0` |
+| Promidas (auto-set)            | `ProtopediaApiCustomClient/0.9.0 (promidas)`  |
+| Custom (user-provided)         | `MyApp/1.0.0` (or any custom value)           |
+
+### 5. Normalization Layer
 
 **Purpose**: Transform API responses into application-friendly format
 
@@ -239,7 +299,7 @@ export type FetchPrototypesResult =
 - Better type inference
 - No ad-hoc transformations scattered in code
 
-### 4. Error Message Construction
+### 6. Error Message Construction
 
 **Purpose**: User-friendly error messages with actionable context
 
@@ -249,26 +309,32 @@ export type FetchPrototypesResult =
 
 ```typescript
 // lib/fetcher/utils/errors/messages.ts
-export function constructDisplayMessage(
-    error: string,
-    status?: number,
-): string {
-    // HTTP errors get status code context
-    if (status !== undefined) {
-        return `API request failed with status ${status}: ${error}`;
+export const constructDisplayMessage = (failure: NetworkFailure): string => {
+    const { error, status, details } = failure;
+    const statusText = details?.res?.statusText;
+    const code = details?.res?.code;
+    let message = resolveErrorMessage(error);
+
+    const prefix = statusText || code;
+    if (prefix && !message.startsWith(prefix)) {
+        message = `${prefix}: ${message}`;
     }
-    // Network errors get clear description
-    return `Network error: ${error}`;
-}
+
+    // HTTP errors include status code, network errors don't
+    return status !== undefined ? `${message} (${status})` : message;
+};
 ```
 
 **Usage**:
 
 ```typescript
 if (!result.ok) {
-    const displayMessage = constructDisplayMessage(result.error, result.status);
+    const displayMessage = constructDisplayMessage({
+        error: result.error,
+        status: result.status,
+        details: result.details,
+    });
     logger.error(displayMessage);
-    // Or show to user
 }
 ```
 
@@ -283,36 +349,40 @@ if (!result.ok) {
 
 ### Error Categories
 
-| Error Type       | Source                    | Handling Strategy                   |
-| ---------------- | ------------------------- | ----------------------------------- |
-| Network Error    | Connection failure        | Return as Result (`ok: false`)      |
-| HTTP Error       | 4xx, 5xx status           | Return with status code             |
-| API Error        | ProtoPedia error response | Return with details object          |
-| Validation Error | Invalid parameters        | Let protopedia-api-v2-client handle |
+| Error Type       | Source                    | Handling Strategy                        |
+| ---------------- | ------------------------- | ---------------------------------------- |
+| Network Error    | Connection failure        | Caught by try/catch, converted to Result |
+| HTTP Error       | 4xx, 5xx status           | Caught by try/catch, converted to Result |
+| API Error        | ProtoPedia error response | Caught by try/catch, converted to Result |
+| Validation Error | Invalid parameters        | Let protopedia-api-v2-client handle      |
 
 ### Error Flow
 
 ```typescript
-// Within ProtopediaApiCustomClient.fetchPrototypes()
-async fetchPrototypes(
+// Within ProtopediaApiCustomClient.#fetchAndNormalizePrototypes()
+async #fetchAndNormalizePrototypes(
     params: ListPrototypesParams,
 ): Promise<FetchPrototypesResult> {
-    const apiResult = await this.#client.listPrototypes(params);
+    try {
+        const upstream = await this.#client.listPrototypes(params);
 
-    // API client already returns Result type
-    if (!apiResult.ok) {
-        // Pass through with optional enhancement
-        return {
-            ok: false,
-            error: apiResult.error,
-            status: apiResult.status,
-            details: apiResult.details,
-        };
+        // Normalize data
+        const data = upstream.results.map(normalizePrototype);
+        return { ok: true, data };
+    } catch (error) {
+        // handleApiError converts thrown exceptions to Result type
+        const errorResult = handleApiError(error);
+
+        // Log based on severity
+        if (!errorResult.ok) {
+            if (errorResult.status === undefined || errorResult.status >= 500) {
+                this.#logger.error(errorResult.error, errorResult);
+            } else {
+                this.#logger.warn(errorResult.error, errorResult);
+            }
+        }
+        return errorResult;
     }
-
-    // Success path: normalize data
-    const normalized = apiResult.data.prototypes.map(normalizePrototype);
-    return { ok: true, data: normalized };
 }
 ```
 
@@ -385,8 +455,9 @@ constructor(config?: ProtopediaApiCustomClientConfig | null) {
 ```plaintext
 ProtopediaApiCustomClient
   └─> fetchPrototypes()
-      └─> handleApiError(error, this.#logger)
-          └─> this.#logger.error() for diagnostics
+      └─> try/catch block
+          ├─> handleApiError(error) → returns FetchPrototypesResult
+          └─> this.#logger.error/warn() logs the result
 ```
 
 **Design Rationale**:
@@ -488,6 +559,11 @@ export function normalizeCount(
 
 **Approach**: Dedicated test suite for each normalizer function
 
+**Test Files**:
+
+- `lib/fetcher/__tests__/utils/string-parsers.test.ts`
+- `lib/fetcher/__tests__/utils/normalize-protopedia-timestamp.test.ts`
+
 **Coverage**:
 
 - Happy path (valid input)
@@ -496,7 +572,11 @@ export function normalizeCount(
 - Whitespace handling
 - Special characters
 
-**Location**: `lib/fetcher/__tests__/utils/normalizers.test.ts`
+**Location**:
+
+- `lib/fetcher/__tests__/utils/string-parsers.test.ts`
+- `lib/fetcher/__tests__/utils/normalize-protopedia-timestamp.test.ts`
+- `lib/fetcher/__tests__/utils/normalize-prototype/` (field-specific tests)
 
 ## Type Safety
 
@@ -507,32 +587,21 @@ export function normalizeCount(
 **Example**:
 
 ```typescript
-// Minimal client interface
-export interface ListPrototypesClient {
-    listPrototypes(
+// The actual implementation uses a concrete class
+export class ProtopediaApiCustomClient {
+    async fetchPrototypes(
         params: ListPrototypesParams,
-    ): Promise<ApiResult<ResultOfListPrototypesApiResponse>>;
-}
-
-// Implementation can have more methods
-class FullClient implements ListPrototypesClient {
-    listPrototypes() {
-        /* ... */
+    ): Promise<FetchPrototypesResult> {
+        // Fetches, normalizes, and handles errors
     }
-    getPrototype() {
-        /* ... */
-    } // Not required by interface
-    searchPrototypes() {
-        /* ... */
-    } // Not required by interface
 }
 ```
 
 **Benefits**:
 
-- Easier mocking in tests
-- Dependency inversion (depend on abstraction)
-- Supports multiple client implementations
+- Single concrete implementation
+- Clear responsibility (fetch + normalize + error handling)
+- Easy to test with actual behavior
 
 ### Type Guards
 
@@ -576,9 +645,9 @@ if (result.ok) {
 
 **Integration Strategy**:
 
-1. Accept any client implementing `ListPrototypesClient`
-2. Provide `ProtopediaApiCustomClient` class for convenience
-3. Allow custom configurations (fetch, timeout, logger)
+1. Provide `ProtopediaApiCustomClient` class that wraps protopedia-api-v2-client
+2. Allow custom configurations (fetch, timeout, logger)
+3. Normalize and handle errors automatically
 
 **Example**:
 
@@ -634,13 +703,15 @@ async setupSnapshot(params: ListPrototypesParams) {
 
 ```typescript
 const customClientForNextJs = new ProtopediaApiCustomClient({
-    token: process.env.PROTOPEDIA_API_V2_TOKEN,
-    fetch: async (url, init) => {
-        return await globalThis.fetch(url, {
-            ...init,
-            cache: 'force-cache',
-            next: { revalidate: 60 },
-        });
+    protoPediaApiClientOptions: {
+        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        fetch: async (url, init) => {
+            return await globalThis.fetch(url, {
+                ...init,
+                cache: 'force-cache',
+                next: { revalidate: 60 },
+            });
+        },
     },
 });
 ```
@@ -693,16 +764,16 @@ const customClientForNextJs = new ProtopediaApiCustomClient({
 
 **Trade-off**: More verbose vs. better type safety
 
-### 4. Why Minimal Client Interface?
+### 4. Why Concrete Class Instead of Interface?
 
-**Decision**: `ListPrototypesClient` only requires `listPrototypes()`
+**Decision**: Use `ProtopediaApiCustomClient` concrete class, not an interface
 
 **Reasoning**:
 
-- Easier to mock in tests
-- Supports future alternative clients
-- Follows interface segregation principle
-- Reduces coupling
+- Simpler to use (no need to understand abstraction)
+- Easier to test (can mock the class directly)
+- Reduces over-engineering for single implementation
+- Can evolve to interface pattern if multiple implementations needed
 
 **Trade-off**: Less discoverability vs. better flexibility
 
@@ -721,6 +792,6 @@ const customClientForNextJs = new ProtopediaApiCustomClient({
 
 ---
 
-**Document Version**: 1.0.0
-**Last Updated**: 2025-12-10
+**Document Version**: 2.0.0
+**Last Updated**: 2025-12-16
 **Related Modules**: lib/repository, lib/logger

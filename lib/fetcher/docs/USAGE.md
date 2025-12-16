@@ -55,10 +55,8 @@ if (result.ok) {
 
 ```typescript
 // Named imports
-import {
-    ProtopediaApiCustomClient,
-    constructDisplayMessage,
-} from '@f88/promidas/fetcher';
+import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+import { constructDisplayMessage } from '@f88/promidas/fetcher/utils/errors/messages';
 
 // Type imports
 import type {
@@ -215,10 +213,7 @@ console.log(rawResult.results); // Raw API response
 ### Error Types and Result Structure
 
 ```typescript
-import {
-    ProtopediaApiCustomClient,
-    constructDisplayMessage,
-} from '@f88/promidas/fetcher';
+import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
 
 const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
@@ -229,11 +224,8 @@ const client = new ProtopediaApiCustomClient({
 const result = await client.fetchPrototypes(params);
 
 if (!result.ok) {
-    // Construct user-friendly message
-    const displayMessage = constructDisplayMessage(result.error, result.status);
-    console.error(displayMessage);
-
     // Access error details
+    console.error('Error:', result.error); // Error message
     console.error('Status:', result.status); // HTTP status code if available
     console.error('Code:', result.details?.res?.code); // API error code if available
 }
@@ -243,9 +235,9 @@ if (!result.ok) {
 
 | Error Type    | `result.ok` | `result.status` | `result.details` |
 | ------------- | ----------- | --------------- | ---------------- |
-| Network Error | `false`     | `undefined`     | `undefined`      |
-| HTTP Error    | `false`     | `400-599`       | May be present   |
-| API Error     | `false`     | `200-299`       | Present          |
+| Network Error | `false`     | `undefined`     | Present          |
+| HTTP Error    | `false`     | `400-599`       | Present          |
+| API Error     | `false`     | `200-599`       | Present          |
 | Success       | `true`      | N/A             | N/A              |
 
 ### Handling Specific Errors
@@ -272,19 +264,21 @@ processPrototypes(result.data);
 
 ### Error Message Format
 
-Error messages are pre-formatted and ready for display:
+The `result.error` field contains a formatted error message:
 
 ````typescript
 const result = await client.fetchPrototypes(params);
 
 if (!result.ok) {
-    // Network error example
+    // Network error (no status)
     console.error(result.error);
-    // "Upstream request timed out"
+    // "Connection refused"
+    console.error(result.status); // undefined
 
-    // HTTP error example (when status is 404)
+    // HTTP error (with status)
     console.error(result.error);
     // "Not Found: Resource not found"
+    console.error(result.status); // 404
 
     // Status code is available separately
     if (result.status) {
@@ -380,7 +374,9 @@ const customLogger: Logger = {
 };
 
 const client = new ProtopediaApiCustomClient({
-    token: process.env.PROTOPEDIA_API_V2_TOKEN,
+    protoPediaApiClientOptions: {
+        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+    },
     logger: customLogger,
 });
 ```
@@ -392,7 +388,21 @@ const client = new ProtopediaApiCustomClient({
 ```typescript
 type FetchPrototypesResult =
     | { ok: true; data: NormalizedPrototype[] }
-    | { ok: false; error: string; status?: number; details?: ApiErrorDetails };
+    | FetchPrototypesFailure;
+
+type FetchPrototypesFailure = {
+    ok: false;
+    error: string;
+} & Omit<NetworkFailure, 'error'>;
+
+// NetworkFailure structure:
+// {
+//   status?: number;  // HTTP status code (undefined for network errors)
+//   details: {        // Always present
+//     req?: { method?: string; url?: string };
+//     res?: { statusText?: string; code?: string };
+//   };
+// }
 ```
 
 ### ProtoPediaApiClientOptions
@@ -408,6 +418,6 @@ interface ProtoPediaApiClientOptions {
 
 ---
 
-**Document Version**: 2.0.0
-**Last Updated**: 2025-12-10
+**Document Version**: 0.9.0
+**Last Updated**: 2025-12-16
 **Related Documents**: DESIGN.md
