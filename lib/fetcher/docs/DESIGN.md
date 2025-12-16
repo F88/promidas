@@ -32,7 +32,7 @@ This document describes the architecture, design decisions, and implementation p
 
 ```plaintext
 ┌─────────────────────────────────────────────────────────┐
-│  Consumer Code (Repository, Application)               │
+│  Consumer Code (Repository, Application)                │
 └─────────────────────────────────────────────────────────┘
                           │
                           ▼
@@ -198,7 +198,60 @@ export type FetchPrototypesResult =
 
 **Decision**: Type safety outweighs convenience for library code
 
-### 3. Normalization Layer
+### 4. User-Agent Management
+
+**Purpose**: Identify requests from promidas library for API provider analytics and debugging
+
+**Implementation**:
+
+```typescript
+constructor(config?: ProtopediaApiCustomClientConfig | null) {
+    const { protoPediaApiClientOptions = {}, logger, logLevel } = config ?? {};
+
+    // Set ProtopediaApiCustomClient User-Agent if not provided
+    const userAgent =
+        protoPediaApiClientOptions.userAgent ??
+        `ProtopediaApiCustomClient/${VERSION} (promidas)`;
+
+    this.#client = createProtoPediaClient({
+        ...protoPediaApiClientOptions,
+        userAgent,
+    });
+}
+```
+
+**User-Agent Format**:
+
+```text
+ProtopediaApiCustomClient/{version} (promidas)
+```
+
+Example: `ProtopediaApiCustomClient/0.9.0 (promidas)`
+
+**Design Rationale**:
+
+- **Automatic**: No configuration required from users
+- **Identifiable**: API provider can track promidas library usage
+- **Versioned**: Includes library version for debugging
+- **Overridable**: Users can provide custom User-Agent if needed
+
+**Benefits**:
+
+- API provider can identify requests from promidas library
+- Enables analytics on library adoption and usage patterns
+- Helps with troubleshooting library-specific issues
+- Default behavior works out-of-the-box
+- Power users retain full control via explicit configuration
+
+**Comparison with SDK Default**:
+
+| Source                         | User-Agent                                    |
+| ------------------------------ | --------------------------------------------- |
+| SDK (protopedia-api-v2-client) | `ProtoPedia API Ver 2.0 Node.js Client/3.0.0` |
+| Promidas (auto-set)            | `ProtopediaApiCustomClient/0.9.0 (promidas)`  |
+| Custom (user-provided)         | `MyApp/1.0.0` (or any custom value)           |
+
+### 5. Normalization Layer
 
 **Purpose**: Transform API responses into application-friendly format
 
@@ -239,7 +292,7 @@ export type FetchPrototypesResult =
 - Better type inference
 - No ad-hoc transformations scattered in code
 
-### 4. Error Message Construction
+### 6. Error Message Construction
 
 **Purpose**: User-friendly error messages with actionable context
 
