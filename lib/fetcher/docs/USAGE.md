@@ -168,18 +168,20 @@ const client = new ProtopediaApiCustomClient({
         token: process.env.PROTOPEDIA_API_V2_TOKEN,
     },
     progressLog: false, // Disable automatic logging
-    onProgressStart: (estimatedTotal, limit, prepareTime) => {
-        console.log(
-            `Starting download: ${limit} items, ~${estimatedTotal} bytes`,
-        );
-        console.log(`Preparation took ${prepareTime}s`);
-    },
-    onProgress: (received, total, percentage) => {
-        process.stdout.write(`\rProgress: ${percentage.toFixed(1)}%`);
-    },
-    onProgressComplete: (received, estimatedTotal, downloadTime, totalTime) => {
-        console.log(`\nCompleted: ${received} bytes in ${downloadTime}s`);
-        console.log(`Total time (including preparation): ${totalTime}s`);
+    progressCallback: {
+        onStart: (estimatedTotal, limit, prepareTime) => {
+            console.log(
+                `Starting download: ${limit} items, ~${estimatedTotal} bytes`,
+            );
+            console.log(`Preparation took ${prepareTime}s`);
+        },
+        onProgress: (received, total, percentage) => {
+            process.stdout.write(`\rProgress: ${percentage.toFixed(1)}%`);
+        },
+        onComplete: (received, estimatedTotal, downloadTime, totalTime) => {
+            console.log(`\nCompleted: ${received} bytes in ${downloadTime}s`);
+            console.log(`Total time (including preparation): ${totalTime}s`);
+        },
     },
 });
 

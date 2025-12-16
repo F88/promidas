@@ -407,9 +407,11 @@ export type ProtopediaApiCustomClientConfig = {
     logger?: Logger;
     logLevel?: LogLevel;
     progressLog?: boolean; // Default: true
-    onProgressStart?: ProgressCallbacks['onStart'];
-    onProgress?: ProgressCallbacks['onProgress'];
-    onProgressComplete?: ProgressCallbacks['onComplete'];
+    progressCallback?: {
+        onStart?: ProgressCallbacks['onStart'];
+        onProgress?: ProgressCallbacks['onProgress'];
+        onComplete?: ProgressCallbacks['onComplete'];
+    };
 };
 ```
 
