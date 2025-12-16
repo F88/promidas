@@ -342,12 +342,12 @@ if (!result.ok) {
 
 ### Error Categories
 
-| Error Type       | Source                    | Handling Strategy                   |
-| ---------------- | ------------------------- | ----------------------------------- |
-| Network Error    | Connection failure        | Return as Result (`ok: false`)      |
-| HTTP Error       | 4xx, 5xx status           | Return with status code             |
-| API Error        | ProtoPedia error response | Return with details object          |
-| Validation Error | Invalid parameters        | Let protopedia-api-v2-client handle |
+| Error Type       | Source                    | Handling Strategy                     |
+| ---------------- | ------------------------- | ------------------------------------- |
+| Network Error    | Connection failure        | Caught by try/catch, converted to Result |
+| HTTP Error       | 4xx, 5xx status           | Caught by try/catch, converted to Result |
+| API Error        | ProtoPedia error response | Caught by try/catch, converted to Result |
+| Validation Error | Invalid parameters        | Let protopedia-api-v2-client handle   |
 
 ### Error Flow
 
@@ -550,6 +550,11 @@ export function normalizeCount(
 ### Normalization Testing Strategy
 
 **Approach**: Dedicated test suite for each normalizer function
+
+**Test Files**:
+
+- `lib/fetcher/__tests__/utils/string-parsers.test.ts`
+- `lib/fetcher/__tests__/utils/normalize-protopedia-timestamp.test.ts`
 
 **Coverage**:
 

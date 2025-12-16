@@ -230,7 +230,7 @@ const result = await client.fetchPrototypes(params);
 
 if (!result.ok) {
     // Construct user-friendly message
-    const displayMessage = constructDisplayMessage(result.error, result.status);
+    const displayMessage = constructDisplayMessage(result);
     console.error(displayMessage);
 
     // Access error details
@@ -243,9 +243,9 @@ if (!result.ok) {
 
 | Error Type    | `result.ok` | `result.status` | `result.details` |
 | ------------- | ----------- | --------------- | ---------------- |
-| Network Error | `false`     | `undefined`     | `undefined`      |
-| HTTP Error    | `false`     | `400-599`       | May be present   |
-| API Error     | `false`     | `200-299`       | Present          |
+| Network Error | `false`     | `undefined`     | Present          |
+| HTTP Error    | `false`     | `400-599`       | Present          |
+| API Error     | `false`     | `200-599`       | Present          |
 | Success       | `true`      | N/A             | N/A              |
 
 ### Handling Specific Errors
@@ -380,7 +380,9 @@ const customLogger: Logger = {
 };
 
 const client = new ProtopediaApiCustomClient({
-    token: process.env.PROTOPEDIA_API_V2_TOKEN,
+    protoPediaApiClientOptions: {
+        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+    },
     logger: customLogger,
 });
 ```
@@ -392,7 +394,7 @@ const client = new ProtopediaApiCustomClient({
 ```typescript
 type FetchPrototypesResult =
     | { ok: true; data: NormalizedPrototype[] }
-    | { ok: false; error: string; status?: number; details?: ApiErrorDetails };
+    | { ok: false; error: string; status?: number; details: ApiErrorDetails };
 ```
 
 ### ProtoPediaApiClientOptions
@@ -408,6 +410,6 @@ interface ProtoPediaApiClientOptions {
 
 ---
 
-**Document Version**: 2.0.0
-**Last Updated**: 2025-12-10
+**Document Version**: 0.9.0
+**Last Updated**: 2025-12-16
 **Related Documents**: DESIGN.md
