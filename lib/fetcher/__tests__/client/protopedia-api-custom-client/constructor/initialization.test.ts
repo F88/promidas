@@ -31,10 +31,15 @@ describe('ProtopediaApiCustomClient - Constructor - Initialization', () => {
       protoPediaApiClientOptions: { token, baseUrl },
     });
 
-    expect(createProtoPediaClientMock).toHaveBeenCalledWith({
-      token,
-      baseUrl,
-    });
+    expect(createProtoPediaClientMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        token,
+        baseUrl,
+        userAgent: expect.stringMatching(
+          /^ProtopediaApiCustomClient\/\d+\.\d+\.\d+ \(promidas\)$/,
+        ),
+      }),
+    );
     expect(client).toBeInstanceOf(ProtopediaApiCustomClient);
   });
 
@@ -54,11 +59,16 @@ describe('ProtopediaApiCustomClient - Constructor - Initialization', () => {
       },
     });
 
-    expect(createProtoPediaClientMock).toHaveBeenCalledWith({
-      token,
-      baseUrl,
-      logLevel,
-    });
+    expect(createProtoPediaClientMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        token,
+        baseUrl,
+        logLevel,
+        userAgent: expect.stringMatching(
+          /^ProtopediaApiCustomClient\/\d+\.\d+\.\d+ \(promidas\)$/,
+        ),
+      }),
+    );
     expect(client).toBeInstanceOf(ProtopediaApiCustomClient);
   });
 
@@ -68,7 +78,13 @@ describe('ProtopediaApiCustomClient - Constructor - Initialization', () => {
 
     const client = new ProtopediaApiCustomClient();
 
-    expect(createProtoPediaClientMock).toHaveBeenCalledWith({});
+    expect(createProtoPediaClientMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userAgent: expect.stringMatching(
+          /^ProtopediaApiCustomClient\/\d+\.\d+\.\d+ \(promidas\)$/,
+        ),
+      }),
+    );
     expect(client).toBeInstanceOf(ProtopediaApiCustomClient);
   });
 
@@ -86,10 +102,15 @@ describe('ProtopediaApiCustomClient - Constructor - Initialization', () => {
       },
     });
 
-    expect(createProtoPediaClientMock).toHaveBeenCalledWith({
-      fetch: customFetch,
-      timeoutMs,
-    });
+    expect(createProtoPediaClientMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fetch: customFetch,
+        timeoutMs,
+        userAgent: expect.stringMatching(
+          /^ProtopediaApiCustomClient\/\d+\.\d+\.\d+ \(promidas\)$/,
+        ),
+      }),
+    );
     expect(client).toBeInstanceOf(ProtopediaApiCustomClient);
   });
 

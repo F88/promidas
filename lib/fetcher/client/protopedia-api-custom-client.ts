@@ -20,6 +20,7 @@ import {
 } from '../../logger/index.js';
 import type { NormalizedPrototype } from '../../types/index.js';
 import { sanitizeDataForLogging } from '../../utils/index.js'; // 追加
+import { VERSION } from '../../version.js';
 import type {
   NetworkFailure,
   UpstreamPrototype,
@@ -93,9 +94,17 @@ export class ProtopediaApiCustomClient {
       sanitizeDataForLogging(config),
     );
 
+    // Set ProtopediaApiCustomClient User-Agent if not provided
+    const userAgent =
+      protoPediaApiClientOptions.userAgent ??
+      `ProtopediaApiCustomClient/${VERSION} (promidas)`;
+
     // Create underlying protopedia-api-v2-client
     // Note: SDK client logging is controlled via protoPediaApiClientOptions
-    this.#client = createProtoPediaClient(protoPediaApiClientOptions ?? {});
+    this.#client = createProtoPediaClient({
+      ...protoPediaApiClientOptions,
+      userAgent,
+    });
   }
 
   /**
