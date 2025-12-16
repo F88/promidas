@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Logger Output Format**: Changed ConsoleLogger output format to prefix-based style
+    - Before: `message, { level: 'info', meta: ... }`
+    - After: `[INFO] message` (with optional metadata if provided)
+    - Benefits:
+        - Log level is always visible at the start of each message
+        - No redundant output when metadata is undefined
+        - Cleaner console output for better readability
+    - All 38 tests updated to reflect the new format
+    - Documentation updated in DESIGN.md and USAGE.md
+
+    ```typescript
+    const logger = new ConsoleLogger('info');
+    
+    // No metadata - clean output
+    logger.info('Application started');
+    // Output: [INFO] Application started
+    
+    // With object metadata - level not duplicated
+    logger.info('User logged in', { userId: 123 });
+    // Output: [INFO] User logged in { userId: 123 }
+    
+    // With primitive metadata - passed directly
+    logger.error('Request failed', 500);
+    // Output: [ERROR] Request failed 500
+    ```
+
 ### Added
 
 - **User-Agent Support in ProtopediaApiCustomClient**: Automatically sets library-specific User-Agent for API requests (#45)
