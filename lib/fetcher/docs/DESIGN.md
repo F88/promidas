@@ -324,20 +324,19 @@ this.#client = createProtoPediaClient({
 
 ```typescript
 // Constants
-const BYTES_PER_PROTOTYPE = 267;
-const OVERHEAD_BYTES = 20_000;
+const AVERAGE_PROTOTYPE_SIZE = 2670;
 
 // Estimation function
 function estimateDownloadSize(limit: number): number {
-    return limit * BYTES_PER_PROTOTYPE + OVERHEAD_BYTES;
+    return limit * AVERAGE_PROTOTYPE_SIZE;
 }
 ```
 
 **Rationale**:
 
-- Average prototype size: ~267 bytes (empirically measured)
-- API response overhead: ~20KB (headers, metadata)
-- Conservative estimate to avoid progress bar exceeding 100%
+- Average prototype size: ~2670 bytes per item (empirically measured from 5,000 samples)
+- Based on actual ProtoPedia API data: 13,350,369 bytes / 5,000 items = 2670 bytes/item
+- Simple linear calculation without overhead estimation for accuracy
 
 ### Callback Sequence
 
