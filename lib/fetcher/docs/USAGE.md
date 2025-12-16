@@ -25,7 +25,6 @@ This document describes the fetcher layer, data normalization, and integration w
 - [Normalized Data Model](#normalized-data-model)
 - [Error Handling](#error-handling)
 - [Logger Configuration](#logger-configuration)
-- [Integration Examples](#integration-examples)
 
 ## Quick Start
 
@@ -371,7 +370,7 @@ processPrototypes(result.data);
 
 The `result.error` field contains a formatted error message:
 
-````typescript
+```typescript
 const result = await client.fetchPrototypes(params);
 
 if (!result.ok) {
@@ -390,6 +389,7 @@ if (!result.ok) {
         console.error(`HTTP ${result.status}`);
     }
 }
+```
 
 ## Logger Configuration
 
