@@ -426,7 +426,7 @@ const client3 = new ProtopediaApiCustomClient({
     },
     logger, // Uses logger's existing level
 });
-````
+```
 
 ### Logger Levels
 
