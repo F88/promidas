@@ -175,7 +175,7 @@ IDベースの検索は内部インデックスによりO(1):
 
 ```typescript
 // 高速 - O(1)
-const prototype = await repo.getPrototypeFromSnapshotById(123);
+const prototype = await repo.getPrototypeFromSnapshotByPrototypeId(123);
 ```
 
 ### メモリ効率

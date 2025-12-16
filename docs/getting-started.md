@@ -174,7 +174,7 @@ async function main() {
     const random = await repo.getRandomPrototypeFromSnapshot();
     if (random) {
         console.log(`\nRandom prototype:`);
-        console.log(`  ID: ${random.prototypeId}`);
+        console.log(`  ID: ${random.id}`);
         console.log(`  Name: ${random.prototypeNm}`);
         console.log(`  Tags: ${random.tags.join(', ')}`);
     }
@@ -326,7 +326,7 @@ await repo.setupSnapshot({ limit: 1000 });
 
 // Snapshotからデータ取得
 const allData = await repo.getAllFromSnapshot();
-const byId = await repo.getPrototypeFromSnapshotById(123);
+const byId = await repo.getPrototypeFromSnapshotByPrototypeId(123);
 const random = await repo.getRandomPrototypeFromSnapshot();
 ```
 
@@ -412,8 +412,8 @@ Snapshotの状態を確認できます:
 const stats = repo.getStats();
 console.log(`Size: ${stats.size}`);
 console.log(`Is expired: ${stats.isExpired}`);
-console.log(`Last updated: ${stats.lastUpdatedAt}`);
-console.log(`Expires at: ${stats.expiresAt}`);
+console.log(`Cached at: ${stats.cachedAt}`);
+console.log(`Remaining TTL: ${stats.remainingTtlMs}ms`);
 ```
 
 ## 次のステップ
