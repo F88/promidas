@@ -3,9 +3,10 @@
 [![CI](https://github.com/F88/promidas/actions/workflows/ci.yml/badge.svg)](https://github.com/F88/promidas/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/F88/promidas/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/F88/promidas/actions/workflows/github-code-scanning/codeql)
 [![Publish package to GitHub Packages](https://github.com/F88/promidas/actions/workflows/publish-package-to-github-packages.yml/badge.svg)](https://github.com/F88/promidas/actions/workflows/publish-package-to-github-packages.yml)
+[![codecov](https://codecov.io/github/F88/promidas/graph/badge.svg)](https://codecov.io/github/F88/promidas)
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/F88/promidas)
-[![codecov](https://codecov.io/github/F88/promidas/graph/badge.svg)](https://codecov.io/github/F88/promidas)
+[![View Code Wiki](https://www.gstatic.com/_/boq-sdlc-agents-ui/_/r/YUi5dj2UWvE.svg)](https://codewiki.google/github.com/f88/promidas)
 
 ProtoPedia Resource Organized Management In-memory Data Access Store
 
