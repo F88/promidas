@@ -88,24 +88,6 @@ export interface ProtopediaInMemoryRepository {
 }
 ```
 
-The factory type is:
-
-```ts
-import type { PrototypeInMemoryStoreConfig } from '../store/index.js';
-
-export interface CreatePromidasRepositoryOptions {
-    storeConfig?: PrototypeInMemoryStoreConfig;
-    apiClientOptions?: ProtopediaApiClientOptions;
-}
-
-export type CreatePromidasRepository = (
-    options?: CreatePromidasRepositoryOptions,
-) => ProtopediaInMemoryRepository;
-```
-
-`ProtopediaApiClientOptions` contains options for the underlying API client,
-including authentication token and optional custom logger configuration.
-
 ## Typical usage pattern
 
 ### 1. Create a repository instance
