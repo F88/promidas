@@ -62,16 +62,16 @@ async function main() {
     process.exit(1);
   }
 
-  // Test 1: Create repository with custom TTL (60 seconds)
-  console.log('=== Test 1: Initialize repository with custom TTL ===');
+  // Test 1: Create repository
+  console.log('=== Test 1: Initialize repository ===');
 
-  // Builder approach
+  // Builder approach (60s TTL for testing)
   // const repo = createRepositoryWithBuilder(token);
 
-  // Factory approach
+  // Factory approach (30min TTL - production-ready)
   const repo = createRepositoryWithFactory(token);
 
-  console.log('✓ Repository created with 60s TTL\n');
+  console.log('✓ Repository created\n');
 
   // Test 2: Setup initial snapshot with 5 prototypes
   console.log('=== Test 2: Setup snapshot (fetch 5 prototypes) ===');
