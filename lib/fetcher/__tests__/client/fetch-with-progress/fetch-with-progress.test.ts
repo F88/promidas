@@ -96,6 +96,100 @@ describe('createFetchWithProgress', () => {
       expect(onProgress).toHaveBeenCalled();
       expect(onProgressComplete).toHaveBeenCalled();
     });
+
+    it('calls onProgressStart callback even without onProgress', async () => {
+      const logger = createConsoleLogger();
+      const onProgressStart = vi.fn();
+
+      const customFetch = createFetchWithProgress({
+        logger,
+        enableProgressLog: false,
+        onProgressStart,
+      });
+
+      const mockBody = 'test';
+      const mockResponse = new Response(mockBody, {
+        status: 200,
+        headers: { 'Content-Length': String(mockBody.length) },
+      });
+
+      global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
+      const response = await customFetch(
+        'https://api.example.com/data?limit=100',
+      );
+      await response.text();
+
+      expect(onProgressStart).toHaveBeenCalled();
+      expect(onProgressStart).toHaveBeenCalledWith(
+        expect.any(Number), // estimatedTotal
+        100, // limit
+        expect.any(Number), // prepareTime (number, not string)
+      );
+    });
+
+    it('calls onProgressComplete callback even without onProgress', async () => {
+      const logger = createConsoleLogger();
+      const onProgressComplete = vi.fn();
+
+      const customFetch = createFetchWithProgress({
+        logger,
+        enableProgressLog: false,
+        onProgressComplete,
+      });
+
+      const mockBody = 'test';
+      const mockResponse = new Response(mockBody, {
+        status: 200,
+        headers: { 'Content-Length': String(mockBody.length) },
+      });
+
+      global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
+      const response = await customFetch(
+        'https://api.example.com/data?limit=100',
+      );
+      await response.text();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(onProgressComplete).toHaveBeenCalled();
+      expect(onProgressComplete).toHaveBeenCalledWith(
+        4, // received
+        expect.any(Number), // estimatedTotal
+        expect.any(Number), // downloadTime (number, not string)
+        expect.any(Number), // totalTime (number, not string)
+      );
+    });
+
+    it('calls onProgressStart and onProgressComplete without onProgress', async () => {
+      const logger = createConsoleLogger();
+      const onProgressStart = vi.fn();
+      const onProgressComplete = vi.fn();
+
+      const customFetch = createFetchWithProgress({
+        logger,
+        enableProgressLog: false,
+        onProgressStart,
+        onProgressComplete,
+      });
+
+      const mockBody = 'test';
+      const mockResponse = new Response(mockBody, {
+        status: 200,
+        headers: { 'Content-Length': String(mockBody.length) },
+      });
+
+      global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
+      const response = await customFetch(
+        'https://api.example.com/data?limit=100',
+      );
+      await response.text();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(onProgressStart).toHaveBeenCalled();
+      expect(onProgressComplete).toHaveBeenCalled();
+    });
   });
 
   describe('response handling', () => {

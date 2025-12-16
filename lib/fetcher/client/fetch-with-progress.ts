@@ -239,11 +239,6 @@ export function createFetchWithProgress(
     const bodyStartTime = Date.now();
     const prepareTime = ((bodyStartTime - downloadStartTime) / 1000).toFixed(2);
 
-    // If no progress tracking is needed, return response as-is
-    if (!enableProgressLog && !onProgress) {
-      return response;
-    }
-
     // Get Content-Length header to calculate progress
     const contentLength = response.headers.get('Content-Length');
     let total = contentLength ? parseInt(contentLength, 10) : 0;
