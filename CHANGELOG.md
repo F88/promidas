@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         - Pre-configured: 10-minute TTL, 30-second timeout, minimal logging (errors/warnings only)
         - User-Agent: `PromidasForServer/${VERSION}`
     - Both factories use 30 MiB data size limit (`LIMIT_DATA_SIZE_BYTES`)
-    - Comprehensive test coverage: 44 new tests with builder spy-based validation
+    - Comprehensive test coverage: 96 tests (59 factory + 37 builder) with 100% coverage on factory.ts and builder.ts
     - Exported from main module: `import { createPromidasForLocal, createPromidasForServer } from '@f88/promidas'`
 
     ```typescript
