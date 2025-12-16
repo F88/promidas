@@ -355,37 +355,45 @@ export class PrototypeInMemoryStore {
    * internal state cannot be corrupted by external mutations of the array.
    * However, the prototype objects themselves are not cloned. Callers must not
    * mutate the prototype objects after passing them to this method.
+   *
+   * Size calculation is performed AFTER deduplication to ensure accurate size checking.
+   * If duplicate IDs are present in the input array, only the last occurrence is kept.
    */
   setAll(prototypes: NormalizedPrototype[]): { dataSizeBytes: number } | null {
-    // Validate payload size before storing
-    const dataSizeBytes = this.estimateSize(prototypes);
-
-    if (dataSizeBytes > this.maxDataSizeBytes) {
-      this.logger.warn('Snapshot skipped: data exceeds maximum size', {
-        dataSizeBytes,
-        maxDataSizeBytes: this.maxDataSizeBytes,
-        count: prototypes.length,
-      });
-      return null;
-    }
-
-    // Build O(1) lookup index by prototype ID
+    // Build O(1) lookup index by prototype ID first to deduplicate
     // Note: If duplicate IDs are present in the input array, the last one wins.
-    this.prototypeIdIndex = new Map(
+    const uniqueMap = new Map(
       prototypes.map((prototype) => [prototype.id, prototype]),
     );
 
     // Warn if duplicate IDs were detected in the input array
-    if (this.prototypeIdIndex.size !== prototypes.length) {
+    if (uniqueMap.size !== prototypes.length) {
       this.logger.warn('Duplicate prototype IDs detected in snapshot', {
         inputCount: prototypes.length,
-        storedCount: this.prototypeIdIndex.size,
+        storedCount: uniqueMap.size,
       });
     }
 
     // Reconstruct prototypes array from the map to ensure consistency and uniqueness by ID.
     // This will also ensure that `getAll().length` matches `this.size`.
-    this.prototypes = Array.from(this.prototypeIdIndex.values());
+    const uniquePrototypes = Array.from(uniqueMap.values());
+
+    // Validate payload size AFTER deduplication
+    const dataSizeBytes = this.estimateSize(uniquePrototypes);
+
+    if (dataSizeBytes > this.maxDataSizeBytes) {
+      this.logger.warn('Snapshot skipped: data exceeds maximum size', {
+        dataSizeBytes,
+        maxDataSizeBytes: this.maxDataSizeBytes,
+        inputCount: prototypes.length,
+        uniqueCount: uniqueMap.size,
+      });
+      return null;
+    }
+
+    // Store the deduplicated data
+    this.prototypeIdIndex = uniqueMap;
+    this.prototypes = uniquePrototypes;
 
     // Update cache metadata
     this.cachedAt = new Date();
