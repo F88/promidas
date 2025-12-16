@@ -409,24 +409,6 @@ await repo.setupSnapshot({ limit: 10000 });
 
 ### パターン5: カスタムロガー
 
-**ファクトリ関数:**
-
-```typescript
-import { ConsoleLogger } from '@f88/promidas/logger';
-import { PromidasRepositoryBuilder } from '@f88/promidas';
-
-const logger = new ConsoleLogger('debug');
-
-const repo = new PromidasRepositoryBuilder()
-    .setLogger(logger)
-    .setApiClientConfig({
-        protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_V2_TOKEN,
-        },
-    })
-    .build();
-```
-
 **Builder:**
 
 ```typescript

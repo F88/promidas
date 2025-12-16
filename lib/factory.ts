@@ -21,8 +21,7 @@
  *
  * export function createMyCustomRepository(): ProtopediaInMemoryRepository {
  *   return new PromidasRepositoryBuilder()
- *     .setDefaultLogLevel('warn')
- *     .setStoreConfig({ ttlMs: 60 * 60 * 1000 }) // 1 hour TTL
+ *     .setStoreConfig({ ttlMs: 60 * 60 * 1000, logLevel: 'warn' }) // 1 hour TTL
  *     .build();
  * }
  * ```
@@ -32,6 +31,7 @@
 
 import { PromidasRepositoryBuilder } from './builder.js';
 import type { ProtopediaApiCustomClientConfig } from './fetcher/index.js';
+import { ConsoleLogger } from './logger/console-logger.js';
 import type { LogLevel } from './logger/index.js';
 import type {
   ProtopediaInMemoryRepository,
@@ -109,11 +109,18 @@ export function createPromidasForLocal(config: {
   // Note: 'info' level records normal operations for development monitoring
   const logLevel: LogLevel = config.logLevel ?? 'info';
 
+  // Create a shared logger instance for memory efficiency
+  //
+  // Design Decision: We create one ConsoleLogger and share it across all components
+  // instead of passing logLevel to each component's config. This reduces memory
+  // footprint and ensures consistent logging behavior across the repository.
+  const logger = new ConsoleLogger(logLevel);
+
   // Configure store with default TTL for local development
   const storeConfig: PrototypeInMemoryStoreConfig = {
     ttlMs: 30 * 60 * 1000, // 30 minutes
     maxDataSizeBytes: STORE_MAX_DATA_SIZE_BYTES_LIMIT, // 30 MiB
-    logLevel,
+    logger, // Shared logger - logLevel is NOT set because logger already contains it
   };
   builder.setStoreConfig(storeConfig);
 
@@ -130,12 +137,14 @@ export function createPromidasForLocal(config: {
       timeoutMs: 90 * 1_000, // 90 seconds (accommodates 1-2 Mbps)
       userAgent: `PromidasForLocal/${VERSION}`,
     },
-    logLevel,
+    logger, // Shared logger - logLevel is NOT set because logger already contains it
   };
   builder.setApiClientConfig(apiClientConfig);
 
   // Configure repository
-  const repositoryConfig: ProtopediaInMemoryRepositoryConfig = {};
+  const repositoryConfig: ProtopediaInMemoryRepositoryConfig = {
+    logger, // Shared logger - logLevel is NOT set because logger already contains it
+  };
   builder.setRepositoryConfig(repositoryConfig);
 
   // Build and return the repository instance
@@ -217,11 +226,18 @@ export function createPromidasForServer(config?: {
   // Note: 'warn' level is recommended for server environments to reduce log volume
   const logLevel: LogLevel = config?.logLevel ?? 'warn';
 
+  // Create a shared logger instance for memory efficiency
+  //
+  // Design Decision: We create one ConsoleLogger and share it across all components
+  // instead of passing logLevel to each component's config. This reduces memory
+  // footprint and ensures consistent logging behavior across the repository.
+  const logger = new ConsoleLogger(logLevel);
+
   // Configure store for server environments (shorter TTL for memory efficiency)
   const storeConfig: PrototypeInMemoryStoreConfig = {
     ttlMs: 10 * 60 * 1000, // 10 minutes
     maxDataSizeBytes: STORE_MAX_DATA_SIZE_BYTES_LIMIT, // 30 MiB
-    logLevel,
+    logger, // Shared logger - logLevel is NOT set because logger already contains it
   };
   builder.setStoreConfig(storeConfig);
 
@@ -232,12 +248,14 @@ export function createPromidasForServer(config?: {
       timeoutMs: 30 * 1_000, // 30 seconds
       userAgent: `PromidasForServer/${VERSION}`,
     },
-    logLevel,
+    logger, // Shared logger - logLevel is NOT set because logger already contains it
   };
   builder.setApiClientConfig(apiClientConfig);
 
   // Configure repository
-  const repositoryConfig: ProtopediaInMemoryRepositoryConfig = {};
+  const repositoryConfig: ProtopediaInMemoryRepositoryConfig = {
+    logger, // Shared logger - logLevel is NOT set because logger already contains it
+  };
   builder.setRepositoryConfig(repositoryConfig);
 
   // Build and return the repository instance

@@ -385,58 +385,6 @@ const client = new ProtopediaApiCustomClient({
 });
 ```
 
-### Shared Logger Across Components
-
-```typescript
-import { createConsoleLogger } from '@f88/promidas/logger';
-import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
-import { PromidasRepositoryBuilder } from '@f88/promidas';
-
-// Single logger for all components
-const logger = createConsoleLogger();
-
-const apiClient = new ProtopediaApiCustomClient({
-    token: process.env.PROTOPEDIA_API_V2_TOKEN,
-    logger,
-    logLevel: 'info',
-});
-
-const repository = new PromidasRepositoryBuilder()
-    .setLogger(logger)
-    .setApiClient(apiClient)
-    .build();
-```
-
-## Integration Examples
-
-### With Repository Layer
-
-```typescript
-import { PromidasRepositoryBuilder } from '@f88/promidas';
-import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
-
-// Option 1: Let repository create client
-const repository1 = new PromidasRepositoryBuilder()
-    .setApiClientConfig({
-        protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_V2_TOKEN,
-        },
-    })
-    .build();
-
-// Option 2: Provide custom client
-const customClient = new ProtopediaApiCustomClient({
-    protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
-        baseUrl: 'https://custom-api.example.com',
-    },
-});
-
-const repository2 = new PromidasRepositoryBuilder()
-    .setApiClient(customClient)
-    .build();
-```
-
 ## Type Definitions
 
 ### FetchPrototypesResult

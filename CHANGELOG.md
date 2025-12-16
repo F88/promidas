@@ -151,11 +151,9 @@ const result = await client.fetchPrototypes({ limit: 100 });
 
 - **PromidasRepositoryBuilder**: Introduced fluent builder interface for constructing repository instances with step-by-step configuration (#32)
     - Provides alternative to factory function for complex configuration scenarios
-    - Supports shared logger pattern for memory efficiency across all components
-    - Log level priority management (repository > store > apiClient > default)
     - Deep merge support for multiple configuration calls
     - Configuration immutability protection
-    - Comprehensive test coverage with 209 tests covering all configuration scenarios
+    - Comprehensive test coverage covering all configuration scenarios
     - Exported from main module: `import { PromidasRepositoryBuilder } from '@f88/promidas'`
 
     ```typescript

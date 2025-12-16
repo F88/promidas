@@ -313,26 +313,6 @@ describe('MyService', () => {
 
 ## Integration Examples
 
-### With Repository
-
-```typescript
-import { PromidasRepositoryBuilder } from '@f88/promidas';
-import { createConsoleLogger } from '@f88/promidas/logger';
-
-const logger = createConsoleLogger();
-
-const repository = new PromidasRepositoryBuilder()
-    .setLogger(logger)
-    .setStoreConfig({ logLevel: 'warn' })
-    .setApiClientConfig({
-        protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_V2_TOKEN,
-        },
-        logLevel: 'debug',
-    })
-    .build();
-```
-
 ### With Fetcher
 
 ```typescript
@@ -361,28 +341,6 @@ const client = createProtoPediaClient({
     logger,
     logLevel: 'debug',
 });
-```
-
-### Shared Logger Across Components
-
-```typescript
-import { createConsoleLogger } from '@f88/promidas/logger';
-import { PromidasRepositoryBuilder } from '@f88/promidas';
-import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
-
-// Single logger instance
-const logger = createConsoleLogger();
-
-// Shared across all components
-const apiClient = createProtopediaApiCustomClient({
-    token: process.env.PROTOPEDIA_API_V2_TOKEN,
-    logger,
-});
-
-const repository = new PromidasRepositoryBuilder()
-    .setLogger(logger)
-    .setApiClient(apiClient)
-    .build();
 ```
 
 ## Best Practices

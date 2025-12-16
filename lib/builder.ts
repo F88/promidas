@@ -61,10 +61,6 @@ export type {
  * - If you don't provide a logger, a new ConsoleLogger is created with the specified logLevel (default: 'info')
  * - Each component can have different loggers and log levels for maximum flexibility
  *
- * **Shared Logger Pattern:**
- * If you want to share a logger across components, create it once and pass it to all configs.
- * This is typically handled by factory functions for common use cases.
- *
  * @example
  * ```typescript
  * // Basic usage with default settings (each component gets independent logger)
@@ -83,14 +79,6 @@ export type {
  *   .setStoreConfig({ logLevel: 'error' })
  *   .setApiClientConfig({ logLevel: 'warn' })
  *   .setRepositoryConfig({ logLevel: 'debug' })
- *   .build();
- *
- * // Share a logger across components
- * const sharedLogger = new ConsoleLogger('info');
- * const repo = new PromidasRepositoryBuilder()
- *   .setStoreConfig({ logger: sharedLogger })
- *   .setApiClientConfig({ logger: sharedLogger })
- *   .setRepositoryConfig({ logger: sharedLogger })
  *   .build();
  * ```
  */
