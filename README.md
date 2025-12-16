@@ -11,6 +11,28 @@ ProtoPedia Resource Organized Management In-memory Data Access Store
 
 A toolset library for ProtoPedia providing independent store and fetcher components, and a high-level repository for easy data management.
 
+## クイックスタート
+
+**[📖 ドキュメントサイト](https://f88.github.io/promidas/)** - 使い方とサンプルコード
+
+**初めての方へ:**
+
+1. [Getting Started](https://f88.github.io/promidas/getting-started.html) - インストールと最初の一歩
+2. [Use Cases](https://f88.github.io/promidas/usecase.html) - あなたの利用シーンを選ぶ
+3. [ローカル開発ガイド](https://f88.github.io/promidas/usecase-local.html) - スクリプトとデータ分析
+
+**今すぐ試す:**
+
+```bash
+npm install github:F88/promidas protopedia-api-v2-client
+export PROTOPEDIA_API_V2_TOKEN="your-token-here"
+npx tsx scripts/try-protopedia-repository.ts
+```
+
+**デモサイト:** [PROMIDAS Demo](https://f88.github.io/PROMIDAS-demo/) (開発中)
+
+---
+
 ## Project Overview
 
 This repository provides a modular toolset for managing ProtoPedia data, consisting of independent components and a high-level repository:
@@ -49,24 +71,18 @@ This repository provides a modular toolset for managing ProtoPedia data, consist
 
 6. **`lib/repository`** - Ready-to-use Repository (`ProtopediaInMemoryRepository`)
     - Integrates `lib/store` and `lib/fetcher` into a single easy-to-use package
-    - Provides `createPromidasRepository` factory (in top-level `lib/factory.ts`)
     - Best for most use cases requiring caching and automatic refreshing
     - [📘 README](lib/repository/README.md) | [Usage Guide](lib/repository/docs/USAGE.md) | [Design Document](lib/repository/docs/DESIGN.md)
 
+7. **High-Level APIs** - Factory Functions and Builder
+    - **Factory Functions** (`lib/factory.ts`): Pre-configured for common scenarios
+        - `createPromidasForLocal()` - Optimized for local/development (30min TTL, 90s timeout, verbose logging)
+        - `createPromidasForServer()` - Optimized for server/production (10min TTL, 30s timeout, minimal logging)
+    - **Builder Pattern** (`lib/builder.ts`): Step-by-step configuration for advanced use cases
+        - `PromidasRepositoryBuilder` - Fluent API for complex configurations
+    - Exported from main module: `import { createPromidasForLocal, PromidasRepositoryBuilder } from '@f88/promidas'`
+
 This project extracts and generalizes the data-fetching and in-memory data management capabilities originally implemented in [F88/mugen-protopedia](https://github.com/F88/mugen-protopedia/), providing them as a standalone, reusable library for various applications.
-
-## 📚 Documentation
-
-**[📖 Documentation Index](docs/index.md)** - Complete documentation guide
-
-For first-time users:
-
-1. **[Use Cases](docs/usecase.md)** - Understand execution environments and security
-2. **[Getting Started](docs/getting-started.md)** - Installation and basic usage
-
-## 🌐 Demo
-
-**[PROMIDAS Demo](https://f88.github.io/PROMIDAS-demo/)** - Live demonstration (Work in Progress)
 
 ## ProtoPedia API Ver 2.0
 
@@ -81,89 +97,6 @@ Please refer to the API documentation for details:
 This library fully supports [protopedia-api-v2-client](https://www.npmjs.com/package/protopedia-api-v2-client) v3.0.0 and later.
 
 For details on how to integrate with `protopedia-api-v2-client` and use custom fetchers (e.g. for Next.js), please refer to [`lib/fetcher/docs/USAGE.md`](lib/fetcher/docs/USAGE.md).
-
-## Quick Start
-
-### Installation
-
-```bash
-npm install github:F88/promidas protopedia-api-v2-client
-```
-
-### Usage
-
-#### Option 1: Factory Functions (Recommended for Beginners)
-
-Pre-configured factory functions for common use cases:
-
-**For Local/Development:**
-
-```typescript
-import { createPromidasForLocal } from '@f88/promidas';
-
-const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
-    logLevel: 'info', // optional
-});
-
-await repo.setupSnapshot({ limit: 100 });
-const data = await repo.getAllFromSnapshot();
-```
-
-**For Server/Production:**
-
-```typescript
-import { createPromidasForServer } from '@f88/promidas';
-
-// Requires PROTOPEDIA_API_V2_TOKEN environment variable
-const repo = createPromidasForServer({
-    logLevel: 'warn', // optional
-});
-
-await repo.setupSnapshot({ limit: 100 });
-const data = await repo.getAllFromSnapshot();
-```
-
-#### Option 2: Builder Pattern (Advanced Use Cases)
-
-For complex configurations and step-by-step setup:
-
-```typescript
-import { PromidasRepositoryBuilder } from '@f88/promidas';
-
-const repo = new PromidasRepositoryBuilder()
-    .setDefaultLogLevel('info')
-    .setStoreConfig({ ttlMs: 30 * 60 * 1000 }) // 30 minutes TTL
-    .setApiClientConfig({
-        protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_V2_TOKEN,
-        },
-    })
-    .build();
-
-await repo.setupSnapshot({ offset: 0, limit: 100 });
-```
-
-### Common Operations
-
-```typescript
-// Get random prototype
-const random = await repo.getRandomPrototypeFromSnapshot();
-console.log(random?.prototypeNm);
-
-// Get specific prototype by ID
-const prototype = await repo.getPrototypeFromSnapshotById(123);
-
-// Check snapshot stats
-const stats = repo.getStats();
-console.log(`Snapshot size: ${stats.size}`);
-console.log(`Is expired: ${stats.isExpired}`);
-
-// Refresh snapshot when needed
-if (stats.isExpired) {
-    await repo.refreshSnapshot();
-}
-```
 
 ## Subpath Exports
 
@@ -208,18 +141,14 @@ import { createPromidasRepository } from '@f88/promidas/repository';
 - `@f88/promidas/store` — In-memory store
 - `@f88/promidas/repository` — Repository factory (same as root)
 
-### Example Script
+## For Contributors
 
-See `scripts/try-protopedia-repository.ts` for a complete example that demonstrates:
+**Development:**
 
-- Repository initialization with custom TTL
-- Snapshot setup and refresh
-- Random and ID-based prototype retrieval
-- Stats monitoring and cache validation
+- [DEVELOPMENT.md](DEVELOPMENT.md) - Setup development environment and workflows
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
+- [RELEASE.md](RELEASE.md) - Release process and versioning
 
-Run the example:
+**Project History:**
 
-```bash
-export PROTOPEDIA_API_V2_TOKEN="your-token-here"
-npx tsx scripts/try-protopedia-repository.ts
-```
+- [CHANGELOG.md](CHANGELOG.md) - Version history and release notes

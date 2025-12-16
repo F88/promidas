@@ -230,6 +230,7 @@ node your-script.js
 #### 1. `createPromidasForLocal()` - ローカル/開発環境向け
 
 **特徴:**
+
 - デバッグ情報を含む詳細なログ (default: `'info'`)
 - 長いTTL (30分) - 開発中のキャッシュ維持
 - 90秒タイムアウト - 低速回線対応 (1-2 Mbps)
@@ -245,6 +246,7 @@ const repo = createPromidasForLocal({
 ```
 
 **推奨用途:**
+
 - ローカルでのデータ分析スクリプト
 - 開発中のアプリケーション
 - 静的サイト生成 (ビルド時)
@@ -252,6 +254,7 @@ const repo = createPromidasForLocal({
 #### 2. `createPromidasForServer()` - サーバー/本番環境向け
 
 **特徴:**
+
 - 最小限のログ (default: `'warn'`) - エラーと警告のみ
 - 短いTTL (10分) - メモリ効率優先
 - 30秒タイムアウト - サーバーグレード回線想定
@@ -267,11 +270,13 @@ const repo = createPromidasForServer({
 ```
 
 **推奨用途:**
+
 - Webアプリケーションのバックエンド
 - サーバーサイドAPI
 - 本番環境での長時間稼働
 
 **セキュリティ上の利点:**
+
 - トークンをコードに書かない
 - 環境変数が設定されていない場合はエラーをthrow (早期検出)
 
@@ -300,14 +305,14 @@ const repo = new PromidasRepositoryBuilder()
 
 ### どちらを使うべきか?
 
-| 状況 | 推奨 |
-|------|------|
-| 初めてPROMIDASを使う | `createPromidasForLocal()` |
-| ローカルスクリプト | `createPromidasForLocal()` |
+| 状況                     | 推奨                        |
+| ------------------------ | --------------------------- |
+| 初めてPROMIDASを使う     | `createPromidasForLocal()`  |
+| ローカルスクリプト       | `createPromidasForLocal()`  |
 | サーバーアプリケーション | `createPromidasForServer()` |
-| 複雑な設定が必要 | `PromidasRepositoryBuilder` |
-| 条件付き設定 | `PromidasRepositoryBuilder` |
-| カスタムLogger使用 | `PromidasRepositoryBuilder` |
+| 複雑な設定が必要         | `PromidasRepositoryBuilder` |
+| 条件付き設定             | `PromidasRepositoryBuilder` |
+| カスタムLogger使用       | `PromidasRepositoryBuilder` |
 
 ### Snapshot (スナップショット)
 
