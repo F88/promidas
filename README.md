@@ -92,24 +92,61 @@ npm install github:F88/promidas protopedia-api-v2-client
 
 ### Usage
 
-```typescript
-import { createPromidasRepository } from '@f88/promidas';
+#### Option 1: Factory Functions (Recommended for Beginners)
 
-// Create repository with custom configuration
-const repo = createPromidasRepository({
-    storeConfig: {
-        ttlMs: 30 * 60 * 1000, // 30 minutes TTL
-        maxDataSizeBytes: 10 * 1024 * 1024, // 10 MiB limit (default)
-    },
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
-        logLevel: 'info',
-    },
+Pre-configured factory functions for common use cases:
+
+**For Local/Development:**
+
+```typescript
+import { createPromidasForLocal } from '@f88/promidas';
+
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    logLevel: 'info', // optional
 });
 
-// Setup initial snapshot
-await repo.setupSnapshot({ offset: 0, limit: 100 });
+await repo.setupSnapshot({ limit: 100 });
+const data = await repo.getAllFromSnapshot();
+```
 
+**For Server/Production:**
+
+```typescript
+import { createPromidasForServer } from '@f88/promidas';
+
+// Requires PROTOPEDIA_API_V2_TOKEN environment variable
+const repo = createPromidasForServer({
+    logLevel: 'warn', // optional
+});
+
+await repo.setupSnapshot({ limit: 100 });
+const data = await repo.getAllFromSnapshot();
+```
+
+#### Option 2: Builder Pattern (Advanced Use Cases)
+
+For complex configurations and step-by-step setup:
+
+```typescript
+import { PromidasRepositoryBuilder } from '@f88/promidas';
+
+const repo = new PromidasRepositoryBuilder()
+    .setDefaultLogLevel('info')
+    .setStoreConfig({ ttlMs: 30 * 60 * 1000 }) // 30 minutes TTL
+    .setApiClientConfig({
+        protoPediaApiClientOptions: {
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        },
+    })
+    .build();
+
+await repo.setupSnapshot({ offset: 0, limit: 100 });
+```
+
+### Common Operations
+
+```typescript
 // Get random prototype
 const random = await repo.getRandomPrototypeFromSnapshot();
 console.log(random?.prototypeNm);

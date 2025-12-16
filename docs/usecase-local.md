@@ -51,8 +51,10 @@ instructions-for-ais:
 起動時に `setupSnapshot()` で全データを取得し、その後はメモリ内のデータを使います:
 
 ```typescript
-const repo = createPromidasRepository({
-    apiClientOptions: { token: process.env.PROTOPEDIA_API_TOKEN },
+import { createPromidasForLocal } from '@f88/promidas';
+
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_TOKEN,
 });
 
 // 起動時に全データ取得
@@ -101,15 +103,14 @@ PROTOPEDIA_API_TOKEN=your-token-here
 
 ### 3. 最小限のスクリプト
 
-**方法1: ファクトリ関数 (推奨)**
+**方法1: Factory関数 (推奨 - 最もシンプル)**
 
 ```typescript
-import { createPromidasRepository } from '@f88/promidas';
+import { createPromidasForLocal } from '@f88/promidas';
 
-const repo = createPromidasRepository({
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
-    },
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_TOKEN,
+    logLevel: 'info', // optional
 });
 
 // データ取得
@@ -134,6 +135,7 @@ console.log(`Completed: ${completed.length}`);
 import { PromidasRepositoryBuilder } from '@f88/promidas';
 
 const repo = new PromidasRepositoryBuilder()
+    .setDefaultLogLevel('info')
     .setApiClientConfig({
         protoPediaApiClientOptions: {
             token: process.env.PROTOPEDIA_API_TOKEN,
@@ -159,11 +161,11 @@ npx tsx script.ts
 ProtoPediaのデータをCSVやJSONファイルにエクスポート:
 
 ```typescript
-import { createPromidasRepository } from '@f88/promidas';
+import { createPromidasForLocal } from '@f88/promidas';
 import { writeFileSync } from 'fs';
 
-const repo = createPromidasRepository({
-    apiClientOptions: { token: process.env.PROTOPEDIA_API_TOKEN },
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_TOKEN,
 });
 
 await repo.setupSnapshot({ limit: 10000 });
@@ -190,10 +192,10 @@ console.log(`Exported ${allData.length} prototypes`);
 タグ、ステータス、作成日などで統計を取る:
 
 ```typescript
-import { createPromidasRepository } from '@f88/promidas';
+import { createPromidasForLocal } from '@f88/promidas';
 
-const repo = createPromidasRepository({
-    apiClientOptions: { token: process.env.PROTOPEDIA_API_TOKEN },
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_TOKEN,
 });
 
 await repo.setupSnapshot({ limit: 10000 });

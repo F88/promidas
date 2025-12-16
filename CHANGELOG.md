@@ -9,6 +9,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Beginner-Friendly Factory Functions**: Implemented two environment-specific factory functions for common use cases (#35)
+    - `createPromidasForLocal()` - Optimized for local/development environments
+        - Parameters: `protopediaApiToken` (required), `logLevel` (optional, default: `'info'`)
+        - Pre-configured: 30-minute TTL, 90-second timeout (supports 1-2 Mbps connections), verbose logging
+        - User-Agent: `PromidasForLocal/${VERSION}`
+    - `createPromidasForServer()` - Optimized for server/production environments
+        - Parameters: `logLevel` (optional, default: `'warn'`)
+        - Requires environment variable: `PROTOPEDIA_API_V2_TOKEN`
+        - Pre-configured: 10-minute TTL, 30-second timeout, minimal logging (errors/warnings only)
+        - User-Agent: `PromidasForServer/${VERSION}`
+    - Both factories use 30 MiB data size limit (`LIMIT_DATA_SIZE_BYTES`)
+    - Comprehensive test coverage: 44 new tests with builder spy-based validation
+    - Exported from main module: `import { createPromidasForLocal, createPromidasForServer } from '@f88/promidas'`
+
+    ```typescript
+    // Local/Development usage
+    import { createPromidasForLocal } from '@f88/promidas';
+
+    const repo = createPromidasForLocal({
+        protopediaApiToken: 'your-token-here',
+        logLevel: 'info', // optional
+    });
+
+    // Server/Production usage (requires PROTOPEDIA_API_V2_TOKEN env var)
+    import { createPromidasForServer } from '@f88/promidas';
+
+    const repo = createPromidasForServer({
+        logLevel: 'warn', // optional
+    });
+    ```
+
+- **Version Management System**: Integrated automatic version generation for User-Agent strings (#35)
+    - `scripts/generate-version.mjs` - Auto-generates `lib/version.ts` from `package.json` version
+    - Integrated into prebuild script (runs before TypeScript compilation)
+    - `lib/version.ts` - Auto-generated version constant, committed to repository
+    - Used in factory function User-Agent headers for better API tracking
+
+### Changed
+
+- **Data Size Constant Renamed**: `MAX_DATA_SIZE_BYTES` → `LIMIT_DATA_SIZE_BYTES` (#35)
+    - New name better indicates hard constraint vs configurable maximum
+    - Re-exported from `lib/store/index.ts` for external use
+    - Value unchanged: 30 MiB (31,457,280 bytes)
+    - Updated all internal references and documentation
+
 ## [0.8.0] - 2025-12-15
 
 ### Breaking Changes
