@@ -441,4 +441,175 @@ describe('createFetchWithProgress', () => {
       expect(loggerSpy).not.toHaveBeenCalled();
     });
   });
+
+  describe('error handling', () => {
+    it('handles invalid limit parameter gracefully', async () => {
+      const logger = createConsoleLogger();
+
+      const customFetch = createFetchWithProgress({
+        logger,
+        enableProgressLog: true,
+      });
+
+      // Test with limit=0
+      const mockResponse1 = new Response('test data 1', {
+        status: 200,
+        headers: new Headers({
+          'content-type': 'application/json',
+        }),
+      });
+      global.fetch = vi.fn().mockResolvedValue(mockResponse1);
+      const response1 = await customFetch(
+        'https://api.example.com/data?limit=0',
+      );
+      expect(await response1.text()).toBe('test data 1');
+
+      // Test with negative limit
+      const mockResponse2 = new Response('test data 2', {
+        status: 200,
+        headers: new Headers({
+          'content-type': 'application/json',
+        }),
+      });
+      global.fetch = vi.fn().mockResolvedValue(mockResponse2);
+      const response2 = await customFetch(
+        'https://api.example.com/data?limit=-1',
+      );
+      expect(await response2.text()).toBe('test data 2');
+
+      // Test with non-numeric limit
+      const mockResponse3 = new Response('test data 3', {
+        status: 200,
+        headers: new Headers({
+          'content-type': 'application/json',
+        }),
+      });
+      global.fetch = vi.fn().mockResolvedValue(mockResponse3);
+      const response3 = await customFetch(
+        'https://api.example.com/data?limit=abc',
+      );
+      expect(await response3.text()).toBe('test data 3');
+    });
+
+    it('handles URL parsing errors in estimateResponseSize gracefully', async () => {
+      const logger = createConsoleLogger();
+      const mockResponse = new Response('test data', {
+        status: 200,
+        headers: new Headers({
+          'content-type': 'application/json',
+          'content-length': '4',
+        }),
+      });
+
+      global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
+      // Invalid URL that might cause parsing errors
+      const customFetch = createFetchWithProgress({
+        logger,
+        enableProgressLog: true,
+      });
+
+      const response = await customFetch('not-a-valid-url://test');
+      const text = await response.text();
+
+      expect(text).toBe('test data');
+    });
+
+    it('handles response without body gracefully', async () => {
+      const logger = createConsoleLogger();
+      // 204 No Content responses have no body
+      const mockResponse = new Response(null, {
+        status: 204,
+        headers: new Headers({
+          'content-type': 'application/json',
+        }),
+      });
+
+      global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
+      const customFetch = createFetchWithProgress({
+        logger,
+        enableProgressLog: true,
+      });
+
+      const response = await customFetch('https://api.example.com/data');
+
+      expect(response.status).toBe(204);
+      expect(response.body).toBeNull();
+    });
+
+    it('handles stream reading errors gracefully', async () => {
+      const logger = createConsoleLogger();
+      const errorStream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(new Uint8Array([1, 2, 3]));
+          controller.error(new Error('Stream read error'));
+        },
+      });
+
+      const mockResponse = new Response(errorStream, {
+        status: 200,
+        headers: new Headers({
+          'content-type': 'application/json',
+          'content-length': '100',
+        }),
+      });
+
+      global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
+      const customFetch = createFetchWithProgress({
+        logger,
+        enableProgressLog: true,
+      });
+
+      const response = await customFetch(
+        'https://api.example.com/data?limit=100',
+      );
+
+      // Stream error should be propagated
+      await expect(response.text()).rejects.toThrow('Stream read error');
+    });
+
+    it('uses logger.info fallback when process.stderr is not available', async () => {
+      const logger = createConsoleLogger();
+
+      // Spy on stderr.write and make it undefined to simulate browser environment
+      const originalWrite = process.stderr.write;
+      // @ts-expect-error - Simulating browser environment
+      process.stderr.write = undefined;
+
+      const loggerSpy = vi.spyOn(logger, 'info');
+
+      const mockResponse = new Response('test', {
+        status: 200,
+        headers: new Headers({
+          'content-type': 'application/json',
+          'content-length': '4',
+        }),
+      });
+
+      global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
+      const customFetch = createFetchWithProgress({
+        logger,
+        enableProgressLog: true,
+      });
+
+      const response = await customFetch(
+        'https://api.example.com/data?limit=100',
+      );
+      await response.text();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Should use logger.info instead of process.stderr
+      // Note: "Download starting" only appears when using estimated size (no Content-Length)
+      // In this test, we provide Content-Length, so we only expect progress and complete messages
+      expect(loggerSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Download complete'),
+      );
+
+      // Restore original write
+      process.stderr.write = originalWrite;
+    });
+  });
 });
