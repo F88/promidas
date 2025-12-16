@@ -138,6 +138,7 @@ export function createPromidasForLocal(config: {
       userAgent: `PromidasForLocal/${VERSION}`,
     },
     logger, // Shared logger - logLevel is NOT set because logger already contains it
+    progressLog: true,
   };
   builder.setApiClientConfig(apiClientConfig);
 
@@ -249,6 +250,7 @@ export function createPromidasForServer(config?: {
       userAgent: `PromidasForServer/${VERSION}`,
     },
     logger, // Shared logger - logLevel is NOT set because logger already contains it
+    progressLog: true,
   };
   builder.setApiClientConfig(apiClientConfig);
 
