@@ -302,26 +302,32 @@ Example: `ProtopediaApiCustomClient/0.9.0 (promidas)`
 
 ```typescript
 // lib/fetcher/utils/errors/messages.ts
-export function constructDisplayMessage(
-    error: string,
-    status?: number,
-): string {
-    // HTTP errors get status code context
-    if (status !== undefined) {
-        return `API request failed with status ${status}: ${error}`;
+export const constructDisplayMessage = (failure: NetworkFailure): string => {
+    const { error, status, details } = failure;
+    const statusText = details?.res?.statusText;
+    const code = details?.res?.code;
+    let message = resolveErrorMessage(error);
+
+    const prefix = statusText || code;
+    if (prefix && !message.startsWith(prefix)) {
+        message = `${prefix}: ${message}`;
     }
-    // Network errors get clear description
-    return `Network error: ${error}`;
-}
+
+    // HTTP errors include status code, network errors don't
+    return status !== undefined ? `${message} (${status})` : message;
+};
 ```
 
 **Usage**:
 
 ```typescript
 if (!result.ok) {
-    const displayMessage = constructDisplayMessage(result.error, result.status);
+    const displayMessage = constructDisplayMessage({
+        error: result.error,
+        status: result.status,
+        details: result.details,
+    });
     logger.error(displayMessage);
-    // Or show to user
 }
 ```
 
@@ -346,26 +352,30 @@ if (!result.ok) {
 ### Error Flow
 
 ```typescript
-// Within ProtopediaApiCustomClient.fetchPrototypes()
-async fetchPrototypes(
+// Within ProtopediaApiCustomClient.#fetchAndNormalizePrototypes()
+async #fetchAndNormalizePrototypes(
     params: ListPrototypesParams,
 ): Promise<FetchPrototypesResult> {
-    const apiResult = await this.#client.listPrototypes(params);
+    try {
+        const upstream = await this.#client.listPrototypes(params);
 
-    // API client already returns Result type
-    if (!apiResult.ok) {
-        // Pass through with optional enhancement
-        return {
-            ok: false,
-            error: apiResult.error,
-            status: apiResult.status,
-            details: apiResult.details,
-        };
+        // Normalize data
+        const data = upstream.results.map(normalizePrototype);
+        return { ok: true, data };
+    } catch (error) {
+        // handleApiError converts thrown exceptions to Result type
+        const errorResult = handleApiError(error);
+
+        // Log based on severity
+        if (!errorResult.ok) {
+            if (errorResult.status === undefined || errorResult.status >= 500) {
+                this.#logger.error(errorResult.error, errorResult);
+            } else {
+                this.#logger.warn(errorResult.error, errorResult);
+            }
+        }
+        return errorResult;
     }
-
-    // Success path: normalize data
-    const normalized = apiResult.data.prototypes.map(normalizePrototype);
-    return { ok: true, data: normalized };
 }
 ```
 
@@ -549,7 +559,11 @@ export function normalizeCount(
 - Whitespace handling
 - Special characters
 
-**Location**: `lib/fetcher/__tests__/utils/normalizers.test.ts`
+**Location**:
+
+- `lib/fetcher/__tests__/utils/string-parsers.test.ts`
+- `lib/fetcher/__tests__/utils/normalize-protopedia-timestamp.test.ts`
+- `lib/fetcher/__tests__/utils/normalize-prototype/` (field-specific tests)
 
 ## Type Safety
 
@@ -687,13 +701,15 @@ async setupSnapshot(params: ListPrototypesParams) {
 
 ```typescript
 const customClientForNextJs = new ProtopediaApiCustomClient({
-    token: process.env.PROTOPEDIA_API_V2_TOKEN,
-    fetch: async (url, init) => {
-        return await globalThis.fetch(url, {
-            ...init,
-            cache: 'force-cache',
-            next: { revalidate: 60 },
-        });
+    protoPediaApiClientOptions: {
+        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        fetch: async (url, init) => {
+            return await globalThis.fetch(url, {
+                ...init,
+                cache: 'force-cache',
+                next: { revalidate: 60 },
+            });
+        },
     },
 });
 ```
@@ -774,6 +790,6 @@ const customClientForNextJs = new ProtopediaApiCustomClient({
 
 ---
 
-**Document Version**: 1.0.0
-**Last Updated**: 2025-12-10
+**Document Version**: 2.0.0
+**Last Updated**: 2025-12-16
 **Related Modules**: lib/repository, lib/logger
