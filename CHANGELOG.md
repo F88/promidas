@@ -9,6 +9,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **User-Agent Support in ProtopediaApiCustomClient**: Automatically sets library-specific User-Agent for API requests (#45)
+    - Default User-Agent: `ProtopediaApiCustomClient/{VERSION} (promidas)`
+    - Identifies requests from promidas library for better analytics and debugging
+    - Customizable via `protoPediaApiClientOptions.userAgent` option
+    - Comprehensive test coverage with 4 dedicated tests
+
+    ```typescript
+    // Default User-Agent (auto-set)
+    const client = new ProtopediaApiCustomClient({
+        protoPediaApiClientOptions: {
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        },
+    });
+    // User-Agent: "ProtopediaApiCustomClient/0.9.0 (promidas)"
+
+    // Custom User-Agent
+    const client = new ProtopediaApiCustomClient({
+        protoPediaApiClientOptions: {
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+            userAgent: 'MyApp/1.0.0',
+        },
+    });
+    ```
+
+### Fixed
+
+- **Documentation Accuracy**: Fixed 17 critical issues in fetcher documentation (#45)
+    - Removed non-existent types: `ApiErrorDetails`, `ApiResult`, `ListPrototypesClient`
+    - Fixed `FetchPrototypesResult` type definition to match actual implementation
+    - Corrected `constructDisplayMessage` import path
+    - Updated error handling flow documentation to reflect try/catch implementation
+    - Fixed all code examples to work correctly
+
 ## [0.9.0] - 2025-12-16
 
 ### Added
