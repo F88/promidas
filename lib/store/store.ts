@@ -18,7 +18,12 @@ import { sanitizeDataForLogging } from '../utils/index.js'; // 追加
 
 const DEFAULT_TTL_MS = 30 * 60 * 1_000; // 30 minutes
 const DEFAULT_DATA_SIZE_BYTES = 10 * 1024 * 1024; // 10 MiB
-const MAX_DATA_SIZE_BYTES = 30 * 1024 * 1024; // 30 MiB
+
+/**
+ * Hard limit for data size in bytes for storing snapshots.
+ * Attempting to configure a store with a size larger than this will throw an error.
+ */
+export const LIMIT_DATA_SIZE_BYTES = 30 * 1024 * 1024; // 30 MiB
 
 /**
  * Configuration options for the PrototypeInMemoryStore.
@@ -134,7 +139,7 @@ export class PrototypeInMemoryStore {
    * @param config.logLevel - Log level for the default logger. Only used when
    *   `logger` is not provided. IGNORED if `logger` is provided.
    *
-   * @throws {Error} When maxDataSizeBytes exceeds MAX_DATA_SIZE_BYTES (30 MiB)
+   * @throws {Error} When maxDataSizeBytes exceeds LIMIT_DATA_SIZE_BYTES (30 MiB)
    */
   constructor({
     ttlMs = DEFAULT_TTL_MS,
@@ -143,10 +148,10 @@ export class PrototypeInMemoryStore {
     logLevel,
   }: PrototypeInMemoryStoreConfig = {}) {
     // Throw if maxDataSizeBytes exceeds the hard limit
-    if (maxDataSizeBytes > MAX_DATA_SIZE_BYTES) {
-      const maxMiB = (MAX_DATA_SIZE_BYTES / (1024 * 1024)).toFixed(0);
+    if (maxDataSizeBytes > LIMIT_DATA_SIZE_BYTES) {
+      const maxMiB = (LIMIT_DATA_SIZE_BYTES / (1024 * 1024)).toFixed(0);
       throw new Error(
-        `PrototypeInMemoryStore maxDataSizeBytes must be <= ${MAX_DATA_SIZE_BYTES} bytes (${maxMiB} MiB) to prevent oversized data`,
+        `PrototypeInMemoryStore maxDataSizeBytes must be <= ${LIMIT_DATA_SIZE_BYTES} bytes (${maxMiB} MiB) to prevent oversized data`,
       );
     }
 

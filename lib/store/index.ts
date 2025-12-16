@@ -19,6 +19,7 @@
  */
 
 export {
+  LIMIT_DATA_SIZE_BYTES,
   PrototypeInMemoryStore,
   type PrototypeInMemoryStats,
   type PrototypeInMemoryStoreConfig,
