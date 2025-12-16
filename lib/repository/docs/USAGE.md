@@ -14,11 +14,9 @@ instructions-for-ais:
 
 # ProtopediaInMemoryRepository Usage Guide
 
-This document describes how to use the ProtoPedia-specific in-memory
-repository built on top of the generic `PrototypeInMemoryStore` core.
+**📌 Note**: For getting started with PROMIDAS, please refer to the [Getting Started Guide](https://f88.github.io/promidas/getting-started.html) which covers the recommended factory functions (`createPromidasForLocal`, `createPromidasForServer`).
 
-The main entry point is the `createPromidasRepository` factory
-exported from `lib/repository`.
+This document describes the advanced usage of the ProtoPedia-specific in-memory repository and the `PromidasRepositoryBuilder` for custom configurations.
 
 ## Overview
 
@@ -90,178 +88,21 @@ export interface ProtopediaInMemoryRepository {
 }
 ```
 
-The factory type is:
-
-```ts
-import type { PrototypeInMemoryStoreConfig } from '../store/index.js';
-
-export interface CreatePromidasRepositoryOptions {
-    storeConfig?: PrototypeInMemoryStoreConfig;
-    apiClientOptions?: ProtopediaApiClientOptions;
-}
-
-export type CreatePromidasRepository = (
-    options?: CreatePromidasRepositoryOptions,
-) => ProtopediaInMemoryRepository;
-```
-
-`ProtopediaApiClientOptions` contains options for the underlying API client,
-including authentication token and optional custom logger configuration.
-
 ## Typical usage pattern
 
 ### 1. Create a repository instance
 
-```ts
-import { createPromidasRepository } from 'in-memory-snapshot-manager-for-protopedia';
+For most use cases, use the factory functions:
 
-const repo = createPromidasRepository({
-    storeConfig: {
-        ttlMs: 30 * 60 * 1000, // 30 minutes
-        maxDataSizeBytes: 10 * 1024 * 1024, // 10 MiB (default)
-    },
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
-        logLevel: 'info', // 'debug' | 'info' | 'warn' | 'error' | 'silent'
-    },
+```ts
+import { createPromidasForLocal } from '@f88/promidas';
+
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
 });
 ```
 
-### Configuring Logging
-
-The repository has two independent components that can log information:
-
-1. **Store** - Logs when data is cached, updated, or expires
-2. **API Client** - Logs HTTP requests and responses to ProtoPedia API
-
-You can configure logging for each component separately or use the same logger for both.
-
-#### Case 1: Default logging (no configuration needed)
-
-By default, both components use a built-in logger at 'info' level. You don't need to
-configure anything:
-
-```ts
-import { createPromidasRepository } from 'in-memory-snapshot-manager-for-protopedia';
-
-const repo = createPromidasRepository({
-    storeConfig: {
-        ttlMs: 30 * 60 * 1000, // 30 minutes
-    },
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
-    },
-});
-// Both store and API client will log at 'info' level
-```
-
-#### Case 2: Change log level for API requests only
-
-If you want to see more detailed logs for API requests (e.g., for debugging),
-add `logLevel` to the second parameter:
-
-```ts
-import { createPromidasRepository } from 'in-memory-snapshot-manager-for-protopedia';
-
-const repo = createPromidasRepository({
-    storeConfig: {
-        ttlMs: 30 * 60 * 1000,
-    },
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
-        logLevel: 'debug', // ← Add this line to see detailed API logs
-    },
-});
-// Store logs at 'info' (default)
-// API client logs at 'debug' (more detailed)
-```
-
-Available log levels: `'debug'` | `'info'` | `'warn'` | `'error'` | `'silent'`
-
-#### Case 3: Use your own logger for both store and API client
-
-If you need custom logging (e.g., send logs to a file or external service),
-create a logger and pass it to both components:
-
-```ts
-import {
-    createPromidasRepository,
-    createConsoleLogger,
-} from 'in-memory-snapshot-manager-for-protopedia';
-
-// Step 1: Create a logger
-const myLogger = createConsoleLogger();
-
-// Step 2: Pass the same logger to both places
-const repo = createPromidasRepository({
-    storeConfig: {
-        ttlMs: 30 * 60 * 1000,
-        logger: myLogger,
-        logLevel: 'debug', // ← Add logLevel here for store
-    },
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
-        logger: myLogger,
-        logLevel: 'debug', // ← Add logLevel here for API client
-    },
-});
-// Both store and API client will use your custom logger
-```
-
-#### Case 4: Use different loggers for store and API client
-
-If you want different log levels or formats for store vs API operations:
-
-```ts
-import {
-    createPromidasRepository,
-    createConsoleLogger,
-} from 'in-memory-snapshot-manager-for-protopedia';
-
-// Step 1: Create a shared logger
-const logger = createConsoleLogger();
-
-// Step 2: Pass logger with different log levels
-const repo = createPromidasRepository({
-    storeConfig: {
-        ttlMs: 30 * 60 * 1000,
-        logger,
-        logLevel: 'warn', // ← Store uses 'warn' level
-    },
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
-        logger,
-        logLevel: 'debug', // ← API client uses 'debug' level
-    },
-});
-// Store logs at 'warn' level
-// API client logs at 'debug' level
-```
-
-#### Summary: Where to add logger configuration
-
-```ts
-const repo = createPromidasRepository({
-    storeConfig: {
-        // Store configuration
-        ttlMs: 30 * 60 * 1000,
-        logger: storeLogger, // ← Logger for store operations
-        logLevel: 'info', // ← Log level for store
-    },
-    apiClientOptions: {
-        // API client configuration
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
-        logger: apiLogger, // ← Logger for API operations
-        logLevel: 'debug', // ← Log level for API client
-    },
-});
-```
-
-**Important**: The `logger` and `logLevel` settings for each component are independent.
-If you don't specify them, default loggers will be used automatically.
-
-**Note**: When you provide a custom logger to `apiClientOptions`, the API client wrapper
-automatically wraps it with the correct structure internally.
+**Note**: For advanced configuration options including Builder patterns and factory functions, please refer to the [Getting Started Guide](../../../docs/getting-started.md) or [API Documentation](../../../README.md).
 
 ### 2. Populate the initial snapshot
 

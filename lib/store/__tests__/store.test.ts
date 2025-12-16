@@ -344,6 +344,93 @@ describe('PrototypeInMemoryStore', () => {
         false,
       ); // Original duplicate should be gone
     });
+
+    it('accepts data with duplicates when deduplicated size is within limit', () => {
+      // Create a prototype to measure its approximate size
+      const singlePrototype = createPrototype({
+        id: 1,
+        freeComment: 'x'.repeat(50),
+      });
+      const tempStore = new PrototypeInMemoryStore();
+      const singleResult = tempStore.setAll([singlePrototype]);
+      const singleSize = singleResult?.dataSizeBytes ?? 0;
+
+      // Set limit to allow 2 prototypes but not 5
+      const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: singleSize * 2.5,
+      });
+
+      // Create prototypes with same content
+      const comment = 'x'.repeat(50);
+      const prototypes = [
+        createPrototype({ id: 1, freeComment: comment }),
+        createPrototype({ id: 1, freeComment: comment }), // Duplicate
+        createPrototype({ id: 1, freeComment: comment }), // Duplicate
+        createPrototype({ id: 1, freeComment: comment }), // Duplicate
+        createPrototype({ id: 2, freeComment: comment }),
+      ];
+
+      // With duplicates: 5 items would exceed limit
+      // After deduplication: 2 unique items should be within limit
+      const result = store.setAll(prototypes);
+
+      // Should succeed because deduplicated size is within limit
+      expect(result).not.toBeNull();
+      expect(store.size).toBe(2);
+      expect(store.getAll().length).toBe(2);
+
+      // Verify dataSizeBytes reflects deduplicated size
+      const stats = store.getStats();
+      expect(stats.dataSizeBytes).toBeLessThan(singleSize * 2.5);
+      expect(stats.size).toBe(2);
+    });
+
+    it('rejects data when deduplicated size still exceeds limit', () => {
+      // Set a very small limit
+      const store = new PrototypeInMemoryStore({ maxDataSizeBytes: 100 });
+
+      // Create prototypes with large freeComment
+      const largeComment = 'x'.repeat(200);
+      const prototypes = [
+        createPrototype({ id: 1, freeComment: largeComment }),
+        createPrototype({ id: 1, freeComment: largeComment }), // Duplicate
+        createPrototype({ id: 2, freeComment: largeComment }),
+        createPrototype({ id: 2, freeComment: largeComment }), // Duplicate
+      ];
+
+      // Even after deduplication (2 unique items), should exceed limit
+      const result = store.setAll(prototypes);
+
+      expect(result).toBeNull();
+      expect(store.size).toBe(0);
+    });
+
+    it('reports accurate dataSizeBytes after deduplication', () => {
+      const store = new PrototypeInMemoryStore();
+
+      // Create prototypes with varying sizes
+      const prototypes = [
+        createPrototype({ id: 1, freeComment: 'small' }),
+        createPrototype({ id: 2, freeComment: 'x'.repeat(100) }),
+        createPrototype({ id: 1, freeComment: 'x'.repeat(500) }), // Duplicate with larger content
+      ];
+
+      const result = store.setAll(prototypes);
+
+      expect(result).not.toBeNull();
+      expect(store.size).toBe(2);
+
+      const stats = store.getStats();
+      // dataSizeBytes should reflect only the 2 unique prototypes
+      // (id:1 with large comment + id:2 with medium comment)
+      expect(stats.dataSizeBytes).toBeGreaterThan(0);
+      expect(stats.size).toBe(2);
+
+      // Verify the stored data matches what we expect
+      const stored = store.getAll();
+      expect(stored.length).toBe(2);
+      expect(stored.find((p) => p.id === 1)?.freeComment).toBe('x'.repeat(500)); // Last duplicate wins
+    });
   });
 
   describe('runExclusive', () => {

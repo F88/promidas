@@ -55,7 +55,7 @@ import { parseProtoPediaTimestamp } from '@f88/promidas/utils';
 import { PrototypeInMemoryStore } from '@f88/promidas/store';
 
 // 統合されたRepository使用(最も簡単)
-import { createPromidasRepository } from '@f88/promidas';
+import { createPromidasForLocal } from '@f88/promidas';
 ```
 
 ### なぜモジュラー設計か
@@ -74,13 +74,15 @@ PROMIDASは、ユーザーの習熟度に応じて**段階的に複雑さを導�
 初心者や簡単なユースケース向け:
 
 ```typescript
-const repo = createPromidasRepository({
-    apiClientOptions: { token: process.env.PROTOPEDIA_API_TOKEN },
+import { createPromidasForLocal } from '@f88/promidas';
+
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
 });
 ```
 
 - 1行で完結
-- 最小限の設定
+- 環境別の最適化設定 (local / server)
 - すぐに使い始められる
 
 ### レベル2: Builderパターン
@@ -89,10 +91,12 @@ const repo = createPromidasRepository({
 
 ```typescript
 const repo = new PromidasRepositoryBuilder()
-    .setDefaultLogLevel('debug')
-    .setStoreConfig({ ttlMs: 30 * 60 * 1000 })
+    .setStoreConfig({ ttlMs: 30 * 60 * 1000, logLevel: 'debug' })
     .setApiClientConfig({
-        protoPediaApiClientOptions: { token: process.env.PROTOPEDIA_API_TOKEN },
+        protoPediaApiClientOptions: {
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        },
+        logLevel: 'debug',
     })
     .build();
 ```
@@ -127,13 +131,15 @@ PROMIDASは**TypeScriptファースト**の設計です。実行時エラーで�
 ### 完全な型サポート
 
 ```typescript
+import { createPromidasForLocal } from '@f88/promidas';
+
 // 型推論が効く
-const repo = createPromidasRepository({
-    apiClientOptions: { token: 'xxx' },
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
 });
 
-const data = await repo.getAllFromSnapshot(); // NormalizedPrototype[]
-const byId = await repo.getPrototypeFromSnapshotById(123); // NormalizedPrototype | undefined
+const data = await repo.getAllFromSnapshot(); // readonly NormalizedPrototype[]
+const byId = await repo.getPrototypeFromSnapshotByPrototypeId(123); // NormalizedPrototype | null
 
 // 型エラーで防げる
 repo.setupSnapshot({ limit: 'abc' }); // ❌ 型エラー
@@ -169,7 +175,7 @@ IDベースの検索は内部インデックスによりO(1):
 
 ```typescript
 // 高速 - O(1)
-const prototype = await repo.getPrototypeFromSnapshotById(123);
+const prototype = await repo.getPrototypeFromSnapshotByPrototypeId(123);
 ```
 
 ### メモリ効率
@@ -177,12 +183,19 @@ const prototype = await repo.getPrototypeFromSnapshotById(123);
 TTLによる自動データ更新とメモリ管理:
 
 ```typescript
-const repo = createPromidasRepository({
-    storeConfig: {
+import { PromidasRepositoryBuilder } from '@f88/promidas';
+
+const repo = new PromidasRepositoryBuilder()
+    .setStoreConfig({
         ttlMs: 30 * 60 * 1000, // 30分で期限切れ
         maxDataSizeBytes: 10 * 1024 * 1024, // 10MB制限
-    },
-});
+    })
+    .setApiClientConfig({
+        protoPediaApiClientOptions: {
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        },
+    })
+    .build();
 ```
 
 ### 実用的な選択
@@ -212,11 +225,11 @@ PROMIDASは、特に**BEARER TOKENのセキュリティ**を重視します。
 ### 安全なデフォルト
 
 ```typescript
-// ❌ TOKENをハードコードしない設計
-const repo = createPromidasRepository({
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN, // 環境変数推奨
-    },
+import { createPromidasForLocal } from '@f88/promidas';
+
+// ✅ TOKENをハードコードしない設計
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN, // 環境変数推奨
 });
 ```
 

@@ -26,9 +26,14 @@ import type { Logger } from './logger.types.js';
  * ```typescript
  * // Recommended: Use with Repository/Store
  * const logger = createConsoleLogger();
- * const repo = createPromidasRepository({
- *   storeConfig: { logger, logLevel: 'debug' }
- * });
+ * const repo = new PromidasRepositoryBuilder()
+ *   .setStoreConfig({ logger, logLevel: 'debug' })
+ *   .setApiClientConfig({
+ *     logger,
+ *     logLevel: 'debug',
+ *     protoPediaApiClientOptions: { token: process.env.PROTOPEDIA_API_V2_TOKEN }
+ *   })
+ *   .build();
  * ```
  *
  * @example

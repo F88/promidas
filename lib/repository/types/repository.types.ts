@@ -3,10 +3,7 @@
  *
  * @module
  */
-import type {
-  ListPrototypesParams,
-  ProtoPediaApiClientOptions,
-} from 'protopedia-api-v2-client';
+import type { ListPrototypesParams } from 'protopedia-api-v2-client';
 import type { DeepReadonly } from 'ts-essentials';
 
 import type { Logger, LogLevel } from '../../logger/index.js';
@@ -27,11 +24,11 @@ export type ProtopediaInMemoryRepositoryConfig = {
    * Custom logger instance for repository operations.
    *
    * @remarks
-   * - If provided, the logger will be used as-is (NOT modified)
-   * - If provided, the `logLevel` option is IGNORED
-   * - To use a custom logger with a specific level, configure it before passing
+   * - If provided, the logger will be used as-is
+   * - If provided with logLevel, the level will be updated if logger is mutable
+   * - If not provided, creates a ConsoleLogger with the specified logLevel
    *
-   * @default undefined (creates ConsoleLogger)
+   * @default undefined (creates ConsoleLogger with 'info' level)
    */
   logger?: Logger;
 
@@ -41,7 +38,7 @@ export type ProtopediaInMemoryRepositoryConfig = {
    * @remarks
    * - Only used when `logger` is NOT provided
    * - Creates a new ConsoleLogger with this level
-   * - IGNORED if `logger` is provided
+   * - If logger is provided and mutable, updates its level property
    *
    * @default 'info'
    */
@@ -118,14 +115,6 @@ export interface ProtopediaInMemoryRepository {
    * This method does NOT perform HTTP calls.
    *
    * @returns {@link PrototypeAnalysisResult} containing min and max IDs, or null values if snapshot is empty
-   *
-   * @example
-   * ```typescript
-   * const repo = createPromidasRepository({});
-   * await repo.setupSnapshot({ limit: 1000 });
-   *
-   * const analysis = await repo.analyzePrototypes();
-   * ```
    */
   analyzePrototypes(): Promise<PrototypeAnalysisResult>;
 
@@ -140,16 +129,6 @@ export interface ProtopediaInMemoryRepository {
    * the current in-memory state of the snapshot.
    *
    * @returns Read-only array of all prototypes
-   *
-   * @example
-   * ```typescript
-   * const repo = createPromidasRepository({});
-   * await repo.setupSnapshot({ limit: 100 });
-   *
-   * // Get all prototypes
-   * const prototypes = await repo.getAllFromSnapshot();
-   * console.log(`Total prototypes: ${prototypes.length}`);
-   * ```
    */
   getAllFromSnapshot(): Promise<readonly DeepReadonly<NormalizedPrototype>[]>;
 
@@ -167,19 +146,6 @@ export interface ProtopediaInMemoryRepository {
    * the current in-memory state of the snapshot.
    *
    * @returns Read-only array of prototype IDs
-   *
-   * @example
-   * ```typescript
-   * const repo = createPromidasRepository({});
-   * await repo.setupSnapshot({ limit: 100 });
-   *
-   * // Get all available IDs
-   * const ids = await repo.getPrototypeIdsFromSnapshot();
-   * console.log(`Available prototypes: ${ids.length}`);
-   *
-   * // Return to client
-   * return { availableIds: ids };
-   * ```
    */
   getPrototypeIdsFromSnapshot(): Promise<readonly number[]>;
 
@@ -226,28 +192,3 @@ export interface ProtopediaInMemoryRepository {
     size: number,
   ): Promise<readonly DeepReadonly<NormalizedPrototype>[]>;
 }
-
-/**
- * Factory function type for creating a ProtoPedia in-memory repository.
- *
- * This factory wires together:
- * - a {@link ProtopediaInMemoryRepositoryConfig} for repository-level logging
- * - a {@link PrototypeInMemoryStoreConfig} for the underlying in-memory store
- *   (TTL, memory guard, logger, etc.), and
- * - options for the ProtoPedia HTTP client used to fetch prototypes.
- *
- * The returned {@link ProtopediaInMemoryRepository} exposes a
- * snapshot-based API: it uses the configured client to populate a snapshot
- * in memory, and then serves read operations from that snapshot only.
- *
- * @param options - Configuration options for the repository
- * @param options.repositoryConfig - Configuration for repository-level logging (optional)
- * @param options.storeConfig - Configuration for the underlying in-memory store (optional)
- * @param options.apiClientOptions - Configuration for the ProtoPedia HTTP client (optional)
- * @returns A configured repository instance
- */
-export type CreatePromidasRepository = (options?: {
-  repositoryConfig?: ProtopediaInMemoryRepositoryConfig;
-  storeConfig?: PrototypeInMemoryStoreConfig;
-  apiClientOptions?: ProtoPediaApiClientOptions;
-}) => ProtopediaInMemoryRepository;

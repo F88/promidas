@@ -39,9 +39,10 @@
  *
  * ## Usage Recommendation
  *
- * **Use the factory function** {@link createPromidasRepository}
- * instead of direct instantiation. The factory provides better dependency
- * injection and configuration management.
+ * For normal usage, import from `@f88/promidas` instead of direct instantiation:
+ * - `createPromidasForLocal()` for local development
+ * - `createPromidasForServer()` for server environments
+ * - `PromidasRepositoryBuilder` for advanced customization
  *
  * Direct instantiation is only recommended for:
  * - Testing scenarios
@@ -49,7 +50,6 @@
  * - Framework integration
  *
  * @module
- * @see {@link createPromidasRepository} for the factory function
  * @see {@link ProtopediaInMemoryRepository} for the public interface
  */
 import type {
@@ -147,7 +147,7 @@ const SAMPLE_SIZE_THRESHOLD_RATIO = 0.5;
  *
  * ## Usage
  *
- * **Recommended**: Use {@link createPromidasRepository} factory
+ * **Recommended**: Import from `@f88/promidas` instead of direct instantiation
  *
  * **Direct instantiation** (advanced):
  * ```typescript
@@ -162,7 +162,6 @@ const SAMPLE_SIZE_THRESHOLD_RATIO = 0.5;
  * ```
  *
  * @see {@link ProtopediaInMemoryRepository} for the public interface contract
- * @see {@link createPromidasRepository} for the recommended factory
  */
 export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepository {
   /**
@@ -262,7 +261,15 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
         };
       }
 
-      this.#store.setAll(result.data);
+      const setResult = this.#store.setAll(result.data);
+
+      if (setResult === null) {
+        return {
+          ok: false,
+          error: 'Failed to store snapshot: data size exceeds maximum limit',
+        };
+      }
+
       this.#lastFetchParams = { ...mergedParams };
 
       return {

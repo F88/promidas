@@ -44,16 +44,17 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PromidasRepositoryBuilder } from '../builder.js';
+import { PromidasRepositoryBuilder } from '../../builder.js';
 import {
   createConsoleLogger,
   type Logger,
   type LogLevel,
-} from '../logger/index.js';
+} from '../../logger/index.js';
 
 // Mock the ProtopediaApiCustomClient
-vi.mock('../fetcher/index', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../fetcher/index.js')>();
+vi.mock('../../fetcher/index', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../fetcher/index.js')>();
   return {
     ...actual,
     ProtopediaApiCustomClient: vi.fn(function (this: any) {
@@ -410,7 +411,7 @@ describe('PromidasRepositoryBuilder', () => {
     });
   });
 
-  describe('Shared Logger Pattern', () => {
+  describe('Logger Configuration', () => {
     it('should create a repository successfully when no explicit loggers are provided', () => {
       const builder = new PromidasRepositoryBuilder();
       const repo = builder.build();
@@ -425,7 +426,7 @@ describe('PromidasRepositoryBuilder', () => {
       expect(config.ttlMs).toBeDefined();
     });
 
-    it('should respect explicitly provided loggers and not create shared logger', () => {
+    it('should respect explicitly provided loggers', () => {
       const customStoreLogger = {
         debug: vi.fn(),
         info: vi.fn(),
@@ -450,12 +451,9 @@ describe('PromidasRepositoryBuilder', () => {
 
       // Should build successfully with custom loggers
       expect(repo).toBeDefined();
-
-      // Verify the custom loggers were passed through to the constructors
-      // (this is validated by the console output in the test run)
     });
 
-    it('should use correct logLevel priority when creating shared logger (repository > store > apiClient)', () => {
+    it('should create independent loggers when logLevel is specified', () => {
       const builder = new PromidasRepositoryBuilder();
       const repo = builder
         .setStoreConfig({ logLevel: 'warn' })
@@ -463,29 +461,7 @@ describe('PromidasRepositoryBuilder', () => {
         .setRepositoryConfig({ logLevel: 'debug' })
         .build();
 
-      // Repository should be created with debug level (highest priority)
-      expect(repo).toBeDefined();
-
-      // The shared logger with 'debug' level is used internally
-      // (verified by console output showing level: 'debug')
-    });
-
-    it('should use store logLevel when repository logLevel is not provided', () => {
-      const builder = new PromidasRepositoryBuilder();
-      const repo = builder
-        .setStoreConfig({ logLevel: 'warn' })
-        .setApiClientConfig({ logLevel: 'error' })
-        .build();
-
-      // Repository should be created with warn level (second priority)
-      expect(repo).toBeDefined();
-    });
-
-    it('should use apiClient logLevel when neither repository nor store logLevel is provided', () => {
-      const builder = new PromidasRepositoryBuilder();
-      const repo = builder.setApiClientConfig({ logLevel: 'error' }).build();
-
-      // Repository should be created with error level (third priority)
+      // Repository should be created successfully
       expect(repo).toBeDefined();
     });
 
@@ -497,30 +473,6 @@ describe('PromidasRepositoryBuilder', () => {
       expect(repo).toBeDefined();
       const config = repo.getConfig();
       expect(config.logLevel).toBe('info');
-    });
-
-    it('should create shared logger when some components lack explicit loggers', () => {
-      const customLogger = {
-        debug: vi.fn(),
-        info: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
-        level: 'debug' as const,
-      };
-
-      const builder = new PromidasRepositoryBuilder();
-      const repo = builder
-        .setStoreConfig({ logger: customLogger })
-        // apiClient and repository don't have explicit logger
-        .setRepositoryConfig({ logLevel: 'warn' })
-        .build();
-
-      // Repository should be created successfully even when only one component has a logger
-      expect(repo).toBeDefined();
-
-      // Store uses custom logger, apiClient and repository use shared logger with 'warn' level
-      // This verifies the fix for the bug where shared logger wasn't created
-      // when at least one component had an explicit logger
     });
 
     it('should reuse the same builder instance across multiple build calls', () => {
@@ -535,90 +487,63 @@ describe('PromidasRepositoryBuilder', () => {
       // Both should be valid repositories (different instances)
       expect(repo1).not.toBe(repo2);
     });
-  });
 
-  describe('Default Log Level', () => {
-    it('should use default log level when set and no other logLevel is specified', () => {
-      const builder = new PromidasRepositoryBuilder();
-      const repo = builder.setDefaultLogLevel('debug').build();
-
-      // Repository should be created successfully with debug level shared logger
-      expect(repo).toBeDefined();
-      // The shared logger with 'debug' level is used internally
-      // (verified by console output showing level: 'debug')
-    });
-
-    it('should allow individual component logLevel to override default', () => {
+    it('should create independent loggers for each component by default', () => {
       const builder = new PromidasRepositoryBuilder();
       const repo = builder
-        .setDefaultLogLevel('debug')
-        .setStoreConfig({ logLevel: 'error' })
+        .setStoreConfig({ logLevel: 'debug' })
+        .setApiClientConfig({ logLevel: 'info' })
+        .setRepositoryConfig({ logLevel: 'warn' })
         .build();
 
-      // Store's logLevel should override default
+      // Repository should be created successfully with different log levels
       expect(repo).toBeDefined();
+
+      // Each component has its own independent logger with its own level
+      // Store: debug, ApiClient: info, Repository: warn
       const config = repo.getConfig();
-      expect(config.logLevel).toBe('error');
+      expect(config.logLevel).toBe('debug'); // Store's log level
     });
 
-    it('should respect explicit logger over default log level', () => {
-      const customLogger = {
+    it('should not share logger instances across components', () => {
+      const sharedLogger = {
         debug: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),
         error: vi.fn(),
-        level: 'warn' as const,
+        level: 'info' as const,
       };
 
       const builder = new PromidasRepositoryBuilder();
       const repo = builder
-        .setDefaultLogLevel('debug')
-        .setStoreConfig({ logger: customLogger })
+        .setStoreConfig({ logger: sharedLogger })
+        .setApiClientConfig({ logger: sharedLogger })
+        .setRepositoryConfig({ logger: sharedLogger })
         .build();
 
-      // Custom logger should be used as-is
+      // Should build successfully even when same logger is explicitly provided
+      // This tests that builder doesn't prevent sharing if explicitly requested
       expect(repo).toBeDefined();
     });
 
-    it('should work regardless of method call order', () => {
-      const builder1 = new PromidasRepositoryBuilder();
-      const repo1 = builder1
-        .setStoreConfig({ logLevel: 'warn' })
-        .setDefaultLogLevel('debug')
-        .build();
+    it('should create ConsoleLogger when only logLevel is provided', () => {
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
-      const builder2 = new PromidasRepositoryBuilder();
-      const repo2 = builder2
-        .setDefaultLogLevel('debug')
-        .setStoreConfig({ logLevel: 'warn' })
-        .build();
-
-      // Both should use 'warn' (individual config overrides default)
-      expect(repo1.getConfig().logLevel).toBe('warn');
-      expect(repo2.getConfig().logLevel).toBe('warn');
-    });
-
-    it('should fall back to info when no default is set', () => {
       const builder = new PromidasRepositoryBuilder();
-      const repo = builder.build();
 
-      // Should use default 'info' level
+      // Provide logLevel without logger - Builder should create ConsoleLogger
+      const repo = builder
+        .setStoreConfig({ logLevel: 'debug' })
+        .setRepositoryConfig({ logLevel: 'debug' })
+        .build();
+
       expect(repo).toBeDefined();
       const config = repo.getConfig();
-      expect(config.logLevel).toBe('info');
-    });
+      expect(config.logLevel).toBe('debug');
 
-    it('should allow chaining with other configuration methods', () => {
-      const builder = new PromidasRepositoryBuilder();
-      const repo = builder
-        .setDefaultLogLevel('debug')
-        .setStoreConfig({ ttlMs: 60_000 })
-        .setApiClientConfig({ logLevel: 'error' })
-        .setRepositoryConfig({ logLevel: 'warn' })
-        .build();
-
-      // Repository logLevel has highest priority
-      expect(repo).toBeDefined();
+      consoleErrorSpy.mockRestore();
     });
   });
 

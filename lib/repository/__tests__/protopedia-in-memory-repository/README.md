@@ -188,7 +188,7 @@ npm test -- --coverage lib/repository/__tests__/protopedia-in-memory-repository
 
 ## Key Testing Principles
 
-1. **Dependency Injection:** All tests construct `ProtopediaInMemoryRepositoryImpl` directly with injected dependencies (never use `createPromidasRepository` factory in these tests)
+1. **Dependency Injection:** All tests construct `ProtopediaInMemoryRepositoryImpl` directly with injected dependencies (never use factory functions in these tests)
 
 2. **Test Isolation:** Each test has clean mocks via `beforeEach` and `resetMocks()`
 

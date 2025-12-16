@@ -313,27 +313,6 @@ describe('MyService', () => {
 
 ## Integration Examples
 
-### With Repository
-
-```typescript
-import { createProtopediaInMemoryRepository } from '@f88/promidas/repository';
-import { createConsoleLogger } from '@f88/promidas/logger';
-
-const logger = createConsoleLogger();
-
-const repository = createProtopediaInMemoryRepository({
-    storeConfig: {
-        logger,
-        logLevel: 'warn',
-    },
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
-        logger,
-        logLevel: 'debug',
-    },
-});
-```
-
 ### With Fetcher
 
 ```typescript
@@ -343,7 +322,7 @@ import { createConsoleLogger } from '@f88/promidas/logger';
 const logger = createConsoleLogger();
 
 const client = createProtopediaApiCustomClient({
-    token: process.env.PROTOPEDIA_API_TOKEN,
+    token: process.env.PROTOPEDIA_API_V2_TOKEN,
     logger,
     logLevel: 'info',
 });
@@ -358,34 +337,9 @@ import { createConsoleLogger } from '@f88/promidas/logger';
 const logger = createConsoleLogger();
 
 const client = createProtoPediaClient({
-    token: process.env.PROTOPEDIA_API_TOKEN,
+    token: process.env.PROTOPEDIA_API_V2_TOKEN,
     logger,
     logLevel: 'debug',
-});
-```
-
-### Shared Logger Across Components
-
-```typescript
-import { createConsoleLogger } from '@f88/promidas/logger';
-import { createProtopediaInMemoryRepository } from '@f88/promidas/repository';
-import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
-
-// Single logger instance
-const logger = createConsoleLogger();
-
-// Shared across all components
-const apiClient = createProtopediaApiCustomClient({
-    token: process.env.PROTOPEDIA_API_TOKEN,
-    logger,
-});
-
-const repository = createProtopediaInMemoryRepository({
-    storeConfig: { logger },
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
-        logger,
-    },
 });
 ```
 

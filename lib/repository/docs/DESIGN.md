@@ -39,9 +39,9 @@ This document describes the architecture, design decisions, and implementation p
                           ▼
 ┌─────────────────────────────────────────────────────────┐
 │  Factory Layer                                          │
-│  - createPromidasRepository()                 │
-│  - Dependency injection                                 │
-│  - Configuration validation                             │
+│  - createPromidasForLocal() / createPromidasForServer() │
+│  - PromidasRepositoryBuilder                            │
+│  - Dependency injection & configuration validation      │
 └─────────────────────────────────────────────────────────┘
                           │
                           ▼
@@ -98,16 +98,22 @@ export interface ProtopediaInMemoryRepository {
     // ... other methods
 }
 
-// Implementation is hidden behind factory
-export const createPromidasRepository = ({
-    storeConfig = {},
-    apiClientOptions,
-}: CreatePromidasRepositoryOptions = {}): ProtopediaInMemoryRepository => {
-    return new ProtopediaInMemoryRepositoryImpl({
-        repositoryConfig: {},
-        storeConfig,
-        apiClientOptions,
-    });
+// Implementation is hidden behind factory functions
+export const createPromidasForLocal = (options?: {
+    protopediaApiToken?: string;
+}): ProtopediaInMemoryRepository => {
+    return new PromidasRepositoryBuilder()
+
+        .setStoreConfig({ ttlMs: 30 * 60 * 1000 })
+        .setApiClientConfig({
+            protoPediaApiClientOptions: {
+                token:
+                    options?.protopediaApiToken ??
+                    process.env.PROTOPEDIA_API_V2_TOKEN,
+                timeout: 90_000,
+            },
+        })
+        .build();
 };
 ```
 

@@ -4,15 +4,56 @@ import {
 } from 'protopedia-api-v2-client';
 
 import {
+  createPromidasForLocal,
   PromidasRepositoryBuilder,
+  type ProtopediaInMemoryRepository,
   type PrototypeInMemoryStoreConfig,
 } from '../lib/index.js';
 
+/**
+ * Creates a PromidasRepository using the factory function optimized for local use.
+ * @param token
+ * @returns
+ */
+function createRepositoryWithFactory(
+  token: string,
+): ProtopediaInMemoryRepository {
+  return createPromidasForLocal({
+    protopediaApiToken: token,
+    // logLevel: 'info',
+    logLevel: 'debug',
+  });
+}
+
+/**
+ * Creates a PromidasRepository using PromidasRepositoryBuilder with custom store TTL.
+ *
+ * @param token
+ * @returns
+ */
+function createRepositoryWithBuilder(
+  token: string,
+): ProtopediaInMemoryRepository {
+  const prototypeInMemoryStoreConfig: PrototypeInMemoryStoreConfig = {
+    ttlMs: 60_000, // 60 seconds for testing
+  };
+  const protoPediaApiClientOptions: ProtoPediaApiClientOptions = {
+    token,
+  };
+
+  return new PromidasRepositoryBuilder()
+    .setStoreConfig({ ...prototypeInMemoryStoreConfig, logLevel: 'debug' })
+    .setApiClientConfig({
+      protoPediaApiClientOptions: {
+        token: token,
+      },
+      logLevel: 'debug',
+    })
+    .build();
+}
+
 async function main() {
   const token = process.env.PROTOPEDIA_API_V2_TOKEN;
-  const logLevel = process.env.PROTOPEDIA_API_V2_LOG_LEVEL as
-    | ProtoPediaApiClientOptions['logLevel']
-    | undefined;
 
   if (!token) {
     console.error(
@@ -21,22 +62,16 @@ async function main() {
     process.exit(1);
   }
 
-  // Test 1: Create repository with custom TTL (60 seconds)
-  console.log('=== Test 1: Initialize repository with custom TTL ===');
-  const prototypeInMemoryStoreConfig: PrototypeInMemoryStoreConfig = {
-    ttlMs: 60_000, // 60 seconds for testing
-  };
-  const protoPediaApiClientOptions: ProtoPediaApiClientOptions = {
-    token,
-    ...(logLevel && { logLevel }),
-  };
-  const repo = new PromidasRepositoryBuilder()
-    .setStoreConfig(prototypeInMemoryStoreConfig)
-    .setApiClientConfig({
-      protoPediaApiClientOptions: protoPediaApiClientOptions,
-    })
-    .build();
-  console.log('✓ Repository created with 60s TTL\n');
+  // Test 1: Create repository
+  console.log('=== Test 1: Initialize repository ===');
+
+  // Builder approach (60s TTL for testing)
+  // const repo = createRepositoryWithBuilder(token);
+
+  // Factory approach (30min TTL - production-ready)
+  const repo = createRepositoryWithFactory(token);
+
+  console.log('✓ Repository created\n');
 
   // Test 2: Setup initial snapshot with 5 prototypes
   console.log('=== Test 2: Setup snapshot (fetch 5 prototypes) ===');

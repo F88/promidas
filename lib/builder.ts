@@ -55,20 +55,15 @@ export type {
  * through a fluent interface.
  *
  * @remarks
- * **Shared Logger Pattern:**
- * When no explicit logger is provided in any configuration, a single shared ConsoleLogger
- * instance is created and used across all components (Store, API Client, Repository).
- * This improves memory efficiency and ensures consistent logging.
- *
- * **Log Level Priority:**
- * 1. Explicit logger instances (highest priority)
- * 2. Individual component logLevel (repository > store > apiClient)
- * 3. Default log level (set via {@link setDefaultLogLevel})
- * 4. 'info' (fallback)
+ * **Logger Configuration:**
+ * Each component (Store, API Client, Repository) receives an independent logger instance.
+ * - If you provide a custom logger, it will be used as-is
+ * - If you don't provide a logger, a new ConsoleLogger is created with the specified logLevel (default: 'info')
+ * - Each component can have different loggers and log levels for maximum flexibility
  *
  * @example
  * ```typescript
- * // Basic usage with default settings
+ * // Basic usage with default settings (each component gets independent logger)
  * const repo = new PromidasRepositoryBuilder().build();
  *
  * // Configure store settings
@@ -79,16 +74,12 @@ export type {
  *   })
  *   .build();
  *
- * // Set default log level for all components
+ * // Different log levels for each component
  * const repo = new PromidasRepositoryBuilder()
- *   .setDefaultLogLevel('debug')
+ *   .setStoreConfig({ logLevel: 'error' })
+ *   .setApiClientConfig({ logLevel: 'warn' })
+ *   .setRepositoryConfig({ logLevel: 'debug' })
  *   .build();
- *
- * // Mix default and individual log levels
- * const repo = new PromidasRepositoryBuilder()
- *   .setDefaultLogLevel('info')
- *   .setStoreConfig({ logLevel: 'error' })  // Store uses 'error'
- *   .build();  // ApiClient and Repository use 'info'
  * ```
  */
 export class PromidasRepositoryBuilder {
@@ -96,59 +87,6 @@ export class PromidasRepositoryBuilder {
   #storeConfig: PrototypeInMemoryStoreConfig = {};
   #apiClientConfig: ProtopediaApiCustomClientConfig = {};
   #repositoryConfig: ProtopediaInMemoryRepositoryConfig = {};
-
-  /**
-   * Default log level used when creating the shared logger.
-   * This is used as a fallback when no explicit logLevel is specified in any config.
-   */
-  #defaultLogLevel?: LogLevel;
-
-  /**
-   * Shared logger instance used across all components when no explicit logger is provided.
-   * Created lazily during build() to ensure consistent logging across Store, API Client, and Repository.
-   */
-  #sharedLogger?: Logger;
-
-  /**
-   * Set the default log level for all components.
-   *
-   * This sets the log level used when creating the shared logger instance.
-   * Individual component logLevel settings take precedence over this default.
-   *
-   * @param level - The default log level to use
-   * @returns This builder instance for method chaining
-   *
-   * @remarks
-   * **Priority order:**
-   * 1. Explicit logger instances (highest priority)
-   * 2. Individual component logLevel (repository > store > apiClient)
-   * 3. Default log level (set by this method)
-   * 4. 'info' (fallback)
-   *
-   * @example
-   * ```typescript
-   * // Set default to 'debug' for all components
-   * const repo = new PromidasRepositoryBuilder()
-   *   .setDefaultLogLevel('debug')
-   *   .build();
-   *
-   * // Store uses 'warn', others use default 'debug'
-   * const repo = new PromidasRepositoryBuilder()
-   *   .setDefaultLogLevel('debug')
-   *   .setStoreConfig({ logLevel: 'warn' })
-   *   .build();
-   *
-   * // Custom logger is used as-is (default is ignored)
-   * const repo = new PromidasRepositoryBuilder()
-   *   .setDefaultLogLevel('debug')
-   *   .setStoreConfig({ logger: customLogger })
-   *   .build();
-   * ```
-   */
-  setDefaultLogLevel(level: LogLevel): this {
-    this.#defaultLogLevel = level;
-    return this;
-  }
 
   /**
    * Set configuration for the in-memory store.
@@ -200,18 +138,11 @@ export class PromidasRepositoryBuilder {
    * based on the accumulated configuration.
    *
    * @remarks
-   * **Shared Logger Pattern:**
-   * When no explicit logger is provided in any configuration, a shared ConsoleLogger
-   * instance is created and used across all components for consistent logging and
-   * memory efficiency.
-   *
-   * **Log Level Priority:**
-   * The log level for the shared logger is determined in this order:
-   * 1. Repository config logLevel
-   * 2. Store config logLevel
-   * 3. API Client config logLevel
-   * 4. Default log level (set via {@link setDefaultLogLevel})
-   * 5. 'info' (fallback)
+   * **Logger Creation:**
+   * When no explicit logger is provided in a component's configuration, Builder
+   * creates a new ConsoleLogger instance with the specified logLevel (default: 'info').
+   * Each component receives an independent logger instance unless you explicitly
+   * share a logger by passing the same logger instance to multiple configs.
    *
    * **Configuration Immutability:**
    * Configurations are deep-merged to prevent external mutations from affecting
@@ -222,57 +153,49 @@ export class PromidasRepositoryBuilder {
    *
    * @example
    * ```typescript
-   * // Build with default settings
+   * // Build with default settings (each component gets independent logger with 'info' level)
    * const repo = new PromidasRepositoryBuilder().build();
    *
-   * // Build with custom log level
+   * // Build with different log levels
    * const repo = new PromidasRepositoryBuilder()
-   *   .setDefaultLogLevel('debug')
-   *   .build();
-   *
-   * // Build with mixed configuration
-   * const repo = new PromidasRepositoryBuilder()
-   *   .setDefaultLogLevel('info')
    *   .setStoreConfig({ ttlMs: 60000, logLevel: 'warn' })
    *   .setRepositoryConfig({ logLevel: 'debug' })
    *   .build();
-   * // Result: Store and Repository share a logger with 'debug' level
-   * // (repository logLevel has highest priority)
+   * // Result: Store gets ConsoleLogger('warn'), Repository gets ConsoleLogger('debug')
    * ```
    */
   build(): ProtopediaInMemoryRepository {
     try {
-      // Ensure shared logger exists if it will be needed by any component.
-      if (
-        !this.#sharedLogger &&
-        (!this.#storeConfig.logger ||
-          !this.#apiClientConfig.logger ||
-          !this.#repositoryConfig.logger)
-      ) {
-        // Determine log level priority: repository > store > apiClient > default > 'info'
-        const logLevel =
-          this.#repositoryConfig.logLevel ??
-          this.#storeConfig.logLevel ??
-          this.#apiClientConfig.logLevel ??
-          this.#defaultLogLevel ??
-          'info';
-        this.#sharedLogger = new ConsoleLogger(logLevel);
-      }
-
-      // Inject shared logger into configs that don't have an explicit logger.
+      // Design Decision: Builder ensures logger instance exists
+      //
+      // Why Builder creates loggers instead of delegating to modules:
+      // 1. Responsibility clarity: Builder guarantees logger presence
+      // 2. Loose coupling: Reduces dependency on module's logger creation logic
+      // 3. Consistency: Uniform logger creation strategy across all components
+      //
+      // Alternative (simpler but more coupled):
+      //   Just pass config as-is: new PrototypeInMemoryStore(this.#storeConfig)
+      //   Modules would handle logger creation internally
+      //   Trade-off: Tighter coupling to module implementation details
       const storeConfig: PrototypeInMemoryStoreConfig = {
         ...this.#storeConfig,
-        logger: this.#storeConfig.logger ?? this.#sharedLogger!,
+        logger:
+          this.#storeConfig.logger ??
+          new ConsoleLogger(this.#storeConfig.logLevel ?? 'info'),
       };
 
       const apiClientConfig: ProtopediaApiCustomClientConfig = {
         ...this.#apiClientConfig,
-        logger: this.#apiClientConfig.logger ?? this.#sharedLogger!,
+        logger:
+          this.#apiClientConfig.logger ??
+          new ConsoleLogger(this.#apiClientConfig.logLevel ?? 'info'),
       };
 
       const repositoryConfig: ProtopediaInMemoryRepositoryConfig = {
         ...this.#repositoryConfig,
-        logger: this.#repositoryConfig.logger ?? this.#sharedLogger!,
+        logger:
+          this.#repositoryConfig.logger ??
+          new ConsoleLogger(this.#repositoryConfig.logLevel ?? 'info'),
       };
 
       const store = new PrototypeInMemoryStore(storeConfig);
@@ -286,8 +209,7 @@ export class PromidasRepositoryBuilder {
       });
     } catch (error) {
       // Log the error before re-throwing, ensuring sensitive data is sanitized
-      const logger =
-        this.#repositoryConfig.logger ?? this.#sharedLogger ?? console;
+      const logger = this.#repositoryConfig.logger ?? console;
       if (typeof logger.error === 'function') {
         logger.error(
           'Failed to build ProtopediaInMemoryRepository',

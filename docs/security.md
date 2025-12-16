@@ -127,12 +127,19 @@ ProtoPedia API Ver 2.0の公式ドキュメントには、 `Bearer Token` の取
 
 ```typescript
 // pages/api/prototypes.ts (サーバーサイド)
+import { createPromidasForServer } from '@f88/promidas';
+
 export async function GET() {
-    const repo = createPromidasRepository({
-        apiClientOptions: {
-            token: process.env.PROTOPEDIA_API_TOKEN, // 安全
-        },
-    });
+    // サーバー用の最適化設定 (10分TTL, warnログ)
+    const repo = createPromidasForServer();
+
+    const setupResult = await repo.setupSnapshot({ limit: 1000 });
+    if (!setupResult.ok) {
+        return Response.json(
+            { error: setupResult.error.message },
+            { status: 500 },
+        );
+    }
 
     const data = await repo.getAllFromSnapshot();
     return Response.json(data);
@@ -143,7 +150,7 @@ export async function GET() {
 
 ```bash
 # .env (Gitにコミットしない)
-PROTOPEDIA_API_TOKEN=your-token-here
+PROTOPEDIA_API_V2_TOKEN=your-token-here
 ```
 
 ```docker

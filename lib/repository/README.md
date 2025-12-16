@@ -25,31 +25,27 @@ API から取得したプロトタイプ情報をメモリに保存して、素�
 
 ## 📥 インストールと使い方
 
+詳しい使い方は、[Getting Started Guide](https://f88.github.io/promidas/getting-started.html)を参照してください。
+
 このモジュールは単体でも使用できます:
 
 ```typescript
 import {
-    createPromidasRepository,
     type NormalizedPrototype,
     type Logger,
 } from '@f88/promidas/repository';
 ```
 
-または、ルートからもインポートできます:
+## 🚀 クイックスタート
+
+初心者向けのファクトリー関数を使った簡単な例:
 
 ```typescript
-import { createPromidasRepository } from '@f88/promidas';
-```
+import { createPromidasForLocal } from '@f88/promidas';
 
-## 🚀 簡単な使い方
-
-```typescript
-import { createPromidasRepository } from '@f88/promidas';
-
-// 1. リポジトリを作成
-const repository = createPromidasRepository({
-    storeConfig: { ttlMs: 30 * 60 * 1000 }, // ストア設定: 30分のTTL
-    apiClientOptions: { token: process.env.PROTOPEDIA_API_TOKEN }, // APIクライアント設定
+// 1. リポジトリを作成 (ローカル開発用の最適化設定)
+const repository = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
 });
 
 // 2. データを読み込む
@@ -63,11 +59,9 @@ if (!result.ok) {
 const allData = await repository.getAllFromSnapshot();
 const completed = allData.filter((p) => p.status === 3); // 3 = '完成'
 console.log(`完成プロトタイプ: ${completed.length} 件`);
-
-// 4. タグで検索
-const iotPrototypes = allData.filter((p) => p.tags.includes('IoT'));
-console.log(`IoT関連: ${iotPrototypes.length} 件`);
 ```
+
+より詳細な例や高度な設定については、[ドキュメント](https://f88.github.io/promidas/)をご覧ください。
 
 ## 📚 詳しく知りたい方へ
 

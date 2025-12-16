@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-import { PromidasRepositoryBuilder } from '../builder.js';
+import { PromidasRepositoryBuilder } from '../../builder.js';
 
 describe('PromidasRepositoryBuilder - Error Logging', () => {
   beforeEach(() => {
@@ -31,7 +31,7 @@ describe('PromidasRepositoryBuilder - Error Logging', () => {
     );
   });
 
-  it('logs error when build fails with shared logger', () => {
+  it('logs error when build fails with independent logger', () => {
     const mockLogger = {
       info: vi.fn(),
       warn: vi.fn(),
@@ -40,13 +40,12 @@ describe('PromidasRepositoryBuilder - Error Logging', () => {
       level: 'info' as const,
     };
 
-    // Spy on console.error since shared logger uses ConsoleLogger
+    // Spy on console.error since store creates its own ConsoleLogger
     const consoleErrorSpy = vi
       .spyOn(console, 'error')
       .mockImplementation(() => {});
 
     const builder = new PromidasRepositoryBuilder()
-      .setDefaultLogLevel('debug')
       .setApiClientConfig({ logger: mockLogger })
       .setStoreConfig({
         maxDataSizeBytes: 100_000_000, // Exceeds limit
@@ -54,7 +53,7 @@ describe('PromidasRepositoryBuilder - Error Logging', () => {
 
     expect(() => builder.build()).toThrow();
 
-    // Shared logger (ConsoleLogger) should log the error
+    // Repository's independent logger (ConsoleLogger) should log the error
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       'Failed to build ProtopediaInMemoryRepository',
       expect.objectContaining({
@@ -86,6 +85,37 @@ describe('PromidasRepositoryBuilder - Error Logging', () => {
         error: expect.any(Object),
       }),
     );
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('does not log error when logger.error is not a function', () => {
+    const mockLoggerWithoutError = {
+      info: vi.fn(),
+      warn: vi.fn(),
+      // error is not a function
+      error: undefined,
+      debug: vi.fn(),
+      level: 'info' as const,
+    };
+
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+
+    const builder = new PromidasRepositoryBuilder()
+      .setRepositoryConfig({ logger: mockLoggerWithoutError as any })
+      .setStoreConfig({
+        maxDataSizeBytes: 100_000_000, // Exceeds limit
+      });
+
+    expect(() => builder.build()).toThrow();
+
+    // Logger's error should not be called (it's not a function)
+    expect(mockLoggerWithoutError.error).toBeUndefined();
+
+    // Console.error should not be used either (logger exists but error is not a function)
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
 
     consoleErrorSpy.mockRestore();
   });

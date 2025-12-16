@@ -51,8 +51,10 @@ instructions-for-ais:
 起動時に `setupSnapshot()` で全データを取得し、その後はメモリ内のデータを使います:
 
 ```typescript
-const repo = createPromidasRepository({
-    apiClientOptions: { token: process.env.PROTOPEDIA_API_TOKEN },
+import { createPromidasForLocal } from '@f88/promidas';
+
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
 });
 
 // 起動時に全データ取得
@@ -85,7 +87,7 @@ npm install github:F88/promidas protopedia-api-v2-client
 ### 2. トークンを環境変数に設定
 
 ```bash
-export PROTOPEDIA_API_TOKEN="your-token-here"
+export PROTOPEDIA_API_V2_TOKEN="your-token-here"
 ```
 
 または `.env` ファイルを使う場合:
@@ -96,20 +98,19 @@ npm install dotenv
 
 ```properties
 // .env
-PROTOPEDIA_API_TOKEN=your-token-here
+PROTOPEDIA_API_V2_TOKEN=your-token-here
 ```
 
 ### 3. 最小限のスクリプト
 
-**方法1: ファクトリ関数 (推奨)**
+**方法1: Factory関数 (推奨 - 最もシンプル)**
 
 ```typescript
-import { createPromidasRepository } from '@f88/promidas';
+import { createPromidasForLocal } from '@f88/promidas';
 
-const repo = createPromidasRepository({
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
-    },
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    logLevel: 'info', // optional
 });
 
 // データ取得
@@ -134,9 +135,10 @@ console.log(`Completed: ${completed.length}`);
 import { PromidasRepositoryBuilder } from '@f88/promidas';
 
 const repo = new PromidasRepositoryBuilder()
+
     .setApiClientConfig({
         protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_TOKEN,
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
         },
     })
     .build();
@@ -159,11 +161,11 @@ npx tsx script.ts
 ProtoPediaのデータをCSVやJSONファイルにエクスポート:
 
 ```typescript
-import { createPromidasRepository } from '@f88/promidas';
+import { createPromidasForLocal } from '@f88/promidas';
 import { writeFileSync } from 'fs';
 
-const repo = createPromidasRepository({
-    apiClientOptions: { token: process.env.PROTOPEDIA_API_TOKEN },
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
 });
 
 await repo.setupSnapshot({ limit: 10000 });
@@ -190,10 +192,10 @@ console.log(`Exported ${allData.length} prototypes`);
 タグ、ステータス、作成日などで統計を取る:
 
 ```typescript
-import { createPromidasRepository } from '@f88/promidas';
+import { createPromidasForLocal } from '@f88/promidas';
 
-const repo = createPromidasRepository({
-    apiClientOptions: { token: process.env.PROTOPEDIA_API_TOKEN },
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
 });
 
 await repo.setupSnapshot({ limit: 10000 });
@@ -234,10 +236,10 @@ console.log('Top 20 tags:', topTags);
 データの一貫性や品質をチェック:
 
 ```typescript
-import { createPromidasRepository } from '@f88/promidas';
+import { createPromidasForLocal } from '@f88/promidas';
 
-const repo = createPromidasRepository({
-    apiClientOptions: { token: process.env.PROTOPEDIA_API_TOKEN },
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
 });
 
 await repo.setupSnapshot({ limit: 10000 });
@@ -265,11 +267,11 @@ console.log(`Prototypes with future date: ${futureDate.length}`);
 Astro、VitePress、Next.js (SSG) などでProtoPediaデータを使う:
 
 ```typescript
-import { createPromidasRepository } from '@f88/promidas';
+import { createPromidasForLocal } from '@f88/promidas';
 import { writeFileSync, mkdirSync } from 'fs';
 
-const repo = createPromidasRepository({
-    apiClientOptions: { token: process.env.PROTOPEDIA_API_TOKEN },
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
 });
 
 await repo.setupSnapshot({ limit: 10000 });
@@ -312,10 +314,10 @@ console.log('Generated static data files');
 **ファクトリ関数:**
 
 ```typescript
-const repo = createPromidasRepository({
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
-    },
+import { createPromidasForLocal } from '@f88/promidas';
+
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
 });
 ```
 
@@ -325,7 +327,7 @@ const repo = createPromidasRepository({
 const repo = new PromidasRepositoryBuilder()
     .setApiClientConfig({
         protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_TOKEN,
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
         },
     })
     .build();
@@ -340,11 +342,11 @@ const repo = new PromidasRepositoryBuilder()
 **ファクトリ関数:**
 
 ```typescript
-const repo = createPromidasRepository({
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
-        logLevel: 'debug', // 詳細なログを出力
-    },
+import { createPromidasForLocal } from '@f88/promidas';
+
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    logLevel: 'debug', // 詳細なログを出力
 });
 ```
 
@@ -352,11 +354,12 @@ const repo = createPromidasRepository({
 
 ```typescript
 const repo = new PromidasRepositoryBuilder()
-    .setDefaultLogLevel('debug') // すべてのコンポーネントでdebugログ
+    .setStoreConfig({ logLevel: 'debug' })
     .setApiClientConfig({
         protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_TOKEN,
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
         },
+        logLevel: 'debug',
     })
     .build();
 ```
@@ -366,14 +369,18 @@ const repo = new PromidasRepositoryBuilder()
 ### パターン3: TTL無効 (データ更新なし)
 
 ```typescript
-const repo = createPromidasRepository({
-    storeConfig: {
+import { PromidasRepositoryBuilder } from '@f88/promidas';
+
+const repo = new PromidasRepositoryBuilder()
+    .setStoreConfig({
         ttlMs: Infinity, // データ更新しない
-    },
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
-    },
-});
+    })
+    .setApiClientConfig({
+        protoPediaApiClientOptions: {
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        },
+    })
+    .build();
 ```
 
 一度データを取得したら、そのデータを使い続けます。
@@ -381,62 +388,50 @@ const repo = createPromidasRepository({
 ### パターン4: 大量データ取得用
 
 ```typescript
-const repo = createPromidasRepository({
-    storeConfig: {
-        maxDataSizeBytes: 50 * 1024 * 1024, // 50MB
-    },
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
-    },
-});
+import { PromidasRepositoryBuilder } from '@f88/promidas';
 
-// 全データ取得 (limit: 0 = 無制限)
-await repo.setupSnapshot({ limit: 0 });
-```
-
-### パターン5: カスタムロガー
-
-**ファクトリ関数:**
-
-```typescript
-import { ConsoleLogger } from '@f88/promidas/logger';
-
-const logger = new ConsoleLogger('debug');
-
-const repo = createPromidasRepository({
-    storeConfig: { logger },
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
-        logger, // 同じロガーを共有
-    },
-});
-```
-
-**Builder (共有ロガー自動管理):**
-
-```typescript
 const repo = new PromidasRepositoryBuilder()
-    .setDefaultLogLevel('debug') // 共有ロガーが自動的に作成・共有される
-    .setStoreConfig({ ttlMs: Infinity })
+    .setStoreConfig({
+        maxDataSizeBytes: 30 * 1024 * 1024, // 30 MiB (hard limit)
+    })
     .setApiClientConfig({
         protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_TOKEN,
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
         },
     })
     .build();
+
+// 大量データを取得
+await repo.setupSnapshot({ limit: 10000 });
 ```
 
-Builderを使うと、明示的にロガーを作成・共有しなくても自動的に効率的なロガー管理が行われます。
+**注意**: ProtoPedia APIには全件取得の特別なパラメータはありません。大量データが必要な場合は、十分に大きな`limit`値を指定してください。
+
+### パターン5: カスタムロガー
+
+**Builder:**
+
+```typescript
+const repo = new PromidasRepositoryBuilder()
+    .setStoreConfig({ ttlMs: Infinity, logLevel: 'debug' })
+    .setApiClientConfig({
+        protoPediaApiClientOptions: {
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        },
+        logLevel: 'debug',
+    })
+    .build();
+```
 
 ## サンプルスクリプト集
 
 ### タグクラウド生成
 
 ```typescript
-import { createPromidasRepository } from '@f88/promidas';
+import { createPromidasForLocal } from '@f88/promidas';
 
-const repo = createPromidasRepository({
-    apiClientOptions: { token: process.env.PROTOPEDIA_API_TOKEN },
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
 });
 
 await repo.setupSnapshot({ limit: 10000 });
@@ -472,10 +467,10 @@ console.log('Generated tag-cloud.html');
 ### 月別作成数グラフデータ
 
 ```typescript
-import { createPromidasRepository } from '@f88/promidas';
+import { createPromidasForLocal } from '@f88/promidas';
 
-const repo = createPromidasRepository({
-    apiClientOptions: { token: process.env.PROTOPEDIA_API_TOKEN },
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
 });
 
 await repo.setupSnapshot({ limit: 10000 });
@@ -519,14 +514,23 @@ await repo.setupSnapshot({ limit: 100 });
 
 ### Q2. メモリが足りない
 
-**A**: `maxDataSizeBytes` で制限を増やすか、データ量を減らします:
+**A**: データ量を減らすか、`limit` パラメータで取得件数を制限します。
+
+注意: `maxDataSizeBytes` の上限は 30 MiB (ハードリミット) です:
 
 ```typescript
-const repo = createPromidasRepository({
-    storeConfig: {
-        maxDataSizeBytes: 100 * 1024 * 1024, // 100MB
-    },
-});
+import { PromidasRepositoryBuilder } from '@f88/promidas';
+
+const repo = new PromidasRepositoryBuilder()
+    .setStoreConfig({
+        maxDataSizeBytes: 30 * 1024 * 1024, // 30 MiB (hard limit)
+    })
+    .setApiClientConfig({
+        protoPediaApiClientOptions: {
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        },
+    })
+    .build();
 ```
 
 ### Q3. エラーが発生したらどうすればいい?
@@ -546,11 +550,11 @@ if (!result.ok) {
 **A**: `logLevel: 'debug'` を設定します:
 
 ```typescript
-const repo = createPromidasRepository({
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
-        logLevel: 'debug',
-    },
+import { createPromidasForLocal } from '@f88/promidas';
+
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    logLevel: 'debug',
 });
 ```
 
@@ -570,8 +574,8 @@ if (existsSync(CACHE_FILE)) {
     console.log('Loaded from cache');
 } else {
     // APIから取得してキャッシュ
-    const repo = createPromidasRepository({
-        apiClientOptions: { token: process.env.PROTOPEDIA_API_TOKEN },
+    const repo = createPromidasForLocal({
+        protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
     });
     await repo.setupSnapshot({ limit: 10000 });
     allData = await repo.getAllFromSnapshot();

@@ -18,7 +18,12 @@ import { sanitizeDataForLogging } from '../utils/index.js'; // 追加
 
 const DEFAULT_TTL_MS = 30 * 60 * 1_000; // 30 minutes
 const DEFAULT_DATA_SIZE_BYTES = 10 * 1024 * 1024; // 10 MiB
-const MAX_DATA_SIZE_BYTES = 30 * 1024 * 1024; // 30 MiB
+
+/**
+ * Hard limit for data size in bytes for storing snapshots.
+ * Attempting to configure a store with a size larger than this will throw an error.
+ */
+export const LIMIT_DATA_SIZE_BYTES = 30 * 1024 * 1024; // 30 MiB
 
 /**
  * Configuration options for the PrototypeInMemoryStore.
@@ -40,11 +45,11 @@ export type PrototypeInMemoryStoreConfig = {
    * Custom logger instance.
    *
    * @remarks
-   * - If provided, the logger will be used as-is (NOT modified)
-   * - If provided, the `logLevel` option is IGNORED
-   * - To use a custom logger with a specific level, configure it before passing
+   * - If provided, the logger will be used as-is
+   * - If provided with logLevel, the level will be updated if logger is mutable
+   * - If not provided, creates a ConsoleLogger with the specified logLevel
    *
-   * @default undefined (creates ConsoleLogger)
+   * @default undefined (creates ConsoleLogger with 'info' level)
    */
   logger?: Logger;
 
@@ -54,7 +59,7 @@ export type PrototypeInMemoryStoreConfig = {
    * @remarks
    * - Only used when `logger` is NOT provided
    * - Creates a new ConsoleLogger with this level
-   * - IGNORED if `logger` is provided
+   * - If logger is provided and mutable, updates its level property
    *
    * @default 'info'
    */
@@ -130,11 +135,12 @@ export class PrototypeInMemoryStore {
    *   Defaults to 10 MiB (10,485,760 bytes). Must not exceed 30 MiB.
    *   If a snapshot exceeds this limit, setAll() will reject it.
    * @param config.logger - Optional custom logger instance. If not provided,
-   *   a default ConsoleLogger is created. NOTE: The logger will NOT be modified.
-   * @param config.logLevel - Log level for the default logger. Only used when
-   *   `logger` is not provided. IGNORED if `logger` is provided.
+   *   a default ConsoleLogger is created.
+   * @param config.logLevel - Log level for the logger. When `logger` is not provided,
+   *   creates a ConsoleLogger with this level. When `logger` is provided and mutable,
+   *   updates the logger's level property.
    *
-   * @throws {Error} When maxDataSizeBytes exceeds MAX_DATA_SIZE_BYTES (30 MiB)
+   * @throws {Error} When maxDataSizeBytes exceeds LIMIT_DATA_SIZE_BYTES (30 MiB)
    */
   constructor({
     ttlMs = DEFAULT_TTL_MS,
@@ -143,10 +149,10 @@ export class PrototypeInMemoryStore {
     logLevel,
   }: PrototypeInMemoryStoreConfig = {}) {
     // Throw if maxDataSizeBytes exceeds the hard limit
-    if (maxDataSizeBytes > MAX_DATA_SIZE_BYTES) {
-      const maxMiB = (MAX_DATA_SIZE_BYTES / (1024 * 1024)).toFixed(0);
+    if (maxDataSizeBytes > LIMIT_DATA_SIZE_BYTES) {
+      const maxMiB = (LIMIT_DATA_SIZE_BYTES / (1024 * 1024)).toFixed(0);
       throw new Error(
-        `PrototypeInMemoryStore maxDataSizeBytes must be <= ${MAX_DATA_SIZE_BYTES} bytes (${maxMiB} MiB) to prevent oversized data`,
+        `PrototypeInMemoryStore maxDataSizeBytes must be <= ${LIMIT_DATA_SIZE_BYTES} bytes (${maxMiB} MiB) to prevent oversized data`,
       );
     }
 
@@ -350,37 +356,45 @@ export class PrototypeInMemoryStore {
    * internal state cannot be corrupted by external mutations of the array.
    * However, the prototype objects themselves are not cloned. Callers must not
    * mutate the prototype objects after passing them to this method.
+   *
+   * Size calculation is performed AFTER deduplication to ensure accurate size checking.
+   * If duplicate IDs are present in the input array, only the last occurrence is kept.
    */
   setAll(prototypes: NormalizedPrototype[]): { dataSizeBytes: number } | null {
-    // Validate payload size before storing
-    const dataSizeBytes = this.estimateSize(prototypes);
-
-    if (dataSizeBytes > this.maxDataSizeBytes) {
-      this.logger.warn('Snapshot skipped: data exceeds maximum size', {
-        dataSizeBytes,
-        maxDataSizeBytes: this.maxDataSizeBytes,
-        count: prototypes.length,
-      });
-      return null;
-    }
-
-    // Build O(1) lookup index by prototype ID
+    // Build O(1) lookup index by prototype ID first to deduplicate
     // Note: If duplicate IDs are present in the input array, the last one wins.
-    this.prototypeIdIndex = new Map(
+    const uniqueMap = new Map(
       prototypes.map((prototype) => [prototype.id, prototype]),
     );
 
     // Warn if duplicate IDs were detected in the input array
-    if (this.prototypeIdIndex.size !== prototypes.length) {
+    if (uniqueMap.size !== prototypes.length) {
       this.logger.warn('Duplicate prototype IDs detected in snapshot', {
         inputCount: prototypes.length,
-        storedCount: this.prototypeIdIndex.size,
+        storedCount: uniqueMap.size,
       });
     }
 
     // Reconstruct prototypes array from the map to ensure consistency and uniqueness by ID.
     // This will also ensure that `getAll().length` matches `this.size`.
-    this.prototypes = Array.from(this.prototypeIdIndex.values());
+    const uniquePrototypes = Array.from(uniqueMap.values());
+
+    // Validate payload size AFTER deduplication
+    const dataSizeBytes = this.estimateSize(uniquePrototypes);
+
+    if (dataSizeBytes > this.maxDataSizeBytes) {
+      this.logger.warn('Snapshot skipped: data exceeds maximum size', {
+        dataSizeBytes,
+        maxDataSizeBytes: this.maxDataSizeBytes,
+        inputCount: prototypes.length,
+        uniqueCount: uniqueMap.size,
+      });
+      return null;
+    }
+
+    // Store the deduplicated data
+    this.prototypeIdIndex = uniqueMap;
+    this.prototypes = uniquePrototypes;
 
     // Update cache metadata
     this.cachedAt = new Date();

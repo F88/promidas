@@ -82,3 +82,6 @@ export {
   type ProtopediaInMemoryRepository,
   type ProtopediaInMemoryRepositoryConfig,
 } from './builder.js';
+
+// Factory functions for common use cases
+export { createPromidasForLocal, createPromidasForServer } from './factory.js';
