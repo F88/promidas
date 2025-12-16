@@ -82,8 +82,7 @@ describe('ConsoleLogger', () => {
       it('includes metadata in debug logs', () => {
         const logger = new ConsoleLogger('debug');
         logger.debug('Debug with meta', { key: 'value' });
-        expect(debugSpy).toHaveBeenCalledWith('Debug with meta', {
-          level: 'debug',
+        expect(debugSpy).toHaveBeenCalledWith('[DEBUG] Debug with meta', {
           key: 'value',
         });
       });
@@ -174,8 +173,7 @@ describe('ConsoleLogger', () => {
     it('merges object metadata with level', () => {
       const logger = new ConsoleLogger('info');
       logger.info('Message', { userId: 123, action: 'login' });
-      expect(infoSpy).toHaveBeenCalledWith('Message', {
-        level: 'info',
+      expect(infoSpy).toHaveBeenCalledWith('[INFO] Message', {
         userId: 123,
         action: 'login',
       });
@@ -184,55 +182,37 @@ describe('ConsoleLogger', () => {
     it('wraps primitive metadata', () => {
       const logger = new ConsoleLogger('info');
       logger.info('Message', 'string meta');
-      expect(infoSpy).toHaveBeenCalledWith('Message', {
-        level: 'info',
-        meta: 'string meta',
-      });
+      expect(infoSpy).toHaveBeenCalledWith('[INFO] Message', 'string meta');
     });
 
     it('wraps number metadata', () => {
       const logger = new ConsoleLogger('info');
       logger.info('Message', 42);
-      expect(infoSpy).toHaveBeenCalledWith('Message', {
-        level: 'info',
-        meta: 42,
-      });
+      expect(infoSpy).toHaveBeenCalledWith('[INFO] Message', 42);
     });
 
     it('wraps boolean metadata', () => {
       const logger = new ConsoleLogger('info');
       logger.info('Message', true);
-      expect(infoSpy).toHaveBeenCalledWith('Message', {
-        level: 'info',
-        meta: true,
-      });
+      expect(infoSpy).toHaveBeenCalledWith('[INFO] Message', true);
     });
 
     it('wraps null metadata', () => {
       const logger = new ConsoleLogger('info');
       logger.info('Message', null);
-      expect(infoSpy).toHaveBeenCalledWith('Message', {
-        level: 'info',
-        meta: null,
-      });
+      expect(infoSpy).toHaveBeenCalledWith('[INFO] Message', null);
     });
 
     it('handles undefined metadata', () => {
       const logger = new ConsoleLogger('info');
       logger.info('Message', undefined);
-      expect(infoSpy).toHaveBeenCalledWith('Message', {
-        level: 'info',
-        meta: undefined,
-      });
+      expect(infoSpy).toHaveBeenCalledWith('[INFO] Message');
     });
 
     it('handles no metadata parameter', () => {
       const logger = new ConsoleLogger('info');
       logger.info('Message');
-      expect(infoSpy).toHaveBeenCalledWith('Message', {
-        level: 'info',
-        meta: undefined,
-      });
+      expect(infoSpy).toHaveBeenCalledWith('[INFO] Message');
     });
 
     it('merges nested object metadata', () => {
@@ -240,8 +220,7 @@ describe('ConsoleLogger', () => {
       logger.warn('Warning', {
         error: { code: 'ERR_001', message: 'Failed' },
       });
-      expect(warnSpy).toHaveBeenCalledWith('Warning', {
-        level: 'warn',
+      expect(warnSpy).toHaveBeenCalledWith('[WARN] Warning', {
         error: { code: 'ERR_001', message: 'Failed' },
       });
     });
@@ -249,30 +228,21 @@ describe('ConsoleLogger', () => {
     it('handles array metadata', () => {
       const logger = new ConsoleLogger('error');
       logger.error('Error', [1, 2, 3]);
-      expect(errorSpy).toHaveBeenCalledWith('Error', {
-        level: 'error',
-        meta: [1, 2, 3],
-      });
+      expect(errorSpy).toHaveBeenCalledWith('[ERROR] Error', [1, 2, 3]);
     });
 
     it('wraps Error objects instead of merging', () => {
       const logger = new ConsoleLogger('error');
       const error = new Error('Test Error');
       logger.error('Failed', error);
-      expect(errorSpy).toHaveBeenCalledWith('Failed', {
-        level: 'error',
-        meta: error,
-      });
+      expect(errorSpy).toHaveBeenCalledWith('[ERROR] Failed', error);
     });
 
     it('wraps Date objects instead of merging', () => {
       const logger = new ConsoleLogger('info');
       const date = new Date('2024-01-01');
       logger.info('Time', date);
-      expect(infoSpy).toHaveBeenCalledWith('Time', {
-        level: 'info',
-        meta: date,
-      });
+      expect(infoSpy).toHaveBeenCalledWith('[INFO] Time', date);
     });
 
     it('merges objects created with Object.create(null)', () => {
@@ -280,8 +250,7 @@ describe('ConsoleLogger', () => {
       const meta = Object.create(null);
       meta.key = 'value';
       logger.info('Null proto', meta);
-      expect(infoSpy).toHaveBeenCalledWith('Null proto', {
-        level: 'info',
+      expect(infoSpy).toHaveBeenCalledWith('[INFO] Null proto', {
         key: 'value',
       });
     });
@@ -316,21 +285,21 @@ describe('ConsoleLogger', () => {
     it('handles empty string message', () => {
       const logger = new ConsoleLogger('info');
       logger.info('');
-      expect(infoSpy).toHaveBeenCalledWith('', { level: 'info' });
+      expect(infoSpy).toHaveBeenCalledWith('[INFO] ');
     });
 
     it('handles very long messages', () => {
       const logger = new ConsoleLogger('info');
       const longMessage = 'x'.repeat(10000);
       logger.info(longMessage);
-      expect(infoSpy).toHaveBeenCalledWith(longMessage, { level: 'info' });
+      expect(infoSpy).toHaveBeenCalledWith(`[INFO] ${longMessage}`);
     });
 
     it('handles special characters in message', () => {
       const logger = new ConsoleLogger('info');
       const specialMessage = '🎉 \n\t\r Special "chars" \'test\'';
       logger.info(specialMessage);
-      expect(infoSpy).toHaveBeenCalledWith(specialMessage, { level: 'info' });
+      expect(infoSpy).toHaveBeenCalledWith(`[INFO] ${specialMessage}`);
     });
 
     it('handles metadata with circular references gracefully', () => {

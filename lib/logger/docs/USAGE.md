@@ -139,21 +139,21 @@ logger.info('User action', {
     action: 'login',
     timestamp: new Date().toISOString(),
 });
-// Console: "User action" { level: 'info', userId: 123, action: 'login', timestamp: '...' }
+// Console: "[INFO] User action" { userId: 123, action: 'login', timestamp: '...' }
 ```
 
 **Primitive Metadata**:
 
 ```typescript
 logger.error('Request failed', 500);
-// Console: "Request failed" { level: 'error', meta: 500 }
+// Console: "[ERROR] Request failed" 500
 ```
 
 **No Metadata**:
 
 ```typescript
 logger.warn('Cache miss');
-// Console: "Cache miss" { level: 'warn' }
+// Console: "[WARN] Cache miss"
 ```
 
 ### Environment-Based Configuration
