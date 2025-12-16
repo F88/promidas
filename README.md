@@ -127,19 +127,26 @@ import {
     type NormalizedPrototype,
 } from '@f88/promidas/store';
 
-// Repository (same as root import)
-import { createPromidasRepository } from '@f88/promidas/repository';
+// Repository implementation
+import { ProtopediaInMemoryRepositoryImpl } from '@f88/promidas/repository';
+
+// Factory functions and Builder (main module)
+import {
+    createPromidasForLocal,
+    createPromidasForServer,
+    PromidasRepositoryBuilder,
+} from '@f88/promidas';
 ```
 
 **Available subpath exports:**
 
-- `@f88/promidas` — High-level repository (recommended for most use cases)
+- `@f88/promidas` — High-level APIs: Factory functions and Builder (recommended)
 - `@f88/promidas/types` — Type definitions
 - `@f88/promidas/utils` — Utility functions and converters
 - `@f88/promidas/logger` — Logger interface and implementations
 - `@f88/promidas/fetcher` — API client and data fetching
 - `@f88/promidas/store` — In-memory store
-- `@f88/promidas/repository` — Repository factory (same as root)
+- `@f88/promidas/repository` — Repository implementation
 
 ## For Contributors
 
