@@ -392,7 +392,7 @@ import { PromidasRepositoryBuilder } from '@f88/promidas';
 
 const repo = new PromidasRepositoryBuilder()
     .setStoreConfig({
-        maxDataSizeBytes: 50 * 1024 * 1024, // 50MB
+        maxDataSizeBytes: 30 * 1024 * 1024, // 30 MiB (hard limit)
     })
     .setApiClientConfig({
         protoPediaApiClientOptions: {
@@ -514,14 +514,16 @@ await repo.setupSnapshot({ limit: 100 });
 
 ### Q2. メモリが足りない
 
-**A**: `maxDataSizeBytes` で制限を増やすか、データ量を減らします:
+**A**: データ量を減らすか、`limit` パラメータで取得件数を制限します。
+
+注意: `maxDataSizeBytes` の上限は 30 MiB (ハードリミット) です:
 
 ```typescript
 import { PromidasRepositoryBuilder } from '@f88/promidas';
 
 const repo = new PromidasRepositoryBuilder()
     .setStoreConfig({
-        maxDataSizeBytes: 100 * 1024 * 1024, // 100MB
+        maxDataSizeBytes: 30 * 1024 * 1024, // 30 MiB (hard limit)
     })
     .setApiClientConfig({
         protoPediaApiClientOptions: {
