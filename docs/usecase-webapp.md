@@ -58,10 +58,9 @@ Webアプリケーション開発やCI/CD統合など、サーバー上でPROMID
 import { createPromidasForServer } from '@f88/promidas';
 
 // ✅ 推奨 - バックエンドでのみ実行
+// 環境変数 PROTOPEDIA_API_V2_TOKEN から自動的にトークンを読み込む
 export async function GET() {
-    const repo = createPromidasForServer({
-        protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN, // 安全
-    });
+    const repo = createPromidasForServer();
     const data = await repo.getAllFromSnapshot();
     return Response.json(data);
 }
