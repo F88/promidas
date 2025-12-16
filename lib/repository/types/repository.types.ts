@@ -24,11 +24,11 @@ export type ProtopediaInMemoryRepositoryConfig = {
    * Custom logger instance for repository operations.
    *
    * @remarks
-   * - If provided, the logger will be used as-is (NOT modified)
-   * - If provided, the `logLevel` option is IGNORED
-   * - To use a custom logger with a specific level, configure it before passing
+   * - If provided, the logger will be used as-is
+   * - If provided with logLevel, the level will be updated if logger is mutable
+   * - If not provided, creates a ConsoleLogger with the specified logLevel
    *
-   * @default undefined (creates ConsoleLogger)
+   * @default undefined (creates ConsoleLogger with 'info' level)
    */
   logger?: Logger;
 
@@ -38,7 +38,7 @@ export type ProtopediaInMemoryRepositoryConfig = {
    * @remarks
    * - Only used when `logger` is NOT provided
    * - Creates a new ConsoleLogger with this level
-   * - IGNORED if `logger` is provided
+   * - If logger is provided and mutable, updates its level property
    *
    * @default 'info'
    */

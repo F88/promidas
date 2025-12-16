@@ -118,6 +118,27 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
       // No longer logging apiClientOptions with token in constructor
       // This assertion is now effectively testing the absence of token logging from the repository constructor
     });
+
+    it('updates logger level when both logger and logLevel are provided', () => {
+      const mockLogger = {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+        level: 'info',
+      } as Logger & { level: string };
+
+      new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {
+          logger: mockLogger,
+          logLevel: 'debug',
+        },
+      });
+
+      expect(mockLogger.level).toBe('debug');
+    });
   });
 
   describe('setupSnapshot', () => {
