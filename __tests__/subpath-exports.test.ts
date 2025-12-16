@@ -23,54 +23,15 @@ describe('subpath exports', () => {
     console.log('');
     console.log('🎯 PURPOSE:');
     console.log(
-      '  This test validates that package.json subpath exports match',
+      '  Validates that package.json subpath exports resolve correctly',
     );
-    console.log('  the actual exports in lib/*/index.ts files.');
+    console.log('  and match the actual exports in lib/*/index.ts files.');
     console.log('');
     console.log('⚠️  IMPORTANT:');
-    console.log('  When you modify exports in lib/*/index.ts, you MUST update');
     console.log(
-      '  this test accordingly. This is not just a "pass/fail" test,',
+      '  This test serves as a specification of the public API contract.',
     );
-    console.log('  but a specification of the public API contract.');
-    console.log('');
-    console.log('📋 EXPECTED EXPORTS BY MODULE:');
-    console.log('');
-    console.log('  • @f88/promidas/types');
-    console.log(
-      '    ✓ StatusCode, ReleaseFlagCode, LicenseTypeCode, ThanksFlagCode (type-only)',
-    );
-    console.log('    ✓ NormalizedPrototype (type-only)');
-    console.log('    ℹ All exports are type-only, no runtime values');
-    console.log('');
-    console.log('  • @f88/promidas/utils');
-    console.log('    ✓ Converter functions (getPrototype*Label)');
-    console.log(
-      '    ✓ Time parsers (parseProtoPediaTimestamp, parseW3cDtfTimestamp)',
-    );
-    console.log('    ✗ Code types (moved to @f88/promidas/types)');
-    console.log('');
-    console.log('  • @f88/promidas/logger');
-    console.log('    ✓ Logger, LogLevel (types)');
-    console.log('    ✓ createConsoleLogger, createNoopLogger (factories)');
-    console.log('');
-    console.log('  • @f88/promidas/fetcher');
-    console.log('    ✓ fetchAndNormalizePrototypes, normalizePrototype');
-    console.log(
-      '    ✓ NormalizedPrototype, Logger, LogLevel (re-exported for convenience)',
-    );
-    console.log('');
-    console.log('  • @f88/promidas/store');
-    console.log('    ✓ PrototypeInMemoryStore (class)');
-    console.log(
-      '    ✓ NormalizedPrototype, Logger, LogLevel (re-exported for convenience)',
-    );
-    console.log('');
-    console.log('  • @f88/promidas/repository');
-    console.log('    ✓ createPromidasRepository (factory)');
-    console.log(
-      '    ✓ NormalizedPrototype, Logger, LogLevel (re-exported for convenience)',
-    );
+    console.log('  Update this test when modifying exports in lib/*/index.ts.');
     console.log('');
     console.log(
       '═══════════════════════════════════════════════════════════════',
