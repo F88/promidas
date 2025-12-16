@@ -15,7 +15,7 @@ const repo = createPromidasForLocal({
 });
 
 // 例: 最初にスナップショットをセットアップ (必要に応じてオプションを調整)
-// const setupResult = await repo.setupSnapshot({ limit: 0 }); // 全件取得
+// const setupResult = await repo.setupSnapshot({ limit: 10000 });
 // if (!setupResult.ok) {
 //     console.error('Failed to setup snapshot:', setupResult.error);
 //     process.exit(1);
