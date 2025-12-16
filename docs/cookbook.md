@@ -367,3 +367,69 @@ console.log(
     '（スプレッドシート側で「データをインポート」し、区切り文字を「タブ」、エンコードを「UTF-8」に設定してください）',
 );
 ```
+
+## ⏱️ 大量データ取得と進捗表示
+
+### ダウンロード進捗をコールバックで取得する
+
+大量のデータを取得する際、進捗状況を把握したい場合はカスタムコールバックを使用できます。
+
+```typescript
+import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+
+// 進捗コールバック付きのカスタムクライアントを作成
+const client = new ProtopediaApiCustomClient({
+    protoPediaApiClientOptions: {
+        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+    },
+    progressLog: false, // 自動ログを無効化
+    onProgressStart: (estimatedTotal, limit, prepareTime) => {
+        console.log(`ダウンロード開始: ${limit}件取得予定 (推定 ${estimatedTotal} バイト)`);
+        console.log(`準備時間: ${prepareTime.toFixed(2)}秒`);
+    },
+    onProgress: (received, total, percentage) => {
+        // プログレスバーの表示
+        const barLength = 40;
+        const filled = Math.floor((percentage / 100) * barLength);
+        const bar = '█'.repeat(filled) + '░'.repeat(barLength - filled);
+        process.stdout.write(`\r[${bar}] ${percentage.toFixed(1)}% (${received}/${total} バイト)`);
+    },
+    onProgressComplete: (received, estimatedTotal, downloadTime, totalTime) => {
+        console.log(`\n完了: ${received} バイト受信 (${downloadTime.toFixed(2)}秒)`);
+        console.log(`合計時間: ${totalTime.toFixed(2)}秒`);
+    },
+});
+
+// 大量データを取得
+const result = await client.fetchPrototypes({ limit: 10000 });
+
+if (result.ok) {
+    console.log(`${result.data.length} 件のプロトタイプを取得しました`);
+} else {
+    console.error('取得失敗:', result.error);
+}
+```
+
+### 自動進捗ログを有効にする
+
+`createPromidasForLocal` を使う場合、デフォルトで進捗ログが有効になっています。
+ログレベルを `info` 以上にすると、stderr に進捗が表示されます。
+
+```typescript
+import { createPromidasForLocal } from '@f88/promidas';
+
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    logLevel: 'info', // info 以上で進捗ログが表示される
+});
+
+// 10000件取得時は自動的に進捗が stderr に表示されます
+const setupResult = await repo.setupSnapshot({ limit: 10000 });
+// stderr output:
+// Download starting (limit=10000, estimated ~2670000 bytes) (prepared in 0.05s)
+// Download complete: 2670000 bytes received (estimated 2670000 bytes) in 1.23s (total: 1.28s)
+
+if (setupResult.ok) {
+    console.log(`スナップショット作成完了: ${setupResult.stats.count} 件`);
+}
+```
