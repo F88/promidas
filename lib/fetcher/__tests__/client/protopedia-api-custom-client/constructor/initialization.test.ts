@@ -102,15 +102,13 @@ describe('ProtopediaApiCustomClient - Constructor - Initialization', () => {
       },
     });
 
-    expect(createProtoPediaClientMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        fetch: customFetch,
-        timeoutMs,
-        userAgent: expect.stringMatching(
-          /^ProtopediaApiCustomClient\/\d+\.\d+\.\d+ \(promidas\)$/,
-        ),
-      }),
-    );
+    expect(createProtoPediaClientMock).toHaveBeenCalledWith({
+      fetch: expect.any(Function),
+      timeoutMs,
+      userAgent: expect.stringMatching(
+        /^ProtopediaApiCustomClient\/\d+\.\d+\.\d+ \(promidas\)$/,
+      ),
+    });
     expect(client).toBeInstanceOf(ProtopediaApiCustomClient);
   });
 
