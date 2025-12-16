@@ -1,17 +1,17 @@
 # Cookbook (逆引きレシピ集)
 
 このドキュメントは、PROMIDAS を使って ProtoPedia のデータを操作するための実用的なコードスニペット集です。
-記載されているコードは、環境変数を設定し `createPromidasRepository` でリポジトリが初期化されていることを前提としています。
+記載されているコードは、環境変数を設定し `createPromidasForLocal` でリポジトリが初期化されていることを前提としています。
 
 ```typescript
 // 以下を事前に設定していることを想定しています。
-// process.env.PROTOPEDIA_API_TOKEN = 'YOUR_TOKEN_HERE';
+// process.env.PROTOPEDIA_API_V2_TOKEN = 'YOUR_TOKEN_HERE';
 
-import { createPromidasRepository } from '@f88/promidas';
+import { createPromidasForLocal } from '@f88/promidas';
 import type { NormalizedPrototype } from '@f88/promidas/types';
 
-const repo = createPromidasRepository({
-    apiClientOptions: { token: process.env.PROTOPEDIA_API_TOKEN },
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
 });
 
 // 例: 最初にスナップショットをセットアップ (必要に応じてオプションを調整)

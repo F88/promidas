@@ -42,7 +42,7 @@ import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
 // 1. API クライアントを作成
 const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN, // あなたの API トークン
+        token: process.env.PROTOPEDIA_API_V2_TOKEN, // あなたの API トークン
     },
     logLevel: 'info', // ログレベル (オプション)
 });

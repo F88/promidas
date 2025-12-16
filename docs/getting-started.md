@@ -108,7 +108,7 @@ yarn add github:F88/promidas protopedia-api-v2-client
 ### 方法1: 環境変数に直接設定 (シンプル)
 
 ```bash
-export PROTOPEDIA_API_TOKEN="your-token-here"
+export PROTOPEDIA_API_V2_TOKEN="your-token-here"
 ```
 
 ### 方法2: .envファイルを使用 (推奨)
@@ -122,7 +122,7 @@ npm install dotenv
 2. プロジェクトルートに`.env`ファイルを作成:
 
 ```properties
-PROTOPEDIA_API_TOKEN=your-token-here
+PROTOPEDIA_API_V2_TOKEN=your-token-here
 ```
 
 3. **重要**: `.gitignore`に`.env`を追加:
@@ -153,7 +153,7 @@ import { createPromidasForLocal } from '@f88/promidas';
 async function main() {
     // Repositoryの作成 (ローカル/開発環境向け設定)
     const repo = createPromidasForLocal({
-        protopediaApiToken: process.env.PROTOPEDIA_API_TOKEN,
+        protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
         logLevel: 'info', // optional
     });
 
@@ -195,7 +195,7 @@ async function main() {
         .setDefaultLogLevel('info')
         .setApiClientConfig({
             protoPediaApiClientOptions: {
-                token: process.env.PROTOPEDIA_API_TOKEN,
+                token: process.env.PROTOPEDIA_API_V2_TOKEN,
             },
         })
         .build();
@@ -240,7 +240,7 @@ node your-script.js
 import { createPromidasForLocal } from '@f88/promidas';
 
 const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_TOKEN,
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
     logLevel: 'info', // optional, default: 'info'
 });
 ```
@@ -291,7 +291,9 @@ const repo = new PromidasRepositoryBuilder()
     .setDefaultLogLevel('debug')
     .setStoreConfig({ ttlMs: 30 * 60 * 1000 })
     .setApiClientConfig({
-        protoPediaApiClientOptions: { token: process.env.PROTOPEDIA_API_TOKEN },
+        protoPediaApiClientOptions: {
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        },
     })
     .build();
 ```
@@ -339,11 +341,18 @@ const random = await repo.getRandomPrototypeFromSnapshot();
 **TTL**は、Snapshotの有効期限です。TTLが切れると、次回アクセス時に自動的にAPIから最新データを取得します。
 
 ```typescript
-const repo = createPromidasRepository({
-    storeConfig: {
+import { PromidasRepositoryBuilder } from '@f88/promidas';
+
+const repo = new PromidasRepositoryBuilder()
+    .setStoreConfig({
         ttlMs: 30 * 60 * 1000, // 30分間有効
-    },
-});
+    })
+    .setApiClientConfig({
+        protoPediaApiClientOptions: {
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        },
+    })
+    .build();
 ```
 
 **用途別のTTL設定:**
@@ -369,10 +378,17 @@ const data = await repo.getAllFromSnapshot();
 #### 2. TTLベース自動更新 (推奨: 長時間稼働アプリ)
 
 ```typescript
+import { PromidasRepositoryBuilder } from '@f88/promidas';
+
 // TTLを設定
-const repo = createPromidasRepository({
-    storeConfig: { ttlMs: 30 * 60 * 1000 }, // 30分
-});
+const repo = new PromidasRepositoryBuilder()
+    .setStoreConfig({ ttlMs: 30 * 60 * 1000 }) // 30分
+    .setApiClientConfig({
+        protoPediaApiClientOptions: {
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        },
+    })
+    .build();
 
 // 初回取得
 await repo.setupSnapshot();

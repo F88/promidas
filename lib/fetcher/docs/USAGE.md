@@ -35,7 +35,7 @@ import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
 
 const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN,
     },
 });
 
@@ -102,7 +102,7 @@ import { createProtoPediaClient } from 'protopedia-api-v2-client';
 const CONNECTION_AND_HEADER_TIMEOUT_MS = 5_000;
 
 export const customClientForNextJs = createProtoPediaClient({
-    token: process.env.PROTOPEDIA_API_TOKEN ?? '',
+    token: process.env.PROTOPEDIA_API_V2_TOKEN ?? '',
     baseUrl: 'https://api.protopedia.net',
     fetch: async (url, init) => {
         const controller = new AbortController();
@@ -145,7 +145,7 @@ import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
 
 const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN,
     },
     logLevel: 'debug',
 });
@@ -173,7 +173,7 @@ For cases where you need the raw API response without normalization:
 ```typescript
 const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN,
     },
 });
 
@@ -222,7 +222,7 @@ import {
 
 const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN,
     },
 });
 
@@ -305,7 +305,7 @@ import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
 // Pattern 1: logLevel only (creates ConsoleLogger internally)
 const client1 = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN,
     },
     logLevel: 'debug',
 });
@@ -314,7 +314,7 @@ const client1 = new ProtopediaApiCustomClient({
 const logger = createConsoleLogger();
 const client2 = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN,
     },
     logger,
     logLevel: 'debug', // Updates logger's level if mutable
@@ -323,7 +323,7 @@ const client2 = new ProtopediaApiCustomClient({
 // Pattern 3: Custom logger only
 const client3 = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN,
     },
     logger, // Uses logger's existing level
 });
@@ -337,7 +337,7 @@ import { createConsoleLogger, createNoopLogger } from '@f88/promidas/logger';
 // Development - verbose logging
 const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN,
     },
     logLevel: 'debug',
 });
@@ -345,7 +345,7 @@ const client = new ProtopediaApiCustomClient({
 // Production - minimal logging
 const prodClient = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN,
     },
     logLevel: 'error',
 });
@@ -353,7 +353,7 @@ const prodClient = new ProtopediaApiCustomClient({
 // Testing - silent logger
 const testClient = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN,
     },
     logger: createNoopLogger(),
 });
@@ -380,7 +380,7 @@ const customLogger: Logger = {
 };
 
 const client = new ProtopediaApiCustomClient({
-    token: process.env.PROTOPEDIA_API_TOKEN,
+    token: process.env.PROTOPEDIA_API_V2_TOKEN,
     logger: customLogger,
 });
 ```
@@ -390,24 +390,21 @@ const client = new ProtopediaApiCustomClient({
 ```typescript
 import { createConsoleLogger } from '@f88/promidas/logger';
 import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
-import { createProtopediaInMemoryRepository } from '@f88/promidas/repository';
+import { PromidasRepositoryBuilder } from '@f88/promidas';
 
 // Single logger for all components
 const logger = createConsoleLogger();
 
 const apiClient = new ProtopediaApiCustomClient({
-    token: process.env.PROTOPEDIA_API_TOKEN,
+    token: process.env.PROTOPEDIA_API_V2_TOKEN,
     logger,
     logLevel: 'info',
 });
 
-const repository = createProtopediaInMemoryRepository({
-    storeConfig: { logger },
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
-        logger,
-    },
-});
+const repository = new PromidasRepositoryBuilder()
+    .setLogger(logger)
+    .setApiClient(apiClient)
+    .build();
 ```
 
 ## Integration Examples
@@ -415,27 +412,29 @@ const repository = createProtopediaInMemoryRepository({
 ### With Repository Layer
 
 ```typescript
-import { createProtopediaInMemoryRepository } from '@f88/promidas/repository';
+import { PromidasRepositoryBuilder } from '@f88/promidas';
 import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
 
 // Option 1: Let repository create client
-const repository1 = createProtopediaInMemoryRepository({
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
-    },
-});
+const repository1 = new PromidasRepositoryBuilder()
+    .setApiClientConfig({
+        protoPediaApiClientOptions: {
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        },
+    })
+    .build();
 
 // Option 2: Provide custom client
 const customClient = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN,
         baseUrl: 'https://custom-api.example.com',
     },
 });
 
-const repository2 = createProtopediaInMemoryRepository({
-    apiClient: customClient,
-});
+const repository2 = new PromidasRepositoryBuilder()
+    .setApiClient(customClient)
+    .build();
 ```
 
 ## Type Definitions

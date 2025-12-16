@@ -634,7 +634,7 @@ async setupSnapshot(params: ListPrototypesParams) {
 
 ```typescript
 const customClientForNextJs = new ProtopediaApiCustomClient({
-    token: process.env.PROTOPEDIA_API_TOKEN,
+    token: process.env.PROTOPEDIA_API_V2_TOKEN,
     fetch: async (url, init) => {
         return await globalThis.fetch(url, {
             ...init,

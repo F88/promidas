@@ -150,7 +150,7 @@ export async function GET() {
 
 ```bash
 # .env (Gitにコミットしない)
-PROTOPEDIA_API_TOKEN=your-token-here
+PROTOPEDIA_API_V2_TOKEN=your-token-here
 ```
 
 ```docker

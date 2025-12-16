@@ -55,12 +55,12 @@ Webアプリケーション開発やCI/CD統合など、サーバー上でPROMID
 - 環境変数やSecrets管理を使用
 
 ```typescript
+import { createPromidasForServer } from '@f88/promidas';
+
 // ✅ 推奨 - バックエンドでのみ実行
 export async function GET() {
-    const repo = createPromidasRepository({
-        apiClientOptions: {
-            token: process.env.PROTOPEDIA_API_TOKEN, // 安全
-        },
+    const repo = createPromidasForServer({
+        protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN, // 安全
     });
     const data = await repo.getAllFromSnapshot();
     return Response.json(data);
@@ -157,20 +157,20 @@ TBD
 ```yaml
 # .github/workflows/fetch-data.yml
 env:
-    PROTOPEDIA_API_TOKEN: ${{ secrets.PROTOPEDIA_API_TOKEN }}
+    PROTOPEDIA_API_V2_TOKEN: ${{ secrets.PROTOPEDIA_API_V2_TOKEN }}
 ```
 
 **Vercel:**
 
 ```bash
 # Environment Variables設定でTOKENを追加
-PROTOPEDIA_API_TOKEN=your-token-here
+PROTOPEDIA_API_V2_TOKEN=your-token-here
 ```
 
 **Docker:**
 
 ```bash
-docker run -e PROTOPEDIA_API_TOKEN=your-token-here your-image
+docker run -e PROTOPEDIA_API_V2_TOKEN=your-token-here your-image
 ```
 
 ### TTL設定
@@ -178,14 +178,18 @@ docker run -e PROTOPEDIA_API_TOKEN=your-token-here your-image
 サーバー実行では、データ更新頻度に応じてTTLを設定してください:
 
 ```typescript
-const repo = createPromidasRepository({
-    storeConfig: {
+import { PromidasRepositoryBuilder } from '@f88/promidas';
+
+const repo = new PromidasRepositoryBuilder()
+    .setStoreConfig({
         ttlMs: 30 * 60 * 1000, // 30分ごとに更新
-    },
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN,
-    },
-});
+    })
+    .setApiClientConfig({
+        protoPediaApiClientOptions: {
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        },
+    })
+    .build();
 ```
 
 ### エラーハンドリング

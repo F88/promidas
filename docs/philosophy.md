@@ -55,7 +55,7 @@ import { parseProtoPediaTimestamp } from '@f88/promidas/utils';
 import { PrototypeInMemoryStore } from '@f88/promidas/store';
 
 // 統合されたRepository使用(最も簡単)
-import { createPromidasRepository } from '@f88/promidas';
+import { createPromidasForLocal } from '@f88/promidas';
 ```
 
 ### なぜモジュラー設計か
@@ -94,7 +94,9 @@ const repo = new PromidasRepositoryBuilder()
     .setDefaultLogLevel('debug')
     .setStoreConfig({ ttlMs: 30 * 60 * 1000 })
     .setApiClientConfig({
-        protoPediaApiClientOptions: { token: process.env.PROTOPEDIA_API_TOKEN },
+        protoPediaApiClientOptions: {
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        },
     })
     .build();
 ```
@@ -181,12 +183,19 @@ const prototype = await repo.getPrototypeFromSnapshotById(123);
 TTLによる自動データ更新とメモリ管理:
 
 ```typescript
-const repo = createPromidasRepository({
-    storeConfig: {
+import { PromidasRepositoryBuilder } from '@f88/promidas';
+
+const repo = new PromidasRepositoryBuilder()
+    .setStoreConfig({
         ttlMs: 30 * 60 * 1000, // 30分で期限切れ
         maxDataSizeBytes: 10 * 1024 * 1024, // 10MB制限
-    },
-});
+    })
+    .setApiClientConfig({
+        protoPediaApiClientOptions: {
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        },
+    })
+    .build();
 ```
 
 ### 実用的な選択
@@ -216,11 +225,11 @@ PROMIDASは、特に**BEARER TOKENのセキュリティ**を重視します。
 ### 安全なデフォルト
 
 ```typescript
-// ❌ TOKENをハードコードしない設計
-const repo = createPromidasRepository({
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_TOKEN, // 環境変数推奨
-    },
+import { createPromidasForLocal } from '@f88/promidas';
+
+// ✅ TOKENをハードコードしない設計
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN, // 環境変数推奨
 });
 ```
 
