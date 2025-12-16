@@ -7,7 +7,7 @@
  *
  * ## Test Coverage
  *
- * ### 1. createPromidasRepositoryForLocal
+ * ### 1. createPromidasForLocal
  * - Creates repository instance with token parameter
  * - Returns ProtopediaInMemoryRepository instance
  * - Sets appropriate timeout for local environments
@@ -20,10 +20,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PromidasRepositoryBuilder } from '../builder.js';
-import {
-  createPromidasRepositoryForLocal,
-  createPromidasRepositoryForServer,
-} from '../factory.js';
+import { createPromidasForLocal, createPromidasForServer } from '../factory.js';
 import type { ProtopediaInMemoryRepository } from '../repository/types/index.js';
 import { LIMIT_DATA_SIZE_BYTES } from '../store/index.js';
 import { VERSION } from '../version.js';
@@ -37,7 +34,7 @@ describe('Factory Functions', () => {
     vi.restoreAllMocks();
   });
 
-  describe('createPromidasRepositoryForLocal', () => {
+  describe('createPromidasForLocal', () => {
     let mockRepository: ProtopediaInMemoryRepository;
     let setDefaultLogLevelSpy: ReturnType<typeof vi.spyOn>;
     let setStoreConfigSpy: ReturnType<typeof vi.spyOn>;
@@ -79,13 +76,13 @@ describe('Factory Functions', () => {
     });
 
     it('should configure builder with correct default log level', () => {
-      createPromidasRepositoryForLocal({ protopediaApiToken: 'test-token' });
+      createPromidasForLocal({ protopediaApiToken: 'test-token' });
 
       expect(setDefaultLogLevelSpy).toHaveBeenCalledWith('info');
     });
 
     it('should use provided logLevel when specified', () => {
-      createPromidasRepositoryForLocal({
+      createPromidasForLocal({
         protopediaApiToken: 'test-token',
         logLevel: 'warn',
       });
@@ -94,13 +91,13 @@ describe('Factory Functions', () => {
     });
 
     it('should use provided logLevel for different levels', () => {
-      createPromidasRepositoryForLocal({
+      createPromidasForLocal({
         protopediaApiToken: 'test-token',
         logLevel: 'debug',
       });
       expect(setDefaultLogLevelSpy).toHaveBeenCalledWith('debug');
 
-      createPromidasRepositoryForLocal({
+      createPromidasForLocal({
         protopediaApiToken: 'test-token',
         logLevel: 'error',
       });
@@ -108,7 +105,7 @@ describe('Factory Functions', () => {
     });
 
     it('should configure store with correct TTL and maxDataSizeBytes', () => {
-      createPromidasRepositoryForLocal({ protopediaApiToken: 'test-token' });
+      createPromidasForLocal({ protopediaApiToken: 'test-token' });
 
       expect(setStoreConfigSpy).toHaveBeenCalledWith({
         ttlMs: 30 * 60 * 1000, // 30 minutes
@@ -117,7 +114,7 @@ describe('Factory Functions', () => {
     });
 
     it('should not override store logger settings', () => {
-      createPromidasRepositoryForLocal({ protopediaApiToken: 'test-token' });
+      createPromidasForLocal({ protopediaApiToken: 'test-token' });
 
       const storeConfigArg = setStoreConfigSpy.mock.calls[0]?.[0];
       expect(storeConfigArg).toBeDefined();
@@ -126,21 +123,21 @@ describe('Factory Functions', () => {
     });
 
     it('should configure API client with token, User-Agent, and timeout', () => {
-      createPromidasRepositoryForLocal({
+      createPromidasForLocal({
         protopediaApiToken: 'test-token-123',
       });
 
       expect(setApiClientConfigSpy).toHaveBeenCalledWith({
         protoPediaApiClientOptions: {
           token: 'test-token-123',
-          userAgent: `PromidasRepositoryForLocal/${VERSION}`,
+          userAgent: `PromidasForLocal/${VERSION}`,
           timeoutMs: 90000, // 90 seconds
         },
       });
     });
 
     it('should not override api client logger settings', () => {
-      createPromidasRepositoryForLocal({ protopediaApiToken: 'test-token' });
+      createPromidasForLocal({ protopediaApiToken: 'test-token' });
 
       const apiClientConfigArg = setApiClientConfigSpy.mock.calls[0]?.[0];
       expect(apiClientConfigArg).toBeDefined();
@@ -149,7 +146,7 @@ describe('Factory Functions', () => {
     });
 
     it('should not override other ProtoPedia client options', () => {
-      createPromidasRepositoryForLocal({ protopediaApiToken: 'test-token' });
+      createPromidasForLocal({ protopediaApiToken: 'test-token' });
 
       const configArg = setApiClientConfigSpy.mock.calls[0]?.[0];
       expect(configArg).toBeDefined();
@@ -160,7 +157,7 @@ describe('Factory Functions', () => {
     });
 
     it('should call builder methods in expected order', () => {
-      createPromidasRepositoryForLocal({ protopediaApiToken: 'test-token' });
+      createPromidasForLocal({ protopediaApiToken: 'test-token' });
 
       const defaultLogLevelOrder =
         setDefaultLogLevelSpy.mock.invocationCallOrder[0];
@@ -178,7 +175,7 @@ describe('Factory Functions', () => {
     });
 
     it('should call each builder setter exactly once per invocation', () => {
-      createPromidasRepositoryForLocal({ protopediaApiToken: 'test-token' });
+      createPromidasForLocal({ protopediaApiToken: 'test-token' });
 
       expect(setDefaultLogLevelSpy).toHaveBeenCalledTimes(1);
       expect(setStoreConfigSpy).toHaveBeenCalledTimes(1);
@@ -188,13 +185,13 @@ describe('Factory Functions', () => {
     });
 
     it('should configure repository with empty config', () => {
-      createPromidasRepositoryForLocal({ protopediaApiToken: 'test-token' });
+      createPromidasForLocal({ protopediaApiToken: 'test-token' });
 
       expect(setRepositoryConfigSpy).toHaveBeenCalledWith({});
     });
 
     it('should not override repository logger settings', () => {
-      createPromidasRepositoryForLocal({ protopediaApiToken: 'test-token' });
+      createPromidasForLocal({ protopediaApiToken: 'test-token' });
 
       const repositoryConfigArg = setRepositoryConfigSpy.mock.calls[0]?.[0];
       expect(repositoryConfigArg).toBeDefined();
@@ -203,13 +200,13 @@ describe('Factory Functions', () => {
     });
 
     it('should call build method', () => {
-      createPromidasRepositoryForLocal({ protopediaApiToken: 'test-token' });
+      createPromidasForLocal({ protopediaApiToken: 'test-token' });
 
       expect(buildSpy).toHaveBeenCalled();
     });
 
     it('should return repository instance from builder', () => {
-      const repository = createPromidasRepositoryForLocal({
+      const repository = createPromidasForLocal({
         protopediaApiToken: 'test-token',
       });
 
@@ -217,7 +214,7 @@ describe('Factory Functions', () => {
     });
 
     it('should configure with different tokens', () => {
-      createPromidasRepositoryForLocal({ protopediaApiToken: 'token-1' });
+      createPromidasForLocal({ protopediaApiToken: 'token-1' });
       expect(setApiClientConfigSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           protoPediaApiClientOptions: expect.objectContaining({
@@ -226,7 +223,7 @@ describe('Factory Functions', () => {
         }),
       );
 
-      createPromidasRepositoryForLocal({ protopediaApiToken: 'token-2' });
+      createPromidasForLocal({ protopediaApiToken: 'token-2' });
       expect(setApiClientConfigSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           protoPediaApiClientOptions: expect.objectContaining({
@@ -238,7 +235,7 @@ describe('Factory Functions', () => {
 
     it('should accept tokens with special characters', () => {
       const specialToken = 'token-with-dashes_underscores.dots';
-      createPromidasRepositoryForLocal({ protopediaApiToken: specialToken });
+      createPromidasForLocal({ protopediaApiToken: specialToken });
 
       expect(setApiClientConfigSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -251,7 +248,7 @@ describe('Factory Functions', () => {
 
     it('should accept very long tokens', () => {
       const longToken = 'a'.repeat(500);
-      createPromidasRepositoryForLocal({ protopediaApiToken: longToken });
+      createPromidasForLocal({ protopediaApiToken: longToken });
 
       expect(setApiClientConfigSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -264,7 +261,7 @@ describe('Factory Functions', () => {
 
     it('should create independent instances for each invocation', () => {
       // Reset and create new mock for second call
-      const repo1 = createPromidasRepositoryForLocal({
+      const repo1 = createPromidasForLocal({
         protopediaApiToken: 'token-1',
       });
 
@@ -279,7 +276,7 @@ describe('Factory Functions', () => {
 
       buildSpy.mockReturnValueOnce(mockRepository2);
 
-      const repo2 = createPromidasRepositoryForLocal({
+      const repo2 = createPromidasForLocal({
         protopediaApiToken: 'token-2',
       });
 
@@ -288,17 +285,17 @@ describe('Factory Functions', () => {
     });
 
     it('should use correct VERSION constant in User-Agent', () => {
-      createPromidasRepositoryForLocal({ protopediaApiToken: 'test-token' });
+      createPromidasForLocal({ protopediaApiToken: 'test-token' });
 
       const configArg = setApiClientConfigSpy.mock.calls[0]?.[0];
       const userAgent = configArg?.protoPediaApiClientOptions?.userAgent;
 
-      expect(userAgent).toBe(`PromidasRepositoryForLocal/${VERSION}`);
-      expect(userAgent).toMatch(/^PromidasRepositoryForLocal\/\d+\.\d+\.\d+$/);
+      expect(userAgent).toBe(`PromidasForLocal/${VERSION}`);
+      expect(userAgent).toMatch(/^PromidasForLocal\/\d+\.\d+\.\d+$/);
     });
 
     it('should use correct LIMIT_DATA_SIZE_BYTES constant', () => {
-      createPromidasRepositoryForLocal({ protopediaApiToken: 'test-token' });
+      createPromidasForLocal({ protopediaApiToken: 'test-token' });
 
       const storeConfigArg = setStoreConfigSpy.mock.calls[0]?.[0];
       expect(storeConfigArg?.maxDataSizeBytes).toBe(LIMIT_DATA_SIZE_BYTES);
@@ -306,14 +303,14 @@ describe('Factory Functions', () => {
     });
 
     it('should configure exact TTL value of 30 minutes', () => {
-      createPromidasRepositoryForLocal({ protopediaApiToken: 'test-token' });
+      createPromidasForLocal({ protopediaApiToken: 'test-token' });
 
       const storeConfigArg = setStoreConfigSpy.mock.calls[0]?.[0];
       expect(storeConfigArg?.ttlMs).toBe(1800000); // 30 * 60 * 1000
     });
 
     it('should configure exact timeout value of 90 seconds', () => {
-      createPromidasRepositoryForLocal({ protopediaApiToken: 'test-token' });
+      createPromidasForLocal({ protopediaApiToken: 'test-token' });
 
       const apiClientConfigArg = setApiClientConfigSpy.mock.calls[0]?.[0];
       expect(apiClientConfigArg?.protoPediaApiClientOptions?.timeoutMs).toBe(
@@ -322,7 +319,7 @@ describe('Factory Functions', () => {
     });
   });
 
-  describe('createPromidasRepositoryForServer', () => {
+  describe('createPromidasForServer', () => {
     let mockRepository: ProtopediaInMemoryRepository;
     let setDefaultLogLevelSpy: ReturnType<typeof vi.spyOn>;
     let setStoreConfigSpy: ReturnType<typeof vi.spyOn>;
@@ -367,7 +364,7 @@ describe('Factory Functions', () => {
       it('should throw error when PROTOPEDIA_API_V2_TOKEN is not set', () => {
         vi.stubEnv('PROTOPEDIA_API_V2_TOKEN', '');
 
-        expect(() => createPromidasRepositoryForServer()).toThrow(
+        expect(() => createPromidasForServer()).toThrow(
           'PROTOPEDIA_API_V2_TOKEN environment variable is required for server environments',
         );
 
@@ -378,7 +375,7 @@ describe('Factory Functions', () => {
         const testToken = 'env-test-token-12345';
         vi.stubEnv('PROTOPEDIA_API_V2_TOKEN', testToken);
 
-        createPromidasRepositoryForServer();
+        createPromidasForServer();
 
         const apiClientConfigArg = setApiClientConfigSpy.mock.calls[0]?.[0];
         expect(apiClientConfigArg?.protoPediaApiClientOptions?.token).toBe(
@@ -398,7 +395,7 @@ describe('Factory Functions', () => {
         tokens.forEach((token) => {
           vi.stubEnv('PROTOPEDIA_API_V2_TOKEN', token);
 
-          createPromidasRepositoryForServer();
+          createPromidasForServer();
 
           const apiClientConfigArg = setApiClientConfigSpy.mock.calls[0]?.[0];
           expect(apiClientConfigArg?.protoPediaApiClientOptions?.token).toBe(
@@ -421,13 +418,13 @@ describe('Factory Functions', () => {
       });
 
       it('should configure builder with default log level (warn)', () => {
-        createPromidasRepositoryForServer();
+        createPromidasForServer();
 
         expect(setDefaultLogLevelSpy).toHaveBeenCalledWith('warn');
       });
 
       it('should use provided logLevel when specified', () => {
-        createPromidasRepositoryForServer({ logLevel: 'error' });
+        createPromidasForServer({ logLevel: 'error' });
 
         expect(setDefaultLogLevelSpy).toHaveBeenCalledWith('error');
       });
@@ -436,7 +433,7 @@ describe('Factory Functions', () => {
         const logLevels = ['info', 'debug', 'error'] as const;
 
         logLevels.forEach((logLevel) => {
-          createPromidasRepositoryForServer({ logLevel });
+          createPromidasForServer({ logLevel });
 
           expect(setDefaultLogLevelSpy).toHaveBeenCalledWith(logLevel);
           vi.clearAllMocks();
@@ -454,21 +451,21 @@ describe('Factory Functions', () => {
       });
 
       it('should configure store with 10-minute TTL', () => {
-        createPromidasRepositoryForServer();
+        createPromidasForServer();
 
         const storeConfigArg = setStoreConfigSpy.mock.calls[0]?.[0];
         expect(storeConfigArg?.ttlMs).toBe(10 * 60 * 1000);
       });
 
       it('should configure store with maxDataSizeBytes limit', () => {
-        createPromidasRepositoryForServer();
+        createPromidasForServer();
 
         const storeConfigArg = setStoreConfigSpy.mock.calls[0]?.[0];
         expect(storeConfigArg?.maxDataSizeBytes).toBe(LIMIT_DATA_SIZE_BYTES);
       });
 
       it('should not override logger settings in store config', () => {
-        createPromidasRepositoryForServer();
+        createPromidasForServer();
 
         const storeConfigArg = setStoreConfigSpy.mock.calls[0]?.[0];
         expect(storeConfigArg?.logLevel).toBeUndefined();
@@ -485,17 +482,17 @@ describe('Factory Functions', () => {
       });
 
       it('should configure API client with correct User-Agent', () => {
-        createPromidasRepositoryForServer();
+        createPromidasForServer();
 
         const apiClientConfigArg = setApiClientConfigSpy.mock.calls[0]?.[0];
         const userAgent =
           apiClientConfigArg?.protoPediaApiClientOptions?.userAgent;
 
-        expect(userAgent).toBe(`PromidasRepositoryForServer/${VERSION}`);
+        expect(userAgent).toBe(`PromidasForServer/${VERSION}`);
       });
 
       it('should configure API client with 30-second timeout', () => {
-        createPromidasRepositoryForServer();
+        createPromidasForServer();
 
         const apiClientConfigArg = setApiClientConfigSpy.mock.calls[0]?.[0];
         expect(apiClientConfigArg?.protoPediaApiClientOptions?.timeoutMs).toBe(
@@ -504,7 +501,7 @@ describe('Factory Functions', () => {
       });
 
       it('should not override logger settings in API client config', () => {
-        createPromidasRepositoryForServer();
+        createPromidasForServer();
 
         const apiClientConfigArg = setApiClientConfigSpy.mock.calls[0]?.[0];
         expect(apiClientConfigArg?.logLevel).toBeUndefined();
@@ -521,14 +518,14 @@ describe('Factory Functions', () => {
       });
 
       it('should configure repository with empty config object', () => {
-        createPromidasRepositoryForServer();
+        createPromidasForServer();
 
         const repositoryConfigArg = setRepositoryConfigSpy.mock.calls[0]?.[0];
         expect(repositoryConfigArg).toEqual({});
       });
 
       it('should not override logger settings in repository config', () => {
-        createPromidasRepositoryForServer();
+        createPromidasForServer();
 
         const repositoryConfigArg = setRepositoryConfigSpy.mock.calls[0]?.[0];
         expect(repositoryConfigArg?.logLevel).toBeUndefined();
@@ -545,7 +542,7 @@ describe('Factory Functions', () => {
       });
 
       it('should call builder methods in correct order', () => {
-        createPromidasRepositoryForServer();
+        createPromidasForServer();
 
         const callOrder = [
           setDefaultLogLevelSpy,
@@ -566,7 +563,7 @@ describe('Factory Functions', () => {
       });
 
       it('should call each builder method exactly once', () => {
-        createPromidasRepositoryForServer();
+        createPromidasForServer();
 
         expect(setDefaultLogLevelSpy).toHaveBeenCalledTimes(1);
         expect(setStoreConfigSpy).toHaveBeenCalledTimes(1);
@@ -586,7 +583,7 @@ describe('Factory Functions', () => {
       });
 
       it('should return repository instance from builder', () => {
-        const result = createPromidasRepositoryForServer();
+        const result = createPromidasForServer();
 
         expect(result).toBe(mockRepository);
         expect(buildSpy).toHaveBeenCalled();
@@ -597,8 +594,8 @@ describe('Factory Functions', () => {
           .mockReturnValueOnce(mockRepository)
           .mockReturnValueOnce({} as unknown as ProtopediaInMemoryRepository);
 
-        const repo1 = createPromidasRepositoryForServer();
-        const repo2 = createPromidasRepositoryForServer();
+        const repo1 = createPromidasForServer();
+        const repo2 = createPromidasForServer();
 
         expect(repo1).not.toBe(repo2);
         expect(buildSpy).toHaveBeenCalledTimes(2);
@@ -615,19 +612,17 @@ describe('Factory Functions', () => {
       });
 
       it('should use correct VERSION constant in User-Agent', () => {
-        createPromidasRepositoryForServer();
+        createPromidasForServer();
 
         const configArg = setApiClientConfigSpy.mock.calls[0]?.[0];
         const userAgent = configArg?.protoPediaApiClientOptions?.userAgent;
 
-        expect(userAgent).toBe(`PromidasRepositoryForServer/${VERSION}`);
-        expect(userAgent).toMatch(
-          /^PromidasRepositoryForServer\/\d+\.\d+\.\d+$/,
-        );
+        expect(userAgent).toBe(`PromidasForServer/${VERSION}`);
+        expect(userAgent).toMatch(/^PromidasForServer\/\d+\.\d+\.\d+$/);
       });
 
       it('should use correct LIMIT_DATA_SIZE_BYTES constant', () => {
-        createPromidasRepositoryForServer();
+        createPromidasForServer();
 
         const storeConfigArg = setStoreConfigSpy.mock.calls[0]?.[0];
         expect(storeConfigArg?.maxDataSizeBytes).toBe(LIMIT_DATA_SIZE_BYTES);
@@ -635,14 +630,14 @@ describe('Factory Functions', () => {
       });
 
       it('should configure exact TTL value of 10 minutes', () => {
-        createPromidasRepositoryForServer();
+        createPromidasForServer();
 
         const storeConfigArg = setStoreConfigSpy.mock.calls[0]?.[0];
         expect(storeConfigArg?.ttlMs).toBe(600000); // 10 * 60 * 1000
       });
 
       it('should configure exact timeout value of 30 seconds', () => {
-        createPromidasRepositoryForServer();
+        createPromidasForServer();
 
         const apiClientConfigArg = setApiClientConfigSpy.mock.calls[0]?.[0];
         expect(apiClientConfigArg?.protoPediaApiClientOptions?.timeoutMs).toBe(

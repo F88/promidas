@@ -84,7 +84,4 @@ export {
 } from './builder.js';
 
 // Factory functions for common use cases
-export {
-  createPromidasRepositoryForLocal,
-  createPromidasRepositoryForServer,
-} from './factory.js';
+export { createPromidasForLocal, createPromidasForServer } from './factory.js';

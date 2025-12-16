@@ -4,7 +4,7 @@ import {
 } from 'protopedia-api-v2-client';
 
 import {
-  createPromidasRepositoryForLocal,
+  createPromidasForLocal,
   PromidasRepositoryBuilder,
   type ProtopediaInMemoryRepository,
   type PrototypeInMemoryStoreConfig,
@@ -18,7 +18,7 @@ import {
 function createRepositoryWithFactory(
   token: string,
 ): ProtopediaInMemoryRepository {
-  return createPromidasRepositoryForLocal({
+  return createPromidasForLocal({
     protopediaApiToken: token,
     // logLevel: 'info',
     logLevel: 'debug',

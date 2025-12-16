@@ -60,7 +60,7 @@ import { VERSION } from './version.js';
  *
  * **API Client:**
  * - Timeout: 90 seconds (accommodates 1-2 Mbps connections)
- * - User-Agent: `PromidasRepositoryForLocal/{version}`
+ * - User-Agent: `PromidasForLocal/{version}`
  *
  * ## Use Cases
  *
@@ -76,9 +76,9 @@ import { VERSION } from './version.js';
  *
  * @example Basic usage
  * ```typescript
- * import { createPromidasRepositoryForLocal } from "promidas";
+ * import { createPromidasForLocal } from "promidas";
  *
- * const repository = createPromidasRepositoryForLocal({
+ * const repository = createPromidasForLocal({
  *   protopediaApiToken: 'your-api-token',
  * });
  *
@@ -92,13 +92,13 @@ import { VERSION } from './version.js';
  *
  * @example With custom log level
  * ```typescript
- * const repository = createPromidasRepositoryForLocal({
+ * const repository = createPromidasForLocal({
  *   protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN!,
  *   logLevel: 'warn', // Only show warnings and errors
  * });
  * ```
  */
-export function createPromidasRepositoryForLocal(config: {
+export function createPromidasForLocal(config: {
   protopediaApiToken: string;
   logLevel?: LogLevel;
 }): ProtopediaInMemoryRepository {
@@ -128,7 +128,7 @@ export function createPromidasRepositoryForLocal(config: {
       //   - 1 Mbps: ~160s (2m40s)
       //   - 0.5 Mbps: ~320s (5m20s)
       timeoutMs: 90 * 1_000, // 90 seconds (accommodates 1-2 Mbps)
-      userAgent: `PromidasRepositoryForLocal/${VERSION}`,
+      userAgent: `PromidasForLocal/${VERSION}`,
     },
   };
   builder.setApiClientConfig(apiClientConfig);
@@ -163,7 +163,7 @@ export function createPromidasRepositoryForLocal(config: {
  *
  * **API Client:**
  * - Timeout: 30 seconds (server-grade connection)
- * - User-Agent: `PromidasRepositoryForServer/{version}`
+ * - User-Agent: `PromidasForServer/{version}`
  *
  * ## Use Cases
  *
@@ -179,10 +179,10 @@ export function createPromidasRepositoryForLocal(config: {
  *
  * @example Basic usage
  * ```typescript
- * import { createPromidasRepositoryForServer } from "promidas";
+ * import { createPromidasForServer } from "promidas";
  *
  * // TOKEN is read from PROTOPEDIA_API_V2_TOKEN environment variable
- * const repository = createPromidasRepositoryForServer();
+ * const repository = createPromidasForServer();
  *
  * // Setup snapshot with 1000 prototypes
  * await repository.setupSnapshot({ limit: 1000 });
@@ -193,12 +193,12 @@ export function createPromidasRepositoryForLocal(config: {
  *
  * @example With custom log level
  * ```typescript
- * const repository = createPromidasRepositoryForServer({
+ * const repository = createPromidasForServer({
  *   logLevel: 'error', // Only show errors in production
  * });
  * ```
  */
-export function createPromidasRepositoryForServer(config?: {
+export function createPromidasForServer(config?: {
   logLevel?: LogLevel;
 }): ProtopediaInMemoryRepository {
   // Read TOKEN from environment variable
@@ -229,7 +229,7 @@ export function createPromidasRepositoryForServer(config?: {
     protoPediaApiClientOptions: {
       token: protopediaApiToken,
       timeoutMs: 30 * 1_000, // 30 seconds
-      userAgent: `PromidasRepositoryForServer/${VERSION}`,
+      userAgent: `PromidasForServer/${VERSION}`,
     },
   };
   builder.setApiClientConfig(apiClientConfig);
