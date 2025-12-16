@@ -311,5 +311,52 @@ describe('ConsoleLogger', () => {
         logger.info('Message', circular);
       }).not.toThrow();
     });
+
+    it('wraps array metadata without spreading', () => {
+      const logger = new ConsoleLogger('info');
+      const arrayMeta = ['item1', 'item2', 'item3'];
+      logger.info('Array test', arrayMeta);
+      expect(infoSpy).toHaveBeenCalledWith('[INFO] Array test', arrayMeta);
+    });
+
+    it('wraps non-plain objects without spreading', () => {
+      const logger = new ConsoleLogger('info');
+      class CustomClass {
+        value = 42;
+      }
+      const customInstance = new CustomClass();
+      logger.info('Custom class', customInstance);
+      expect(infoSpy).toHaveBeenCalledWith(
+        '[INFO] Custom class',
+        customInstance,
+      );
+    });
+
+    it('wraps primitive metadata values', () => {
+      const logger = new ConsoleLogger('info');
+
+      logger.info('String meta', 'value');
+      expect(infoSpy).toHaveBeenCalledWith('[INFO] String meta', 'value');
+
+      infoSpy.mockClear();
+      logger.info('Number meta', 42);
+      expect(infoSpy).toHaveBeenCalledWith('[INFO] Number meta', 42);
+
+      infoSpy.mockClear();
+      logger.info('Boolean meta', true);
+      expect(infoSpy).toHaveBeenCalledWith('[INFO] Boolean meta', true);
+    });
+
+    it('handles objects with null prototype', () => {
+      const logger = new ConsoleLogger('info');
+      const nullProtoObj = Object.create(null);
+      nullProtoObj.key = 'value';
+      nullProtoObj.num = 123;
+      logger.info('Null proto test', nullProtoObj);
+      expect(infoSpy).toHaveBeenCalledWith('[INFO] Null proto test', {
+        key: 'value',
+        num: 123,
+      });
+    });
   });
 });
