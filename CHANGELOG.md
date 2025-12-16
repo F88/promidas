@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2025-12-16
+
 ### Added
 
 - **Beginner-Friendly Factory Functions**: Implemented two environment-specific factory functions for common use cases (#35)
