@@ -73,7 +73,7 @@
  *
  * @module
  * @see {@link ProtopediaInMemoryRepository} for the complete interface
- * @see {@link createPromidasRepository} for the factory function (in ../factory.js)
+ * @see https://f88.github.io/promidas/getting-started.html for usage with factory functions
  */
 
 /**
@@ -97,7 +97,7 @@ export type { NormalizedPrototype } from '../types/index.js';
  *
  * @example
  * ```typescript
- * import { createPromidasRepository, type Logger } from '@f88/promidas';
+ * import { PromidasRepositoryBuilder, type Logger } from '@f88/promidas';
  *
  * const customLogger: Logger = {
  *   debug: (msg) => console.debug(msg),
@@ -106,10 +106,13 @@ export type { NormalizedPrototype } from '../types/index.js';
  *   error: (msg) => console.error(msg),
  * };
  *
- * const repo = createPromidasRepository({
- *   storeConfig: { logger: customLogger },
- *   apiClientOptions: { token: 'xxx' },
- * });
+ * const repo = new PromidasRepositoryBuilder()
+ *   .setSharedLogger(customLogger)
+ *   .setDefaultLogLevel('debug')
+ *   .setApiClientConfig({
+ *     protoPediaApiClientOptions: { token: 'xxx' },
+ *   })
+ *   .build();
  * ```
  */
 export type { Logger, LogLevel } from '../logger/index.js';

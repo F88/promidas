@@ -79,17 +79,20 @@ describe('subpath exports', () => {
   });
 
   describe('@f88/promidas (root)', () => {
-    it('should export PromidasRepositoryBuilder', async () => {
+    it('should export factory functions and Builder', async () => {
       const root = await import('@f88/promidas');
 
-      // Should export Builder class
+      // Should export beginner-friendly factory functions
+      expect(root).toHaveProperty('createPromidasForLocal');
+      expect(typeof root.createPromidasForLocal).toBe('function');
+      expect(root).toHaveProperty('createPromidasForServer');
+      expect(typeof root.createPromidasForServer).toBe('function');
+
+      // Should export Builder class for advanced usage
       expect(root).toHaveProperty('PromidasRepositoryBuilder');
       expect(typeof root.PromidasRepositoryBuilder).toBe('function');
 
-      // Should NOT export factory function (moved to /repository subpath)
-      expect(root).not.toHaveProperty('createPromidasRepository');
-
-      // Should NOT export other modules
+      // Should NOT export low-level modules directly
       expect(root).not.toHaveProperty('fetchAndNormalizePrototypes');
       expect(root).not.toHaveProperty('createConsoleLogger');
       expect(root).not.toHaveProperty('parseProtoPediaTimestamp');

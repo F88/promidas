@@ -74,13 +74,15 @@ PROMIDASは、ユーザーの習熟度に応じて**段階的に複雑さを導�
 初心者や簡単なユースケース向け:
 
 ```typescript
-const repo = createPromidasRepository({
-    apiClientOptions: { token: process.env.PROTOPEDIA_API_TOKEN },
+import { createPromidasForLocal } from '@f88/promidas';
+
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
 });
 ```
 
 - 1行で完結
-- 最小限の設定
+- 環境別の最適化設定 (local / server)
 - すぐに使い始められる
 
 ### レベル2: Builderパターン
@@ -127,13 +129,15 @@ PROMIDASは**TypeScriptファースト**の設計です。実行時エラーで�
 ### 完全な型サポート
 
 ```typescript
+import { createPromidasForLocal } from '@f88/promidas';
+
 // 型推論が効く
-const repo = createPromidasRepository({
-    apiClientOptions: { token: 'xxx' },
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
 });
 
-const data = await repo.getAllFromSnapshot(); // NormalizedPrototype[]
-const byId = await repo.getPrototypeFromSnapshotById(123); // NormalizedPrototype | undefined
+const data = await repo.getAllFromSnapshot(); // readonly NormalizedPrototype[]
+const byId = await repo.getPrototypeFromSnapshotByPrototypeId(123); // NormalizedPrototype | null
 
 // 型エラーで防げる
 repo.setupSnapshot({ limit: 'abc' }); // ❌ 型エラー

@@ -14,11 +14,9 @@ instructions-for-ais:
 
 # ProtopediaInMemoryRepository Usage Guide
 
-This document describes how to use the ProtoPedia-specific in-memory
-repository built on top of the generic `PrototypeInMemoryStore` core.
+**📌 Note**: For getting started with PROMIDAS, please refer to the [Getting Started Guide](https://f88.github.io/promidas/getting-started.html) which covers the recommended factory functions (`createPromidasForLocal`, `createPromidasForServer`).
 
-The main entry point is the `createPromidasRepository` factory
-exported from `lib/repository`.
+This document describes the advanced usage of the ProtoPedia-specific in-memory repository and the `PromidasRepositoryBuilder` for custom configurations.
 
 ## Overview
 
@@ -112,19 +110,33 @@ including authentication token and optional custom logger configuration.
 
 ### 1. Create a repository instance
 
-```ts
-import { createPromidasRepository } from 'in-memory-snapshot-manager-for-protopedia';
+For most use cases, use the factory functions:
 
-const repo = createPromidasRepository({
-    storeConfig: {
-        ttlMs: 30 * 60 * 1000, // 30 minutes
-        maxDataSizeBytes: 10 * 1024 * 1024, // 10 MiB (default)
-    },
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
-        logLevel: 'info', // 'debug' | 'info' | 'warn' | 'error' | 'silent'
-    },
+```ts
+import { createPromidasForLocal } from '@f88/promidas';
+
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
 });
+```
+
+For advanced customization, use the Builder:
+
+```ts
+import { PromidasRepositoryBuilder } from '@f88/promidas';
+
+const repo = new PromidasRepositoryBuilder()
+    .setStoreConfig({
+        ttlMs: 30 * 60 * 1000, // 30 minutes
+        maxDataSizeBytes: 10 * 1024 * 1024, // 10 MiB
+    })
+    .setApiClientConfig({
+        protoPediaApiClientOptions: {
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        },
+    })
+    .setDefaultLogLevel('info')
+    .build();
 ```
 
 ### Configuring Logging
@@ -142,37 +154,31 @@ By default, both components use a built-in logger at 'info' level. You don't nee
 configure anything:
 
 ```ts
-import { createPromidasRepository } from 'in-memory-snapshot-manager-for-protopedia';
+import { createPromidasForLocal } from '@f88/promidas';
 
-const repo = createPromidasRepository({
-    storeConfig: {
-        ttlMs: 30 * 60 * 1000, // 30 minutes
-    },
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
-    },
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
 });
-// Both store and API client will log at 'info' level
+// Both store and API client will log at 'info' level (local environment)
 ```
 
-#### Case 2: Change log level for API requests only
+#### Case 2: Change log level for specific components
 
-If you want to see more detailed logs for API requests (e.g., for debugging),
-add `logLevel` to the second parameter:
+If you want to see more detailed logs for specific components:
 
 ```ts
-import { createPromidasRepository } from 'in-memory-snapshot-manager-for-protopedia';
+import { PromidasRepositoryBuilder } from '@f88/promidas';
 
-const repo = createPromidasRepository({
-    storeConfig: {
-        ttlMs: 30 * 60 * 1000,
-    },
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
-        logLevel: 'debug', // ← Add this line to see detailed API logs
-    },
-});
-// Store logs at 'info' (default)
+const repo = new PromidasRepositoryBuilder()
+    .setStoreConfig({ ttlMs: 30 * 60 * 1000, logLevel: 'info' })
+    .setApiClientConfig({
+        protoPediaApiClientOptions: {
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        },
+        logLevel: 'debug', // ← API client uses debug level
+    })
+    .build();
+// Store logs at 'info'
 // API client logs at 'debug' (more detailed)
 ```
 
@@ -181,87 +187,80 @@ Available log levels: `'debug'` | `'info'` | `'warn'` | `'error'` | `'silent'`
 #### Case 3: Use your own logger for both store and API client
 
 If you need custom logging (e.g., send logs to a file or external service),
-create a logger and pass it to both components:
+use the Builder's `setSharedLogger` method:
 
 ```ts
-import {
-    createPromidasRepository,
-    createConsoleLogger,
-} from 'in-memory-snapshot-manager-for-protopedia';
+import { PromidasRepositoryBuilder, createConsoleLogger } from '@f88/promidas';
 
 // Step 1: Create a logger
 const myLogger = createConsoleLogger();
 
-// Step 2: Pass the same logger to both places
-const repo = createPromidasRepository({
-    storeConfig: {
-        ttlMs: 30 * 60 * 1000,
-        logger: myLogger,
-        logLevel: 'debug', // ← Add logLevel here for store
-    },
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
-        logger: myLogger,
-        logLevel: 'debug', // ← Add logLevel here for API client
-    },
-});
+// Step 2: Use setSharedLogger to pass the same logger to all components
+const repo = new PromidasRepositoryBuilder()
+    .setSharedLogger(myLogger)
+    .setDefaultLogLevel('debug') // ← Set level for all components
+    .setApiClientConfig({
+        protoPediaApiClientOptions: {
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        },
+    })
+    .build();
 // Both store and API client will use your custom logger
 ```
 
-#### Case 4: Use different loggers for store and API client
+#### Case 4: Use different log levels for store and API client
 
-If you want different log levels or formats for store vs API operations:
+If you want different log levels for store vs API operations:
 
 ```ts
-import {
-    createPromidasRepository,
-    createConsoleLogger,
-} from 'in-memory-snapshot-manager-for-protopedia';
+import { PromidasRepositoryBuilder, createConsoleLogger } from '@f88/promidas';
 
 // Step 1: Create a shared logger
 const logger = createConsoleLogger();
 
-// Step 2: Pass logger with different log levels
-const repo = createPromidasRepository({
-    storeConfig: {
+// Step 2: Configure different log levels for each component
+const repo = new PromidasRepositoryBuilder()
+    .setSharedLogger(logger)
+    .setStoreConfig({
         ttlMs: 30 * 60 * 1000,
-        logger,
         logLevel: 'warn', // ← Store uses 'warn' level
-    },
-    apiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
-        logger,
+    })
+    .setApiClientConfig({
+        protoPediaApiClientOptions: {
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        },
         logLevel: 'debug', // ← API client uses 'debug' level
-    },
-});
+    })
+    .build();
 // Store logs at 'warn' level
 // API client logs at 'debug' level
 ```
 
-#### Summary: Where to add logger configuration
+#### Summary: Logger configuration with Builder
 
 ```ts
-const repo = createPromidasRepository({
-    storeConfig: {
-        // Store configuration
+const repo = new PromidasRepositoryBuilder()
+    .setSharedLogger(myLogger) // ← Optional: Share logger across all components
+    .setDefaultLogLevel('info') // ← Optional: Default level for all components
+    .setStoreConfig({
         ttlMs: 30 * 60 * 1000,
-        logger: storeLogger, // ← Logger for store operations
-        logLevel: 'info', // ← Log level for store
-    },
-    apiClientOptions: {
-        // API client configuration
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
-        logger: apiLogger, // ← Logger for API operations
-        logLevel: 'debug', // ← Log level for API client
-    },
-});
+        logLevel: 'warn', // ← Optional: Override for store
+    })
+    .setApiClientConfig({
+        protoPediaApiClientOptions: {
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        },
+        logLevel: 'debug', // ← Optional: Override for API client
+    })
+    .build();
 ```
 
-**Important**: The `logger` and `logLevel` settings for each component are independent.
-If you don't specify them, default loggers will be used automatically.
+**Builder Benefits**:
 
-**Note**: When you provide a custom logger to `apiClientOptions`, the API client wrapper
-automatically wraps it with the correct structure internally.
+- `setSharedLogger()`: Automatically shares logger across all components
+- `setDefaultLogLevel()`: Sets default level for all components
+- Component-specific `logLevel`: Overrides default for specific components
+- If not specified, default console logger with 'info' level is used
 
 ### 2. Populate the initial snapshot
 
