@@ -72,6 +72,13 @@ if (result.ok) {
 
 ## 💡 主な機能
 
+- ✅ ProtoPedia API からのデータ取得
+- ✅ 自動的な正規化とバリデーション
+- ✅ 大量データ取得時の進捗表示
+- ✅ 型安全な Result 型によるエラーハンドリング
+
+詳細は [USAGE.md](./docs/USAGE.md) を参照してください。
+
 ### API クライアントの作成
 
 ```typescript

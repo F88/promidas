@@ -21,6 +21,7 @@ This document describes the architecture, design decisions, and implementation p
 
 - [Architecture Overview](#architecture-overview)
 - [Design Patterns](#design-patterns)
+- [Download Progress Tracking](#download-progress-tracking)
 - [Error Handling Strategy](#error-handling-strategy)
 - [Normalization Approach](#normalization-approach)
 - [Type Safety](#type-safety)
@@ -197,6 +198,274 @@ type FetchPrototypesFailure = {
 - Easier to test both success and failure paths
 
 **Comparison with exception-based approach**:
+
+| Approach        | Error Handling              | Type Safety  | Testing        |
+| --------------- | --------------------------- | ------------ | -------------- |
+| Result Type     | Explicit in return type     | Compile-time | Easy to mock   |
+| Exception-based | Hidden (try/catch required) | Runtime      | Harder to test |
+
+## Download Progress Tracking
+
+### Architecture
+
+The download progress tracking system implements a three-module architecture:
+
+```plaintext
+┌─────────────────────────────────────────────────────────┐
+│  ProtopediaApiCustomClient                              │
+│  - progressLog: boolean (default: true)                 │
+│  - onProgressStart, onProgress, onProgressComplete      │
+└─────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│  select-custom-fetch                                    │
+│  - Wraps fetch with progress tracking                   │
+│  - Integrates createFetchWithProgress                   │
+└─────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│  fetch-with-progress                                    │
+│  - Core progress tracking logic                         │
+│  - Streaming response processing                        │
+│  - Callback management                                  │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Module Responsibilities
+
+#### 1. fetch-with-progress
+
+**Purpose**: Core progress tracking implementation
+
+**Key Functions**:
+
+```typescript
+export function createFetchWithProgress(
+    originalFetch: typeof fetch,
+    callbacks: ProgressCallbacks,
+    estimatedTotal: number,
+): typeof fetch {
+    return async (url, init) => {
+        // 1. Execute original fetch
+        // 2. Check Content-Length header
+        // 3. Stream response body with progress updates
+        // 4. Trigger callbacks at appropriate times
+    };
+}
+
+export function shouldProgressLog(logger: Logger): boolean {
+    // Returns true for 'debug' or 'info' levels
+    // Controls stderr output
+}
+```
+
+**Design Decisions**:
+
+- Uses `Response.body.getReader()` for streaming
+- Estimates download size from limit parameter (267 bytes per prototype)
+- Separate timing for preparation vs. download phases
+- Callbacks fire only when Content-Length header is present
+
+#### 2. select-custom-fetch
+
+**Purpose**: Smart fetch selection with progress integration
+
+**Implementation**:
+
+```typescript
+export function selectCustomFetch(
+    logger: Logger,
+    customFetch?: typeof fetch,
+    progressLog?: boolean,
+    callbacks?: ProgressCallbacks,
+    estimatedTotal?: number,
+): typeof fetch {
+    // 1. Use custom fetch if provided
+    // 2. Otherwise use global fetch
+    // 3. Wrap with progress tracking if progressLog is true
+    // 4. Return wrapped or original fetch
+}
+```
+
+**Benefits**:
+
+- Centralized fetch selection logic
+- Automatic progress wrapping
+- Preserves custom fetch implementations
+
+#### 3. protopedia-api-custom-client
+
+**Purpose**: Integration point for progress tracking
+
+**Constructor Logic**:
+
+```typescript
+const selectedFetch = selectCustomFetch(
+    this.#logger,
+    config?.protoPediaApiClientOptions?.fetch,
+    config?.progressLog ?? true, // Default: enabled
+    {
+        onStart: config?.onProgressStart,
+        onProgress: config?.onProgress,
+        onComplete: config?.onProgressComplete,
+    },
+    estimatedTotal,
+);
+
+this.#client = createProtoPediaClient({
+    ...config?.protoPediaApiClientOptions,
+    fetch: selectedFetch,
+});
+```
+
+### Progress Estimation Algorithm
+
+```typescript
+// Constants
+const BYTES_PER_PROTOTYPE = 267;
+const OVERHEAD_BYTES = 20_000;
+
+// Estimation function
+function estimateDownloadSize(limit: number): number {
+    return limit * BYTES_PER_PROTOTYPE + OVERHEAD_BYTES;
+}
+```
+
+**Rationale**:
+
+- Average prototype size: ~267 bytes (empirically measured)
+- API response overhead: ~20KB (headers, metadata)
+- Conservative estimate to avoid progress bar exceeding 100%
+
+### Callback Sequence
+
+```plaintext
+1. fetchPrototypes() called
+   ↓
+2. Preparation phase starts (SDK client initialization)
+   ↓
+3. fetch() executed → Response received
+   ↓
+4. onProgressStart() fired (if Content-Length present)
+   ↓
+5. Response body streamed
+   ├─ onProgress() fired for each chunk
+   └─ (multiple times during download)
+   ↓
+6. onProgressComplete() fired
+   ↓
+7. fetchPrototypes() returns result
+```
+
+### Logger Integration
+
+**stderr Output Control**:
+
+```typescript
+function shouldProgressLog(logger: Logger): boolean {
+    const level = logger.level;
+    return level === 'debug' || level === 'info';
+}
+```
+
+**Output Format**:
+
+```plaintext
+Download starting (limit=10000, estimated ~2670000 bytes) (prepared in 0.05s)
+Download complete: 2670000 bytes received (estimated 2670000 bytes) in 1.23s (total: 1.28s)
+```
+
+**Design Decisions**:
+
+- Uses stderr to avoid interfering with stdout
+- Only logs when logger level permits (debug/info)
+- Respects existing logger configuration
+- Can be completely disabled via `progressLog: false`
+
+### Type Definitions
+
+```typescript
+export type ProgressCallbacks = {
+    onStart?: (
+        estimatedTotal: number,
+        limit: number,
+        prepareTime: number,
+    ) => void;
+    onProgress?: (received: number, total: number, percentage: number) => void;
+    onComplete?: (
+        received: number,
+        estimatedTotal: number,
+        downloadTime: number,
+        totalTime: number,
+    ) => void;
+};
+
+export type ProtopediaApiCustomClientConfig = {
+    protoPediaApiClientOptions?: ProtoPediaApiClientOptions;
+    logger?: Logger;
+    logLevel?: LogLevel;
+    progressLog?: boolean; // Default: true
+    onProgressStart?: ProgressCallbacks['onStart'];
+    onProgress?: ProgressCallbacks['onProgress'];
+    onProgressComplete?: ProgressCallbacks['onComplete'];
+};
+```
+
+### Testing Strategy
+
+**Unit Tests** (7 tests in `should-progress-log.test.ts`):
+
+- Logger level filtering logic
+- All log levels tested
+- Edge cases (invalid levels)
+
+**Integration Tests** (15 tests in `fetch-with-progress.test.ts`):
+
+- Mock Response with streaming body
+- Callback firing sequence
+- Progress calculation accuracy
+- Logger integration
+- Error handling
+
+**Test Coverage**:
+
+- ✅ Normal download flow
+- ✅ Missing Content-Length header
+- ✅ Empty response body
+- ✅ Large downloads (chunked transfer)
+- ✅ Logger level filtering
+- ✅ Custom callbacks
+- ✅ Disabled progress tracking
+
+### Performance Considerations
+
+**Overhead**:
+
+- Minimal: Only wraps fetch when `progressLog: true`
+- Streaming processing: No buffering of entire response
+- Callback execution: Synchronous, non-blocking
+
+**Memory**:
+
+- Uses `ReadableStream.getReader()` for chunk processing
+- No full response buffering
+- Releases chunks after processing
+
+### Backward Compatibility
+
+**Default Behavior**:
+
+- `progressLog: true` by default
+- Existing code without progress config: Works with automatic logging
+- Can be disabled: `progressLog: false`
+
+**API Surface**:
+
+- No breaking changes to existing methods
+- All progress parameters optional
+- Extends `ProtopediaApiCustomClientConfig` interface
 
 | Approach  | Type Safety | Testability | Caller Burden      |
 | --------- | ----------- | ----------- | ------------------ |
