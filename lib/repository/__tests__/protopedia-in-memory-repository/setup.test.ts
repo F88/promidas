@@ -499,4 +499,128 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
       expect(proto?.prototypeNm).toBe('third');
     });
   });
+
+  describe('setupSnapshot - data size limit', () => {
+    it('returns error when data size exceeds maxDataSizeBytes', async () => {
+      const largePrototypes = [
+        makePrototype({ id: 1, freeComment: 'x'.repeat(10000) }),
+        makePrototype({ id: 2, freeComment: 'y'.repeat(10000) }),
+      ];
+
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: largePrototypes,
+      });
+
+      vi.mocked(mockStoreInstance.setAll).mockReturnValueOnce(null);
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+      });
+
+      const result = await repo.setupSnapshot({ limit: 100 });
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toContain('data size exceeds maximum limit');
+      }
+      expect(mockStoreInstance.setAll).toHaveBeenCalledWith(largePrototypes);
+    });
+
+    it('does not update lastFetchParams when data size exceeds limit', async () => {
+      const largePrototypes = [
+        makePrototype({ id: 1, freeComment: 'x'.repeat(10000) }),
+      ];
+
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: largePrototypes,
+      });
+
+      vi.mocked(mockStoreInstance.setAll).mockReturnValueOnce(null);
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+      });
+
+      const result = await repo.setupSnapshot({ limit: 100, offset: 50 });
+
+      expect(result.ok).toBe(false);
+
+      // Try to refresh with default params - should not use the failed fetch params
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [makePrototype({ id: 2 })],
+      });
+
+      vi.mocked(mockStoreInstance.setAll).mockReturnValueOnce({
+        dataSizeBytes: 500,
+      });
+
+      await repo.refreshSnapshot();
+
+      // Should use DEFAULT_FETCH_PARAMS, not the params from the failed setupSnapshot
+      expect(fetchPrototypesMock).toHaveBeenLastCalledWith({
+        offset: 0,
+        limit: 10,
+      });
+    });
+  });
+
+  describe('refreshSnapshot - data size limit', () => {
+    it('preserves old snapshot when refresh data exceeds size limit', async () => {
+      // Initial successful setup
+      const initialPrototypes = [
+        makePrototype({ id: 1, prototypeNm: 'initial' }),
+      ];
+
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: initialPrototypes,
+      });
+
+      vi.mocked(mockStoreInstance.setAll).mockReturnValueOnce({
+        dataSizeBytes: 500,
+      });
+
+      vi.mocked(mockStoreInstance.getByPrototypeId)
+        .mockReturnValueOnce(null)
+        .mockReturnValueOnce(makeNormalizedPrototype({ id: 1 }));
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+      });
+
+      const setupResult = await repo.setupSnapshot({ limit: 10 });
+      expect(setupResult.ok).toBe(true);
+
+      // Refresh with data that exceeds size limit
+      const largePrototypes = [
+        makePrototype({ id: 2, freeComment: 'x'.repeat(10000) }),
+      ];
+
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: largePrototypes,
+      });
+
+      vi.mocked(mockStoreInstance.setAll).mockReturnValueOnce(null);
+
+      const refreshResult = await repo.refreshSnapshot();
+
+      expect(refreshResult.ok).toBe(false);
+      if (!refreshResult.ok) {
+        expect(refreshResult.error).toContain(
+          'data size exceeds maximum limit',
+        );
+      }
+
+      // Verify old snapshot is still accessible
+      const oldProto = await repo.getPrototypeFromSnapshotByPrototypeId(1);
+      expect(oldProto).toBeDefined();
+    });
+  });
 });

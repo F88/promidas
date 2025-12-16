@@ -261,7 +261,15 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
         };
       }
 
-      this.#store.setAll(result.data);
+      const setResult = this.#store.setAll(result.data);
+
+      if (setResult === null) {
+        return {
+          ok: false,
+          error: 'Failed to store snapshot: data size exceeds maximum limit',
+        };
+      }
+
       this.#lastFetchParams = { ...mergedParams };
 
       return {
