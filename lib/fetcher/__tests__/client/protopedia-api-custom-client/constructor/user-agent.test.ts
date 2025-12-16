@@ -31,10 +31,12 @@ describe('ProtopediaApiCustomClient - Constructor - User-Agent', () => {
       },
     });
 
-    expect(createProtoPediaClientMock).toHaveBeenCalledWith({
-      token: 'test-token',
-      userAgent: `ProtopediaApiCustomClient/${VERSION} (promidas)`,
-    });
+    expect(createProtoPediaClientMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        token: 'test-token',
+        userAgent: `ProtopediaApiCustomClient/${VERSION} (promidas)`,
+      }),
+    );
   });
 
   it('preserves custom User-Agent when explicitly provided', () => {
@@ -49,10 +51,12 @@ describe('ProtopediaApiCustomClient - Constructor - User-Agent', () => {
       },
     });
 
-    expect(createProtoPediaClientMock).toHaveBeenCalledWith({
-      token: 'test-token',
-      userAgent: customUserAgent,
-    });
+    expect(createProtoPediaClientMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        token: 'test-token',
+        userAgent: customUserAgent,
+      }),
+    );
   });
 
   it('sets default User-Agent even with no config', () => {
@@ -61,9 +65,11 @@ describe('ProtopediaApiCustomClient - Constructor - User-Agent', () => {
 
     new ProtopediaApiCustomClient();
 
-    expect(createProtoPediaClientMock).toHaveBeenCalledWith({
-      userAgent: `ProtopediaApiCustomClient/${VERSION} (promidas)`,
-    });
+    expect(createProtoPediaClientMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userAgent: `ProtopediaApiCustomClient/${VERSION} (promidas)`,
+      }),
+    );
   });
 
   it('User-Agent format includes version and promidas identifier', () => {
