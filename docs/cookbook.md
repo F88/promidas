@@ -384,7 +384,9 @@ const client = new ProtopediaApiCustomClient({
     },
     progressLog: false, // 自動ログを無効化
     onProgressStart: (estimatedTotal, limit, prepareTime) => {
-        console.log(`ダウンロード開始: ${limit}件取得予定 (推定 ${estimatedTotal} バイト)`);
+        console.log(
+            `ダウンロード開始: ${limit}件取得予定 (推定 ${estimatedTotal} バイト)`,
+        );
         console.log(`準備時間: ${prepareTime.toFixed(2)}秒`);
     },
     onProgress: (received, total, percentage) => {
@@ -392,10 +394,14 @@ const client = new ProtopediaApiCustomClient({
         const barLength = 40;
         const filled = Math.floor((percentage / 100) * barLength);
         const bar = '█'.repeat(filled) + '░'.repeat(barLength - filled);
-        process.stdout.write(`\r[${bar}] ${percentage.toFixed(1)}% (${received}/${total} バイト)`);
+        process.stdout.write(
+            `\r[${bar}] ${percentage.toFixed(1)}% (${received}/${total} バイト)`,
+        );
     },
     onProgressComplete: (received, estimatedTotal, downloadTime, totalTime) => {
-        console.log(`\n完了: ${received} バイト受信 (${downloadTime.toFixed(2)}秒)`);
+        console.log(
+            `\n完了: ${received} バイト受信 (${downloadTime.toFixed(2)}秒)`,
+        );
         console.log(`合計時間: ${totalTime.toFixed(2)}秒`);
     },
 });
