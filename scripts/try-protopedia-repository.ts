@@ -19,7 +19,7 @@ function createRepositoryWithFactory(
   token: string,
 ): ProtopediaInMemoryRepository {
   return createPromidasRepositoryForLocal({
-    token: token,
+    protopediaApiToken: token,
     // logLevel: 'info',
     logLevel: 'debug',
   });
