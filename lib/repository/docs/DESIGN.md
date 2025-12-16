@@ -103,7 +103,7 @@ export const createPromidasForLocal = (options?: {
     protopediaApiToken?: string;
 }): ProtopediaInMemoryRepository => {
     return new PromidasRepositoryBuilder()
-        .setDefaultLogLevel('info')
+
         .setStoreConfig({ ttlMs: 30 * 60 * 1000 })
         .setApiClientConfig({
             protoPediaApiClientOptions: {

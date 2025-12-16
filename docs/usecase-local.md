@@ -135,7 +135,7 @@ console.log(`Completed: ${completed.length}`);
 import { PromidasRepositoryBuilder } from '@f88/promidas';
 
 const repo = new PromidasRepositoryBuilder()
-    .setDefaultLogLevel('info')
+
     .setApiClientConfig({
         protoPediaApiClientOptions: {
             token: process.env.PROTOPEDIA_API_V2_TOKEN,
@@ -354,11 +354,12 @@ const repo = createPromidasForLocal({
 
 ```typescript
 const repo = new PromidasRepositoryBuilder()
-    .setDefaultLogLevel('debug') // すべてのコンポーネントでdebugログ
+    .setStoreConfig({ logLevel: 'debug' })
     .setApiClientConfig({
         protoPediaApiClientOptions: {
             token: process.env.PROTOPEDIA_API_V2_TOKEN,
         },
+        logLevel: 'debug',
     })
     .build();
 ```
@@ -426,21 +427,19 @@ const repo = new PromidasRepositoryBuilder()
     .build();
 ```
 
-**Builder (共有ロガー自動管理):**
+**Builder:**
 
 ```typescript
 const repo = new PromidasRepositoryBuilder()
-    .setDefaultLogLevel('debug') // 共有ロガーが自動的に作成・共有される
-    .setStoreConfig({ ttlMs: Infinity })
+    .setStoreConfig({ ttlMs: Infinity, logLevel: 'debug' })
     .setApiClientConfig({
         protoPediaApiClientOptions: {
             token: process.env.PROTOPEDIA_API_V2_TOKEN,
         },
+        logLevel: 'debug',
     })
     .build();
 ```
-
-Builderを使うと、明示的にロガーを作成・共有しなくても自動的に効率的なロガー管理が行われます。
 
 ## サンプルスクリプト集
 

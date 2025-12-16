@@ -91,12 +91,12 @@ const repo = createPromidasForLocal({
 
 ```typescript
 const repo = new PromidasRepositoryBuilder()
-    .setDefaultLogLevel('debug')
-    .setStoreConfig({ ttlMs: 30 * 60 * 1000 })
+    .setStoreConfig({ ttlMs: 30 * 60 * 1000, logLevel: 'debug' })
     .setApiClientConfig({
         protoPediaApiClientOptions: {
             token: process.env.PROTOPEDIA_API_V2_TOKEN,
         },
+        logLevel: 'debug',
     })
     .build();
 ```

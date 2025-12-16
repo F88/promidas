@@ -192,7 +192,6 @@ import { PromidasRepositoryBuilder } from '@f88/promidas';
 async function main() {
     // Builderを使った段階的な設定
     const repo = new PromidasRepositoryBuilder()
-        .setDefaultLogLevel('info')
         .setApiClientConfig({
             protoPediaApiClientOptions: {
                 token: process.env.PROTOPEDIA_API_V2_TOKEN,
@@ -288,12 +287,12 @@ const repo = createPromidasForServer({
 import { PromidasRepositoryBuilder } from '@f88/promidas';
 
 const repo = new PromidasRepositoryBuilder()
-    .setDefaultLogLevel('debug')
-    .setStoreConfig({ ttlMs: 30 * 60 * 1000 })
+    .setStoreConfig({ ttlMs: 30 * 60 * 1000, logLevel: 'debug' })
     .setApiClientConfig({
         protoPediaApiClientOptions: {
             token: process.env.PROTOPEDIA_API_V2_TOKEN,
         },
+        logLevel: 'debug',
     })
     .build();
 ```
@@ -302,8 +301,7 @@ const repo = new PromidasRepositoryBuilder()
 
 - 設定を段階的に追加できる
 - 条件分岐が簡単
-- 共有Loggerパターンでメモリ効率向上
-- ログレベルの優先順位管理
+- コンポーネントごとに独立したログ設定が可能
 
 ### どちらを使うべきか?
 

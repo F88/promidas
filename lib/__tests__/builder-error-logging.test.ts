@@ -46,7 +46,6 @@ describe('PromidasRepositoryBuilder - Error Logging', () => {
       .mockImplementation(() => {});
 
     const builder = new PromidasRepositoryBuilder()
-      .setDefaultLogLevel('debug')
       .setApiClientConfig({ logger: mockLogger })
       .setStoreConfig({
         maxDataSizeBytes: 100_000_000, // Exceeds limit

@@ -164,10 +164,10 @@ const result = await client.fetchPrototypes({ limit: 100 });
 
     // Advanced configuration
     const repo = new PromidasRepositoryBuilder()
-        .setDefaultLogLevel('debug')
-        .setStoreConfig({ ttlMs: 60000 })
+        .setStoreConfig({ ttlMs: 60000, logLevel: 'debug' })
         .setApiClientConfig({
             protoPediaApiClientOptions: { token: 'xxx' },
+            logLevel: 'debug',
         })
         .setRepositoryConfig({ logLevel: 'info' })
         .build();

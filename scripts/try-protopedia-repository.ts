@@ -42,12 +42,12 @@ function createRepositoryWithBuilder(
   };
 
   return new PromidasRepositoryBuilder()
-    .setDefaultLogLevel('debug')
-    .setStoreConfig(prototypeInMemoryStoreConfig)
+    .setStoreConfig({ ...prototypeInMemoryStoreConfig, logLevel: 'debug' })
     .setApiClientConfig({
       protoPediaApiClientOptions: {
         token: token,
       },
+      logLevel: 'debug',
     })
     .build();
 }

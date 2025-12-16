@@ -105,15 +105,15 @@ export function createPromidasForLocal(config: {
   // Create a builder instance
   const builder = new PromidasRepositoryBuilder();
 
-  // Configure default log level
+  // Determine log level
   // Note: 'info' level records normal operations for development monitoring
-  const defaultLogLevel: LogLevel = config.logLevel ?? 'info';
-  builder.setDefaultLogLevel(defaultLogLevel);
+  const logLevel: LogLevel = config.logLevel ?? 'info';
 
   // Configure store with default TTL for local development
   const storeConfig: PrototypeInMemoryStoreConfig = {
     ttlMs: 30 * 60 * 1000, // 30 minutes
     maxDataSizeBytes: STORE_MAX_DATA_SIZE_BYTES_LIMIT, // 30 MiB
+    logLevel,
   };
   builder.setStoreConfig(storeConfig);
 
@@ -130,6 +130,7 @@ export function createPromidasForLocal(config: {
       timeoutMs: 90 * 1_000, // 90 seconds (accommodates 1-2 Mbps)
       userAgent: `PromidasForLocal/${VERSION}`,
     },
+    logLevel,
   };
   builder.setApiClientConfig(apiClientConfig);
 
@@ -212,15 +213,15 @@ export function createPromidasForServer(config?: {
   // Create a builder instance
   const builder = new PromidasRepositoryBuilder();
 
-  // Configure default log level for production
+  // Determine log level for server environment
   // Note: 'warn' level is recommended for server environments to reduce log volume
-  const defaultLogLevel: LogLevel = config?.logLevel ?? 'warn';
-  builder.setDefaultLogLevel(defaultLogLevel);
+  const logLevel: LogLevel = config?.logLevel ?? 'warn';
 
   // Configure store for server environments (shorter TTL for memory efficiency)
   const storeConfig: PrototypeInMemoryStoreConfig = {
     ttlMs: 10 * 60 * 1000, // 10 minutes
     maxDataSizeBytes: STORE_MAX_DATA_SIZE_BYTES_LIMIT, // 30 MiB
+    logLevel,
   };
   builder.setStoreConfig(storeConfig);
 
@@ -231,6 +232,7 @@ export function createPromidasForServer(config?: {
       timeoutMs: 30 * 1_000, // 30 seconds
       userAgent: `PromidasForServer/${VERSION}`,
     },
+    logLevel,
   };
   builder.setApiClientConfig(apiClientConfig);
 
