@@ -94,6 +94,48 @@ You can pass any `fetch` implementation to the official client factory
 via its options. This makes it easy to adapt to different runtimes such
 as Node.js, browsers, or Next.js server components.
 
+#### Using ProtopediaApiCustomClient (with progress tracking)
+
+```ts
+import { ProtopediaApiCustomClient } from '@f88/promidas';
+
+const CONNECTION_AND_HEADER_TIMEOUT_MS = 5_000;
+
+export const customClientForNextJs = new ProtopediaApiCustomClient({
+    logger: myLogger,
+    progressLog: true, // Progress tracking enabled
+    protoPediaApiClientOptions: {
+        token: process.env.PROTOPEDIA_API_V2_TOKEN ?? '',
+        baseUrl: 'https://api.protopedia.net',
+        fetch: async (url, init) => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(
+                () => controller.abort(),
+                CONNECTION_AND_HEADER_TIMEOUT_MS,
+            );
+
+            try {
+                return await globalThis.fetch(url, {
+                    ...init,
+                    signal: controller.signal,
+                    cache: 'force-cache',
+                    next: {
+                        revalidate: 60,
+                    },
+                });
+            } finally {
+                clearTimeout(timeoutId);
+            }
+        },
+    },
+});
+```
+
+**Key Point**: Your custom fetch (with timeout and Next.js caching) is
+automatically wrapped with progress tracking. Both features work together!
+
+#### Direct SDK usage (without progress tracking)
+
 ```ts
 import { createProtoPediaClient } from 'protopedia-api-v2-client';
 

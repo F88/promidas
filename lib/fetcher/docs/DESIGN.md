@@ -276,24 +276,21 @@ export function shouldProgressLog(logger: Logger): boolean {
 
 ```typescript
 export function selectCustomFetch(
-    logger: Logger,
-    customFetch?: typeof fetch,
-    progressLog?: boolean,
-    callbacks?: ProgressCallbacks,
-    estimatedTotal?: number,
-): typeof fetch {
-    // 1. Use custom fetch if provided
-    // 2. Otherwise use global fetch
-    // 3. Wrap with progress tracking if progressLog is true
-    // 4. Return wrapped or original fetch
+    config: CustomFetchConfig,
+): typeof fetch | undefined {
+    // 1. Check if progress tracking is needed
+    // 2. If needed, wrap baseFetch (or global fetch) with progress tracking
+    // 3. If not needed, return baseFetch (preserves custom implementations)
+    // 4. Return undefined if no custom features needed
 }
 ```
 
-**Benefits**:
+**Key Features**:
 
-- Centralized fetch selection logic
-- Automatic progress wrapping
-- Preserves custom fetch implementations
+- **Wraps user's custom fetch**: If user provides `baseFetch`, it gets wrapped with progress tracking
+- **Preserves custom behavior**: Timeouts, retries, caching, Next.js adapters all continue to work
+- **Automatic progress**: Progress tracking is transparent to the underlying fetch
+- **Conditional wrapping**: Only wraps when progress features are enabled
 
 #### 3. protopedia-api-custom-client
 
@@ -302,23 +299,29 @@ export function selectCustomFetch(
 **Constructor Logic**:
 
 ```typescript
-const selectedFetch = selectCustomFetch(
-    this.#logger,
-    config?.protoPediaApiClientOptions?.fetch,
-    config?.progressLog ?? true, // Default: enabled
-    {
-        onStart: config?.onProgressStart,
-        onProgress: config?.onProgress,
-        onComplete: config?.onProgressComplete,
-    },
-    estimatedTotal,
-);
+// User's custom fetch (if provided) is passed as baseFetch
+const customFetch = selectCustomFetch({
+    logger: this.#logger,
+    enableProgressLog: progressLog,
+    baseFetch: protoPediaApiClientOptions.fetch, // User's custom fetch
+    onProgressStart: progressCallback?.onStart,
+    onProgress: progressCallback?.onProgress,
+    onProgressComplete: progressCallback?.onComplete,
+});
 
 this.#client = createProtoPediaClient({
-    ...config?.protoPediaApiClientOptions,
-    fetch: selectedFetch,
+    ...protoPediaApiClientOptions,
+    userAgent,
+    fetch: customFetch, // Wrapped with progress tracking
 });
 ```
+
+**Flow**:
+
+1. User provides `protoPediaApiClientOptions.fetch` (e.g., with timeout/retry)
+2. `selectCustomFetch` wraps it with progress tracking
+3. Wrapped fetch is passed to SDK
+4. Both custom behavior and progress tracking work together
 
 ### Progress Estimation Algorithm
 
@@ -969,13 +972,16 @@ async setupSnapshot(params: ListPrototypesParams) {
 
 **Use Case**: Adapt to different runtimes (Node.js, browser, Next.js)
 
-**Example (Next.js)**:
+**Example (Next.js with progress tracking)**:
 
 ```typescript
 const customClientForNextJs = new ProtopediaApiCustomClient({
+    logger: myLogger,
+    progressLog: true, // Progress tracking enabled
     protoPediaApiClientOptions: {
         token: process.env.PROTOPEDIA_API_V2_TOKEN,
         fetch: async (url, init) => {
+            // Custom fetch with Next.js features
             return await globalThis.fetch(url, {
                 ...init,
                 cache: 'force-cache',
@@ -986,12 +992,17 @@ const customClientForNextJs = new ProtopediaApiCustomClient({
 });
 ```
 
+**Key Point**: Custom fetch is automatically wrapped with progress tracking.
+Your custom behavior (caching, timeouts, etc.) is preserved while progress
+tracking is added transparently.
+
 **Supported Scenarios**:
 
 - Custom timeouts (AbortController)
 - Caching strategies (Next.js cache)
 - Retry logic
 - Request/response middleware
+- **All of the above + progress tracking** ✨
 
 ## Design Decisions Log
 

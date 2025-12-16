@@ -142,9 +142,14 @@ export class ProtopediaApiCustomClient {
       `ProtopediaApiCustomClient/${VERSION} (promidas)`;
 
     // Select appropriate custom fetch based on configuration
+    // If user provides a custom fetch, wrap it with progress tracking
+    // Otherwise, progress tracking wraps the global fetch
     const customFetch = selectCustomFetch({
       logger: this.#logger,
       enableProgressLog: progressLog,
+      ...(protoPediaApiClientOptions.fetch !== undefined && {
+        baseFetch: protoPediaApiClientOptions.fetch,
+      }),
       ...(progressCallback?.onStart !== undefined && {
         onProgressStart: progressCallback.onStart,
       }),

@@ -612,4 +612,76 @@ describe('createFetchWithProgress', () => {
       process.stderr.write = originalWrite;
     });
   });
+
+  describe('custom fetch support', () => {
+    it('uses provided baseFetch instead of global fetch', async () => {
+      const logger = createConsoleLogger();
+      const customFetchSpy = vi.fn().mockResolvedValue(
+        new Response('custom fetch result', {
+          status: 200,
+          headers: new Headers({
+            'X-Custom': 'true',
+          }),
+        }),
+      );
+
+      const fetchWithProgress = createFetchWithProgress({
+        logger,
+        enableProgressLog: false,
+        baseFetch: customFetchSpy,
+      });
+
+      const response = await fetchWithProgress('https://api.example.com/data');
+      const text = await response.text();
+
+      expect(customFetchSpy).toHaveBeenCalledOnce();
+      expect(customFetchSpy).toHaveBeenCalledWith(
+        'https://api.example.com/data',
+        undefined,
+      );
+      expect(text).toBe('custom fetch result');
+      expect(response.headers.get('X-Custom')).toBe('true');
+    });
+
+    it('wraps custom fetch with progress tracking', async () => {
+      const logger = createConsoleLogger();
+      const onProgress = vi.fn();
+
+      // Custom fetch that adds headers
+      const customFetch = vi.fn().mockImplementation((url, init) => {
+        return globalThis.fetch(url, {
+          ...init,
+          headers: {
+            ...init?.headers,
+            'X-Custom-Header': 'test-value',
+          },
+        });
+      });
+
+      // Mock global fetch to verify custom fetch is used
+      const mockResponse = new Response('test data', {
+        status: 200,
+        headers: new Headers({
+          'Content-Length': '9',
+          'X-From-Custom': 'yes',
+        }),
+      });
+      global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
+      const fetchWithProgress = createFetchWithProgress({
+        logger,
+        enableProgressLog: true,
+        baseFetch: customFetch,
+        onProgress,
+      });
+
+      const response = await fetchWithProgress('https://api.example.com/data');
+      await response.text();
+
+      // Verify custom fetch was called
+      expect(customFetch).toHaveBeenCalledOnce();
+      // Verify progress tracking still works
+      expect(onProgress).toHaveBeenCalled();
+    });
+  });
 });

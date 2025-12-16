@@ -28,6 +28,12 @@ export interface CustomFetchConfig {
   enableProgressLog: boolean;
 
   /**
+   * Base fetch function to wrap with progress tracking.
+   * If not provided, uses global fetch.
+   */
+  baseFetch?: typeof fetch;
+
+  /**
    * Optional callback when download starts.
    */
   onProgressStart?: (
@@ -80,6 +86,7 @@ export function selectCustomFetch(
   const {
     logger,
     enableProgressLog,
+    baseFetch,
     onProgressStart,
     onProgress,
     onProgressComplete,
@@ -96,6 +103,7 @@ export function selectCustomFetch(
     return createFetchWithProgress({
       logger,
       enableProgressLog,
+      ...(baseFetch !== undefined && { baseFetch }),
       ...(onProgressStart !== undefined && { onProgressStart }),
       ...(onProgress !== undefined && { onProgress }),
       ...(onProgressComplete !== undefined && { onProgressComplete }),
@@ -105,13 +113,13 @@ export function selectCustomFetch(
   // Future: Add other custom fetch implementations here
   // Example:
   // if (config.retryEnabled) {
-  //   return createFetchWithRetry({ ... });
+  //   return createFetchWithRetry({ baseFetch, ... });
   // }
   //
   // if (config.cacheEnabled) {
-  //   return createFetchWithCache({ ... });
+  //   return createFetchWithCache({ baseFetch, ... });
   // }
 
-  // Use default fetch
-  return undefined;
+  // If no custom features needed, return the base fetch or undefined
+  return baseFetch;
 }

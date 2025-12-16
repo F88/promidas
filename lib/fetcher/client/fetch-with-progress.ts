@@ -80,6 +80,12 @@ export interface FetchWithProgressConfig {
   enableProgressLog: boolean;
 
   /**
+   * Base fetch function to wrap with progress tracking.
+   * If not provided, uses global fetch.
+   */
+  baseFetch?: typeof fetch;
+
+  /**
    * Optional callback when download starts.
    *
    * @param estimatedTotal - Estimated total size in bytes
@@ -217,6 +223,7 @@ export function createFetchWithProgress(
   const {
     logger,
     enableProgressLog,
+    baseFetch,
     onProgressStart,
     onProgress,
     onProgressComplete,
@@ -233,7 +240,9 @@ export function createFetchWithProgress(
     // Start timing before fetch call
     const downloadStartTime = Date.now();
 
-    const response = await fetch(url, init);
+    // Use provided baseFetch or globalThis.fetch (allows mocking in tests)
+    const fetchFn = baseFetch ?? globalThis.fetch;
+    const response = await fetchFn(url, init);
 
     // Calculate preparation time (request + response headers)
     const bodyStartTime = Date.now();
