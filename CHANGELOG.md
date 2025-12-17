@@ -12,112 +12,88 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **ValidationError for Better Error Handling**: Implemented custom `ValidationError` class to improve validation error handling (#13)
-    - New `ValidationError` class wraps Zod validation errors with user-friendly messages
-    - Hides internal validation library (Zod) dependency from public API
+    - Wraps Zod validation errors with user-friendly messages and hides internal validation library from public API
     - Includes `field` property to identify which parameter failed validation
-    - Applied to parameter validation in:
-        - `getPrototypeFromSnapshotByPrototypeId(prototypeId)` - validates prototypeId is a positive integer
-        - `getRandomSampleFromSnapshot(size)` - validates size is an integer
-    - Error messages:
-        - Invalid prototypeId: "Invalid prototype ID: must be a positive integer"
-        - Invalid size: "Invalid sample size: must be an integer"
-    - Exported from `@f88/promidas/repository`
-    - Documentation updated:
-        - Added "Error Handling" section to USAGE.md with usage examples
-        - Updated DESIGN.md validation and error handling sections
-    - All tests updated: 6 validation tests now expect `ValidationError` instead of `ZodError`
-    - All 1040 tests passing
+    - Applied to `getPrototypeFromSnapshotByPrototypeId()` and `getRandomSampleFromSnapshot()` parameter validation
+    - Exported from `@f88/promidas/repository` with comprehensive documentation
+
+- **Documentation Structure Improvements**: Major documentation reorganization for better user experience (#37)
+    - Added beginner-friendly guides: `quickstart-beginners.md`, `troubleshooting.md`
+    - Added feature documentation: Repository, Factory, and Builder pattern guides
+    - Reorganized use case documentation into `docs/use-case/` directory structure
+    - Renamed `docs/core-concepts/` to `docs/features/` for clarity
+    - Enhanced `docs/index.md` with "What is PROMIDAS" section and improved navigation
+    - Updated sidebar navigation with "主な機能" (Main Features) section
+
+### Changed
+
+- **Documentation Corrections**: Fixed critical documentation errors across multiple files
+    - Node.js version requirement corrected from 18+ to 20+ (matches package.json)
+    - TTL behavior clarified: marks expiration, does not auto-fetch (requires explicit `refreshSnapshot()`)
+    - Error handling examples fixed: `result.error` is string type, not object with `.message`
+    - Fixed field name: `stats.count` → `stats.size`
+    - Corrected default values: 30min TTL, 30MiB size (was incorrectly documented as 1hr, 10MB)
+
+### Dependencies
+
+- Updated development dependencies to latest versions
+- Updated GitHub Actions versions in workflows
 
 ## [0.10.0] - 2025-12-17
 
 ### Changed
 
-- **Logger Output Format**: Changed ConsoleLogger output format to prefix-based style
+- **Logger Output Format**: Changed ConsoleLogger output format to prefix-based style for better readability
     - Before: `message, { level: 'info', meta: ... }`
     - After: `[INFO] message` (with optional metadata if provided)
-    - Benefits:
-        - Log level is always visible at the start of each message
-        - No redundant output when metadata is undefined
-        - Cleaner console output for better readability
+    - Log level is now always visible at the start of each message
     - All 38 tests updated to reflect the new format
-    - Documentation updated in DESIGN.md and USAGE.md
 
 ### Added
 
 - **Download Progress Tracking**: Implemented download progress tracking for prototype fetching (#44)
-    - Three-module architecture:
-        - `fetch-with-progress`: Core progress tracking with callbacks
-        - `select-custom-fetch`: Smart fetch selection with progress integration
-        - `protopedia-api-custom-client`: Updated to use progress tracking by default
-    - Export `shouldProgressLog` for fine-grained control over stderr output
-    - Progress callbacks: `onStart`, `onProgress`, `onComplete`
-    - Automatic logging with logger level filtering
+    - Three-module architecture: `fetch-with-progress`, `select-custom-fetch`, and `protopedia-api-custom-client`
+    - Progress callbacks: `onStart`, `onProgress`, `onComplete` with automatic logger integration
     - Default `progressLog: true` enables automatic download progress tracking
-    - Comprehensive test coverage: 22 tests (15 integration + 7 unit)
+    - Export `shouldProgressLog` for fine-grained control over stderr output
 
 - **User-Agent Support in ProtopediaApiCustomClient**: Automatically sets library-specific User-Agent for API requests (#45)
     - Default User-Agent: `ProtopediaApiCustomClient/{VERSION} (promidas)`
-    - Identifies requests from promidas library for better analytics and debugging
     - Customizable via `protoPediaApiClientOptions.userAgent` option
-    - Comprehensive test coverage with 4 dedicated tests
+    - Improves request identification for analytics and debugging
 
 - **Event Notification System**: Implemented optional event system for repository snapshot operations (#19)
-    - Three event types:
-        - `snapshotStarted` - Emitted when setup/refresh begins
-        - `snapshotCompleted` - Emitted when operation succeeds (includes stats)
-        - `snapshotFailed` - Emitted when operation fails (includes error details)
+    - Three event types: `snapshotStarted`, `snapshotCompleted`, `snapshotFailed`
     - Opt-in design: Events disabled by default, enable via `enableEvents: true`
-    - Type-safe event interface using `typed-emitter` package
-    - Promise coalescing aware: Events fire once per actual API call
+    - Type-safe event interface using `typed-emitter` package with Promise coalescing support
     - Memory management: `dispose()` method for cleanup
-    - Comprehensive documentation:
-        - DESIGN_EVENTS.md - Complete design rationale and implementation details
-        - Event system section in DESIGN.md
-        - Event usage examples in USAGE.md
-    - Test coverage: 16 new tests for event system (1040 total tests)
+    - Comprehensive documentation in DESIGN_EVENTS.md, DESIGN.md, and USAGE.md
     - Dependencies added: `events@^3.3.0`, `typed-emitter@^2.1.0` (devDependency)
 
 ### Fixed
 
 - **Progress Callback Triggering**: Fixed `onProgressStart` callback to trigger correctly when Content-Length header is present (#44)
-- **Documentation Accuracy**: Fixed 17 critical issues in fetcher documentation (#45)
-    - Removed non-existent types: `ApiErrorDetails`, `ApiResult`, `ListPrototypesClient`
-    - Fixed `FetchPrototypesResult` type definition to match actual implementation
-    - Corrected `constructDisplayMessage` import path
-    - Updated error handling flow documentation to reflect try/catch implementation
-    - Fixed all code examples to work correctly
+- **Documentation Accuracy**: Fixed 17 critical issues in fetcher documentation including type definitions, import paths, and code examples (#45)
 
 ## [0.9.0] - 2025-12-16
 
 ### Added
 
 - **Beginner-Friendly Factory Functions**: Implemented two environment-specific factory functions for common use cases (#35)
-    - `createPromidasForLocal()` - Optimized for local/development environments
-        - Parameters: `protopediaApiToken` (required), `logLevel` (optional, default: `'info'`)
-        - Pre-configured: 30-minute TTL, 90-second timeout (supports 1-2 Mbps connections), verbose logging
-        - User-Agent: `PromidasForLocal/${VERSION}`
-    - `createPromidasForServer()` - Optimized for server/production environments
-        - Parameters: `logLevel` (optional, default: `'warn'`)
-        - Requires environment variable: `PROTOPEDIA_API_V2_TOKEN`
-        - Pre-configured: 10-minute TTL, 30-second timeout, minimal logging (errors/warnings only)
-        - User-Agent: `PromidasForServer/${VERSION}`
-    - Both factories use 30 MiB data size limit (`LIMIT_DATA_SIZE_BYTES`)
-    - Comprehensive test coverage: 96 tests (59 factory + 37 builder) with 100% coverage on factory.ts and builder.ts
-    - Exported from main module: `import { createPromidasForLocal, createPromidasForServer } from '@f88/promidas'`
+    - `createPromidasForLocal()` - Optimized for local/development with 30-minute TTL, 90-second timeout, verbose logging
+    - `createPromidasForServer()` - Optimized for server/production with 10-minute TTL, 30-second timeout, minimal logging
+    - Both use environment-appropriate User-Agent headers and 30 MiB data size limit
+    - Exported from main module with comprehensive test coverage (96 tests, 100% coverage)
 
 - **Version Management System**: Integrated automatic version generation for User-Agent strings (#35)
-    - `scripts/generate-version.mjs` - Auto-generates `lib/version.ts` from `package.json` version
-    - Integrated into prebuild script (runs before TypeScript compilation)
-    - `lib/version.ts` - Auto-generated version constant, committed to repository
+    - Auto-generates `lib/version.ts` from `package.json` version during prebuild
     - Used in factory function User-Agent headers for better API tracking
 
 ### Changed
 
 - **Data Size Constant Renamed**: `MAX_DATA_SIZE_BYTES` → `LIMIT_DATA_SIZE_BYTES` (#35)
     - New name better indicates hard constraint vs configurable maximum
-    - Re-exported from `lib/store/index.ts` for external use
     - Value unchanged: 30 MiB (31,457,280 bytes)
-    - Updated all internal references and documentation
 
 ## [0.8.0] - 2025-12-15
 
