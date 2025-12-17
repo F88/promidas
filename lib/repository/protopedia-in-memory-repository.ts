@@ -52,11 +52,13 @@
  * @module
  * @see {@link ProtopediaInMemoryRepository} for the public interface
  */
+import { EventEmitter } from 'events';
 import type {
   ListPrototypesParams,
   ProtoPediaApiClientOptions,
 } from 'protopedia-api-v2-client';
 import type { DeepReadonly } from 'ts-essentials';
+import type { TypedEmitter } from 'typed-emitter';
 
 import { ProtopediaApiCustomClient } from '../fetcher/index.js';
 import {
@@ -77,6 +79,7 @@ import { prototypeIdSchema, sampleSizeSchema } from './schemas/validation.js';
 import type {
   ProtopediaInMemoryRepositoryConfig,
   PrototypeAnalysisResult,
+  RepositoryEvents,
   SnapshotOperationResult,
 } from './types/index.js';
 
@@ -165,6 +168,13 @@ const SAMPLE_SIZE_THRESHOLD_RATIO = 0.5;
  */
 export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepository {
   /**
+   * Event emitter for snapshot operation notifications.
+   *
+   * Only defined when enableEvents: true is set in repository configuration.
+   */
+  readonly events?: TypedEmitter<RepositoryEvents>;
+
+  /**
    * Internal logger instance.
    */
   #logger: Logger;
@@ -212,7 +222,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
     repositoryConfig?: ProtopediaInMemoryRepositoryConfig;
   }) {
     // Fastify-style logger configuration for repository
-    const { logger, logLevel } = repositoryConfig;
+    const { logger, logLevel, enableEvents } = repositoryConfig;
     if (logger) {
       this.#logger = logger;
       this.#logLevel = logLevel ?? 'info';
@@ -226,9 +236,16 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
       this.#logLevel = resolvedLogLevel;
     }
 
+    // Initialize event emitter if events are enabled
+    if (enableEvents === true) {
+      this.events = new EventEmitter() as TypedEmitter<RepositoryEvents>;
+      this.events.setMaxListeners(0); // Allow unlimited listeners
+    }
+
     this.#logger.info('ProtopediaInMemoryRepository constructor called', {
       repositoryConfig: sanitizeDataForLogging(repositoryConfig),
       storeConfig: store.getConfig(),
+      eventsEnabled: enableEvents === true,
     });
 
     this.#store = store;
@@ -314,6 +331,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
   async setupSnapshot(
     params: ListPrototypesParams,
   ): Promise<SnapshotOperationResult> {
+    this.events?.emit('snapshotStarted', 'setup');
     return this.#executeWithCoalescing(() => this.#fetchAndNormalize(params));
   }
 
@@ -327,6 +345,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    * receive the same result. This prevents resource waste and race conditions.
    */
   async refreshSnapshot(): Promise<SnapshotOperationResult> {
+    this.events?.emit('snapshotStarted', 'refresh');
     return this.#executeWithCoalescing(() =>
       this.#fetchAndNormalize(this.#lastFetchParams),
     );
@@ -354,7 +373,16 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
     this.#ongoingFetch = fetchFn();
 
     try {
-      return await this.#ongoingFetch;
+      const result = await this.#ongoingFetch;
+
+      // Emit events based on result
+      if (result.ok) {
+        this.events?.emit('snapshotCompleted', result.stats);
+      } else {
+        this.events?.emit('snapshotFailed', result);
+      }
+
+      return result;
     } finally {
       // Clear the ongoing fetch regardless of success or failure
       this.#ongoingFetch = null;
@@ -520,5 +548,21 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
   async analyzePrototypes(): Promise<PrototypeAnalysisResult> {
     const all = this.#store.getAll();
     return this.analyzePrototypesWithForLoop(all);
+  }
+
+  /**
+   * Clean up event listeners and release resources.
+   *
+   * Removes all event listeners from the internal EventEmitter to prevent memory leaks.
+   * Safe to call even when events are disabled.
+   *
+   * @remarks
+   * Always call this method in cleanup paths:
+   * - Test cleanup (afterEach)
+   * - Component unmounting (React useEffect cleanup)
+   * - Before creating a new repository instance
+   */
+  dispose(): void {
+    this.events?.removeAllListeners();
   }
 }
