@@ -462,9 +462,13 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
           apiClient: mockApiClientInstance,
           repositoryConfig: {},
         });
-        await expect(repo.getRandomSampleFromSnapshot(1.5)).rejects.toThrow(
-          ValidationError,
-        );
+        await expect(
+          repo.getRandomSampleFromSnapshot(1.5),
+        ).rejects.toMatchObject({
+          name: 'ValidationError',
+          message: 'Invalid sample size: must be an integer',
+          field: 'size',
+        });
       });
 
       it('throws ValidationError when size is NaN', async () => {
@@ -473,9 +477,13 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
           apiClient: mockApiClientInstance,
           repositoryConfig: {},
         });
-        await expect(repo.getRandomSampleFromSnapshot(NaN)).rejects.toThrow(
-          ValidationError,
-        );
+        await expect(
+          repo.getRandomSampleFromSnapshot(NaN),
+        ).rejects.toMatchObject({
+          name: 'ValidationError',
+          message: 'Invalid sample size: must be an integer',
+          field: 'size',
+        });
       });
     });
   });
@@ -917,7 +925,11 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         });
         await expect(
           repo.getPrototypeFromSnapshotByPrototypeId(1.5),
-        ).rejects.toThrow(ValidationError);
+        ).rejects.toMatchObject({
+          name: 'ValidationError',
+          message: 'Invalid prototype ID: must be a positive integer',
+          field: 'prototypeId',
+        });
       });
 
       it('throws ValidationError when prototypeId is zero', async () => {
@@ -928,7 +940,11 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         });
         await expect(
           repo.getPrototypeFromSnapshotByPrototypeId(0),
-        ).rejects.toThrow(ValidationError);
+        ).rejects.toMatchObject({
+          name: 'ValidationError',
+          message: 'Invalid prototype ID: must be a positive integer',
+          field: 'prototypeId',
+        });
       });
 
       it('throws ValidationError when prototypeId is negative', async () => {
@@ -939,7 +955,11 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         });
         await expect(
           repo.getPrototypeFromSnapshotByPrototypeId(-1),
-        ).rejects.toThrow(ValidationError);
+        ).rejects.toMatchObject({
+          name: 'ValidationError',
+          message: 'Invalid prototype ID: must be a positive integer',
+          field: 'prototypeId',
+        });
       });
 
       it('throws ValidationError when prototypeId is NaN', async () => {
@@ -950,7 +970,11 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         });
         await expect(
           repo.getPrototypeFromSnapshotByPrototypeId(NaN),
-        ).rejects.toThrow(ValidationError);
+        ).rejects.toMatchObject({
+          name: 'ValidationError',
+          message: 'Invalid prototype ID: must be a positive integer',
+          field: 'prototypeId',
+        });
       });
     });
   });
