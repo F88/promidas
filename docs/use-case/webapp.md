@@ -85,7 +85,7 @@ export async function GET() {
 
     if (!setupResult.ok) {
         return Response.json(
-            { error: setupResult.error.message },
+            { error: setupResult.error },
             { status: 500 },
         );
     }
