@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **ValidationError for Better Error Handling**: Implemented custom `ValidationError` class to improve validation error handling (#13)
+    - New `ValidationError` class wraps Zod validation errors with user-friendly messages
+    - Hides internal validation library (Zod) dependency from public API
+    - Includes `field` property to identify which parameter failed validation
+    - Applied to parameter validation in:
+        - `getPrototypeFromSnapshotByPrototypeId(prototypeId)` - validates prototypeId is a positive integer
+        - `getRandomSampleFromSnapshot(size)` - validates size is an integer
+    - Error messages:
+        - Invalid prototypeId: "Invalid prototype ID: must be a positive integer"
+        - Invalid size: "Invalid sample size: must be an integer"
+    - Exported from `@f88/promidas/repository`
+    - Documentation updated:
+        - Added "Error Handling" section to USAGE.md with usage examples
+        - Updated DESIGN.md validation and error handling sections
+    - All tests updated: 6 validation tests now expect `ValidationError` instead of `ZodError`
+    - All 1040 tests passing
+
 ## [0.10.0] - 2025-12-17
 
 ### Changed

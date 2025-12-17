@@ -262,7 +262,13 @@ if (store.size === 0) // O(1) - reads counter
 ```typescript
 // Entry point validates
 async getPrototypeFromSnapshotByPrototypeId(id: number) {
-  prototypeIdSchema.parse(id); // Zod validation
+  const validation = prototypeIdSchema.safeParse(id);
+  if (!validation.success) {
+    throw new ValidationError(
+      'Invalid prototype ID: must be a positive integer',
+      'prototypeId'
+    );
+  }
   return this.#store.get(id);   // Internal method trusts input
 }
 ```
@@ -281,7 +287,7 @@ async getPrototypeFromSnapshotByPrototypeId(id: number) {
 | ---------------- | --------------- | ------------------------- |
 | Network Error    | ECONNREFUSED    | Result type (`ok: false`) |
 | HTTP Error       | 404, 500        | Result type with status   |
-| Validation Error | Invalid ID type | Throw ZodError            |
+| Validation Error | Invalid ID type | Throw ValidationError     |
 | Programmer Error | Null reference  | Let crash (fail fast)     |
 
 ### Network Error Flow
@@ -351,16 +357,20 @@ export const sampleSizeSchema = z.number().int();
 ### Error Propagation
 
 ```typescript
-try {
-    prototypeIdSchema.parse(id);
-} catch (error) {
-    // Let ZodError propagate to caller
-    // Caller can catch and convert to Result if needed
-    throw error;
+const validation = prototypeIdSchema.safeParse(id);
+if (!validation.success) {
+    // Wrap Zod validation error in custom ValidationError
+    // This hides Zod dependency from library users
+    throw new ValidationError(
+        'Invalid prototype ID: must be a positive integer',
+        'prototypeId',
+    );
 }
 ```
 
 **Decision**: Validation errors are programmer errors, not runtime errors
+
+**Implementation**: Custom `ValidationError` class wraps Zod errors to hide internal validation library dependency
 
 ## Concurrency Considerations
 

@@ -7,13 +7,10 @@
  * @module
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ZodError } from 'zod';
 
 import { ProtopediaApiCustomClient } from '../../../fetcher/index.js';
-import {
-  PrototypeInMemoryStore,
-  type PrototypeInMemoryStoreConfig,
-} from '../../../store/index.js';
+import { PrototypeInMemoryStore } from '../../../store/index.js';
+import { ValidationError } from '../../index.js';
 import { ProtopediaInMemoryRepositoryImpl } from '../../protopedia-in-memory-repository.js';
 
 vi.mock('../../../fetcher/index', async (importOriginal) => {
@@ -459,26 +456,40 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
     });
 
     describe('parameter validation', () => {
-      it('throws ZodError when size is not an integer', async () => {
+      it('throws ValidationError when size is not an integer', async () => {
         const repo = new ProtopediaInMemoryRepositoryImpl({
           store: mockStoreInstance,
           apiClient: mockApiClientInstance,
           repositoryConfig: {},
         });
-        await expect(repo.getRandomSampleFromSnapshot(1.5)).rejects.toThrow(
-          ZodError,
-        );
+        await expect(
+          repo.getRandomSampleFromSnapshot(1.5),
+        ).rejects.toMatchObject({
+          name: 'ValidationError',
+          message: 'Invalid sample size: must be an integer',
+          field: 'size',
+          cause: expect.objectContaining({
+            name: 'ZodError',
+          }),
+        });
       });
 
-      it('throws ZodError when size is NaN', async () => {
+      it('throws ValidationError when size is NaN', async () => {
         const repo = new ProtopediaInMemoryRepositoryImpl({
           store: mockStoreInstance,
           apiClient: mockApiClientInstance,
           repositoryConfig: {},
         });
-        await expect(repo.getRandomSampleFromSnapshot(NaN)).rejects.toThrow(
-          ZodError,
-        );
+        await expect(
+          repo.getRandomSampleFromSnapshot(NaN),
+        ).rejects.toMatchObject({
+          name: 'ValidationError',
+          message: 'Invalid sample size: must be an integer',
+          field: 'size',
+          cause: expect.objectContaining({
+            name: 'ZodError',
+          }),
+        });
       });
     });
   });
@@ -912,7 +923,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
     });
 
     describe('parameter validation', () => {
-      it('throws ZodError when prototypeId is not an integer', async () => {
+      it('throws ValidationError when prototypeId is not an integer', async () => {
         const repo = new ProtopediaInMemoryRepositoryImpl({
           store: mockStoreInstance,
           apiClient: mockApiClientInstance,
@@ -920,10 +931,17 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         });
         await expect(
           repo.getPrototypeFromSnapshotByPrototypeId(1.5),
-        ).rejects.toThrow(ZodError);
+        ).rejects.toMatchObject({
+          name: 'ValidationError',
+          message: 'Invalid prototype ID: must be a positive integer',
+          field: 'prototypeId',
+          cause: expect.objectContaining({
+            name: 'ZodError',
+          }),
+        });
       });
 
-      it('throws ZodError when prototypeId is zero', async () => {
+      it('throws ValidationError when prototypeId is zero', async () => {
         const repo = new ProtopediaInMemoryRepositoryImpl({
           store: mockStoreInstance,
           apiClient: mockApiClientInstance,
@@ -931,10 +949,17 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         });
         await expect(
           repo.getPrototypeFromSnapshotByPrototypeId(0),
-        ).rejects.toThrow(ZodError);
+        ).rejects.toMatchObject({
+          name: 'ValidationError',
+          message: 'Invalid prototype ID: must be a positive integer',
+          field: 'prototypeId',
+          cause: expect.objectContaining({
+            name: 'ZodError',
+          }),
+        });
       });
 
-      it('throws ZodError when prototypeId is negative', async () => {
+      it('throws ValidationError when prototypeId is negative', async () => {
         const repo = new ProtopediaInMemoryRepositoryImpl({
           store: mockStoreInstance,
           apiClient: mockApiClientInstance,
@@ -942,10 +967,17 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         });
         await expect(
           repo.getPrototypeFromSnapshotByPrototypeId(-1),
-        ).rejects.toThrow(ZodError);
+        ).rejects.toMatchObject({
+          name: 'ValidationError',
+          message: 'Invalid prototype ID: must be a positive integer',
+          field: 'prototypeId',
+          cause: expect.objectContaining({
+            name: 'ZodError',
+          }),
+        });
       });
 
-      it('throws ZodError when prototypeId is NaN', async () => {
+      it('throws ValidationError when prototypeId is NaN', async () => {
         const repo = new ProtopediaInMemoryRepositoryImpl({
           store: mockStoreInstance,
           apiClient: mockApiClientInstance,
@@ -953,7 +985,14 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         });
         await expect(
           repo.getPrototypeFromSnapshotByPrototypeId(NaN),
-        ).rejects.toThrow(ZodError);
+        ).rejects.toMatchObject({
+          name: 'ValidationError',
+          message: 'Invalid prototype ID: must be a positive integer',
+          field: 'prototypeId',
+          cause: expect.objectContaining({
+            name: 'ZodError',
+          }),
+        });
       });
     });
   });

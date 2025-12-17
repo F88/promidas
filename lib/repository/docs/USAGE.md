@@ -291,6 +291,59 @@ environments.
     - The repository makes it easy to perform repeated lookups or random sampling
       during the batch job.
 
+## Error Handling
+
+The repository uses different error handling strategies depending on the error type:
+
+### Network Errors (Result Type)
+
+Methods like `setupSnapshot` and `refreshSnapshot` return a `Result` type for network/HTTP errors:
+
+```ts
+const result = await repo.setupSnapshot({ limit: 100 });
+if (!result.ok) {
+    console.error('Failed to setup snapshot:', result.error);
+    // Handle network/HTTP errors gracefully
+}
+```
+
+### Validation Errors (Exceptions)
+
+Methods that validate input parameters throw `ValidationError` for invalid arguments. This indicates programmer errors that should be fixed in code:
+
+```ts
+import { ValidationError } from '@f88/promidas/repository';
+
+try {
+    // Invalid: prototype ID must be a positive integer
+    await repo.getPrototypeFromSnapshotByPrototypeId(-1);
+} catch (error) {
+    if (error instanceof ValidationError) {
+        console.error(`Validation failed for ${error.field}: ${error.message}`);
+        // error.field: 'prototypeId'
+        // error.message: 'Invalid prototype ID: must be a positive integer'
+    }
+}
+
+try {
+    // Invalid: size must be an integer
+    await repo.getRandomSampleFromSnapshot(1.5);
+} catch (error) {
+    if (error instanceof ValidationError) {
+        console.error(`Validation failed for ${error.field}: ${error.message}`);
+        // error.field: 'size'
+        // error.message: 'Invalid sample size: must be an integer'
+    }
+}
+```
+
+**Methods that throw ValidationError:**
+
+- `getPrototypeFromSnapshotByPrototypeId(prototypeId)` - validates prototypeId is a positive integer
+- `getRandomSampleFromSnapshot(size)` - validates size is an integer
+
+**Note**: Validation errors are exceptions for programmer mistakes (e.g., passing wrong data types) and should be fixed during development rather than handled at runtime. These methods only throw `ValidationError` for invalid parameters - other error types are not expected in normal operation.
+
 ## Event Notifications
 
 The repository provides an optional event system for real-time state change notifications during snapshot operations. This feature is designed for interactive WebApp/SPA scenarios.
