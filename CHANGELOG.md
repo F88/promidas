@@ -9,7 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Logger Output Format**: Changed ConsoleLogger output format to prefix-based style
+    - Before: `message, { level: 'info', meta: ... }`
+    - After: `[INFO] message` (with optional metadata if provided)
+    - Benefits:
+        - Log level is always visible at the start of each message
+        - No redundant output when metadata is undefined
+        - Cleaner console output for better readability
+    - All 38 tests updated to reflect the new format
+    - Documentation updated in DESIGN.md and USAGE.md
+
 ### Added
+
+- **Download Progress Tracking**: Implemented download progress tracking for prototype fetching (#44)
+    - Three-module architecture:
+        - `fetch-with-progress`: Core progress tracking with callbacks
+        - `select-custom-fetch`: Smart fetch selection with progress integration
+        - `protopedia-api-custom-client`: Updated to use progress tracking by default
+    - Export `shouldProgressLog` for fine-grained control over stderr output
+    - Progress callbacks: `onStart`, `onProgress`, `onComplete`
+    - Automatic logging with logger level filtering
+    - Default `progressLog: true` enables automatic download progress tracking
+    - Comprehensive test coverage: 22 tests (15 integration + 7 unit)
 
 - **User-Agent Support in ProtopediaApiCustomClient**: Automatically sets library-specific User-Agent for API requests (#45)
     - Default User-Agent: `ProtopediaApiCustomClient/{VERSION} (promidas)`
@@ -17,26 +40,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Customizable via `protoPediaApiClientOptions.userAgent` option
     - Comprehensive test coverage with 4 dedicated tests
 
-    ```typescript
-    // Default User-Agent (auto-set)
-    const client = new ProtopediaApiCustomClient({
-        protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_V2_TOKEN,
-        },
-    });
-    // User-Agent: "ProtopediaApiCustomClient/0.9.0 (promidas)"
-
-    // Custom User-Agent
-    const client = new ProtopediaApiCustomClient({
-        protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_V2_TOKEN,
-            userAgent: 'MyApp/1.0.0',
-        },
-    });
-    ```
-
 ### Fixed
 
+- **Progress Callback Triggering**: Fixed `onProgressStart` callback to trigger correctly when Content-Length header is present (#44)
 - **Documentation Accuracy**: Fixed 17 critical issues in fetcher documentation (#45)
     - Removed non-existent types: `ApiErrorDetails`, `ApiResult`, `ListPrototypesClient`
     - Fixed `FetchPrototypesResult` type definition to match actual implementation
@@ -62,23 +68,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Comprehensive test coverage: 96 tests (59 factory + 37 builder) with 100% coverage on factory.ts and builder.ts
     - Exported from main module: `import { createPromidasForLocal, createPromidasForServer } from '@f88/promidas'`
 
-    ```typescript
-    // Local/Development usage
-    import { createPromidasForLocal } from '@f88/promidas';
-
-    const repo = createPromidasForLocal({
-        protopediaApiToken: 'your-token-here',
-        logLevel: 'info', // optional
-    });
-
-    // Server/Production usage (requires PROTOPEDIA_API_V2_TOKEN env var)
-    import { createPromidasForServer } from '@f88/promidas';
-
-    const repo = createPromidasForServer({
-        logLevel: 'warn', // optional
-    });
-    ```
-
 - **Version Management System**: Integrated automatic version generation for User-Agent strings (#35)
     - `scripts/generate-version.mjs` - Auto-generates `lib/version.ts` from `package.json` version
     - Integrated into prebuild script (runs before TypeScript compilation)
@@ -99,22 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### `createConsoleLogger()` No Longer Accepts Parameters
 
-The `createConsoleLogger()` factory function no longer accepts log level parameters. For specific log levels, use the `ConsoleLogger` constructor directly:
-
-```typescript
-// Before (v0.7.0)
-const logger = createConsoleLogger('debug');
-
-// After (v0.8.0)
-const logger = new ConsoleLogger('debug');
-```
-
-The `ConsoleLogger` implementation now includes a mutable `level` property for runtime log level changes:
-
-```typescript
-const logger = new ConsoleLogger('info');
-logger.level = 'debug'; // Runtime level change
-```
+The `createConsoleLogger()` factory function no longer accepts log level parameters. For specific log levels, use the `ConsoleLogger` constructor directly. The `ConsoleLogger` implementation now includes a mutable `level` property for runtime log level changes.
 
 **For Custom Logger Implementations:**
 
@@ -128,56 +102,11 @@ The `Logger` interface does not require a `level` property. To support runtime l
 
 #### Main Module Now Exports Builder Instead of Factory Function
 
-The `createProtopediaInMemoryRepository()` factory function has been removed from the main module in favor of `PromidasRepositoryBuilder`:
-
-```typescript
-// Before (v0.7.0)
-import { createProtopediaInMemoryRepository } from '@f88/promidas';
-
-const repo = createProtopediaInMemoryRepository({
-    storeConfig: { ttlMs: 30000 },
-    apiClientOptions: { token: 'xxx' },
-});
-
-// After (v0.8.0) - Option 1: Use Builder (Recommended)
-import { PromidasRepositoryBuilder } from '@f88/promidas';
-
-const repo = new PromidasRepositoryBuilder()
-    .setStoreConfig({ ttlMs: 30000 })
-    .setApiClientConfig({ protoPediaApiClientOptions: { token: 'xxx' } })
-    .build();
-
-// After (v0.8.0) - Option 2: Import from subpath
-import { createProtopediaInMemoryRepository } from '@f88/promidas/repository';
-
-const repo = createProtopediaInMemoryRepository({
-    storeConfig: { ttlMs: 30000 },
-    apiClientOptions: { token: 'xxx' },
-});
-```
+The `createProtopediaInMemoryRepository()` factory function has been removed from the main module in favor of `PromidasRepositoryBuilder`. Use the builder pattern, or import the factory function from `@f88/promidas/repository` subpath.
 
 #### Removed `fetchAndNormalizePrototypes()` Standalone Function
 
-Use the client method instead for better logger lifecycle management:
-
-```typescript
-// Before (v0.7.0)
-import {
-    fetchAndNormalizePrototypes,
-    createProtopediaApiCustomClient,
-} from '@f88/promidas/fetcher';
-
-const client = createProtopediaApiCustomClient({ token: 'xxx' });
-const result = await fetchAndNormalizePrototypes(client, { limit: 100 });
-
-// After (v0.8.0)
-import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
-
-const client = createProtopediaApiCustomClient({
-    protoPediaApiClientOptions: { token: 'xxx' },
-});
-const result = await client.fetchPrototypes({ limit: 100 });
-```
+Use the client method instead for better logger lifecycle management.
 
 **Files removed:**
 
@@ -192,21 +121,6 @@ const result = await client.fetchPrototypes({ limit: 100 });
     - Configuration immutability protection
     - Comprehensive test coverage covering all configuration scenarios
     - Exported from main module: `import { PromidasRepositoryBuilder } from '@f88/promidas'`
-
-    ```typescript
-    // Basic usage
-    const repo = new PromidasRepositoryBuilder().build();
-
-    // Advanced configuration
-    const repo = new PromidasRepositoryBuilder()
-        .setStoreConfig({ ttlMs: 60000, logLevel: 'debug' })
-        .setApiClientConfig({
-            protoPediaApiClientOptions: { token: 'xxx' },
-            logLevel: 'debug',
-        })
-        .setRepositoryConfig({ logLevel: 'info' })
-        .build();
-    ```
 
 - **Repository Concurrency Control**: Implemented Promise Coalescing pattern for `setupSnapshot()` and `refreshSnapshot()` to prevent duplicate API requests during concurrent calls (#17)
     - Multiple concurrent calls now share a single in-flight request
@@ -238,20 +152,6 @@ const result = await client.fetchPrototypes({ limit: 100 });
 ### Breaking Changes
 
 - **`createProtopediaInMemoryRepository` Signature Change**: The factory function now accepts a single options object with named parameters instead of two positional parameters.
-
-    ```typescript
-    // Before (v0.6.0)
-    const repo = createProtopediaInMemoryRepository(
-        { ttlMs: 30000 },
-        { token: 'xxx' },
-    );
-
-    // After (v0.7.0)
-    const repo = createProtopediaInMemoryRepository({
-        storeConfig: { ttlMs: 30000 },
-        apiClientOptions: { token: 'xxx' },
-    });
-    ```
 
     **Migration Guide:**
 
@@ -318,15 +218,7 @@ const result = await client.fetchPrototypes({ limit: 100 });
 
 ### Breaking Changes
 
-- **Type Exports**: Type definitions are no longer exported from `@f88/promidas/utils`. Import types from `@f88/promidas/types` instead:
-
-    ```typescript
-    // Before
-    import type { NormalizedPrototype } from '@f88/promidas/utils';
-
-    // After
-    import type { NormalizedPrototype } from '@f88/promidas/types';
-    ```
+- **Type Exports**: Type definitions are no longer exported from `@f88/promidas/utils`. Import types from `@f88/promidas/types` instead.
 
 - **API Client**: Upgraded to `protopedia-api-v2-client` v3.0.0. See the API client's changelog for migration details.
 

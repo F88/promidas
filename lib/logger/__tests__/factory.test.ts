@@ -34,25 +34,19 @@ describe('logger factories', () => {
       it('logs info messages', () => {
         const logger = createConsoleLogger();
         logger.info('Info message');
-        expect(infoSpy).toHaveBeenCalledWith('Info message', {
-          level: 'info',
-        });
+        expect(infoSpy).toHaveBeenCalledWith('[INFO] Info message');
       });
 
       it('logs warn messages', () => {
         const logger = createConsoleLogger();
         logger.warn('Warn message');
-        expect(warnSpy).toHaveBeenCalledWith('Warn message', {
-          level: 'warn',
-        });
+        expect(warnSpy).toHaveBeenCalledWith('[WARN] Warn message');
       });
 
       it('logs error messages', () => {
         const logger = createConsoleLogger();
         logger.error('Error message');
-        expect(errorSpy).toHaveBeenCalledWith('Error message', {
-          level: 'error',
-        });
+        expect(errorSpy).toHaveBeenCalledWith('[ERROR] Error message');
       });
     });
 

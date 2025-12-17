@@ -161,7 +161,7 @@ const shouldLog = (current: LogLevel, target: LogLevel): boolean => {
 
 ```typescript
 logger.info('User logged in', { userId: 123, email: 'user@example.com' });
-// Console output: "User logged in" { level: 'info', userId: 123, email: 'user@example.com' }
+// Console output: "[INFO] User logged in" { userId: 123, email: 'user@example.com' }
 ```
 
 **Implementation**:

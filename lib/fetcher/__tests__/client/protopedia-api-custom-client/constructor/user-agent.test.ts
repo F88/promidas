@@ -32,6 +32,7 @@ describe('ProtopediaApiCustomClient - Constructor - User-Agent', () => {
     });
 
     expect(createProtoPediaClientMock).toHaveBeenCalledWith({
+      fetch: expect.any(Function),
       token: 'test-token',
       userAgent: `ProtopediaApiCustomClient/${VERSION} (promidas)`,
     });
@@ -50,6 +51,7 @@ describe('ProtopediaApiCustomClient - Constructor - User-Agent', () => {
     });
 
     expect(createProtoPediaClientMock).toHaveBeenCalledWith({
+      fetch: expect.any(Function),
       token: 'test-token',
       userAgent: customUserAgent,
     });
@@ -62,6 +64,7 @@ describe('ProtopediaApiCustomClient - Constructor - User-Agent', () => {
     new ProtopediaApiCustomClient();
 
     expect(createProtoPediaClientMock).toHaveBeenCalledWith({
+      fetch: expect.any(Function),
       userAgent: `ProtopediaApiCustomClient/${VERSION} (promidas)`,
     });
   });

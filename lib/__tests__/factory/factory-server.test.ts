@@ -171,6 +171,7 @@ describe('createPromidasForServer', () => {
       const apiClientConfigArg = setApiClientConfigSpy.mock.calls[0]?.[0];
       expect(apiClientConfigArg?.logger).toBeDefined();
       expect(apiClientConfigArg?.logLevel).toBeUndefined();
+      expect(apiClientConfigArg?.progressLog).toBe(true);
     });
 
     it('should not configure other API client options', () => {

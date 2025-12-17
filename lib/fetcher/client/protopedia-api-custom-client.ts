@@ -30,6 +30,7 @@ import { handleApiError } from '../utils/errors/handler.js';
 import { normalizePrototype } from '../utils/normalize-prototype.js';
 
 import type { ProtopediaApiCustomClientConfig } from './config.js';
+import { selectCustomFetch } from './select-custom-fetch.js';
 
 /**
  * Custom API client that wraps protopedia-api-v2-client with logger management
@@ -56,10 +57,19 @@ import type { ProtopediaApiCustomClientConfig } from './config.js';
  * ```
  */
 export class ProtopediaApiCustomClient {
+  /**
+   * Underlying protopedia-api-v2-client instance.
+   */
   readonly #client: ProtoPediaApiClient;
 
+  /**
+   * Logger instance for this client.
+   */
   readonly #logger: Logger;
 
+  /**
+   * Log level for this client.
+   */
   readonly #logLevel: LogLevel;
 
   /**
@@ -68,12 +78,44 @@ export class ProtopediaApiCustomClient {
    * @param config - Configuration options for the client
    * @param config.protoPediaApiClientOptions - Options for protopedia-api-v2-client
    * @param config.logger - Custom logger instance
-   * @param config.logLevel - Log level for default logger
+   * @param config.logLevel - Log level for default logger or to update existing logger
+   * @param config.progressLog - Enable download progress logging (default: true)
+   * @param config.progressCallback - Optional callbacks for download progress events
+   * @param config.progressCallback.onStart - Called when download starts
+   * @param config.progressCallback.onProgress - Called periodically during download
+   * @param config.progressCallback.onComplete - Called when download completes
    *
    * @throws {Error} If the underlying protopedia-api-v2-client initialization fails
+   *
+   * @example Basic usage with progress logging
+   * ```typescript
+   * const client = new ProtopediaApiCustomClient({
+   *   protoPediaApiClientOptions: { token: process.env.TOKEN },
+   *   logLevel: 'info', // Shows progress logs
+   * });
+   * ```
+   *
+   * @example With custom callbacks
+   * ```typescript
+   * const client = new ProtopediaApiCustomClient({
+   *   protoPediaApiClientOptions: { token: process.env.TOKEN },
+   *   progressLog: false, // Disable automatic logging
+   *   progressCallback: {
+   *     onProgress: (received, total, percentage) => {
+   *       updateProgressBar(percentage);
+   *     },
+   *   },
+   * });
+   * ```
    */
   constructor(config?: ProtopediaApiCustomClientConfig | null) {
-    const { protoPediaApiClientOptions = {}, logger, logLevel } = config ?? {};
+    const {
+      protoPediaApiClientOptions = {},
+      logger,
+      logLevel,
+      progressLog = true,
+      progressCallback,
+    } = config ?? {};
 
     // Fastify-style logger configuration
     if (logger) {
@@ -99,11 +141,32 @@ export class ProtopediaApiCustomClient {
       protoPediaApiClientOptions.userAgent ??
       `ProtopediaApiCustomClient/${VERSION} (promidas)`;
 
+    // Select appropriate custom fetch based on configuration
+    // If user provides a custom fetch, wrap it with progress tracking
+    // Otherwise, progress tracking wraps the global fetch
+    const customFetch = selectCustomFetch({
+      logger: this.#logger,
+      enableProgressLog: progressLog,
+      ...(protoPediaApiClientOptions.fetch !== undefined && {
+        baseFetch: protoPediaApiClientOptions.fetch,
+      }),
+      ...(progressCallback?.onStart !== undefined && {
+        onProgressStart: progressCallback.onStart,
+      }),
+      ...(progressCallback?.onProgress !== undefined && {
+        onProgress: progressCallback.onProgress,
+      }),
+      ...(progressCallback?.onComplete !== undefined && {
+        onProgressComplete: progressCallback.onComplete,
+      }),
+    });
+
     // Create underlying protopedia-api-v2-client
     // Note: SDK client logging is controlled via protoPediaApiClientOptions
     this.#client = createProtoPediaClient({
       ...protoPediaApiClientOptions,
       userAgent,
+      ...(customFetch !== undefined && { fetch: customFetch }),
     });
   }
 

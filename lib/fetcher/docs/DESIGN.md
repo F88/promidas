@@ -21,6 +21,7 @@ This document describes the architecture, design decisions, and implementation p
 
 - [Architecture Overview](#architecture-overview)
 - [Design Patterns](#design-patterns)
+- [Download Progress Tracking](#download-progress-tracking)
 - [Error Handling Strategy](#error-handling-strategy)
 - [Normalization Approach](#normalization-approach)
 - [Type Safety](#type-safety)
@@ -197,6 +198,278 @@ type FetchPrototypesFailure = {
 - Easier to test both success and failure paths
 
 **Comparison with exception-based approach**:
+
+| Approach        | Error Handling              | Type Safety  | Testing        |
+| --------------- | --------------------------- | ------------ | -------------- |
+| Result Type     | Explicit in return type     | Compile-time | Easy to mock   |
+| Exception-based | Hidden (try/catch required) | Runtime      | Harder to test |
+
+## Download Progress Tracking
+
+### Architecture
+
+The download progress tracking system implements a three-module architecture:
+
+```plaintext
+┌─────────────────────────────────────────────────────────┐
+│  ProtopediaApiCustomClient                              │
+│  - progressLog: boolean (default: true)                 │
+│  - onProgressStart, onProgress, onProgressComplete      │
+└─────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│  select-custom-fetch                                    │
+│  - Wraps fetch with progress tracking                   │
+│  - Integrates createFetchWithProgress                   │
+└─────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│  fetch-with-progress                                    │
+│  - Core progress tracking logic                         │
+│  - Streaming response processing                        │
+│  - Callback management                                  │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Module Responsibilities
+
+#### 1. fetch-with-progress
+
+**Purpose**: Core progress tracking implementation
+
+**Key Functions**:
+
+```typescript
+export function createFetchWithProgress(
+    config: FetchWithProgressConfig,
+): typeof fetch {
+    return async (url, init) => {
+        // 1. Execute baseFetch (or globalThis.fetch if not provided)
+        // 2. Check Content-Length header (or estimate from URL)
+        // 3. Stream response body with progress updates
+        // 4. Trigger callbacks and logging at appropriate times
+    };
+}
+
+export function shouldProgressLog(logger: Logger): boolean {
+    // Returns true for 'debug' or 'info' levels
+    // Controls stderr output filtering
+}
+```
+
+**Design Decisions**:
+
+- Uses `Response.body.getReader()` for streaming
+- Estimates download size from limit parameter (2670 bytes per prototype)
+- Falls back to estimation when Content-Length header is missing
+- Wraps user's `baseFetch` to preserve custom behavior (timeouts, retries, etc.)
+- Separate timing for preparation vs. download phases
+  Callbacks fire when `Content-Length` is present or when the total size can be estimated
+
+#### 2. select-custom-fetch
+
+**Purpose**: Smart fetch selection with progress integration
+
+**Implementation**:
+
+```typescript
+export function selectCustomFetch(
+    config: CustomFetchConfig,
+): typeof fetch | undefined {
+    // 1. Check if progress tracking is needed
+    // 2. If needed, wrap baseFetch (or global fetch) with progress tracking
+    // 3. If not needed, return baseFetch (preserves custom implementations)
+    // 4. Return undefined if no custom features needed
+}
+```
+
+**Key Features**:
+
+- **Wraps user's custom fetch**: If user provides `baseFetch`, it gets wrapped with progress tracking
+- **Preserves custom behavior**: Timeouts, retries, caching, Next.js adapters all continue to work
+- **Automatic progress**: Progress tracking is transparent to the underlying fetch
+- **Conditional wrapping**: Only wraps when progress features are enabled
+
+#### 3. protopedia-api-custom-client
+
+**Purpose**: Integration point for progress tracking
+
+**Constructor Logic**:
+
+```typescript
+// User's custom fetch (if provided) is passed as baseFetch
+const customFetch = selectCustomFetch({
+    logger: this.#logger,
+    enableProgressLog: progressLog,
+    baseFetch: protoPediaApiClientOptions.fetch, // User's custom fetch
+    onProgressStart: progressCallback?.onStart,
+    onProgress: progressCallback?.onProgress,
+    onProgressComplete: progressCallback?.onComplete,
+});
+
+this.#client = createProtoPediaClient({
+    ...protoPediaApiClientOptions,
+    userAgent,
+    fetch: customFetch, // Wrapped with progress tracking
+});
+```
+
+**Flow**:
+
+1. User provides `protoPediaApiClientOptions.fetch` (e.g., with timeout/retry)
+2. `selectCustomFetch` wraps it with progress tracking
+3. Wrapped fetch is passed to SDK
+4. Both custom behavior and progress tracking work together
+
+### Progress Estimation Algorithm
+
+```typescript
+// Constants
+const AVERAGE_PROTOTYPE_SIZE = 2670;
+
+// Estimation function
+function estimateDownloadSize(limit: number): number {
+    return limit * AVERAGE_PROTOTYPE_SIZE;
+}
+```
+
+**Rationale**:
+
+- Average prototype size: ~2670 bytes per item (empirically measured from 5,000 samples)
+- Based on actual ProtoPedia API data: 13,350,369 bytes / 5,000 items = 2670 bytes/item
+- Simple linear calculation without overhead estimation for accuracy
+
+### Callback Sequence
+
+```plaintext
+1. fetchPrototypes() called
+   ↓
+2. Preparation phase starts (SDK client initialization)
+   ↓
+3. fetch() executed → Response received
+   ↓
+4. onProgressStart() fired (if Content-Length present)
+   ↓
+5. Response body streamed
+   ├─ onProgress() fired for each chunk
+   └─ (multiple times during download)
+   ↓
+6. onProgressComplete() fired
+   ↓
+7. fetchPrototypes() returns result
+```
+
+### Logger Integration
+
+**stderr Output Control**:
+
+```typescript
+function shouldProgressLog(logger: Logger): boolean {
+    const level = logger.level;
+    return level === 'debug' || level === 'info';
+}
+```
+
+**Output Format**:
+
+```plaintext
+Download starting (limit=10000, estimated ~2670000 bytes) (prepared in 0.05s)
+Download complete: 2670000 bytes received (estimated 2670000 bytes) in 1.23s (total: 1.28s)
+```
+
+**Design Decisions**:
+
+- Uses stderr to avoid interfering with stdout
+- Only logs when logger level permits (debug/info)
+- Respects existing logger configuration
+- Can be completely disabled via `progressLog: false`
+
+### Type Definitions
+
+```typescript
+export type ProgressCallbacks = {
+    onStart?: (
+        estimatedTotal: number,
+        limit: number,
+        prepareTime: number,
+    ) => void;
+    onProgress?: (received: number, total: number, percentage: number) => void;
+    onComplete?: (
+        received: number,
+        estimatedTotal: number,
+        downloadTime: number,
+        totalTime: number,
+    ) => void;
+};
+
+export type ProtopediaApiCustomClientConfig = {
+    protoPediaApiClientOptions?: ProtoPediaApiClientOptions;
+    logger?: Logger;
+    logLevel?: LogLevel;
+    progressLog?: boolean; // Default: true
+    progressCallback?: {
+        onStart?: ProgressCallbacks['onStart'];
+        onProgress?: ProgressCallbacks['onProgress'];
+        onComplete?: ProgressCallbacks['onComplete'];
+    };
+};
+```
+
+### Testing Strategy
+
+**Unit Tests** (7 tests in `should-progress-log.test.ts`):
+
+- Logger level filtering logic
+- All log levels tested
+- Edge cases (invalid levels)
+
+**Integration Tests** (15 tests in `fetch-with-progress.test.ts`):
+
+- Mock Response with streaming body
+- Callback firing sequence
+- Progress calculation accuracy
+- Logger integration
+- Error handling
+
+**Test Coverage**:
+
+- ✅ Normal download flow
+- ✅ Missing Content-Length header
+- ✅ Empty response body
+- ✅ Large downloads (chunked transfer)
+- ✅ Logger level filtering
+- ✅ Custom callbacks
+- ✅ Disabled progress tracking
+
+### Performance Considerations
+
+**Overhead**:
+
+- Minimal: Only wraps fetch when `progressLog: true`
+- Streaming processing: No buffering of entire response
+- Callback execution: Synchronous, non-blocking
+
+**Memory**:
+
+- Uses `ReadableStream.getReader()` for chunk processing
+- No full response buffering
+- Releases chunks after processing
+
+### Backward Compatibility
+
+**Default Behavior**:
+
+- `progressLog: true` by default
+- Existing code without progress config: Works with automatic logging
+- Can be disabled: `progressLog: false`
+
+**API Surface**:
+
+- No breaking changes to existing methods
+- All progress parameters optional
+- Extends `ProtopediaApiCustomClientConfig` interface
 
 | Approach  | Type Safety | Testability | Caller Burden      |
 | --------- | ----------- | ----------- | ------------------ |
@@ -699,13 +972,16 @@ async setupSnapshot(params: ListPrototypesParams) {
 
 **Use Case**: Adapt to different runtimes (Node.js, browser, Next.js)
 
-**Example (Next.js)**:
+**Example (Next.js with progress tracking)**:
 
 ```typescript
 const customClientForNextJs = new ProtopediaApiCustomClient({
+    logger: myLogger,
+    progressLog: true, // Progress tracking enabled
     protoPediaApiClientOptions: {
         token: process.env.PROTOPEDIA_API_V2_TOKEN,
         fetch: async (url, init) => {
+            // Custom fetch with Next.js features
             return await globalThis.fetch(url, {
                 ...init,
                 cache: 'force-cache',
@@ -716,12 +992,17 @@ const customClientForNextJs = new ProtopediaApiCustomClient({
 });
 ```
 
+**Key Point**: Custom fetch is automatically wrapped with progress tracking.
+Your custom behavior (caching, timeouts, etc.) is preserved while progress
+tracking is added transparently.
+
 **Supported Scenarios**:
 
 - Custom timeouts (AbortController)
 - Caching strategies (Next.js cache)
 - Retry logic
 - Request/response middleware
+- **All of the above + progress tracking** ✨
 
 ## Design Decisions Log
 
@@ -789,9 +1070,3 @@ const customClientForNextJs = new ProtopediaApiCustomClient({
 - Error details still available separately if needed
 
 **Trade-off**: Less customization vs. simpler usage
-
----
-
-**Document Version**: 2.0.0
-**Last Updated**: 2025-12-16
-**Related Modules**: lib/repository, lib/logger

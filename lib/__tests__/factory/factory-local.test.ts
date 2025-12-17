@@ -88,6 +88,7 @@ describe('createPromidasForLocal', () => {
         timeoutMs: 90000, // 90 seconds
       },
       logger: expect.any(Object),
+      progressLog: true,
     });
   });
 

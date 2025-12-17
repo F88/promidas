@@ -124,7 +124,14 @@ export class ConsoleLogger implements Logger {
       return;
     }
 
-    consoleFn(message, createPayload(targetLevel, meta));
+    const prefix = `[${targetLevel.toUpperCase()}]`;
+    const formattedMessage = `${prefix} ${message}`;
+
+    if (meta === undefined) {
+      consoleFn(formattedMessage);
+    } else {
+      consoleFn(formattedMessage, meta);
+    }
   }
 
   private shouldLog(target: LogLevel): boolean {

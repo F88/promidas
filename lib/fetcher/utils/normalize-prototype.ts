@@ -59,14 +59,19 @@ import { splitPipeSeparatedString } from './string-parsers.js';
 export function normalizePrototype(p: UpstreamPrototype): NormalizedPrototype {
   // Precompute adjusted date fields
 
+  // createDate: Required field - preserve original value if parsing fails
   // Always ProtoPedia format → UTC ISO string
   const adjustedCreateDate =
     normalizeProtoPediaTimestamp(p.createDate) ?? p.createDate;
 
+  // updateDate: Optional field - preserve original value if parsing fails
   // Always ProtoPedia format → UTC ISO string
   const adjustedUpdateDate =
     normalizeProtoPediaTimestamp(p.updateDate) ?? p.updateDate;
 
+  // releaseDate: Optional field - drop to undefined if parsing fails
+  // This differs from createDate/updateDate: unparseable release dates
+  // are treated as invalid/missing data rather than preserved as-is
   // ProtoPedia format → UTC ISO string, null or undefined → undefined
   const adjustedReleaseDate =
     normalizeProtoPediaTimestamp(p.releaseDate) ?? undefined;

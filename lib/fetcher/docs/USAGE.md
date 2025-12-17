@@ -20,11 +20,11 @@ This document describes the fetcher layer, data normalization, and integration w
 
 - [Quick Start](#quick-start)
 - [API Client](#api-client)
+- [Download Progress Tracking](#download-progress-tracking)
 - [Fetch and Normalize](#fetch-and-normalize)
 - [Normalized Data Model](#normalized-data-model)
 - [Error Handling](#error-handling)
 - [Logger Configuration](#logger-configuration)
-- [Integration Examples](#integration-examples)
 
 ## Quick Start
 
@@ -94,6 +94,48 @@ You can pass any `fetch` implementation to the official client factory
 via its options. This makes it easy to adapt to different runtimes such
 as Node.js, browsers, or Next.js server components.
 
+#### Using ProtopediaApiCustomClient (with progress tracking)
+
+```ts
+import { ProtopediaApiCustomClient } from '@f88/promidas';
+
+const CONNECTION_AND_HEADER_TIMEOUT_MS = 5_000;
+
+export const customClientForNextJs = new ProtopediaApiCustomClient({
+    logger: myLogger,
+    progressLog: true, // Progress tracking enabled
+    protoPediaApiClientOptions: {
+        token: process.env.PROTOPEDIA_API_V2_TOKEN ?? '',
+        baseUrl: 'https://api.protopedia.net',
+        fetch: async (url, init) => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(
+                () => controller.abort(),
+                CONNECTION_AND_HEADER_TIMEOUT_MS,
+            );
+
+            try {
+                return await globalThis.fetch(url, {
+                    ...init,
+                    signal: controller.signal,
+                    cache: 'force-cache',
+                    next: {
+                        revalidate: 60,
+                    },
+                });
+            } finally {
+                clearTimeout(timeoutId);
+            }
+        },
+    },
+});
+```
+
+**Key Point**: Your custom fetch (with timeout and Next.js caching) is
+automatically wrapped with progress tracking. Both features work together!
+
+#### Direct SDK usage (without progress tracking)
+
 ```ts
 import { createProtoPediaClient } from 'protopedia-api-v2-client';
 
@@ -130,6 +172,112 @@ export const customClientForNextJs = createProtoPediaClient({
 The resulting client can then be passed into this library's
 memorystore layer, or you can let this library create a compatible
 client internally by providing the same options shape.
+
+## Download Progress Tracking
+
+### Overview
+
+The `ProtopediaApiCustomClient` supports download progress tracking for large data fetches.
+Progress information is logged to stderr by default when the logger level permits,
+and custom callbacks can be provided for advanced use cases.
+
+### Basic Usage (Automatic Logging)
+
+```typescript
+import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+
+const client = new ProtopediaApiCustomClient({
+    protoPediaApiClientOptions: {
+        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+    },
+    logLevel: 'info', // Progress logs appear at 'info' level
+    progressLog: true, // Default: enabled
+});
+
+const result = await client.fetchPrototypes({ limit: 10000 });
+// stderr output:
+// Download starting (limit=10000, estimated ~2670000 bytes) (prepared in 0.05s)
+// Download complete: 2670000 bytes received (estimated 2670000 bytes) in 1.23s (total: 1.28s)
+```
+
+### Custom Progress Callbacks
+
+For custom progress handling (e.g., progress bars, UI updates):
+
+```typescript
+const client = new ProtopediaApiCustomClient({
+    protoPediaApiClientOptions: {
+        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+    },
+    progressLog: false, // Disable automatic logging
+    progressCallback: {
+        onStart: (estimatedTotal, limit, prepareTime) => {
+            console.log(
+                `Starting download: ${limit} items, ~${estimatedTotal} bytes`,
+            );
+            console.log(`Preparation took ${prepareTime}s`);
+        },
+        onProgress: (received, total, percentage) => {
+            process.stdout.write(`\rProgress: ${percentage.toFixed(1)}%`);
+        },
+        onComplete: (received, estimatedTotal, downloadTime, totalTime) => {
+            console.log(`\nCompleted: ${received} bytes in ${downloadTime}s`);
+            console.log(`Total time (including preparation): ${totalTime}s`);
+        },
+    },
+});
+
+const result = await client.fetchPrototypes({ limit: 10000 });
+```
+
+### Controlling stderr Output
+
+Use the `shouldProgressLog` utility to determine if progress should be logged to stderr:
+
+```typescript
+import {
+    ProtopediaApiCustomClient,
+    shouldProgressLog,
+} from '@f88/promidas/fetcher';
+import { ConsoleLogger } from '@f88/promidas/logger';
+
+const logger = new ConsoleLogger('info');
+
+if (shouldProgressLog(logger)) {
+    console.log('Progress will be logged to stderr');
+}
+
+// shouldProgressLog returns true when:
+// - Logger level is 'debug' or 'info'
+// - Returns false for 'warn', 'error', or 'silent'
+```
+
+### Progress Tracking Architecture
+
+The progress tracking system consists of three modules:
+
+1. **fetch-with-progress**: Core progress tracking with callbacks
+2. **select-custom-fetch**: Smart fetch selection with progress integration
+3. **protopedia-api-custom-client**: Uses progress tracking by default
+
+**Key Features**:
+
+- Automatic estimation of download size based on limit parameter
+- Real-time progress updates during streaming
+- Separate timing for preparation vs. download phases
+- Logger-level filtering for stderr output
+- Custom callbacks for advanced use cases
+
+### Disabling Progress Tracking
+
+```typescript
+const client = new ProtopediaApiCustomClient({
+    protoPediaApiClientOptions: {
+        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+    },
+    progressLog: false, // No progress tracking
+});
+```
 
 ## Fetch and Normalize
 
@@ -266,7 +414,7 @@ processPrototypes(result.data);
 
 The `result.error` field contains a formatted error message:
 
-````typescript
+```typescript
 const result = await client.fetchPrototypes(params);
 
 if (!result.ok) {
@@ -285,6 +433,7 @@ if (!result.ok) {
         console.error(`HTTP ${result.status}`);
     }
 }
+```
 
 ## Logger Configuration
 
@@ -321,7 +470,7 @@ const client3 = new ProtopediaApiCustomClient({
     },
     logger, // Uses logger's existing level
 });
-````
+```
 
 ### Logger Levels
 
@@ -415,9 +564,3 @@ interface ProtoPediaApiClientOptions {
     fetch?: typeof globalThis.fetch;
 }
 ```
-
----
-
-**Document Version**: 0.9.0
-**Last Updated**: 2025-12-16
-**Related Documents**: DESIGN.md
