@@ -46,6 +46,7 @@ API クライアントの設定を行います。
     - `token`: API トークン
     - `timeoutMs`: タイムアウト時間
 - `logger`: クライアント専用のロガー
+- `logLevel`: クライアント専用のログレベル
 
 ### `setRepositoryConfig(config)`
 
