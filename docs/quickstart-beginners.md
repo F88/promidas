@@ -111,7 +111,7 @@ async function main() {
     });
 
     // データ取得開始
-    const result = await repo.setupSnapshot({ limit: 50 }); // 最新50件を取得
+    const result = await repo.setupSnapshot({ limit: 100 }); // 100件取得
 
     if (!result.ok) {
         console.error('❌ 失敗しました:', result.error);
@@ -127,8 +127,8 @@ async function main() {
         console.log('\n=============================================');
         console.log(`✨ 今日のラッキー作品: ${randomPrototype.prototypeNm}`);
         console.log(`🔗 URL: ${randomPrototype.mainUrl}`);
-        console.log(`❤️ いいね数: ${randomPrototype.likes}`);
         console.log(`🏷️ タグ: ${randomPrototype.tags.join(', ')}`);
+        console.log(`️🧱 素材: ${randomPrototype.materials.join(', ')}`);
         console.log('=============================================\n');
     } else {
         console.log('作品が見つかりませんでした。');

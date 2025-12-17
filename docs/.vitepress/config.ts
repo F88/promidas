@@ -26,15 +26,16 @@ export default defineConfig({
           { text: 'PROMIDAS とは', link: '/' },
           { text: '初心者向けクイックスタート', link: '/quickstart-beginners' },
           { text: 'スタートガイド', link: '/getting-started' },
-          { text: 'ユースケース概要', link: '/usecase' },
           { text: '設計思想', link: '/philosophy' },
         ],
       },
       {
-        text: '💡 ユースケース詳細',
+        text: '💡 ユースケース & レシピ',
         items: [
+          { text: 'ユースケース概要', link: '/usecase' },
           { text: 'ローカルでの実行', link: '/usecase-local' },
           { text: 'サーバーでの実行', link: '/usecase-webapp' },
+          { text: '逆引きレシピ集', link: '/cookbook' },
         ],
       },
       {
@@ -47,6 +48,10 @@ export default defineConfig({
           { text: 'Factory (ファクトリ)', link: '/core-concepts/factory' },
           { text: 'Builder (ビルダー)', link: '/core-concepts/builder' },
         ],
+      },
+      {
+        text: '❓ 困ったときは',
+        items: [{ text: 'トラブルシューティング', link: '/troubleshooting' }],
       },
       {
         text: '🛡️ セキュリティ',
