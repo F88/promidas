@@ -342,7 +342,7 @@ try {
 - `getPrototypeFromSnapshotByPrototypeId(prototypeId)` - validates prototypeId is a positive integer
 - `getRandomSampleFromSnapshot(size)` - validates size is an integer
 
-**Note**: Validation errors are exceptions for programmer mistakes (e.g., passing wrong data types) and should be fixed during development rather than handled at runtime.
+**Note**: Validation errors are exceptions for programmer mistakes (e.g., passing wrong data types) and should be fixed during development rather than handled at runtime. These methods only throw `ValidationError` for invalid parameters - other error types are not expected in normal operation.
 
 ## Event Notifications
 
