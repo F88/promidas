@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2025-12-17
+
 ### Changed
 
 - **Logger Output Format**: Changed ConsoleLogger output format to prefix-based style
@@ -39,6 +41,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Identifies requests from promidas library for better analytics and debugging
     - Customizable via `protoPediaApiClientOptions.userAgent` option
     - Comprehensive test coverage with 4 dedicated tests
+
+- **Event Notification System**: Implemented optional event system for repository snapshot operations (#19)
+    - Three event types:
+        - `snapshotStarted` - Emitted when setup/refresh begins
+        - `snapshotCompleted` - Emitted when operation succeeds (includes stats)
+        - `snapshotFailed` - Emitted when operation fails (includes error details)
+    - Opt-in design: Events disabled by default, enable via `enableEvents: true`
+    - Type-safe event interface using `typed-emitter` package
+    - Promise coalescing aware: Events fire once per actual API call
+    - Memory management: `dispose()` method for cleanup
+    - Comprehensive documentation:
+        - DESIGN_EVENTS.md - Complete design rationale and implementation details
+        - Event system section in DESIGN.md
+        - Event usage examples in USAGE.md
+    - Test coverage: 16 new tests for event system (1040 total tests)
+    - Dependencies added: `events@^3.3.0`, `typed-emitter@^2.1.0` (devDependency)
 
 ### Fixed
 
