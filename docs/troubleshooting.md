@@ -10,6 +10,8 @@ related:
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.
+    - Prohibit updating this front-matter.
+    - Prohibit updating title line (1st line) in this document.
 ---
 
 # トラブルシューティング (FAQ)

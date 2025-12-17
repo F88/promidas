@@ -17,11 +17,11 @@ API から取得したプロトタイプ情報をメモリに保存し、高速�
 
 ## 役割
 
-Repository は以下の役割を担います：
+Repository は以下の役割を担います:
 
 1. **データの一元管理**: 外部 API から取得したデータをメモリ上の Store に保持します。
-2. **抽象化されたアクセス**: データの取得元（API なのかキャッシュなのか）を意識せずにデータを扱えるようにします。
-3. **ライフサイクル管理**: データの有効期限（TTL）を管理し、必要に応じて自動的にリフレッシュを促したり、状態を報告したりします。
+2. **抽象化されたアクセス**: データの取得元(API なのかキャッシュなのか)を意識せずにデータを扱えるようにします。
+3. **ライフサイクル管理**: データの有効期限(TTL)を管理し、必要に応じて自動的にリフレッシュを促したり、状態を報告したりします。
 
 ## 主な機能
 
@@ -58,7 +58,7 @@ const result = await repository.refreshSnapshot();
 
 ## 内部構造
 
-Repository は内部的に以下のコンポーネントを組み合わせて動作します：
+Repository は内部的に以下のコンポーネントを組み合わせて動作します:
 
 - **Store**: 実際にデータをメモリに保持するストレージ。
 - **ApiClient**: 外部の ProtoPedia API と通信するクライアント。
@@ -68,7 +68,7 @@ Repository は内部的に以下のコンポーネントを組み合わせて動
 
 ## 詳細ドキュメント
 
-より詳細な仕様や設計については、以下のドキュメントを参照してください：
+より詳細な仕様や設計については、以下のドキュメントを参照してください:
 
 - [Repository Design](https://github.com/F88/promidas/blob/main/lib/repository/docs/DESIGN.md)
 - [Repository Usage](https://github.com/F88/promidas/blob/main/lib/repository/docs/USAGE.md)

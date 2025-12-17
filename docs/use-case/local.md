@@ -4,8 +4,8 @@ title: Local Script Use Cases
 title-en: Local Script Use Cases
 title-ja: ローカルスクリプト向けユースケース
 related:
-    - ./usecase.md "Use Cases Overview"
-    - ./usecase-webapp.md "Server Execution Use Cases"
+    - ./index.md "Use Cases Overview"
+    - ./webapp.md "Server Execution Use Cases"
     - https://github.com/F88/promidas/blob/main/lib/repository/README.md "Repository Module"
 instructions-for-ais:
     - This document should be written in Japanese.
@@ -599,7 +599,7 @@ const prototypes: NormalizedPrototype[] = await repo.getAllFromSnapshot();
 ## 次のステップ
 
 - [Repository Usage Guide](https://github.com/F88/promidas/blob/main/lib/repository/docs/USAGE.md): より高度な使い方
-- Application Integration Use Cases: アプリケーション組み込み向けガイド（準備中）
+- Application Integration Use Cases: アプリケーション組み込み向けガイド(準備中)
 - [Repository Design Document](https://github.com/F88/promidas/blob/main/lib/repository/docs/DESIGN.md): 内部アーキテクチャ
 
 ## サポート

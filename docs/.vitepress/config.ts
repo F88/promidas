@@ -15,31 +15,40 @@ export default defineConfig({
 
     nav: [
       { text: 'ホーム', link: '/' },
-      { text: 'ユースケース', link: '/usecase' },
-      { text: 'GitHub', link: 'https://github.com/F88/promidas' },
+      { text: 'デモ', link: 'https://f88.github.io/PROMIDAS-demo/' },
+      {
+        text: `ProtoPedia`,
+        link: 'https://protopedia.net/prototype/7917',
+      },
     ],
 
     sidebar: [
       {
         text: '🚀 はじめに',
+        collapsed: true,
         items: [
           { text: 'PROMIDAS とは', link: '/' },
           { text: '初心者向けクイックスタート', link: '/quickstart-beginners' },
           { text: 'スタートガイド', link: '/getting-started' },
-          { text: '設計思想', link: '/philosophy' },
         ],
       },
       {
-        text: '💡 ユースケース & レシピ',
+        text: '💡 ユースケース',
+        collapsed: false,
         items: [
-          { text: 'ユースケース概要', link: '/usecase' },
-          { text: 'ローカルでの実行', link: '/usecase-local' },
-          { text: 'サーバーでの実行', link: '/usecase-webapp' },
-          { text: '逆引きレシピ集', link: '/cookbook' },
+          { text: 'ユースケース概要', link: '/use-case/' },
+          { text: 'ローカルでの実行', link: '/use-case/local' },
+          { text: 'サーバーでの実行', link: '/use-case/webapp' },
         ],
       },
       {
-        text: '🧠 コアコンセプト',
+        text: '🍳 クックブック',
+        collapsed: false,
+        items: [{ text: '逆引きレシピ集', link: '/cookbook' }],
+      },
+      {
+        text: '📦 主要コンポーネント',
+        collapsed: false,
         items: [
           {
             text: 'Repository (リポジトリ)',
@@ -51,15 +60,19 @@ export default defineConfig({
       },
       {
         text: '❓ 困ったときは',
+        collapsed: false,
         items: [{ text: 'トラブルシューティング', link: '/troubleshooting' }],
       },
       {
         text: '🛡️ セキュリティ',
+        collapsed: false,
         items: [{ text: 'セキュリティガイドライン', link: '/security' }],
       },
       {
-        text: '💻 開発',
+        text: '🔍 深掘りPROMIDAS',
+        collapsed: true,
         items: [
+          { text: 'プロジェクトの哲学', link: '/philosophy' },
           {
             text: '開発ガイド',
             link: 'https://github.com/F88/promidas/blob/main/DEVELOPMENT.md',

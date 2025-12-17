@@ -1,3 +1,15 @@
+---
+lang: ja
+title: Cookbook
+title-en: Cookbook
+title-ja: 逆引きレシピ集
+instructions-for-ais:
+    - This document should be written in Japanese.
+    - Use half-width characters for numbers, letters, and symbols.
+    - Prohibit updating this front-matter.
+    - Prohibit updating title line (1st line) in this document.
+---
+
 # Cookbook (逆引きレシピ集)
 
 このドキュメントは、PROMIDAS を使って ProtoPedia のデータを操作するための実用的なコードスニペット集です。
@@ -26,7 +38,7 @@ const repo = createPromidasForLocal({
 
 ### 特定のステータスの作品を取得する
 
-「完成」状態の作品だけを取得したい場合。（ステータスコード 3 が '完成' を示すと仮定します）
+「完成」状態の作品だけを取得したい場合。(ステータスコード 3 が '完成' を示すと仮定します)
 
 ```typescript
 // 事前に repo.setupSnapshot() が実行され、データがメモリにロードされている必要があります。
@@ -88,7 +100,7 @@ console.log(`Prototypes containing "${keyword}": ${searchResults.length}`);
 
 ### 最新のN件を取得する
 
-作成日順（降順）にソートして最新のN件を取得します。
+作成日順(降順)にソートして最新のN件を取得します。
 
 ```typescript
 // 事前に repo.setupSnapshot() が実行され、データがメモリにロードされている必要があります。
@@ -109,7 +121,7 @@ console.log(
 
 ### 最近更新された作品を取得する
 
-更新日順（降順）にソートして最新のN件を取得します。`updateDate` がない作品は除外します。
+更新日順(降順)にソートして最新のN件を取得します。`updateDate` がない作品は除外します。
 
 ```typescript
 // 事前に repo.setupSnapshot() が実行され、データがメモリにロードされている必要があります。
@@ -132,7 +144,7 @@ console.log(
 
 ### 特定の期間に投稿された作品を取得する
 
-指定した日付範囲（例：2024年1月1日〜2024年12月31日）に `createDate` が含まれる作品を取得します。
+指定した日付範囲(例:2024年1月1日~2024年12月31日)に `createDate` が含まれる作品を取得します。
 
 ```typescript
 // 事前に repo.setupSnapshot() が実行され、データがメモリにロードされている必要があります。
@@ -201,7 +213,7 @@ console.log('User prototype counts ranking:', userRanking);
 
 ### ステータスごとの件数を集計する (円グラフ用データ)
 
-作品のステータス（例：開発中、完成）ごとの件数を集計し、円グラフなどで可視化できるデータを作成します。
+作品のステータス(例:開発中、完成)ごとの件数を集計し、円グラフなどで可視化できるデータを作成します。
 
 ```typescript
 // 事前に repo.setupSnapshot() が実行され、データがメモリにロードされている必要があります。
@@ -313,14 +325,14 @@ const rows = allPrototypes.map((p) => {
 
 const csvContent = [headers.join(','), ...rows].join('\n');
 
-// BOM付きで保存（Excelで文字化けしないようにするため）
+// BOM付きで保存(Excelで文字化けしないようにするため)
 writeFileSync('prototypes.csv', '\uFEFF' + csvContent);
 console.log('Saved to prototypes.csv');
 ```
 
 ### Googleスプレッドシート貼り付け用 (TSV)
 
-Googleスプレッドシートに直接貼り付けられるよう、タブ区切りテキスト（TSV）をクリップボードにコピー可能な形式でコンソールに出力します。
+Googleスプレッドシートに直接貼り付けられるよう、タブ区切りテキスト(TSV)をクリップボードにコピー可能な形式でコンソールに出力します。
 
 ```typescript
 // 事前に repo.setupSnapshot() が実行され、データがメモリにロードされている必要があります。
@@ -333,7 +345,7 @@ console.log(['ID', 'タイトル', 'タグ', '作成日', '概要'].join('\t'));
 // データ出力
 allPrototypes.slice(0, 20).forEach((p) => {
     // 例として20件だけ表示
-    // TSVで特殊文字をエスケープする関数（タブや改行を考慮）
+    // TSVで特殊文字をエスケープする関数(タブや改行を考慮)
     const escapeTsv = (value: any) => {
         if (value === null || value === undefined) return '';
         const str = String(value);
@@ -364,7 +376,7 @@ console.log(
     '\n--- 上記の出力をコピーし、Googleスプレッドシートに貼り付けてください ---',
 );
 console.log(
-    '（スプレッドシート側で「データをインポート」し、区切り文字を「タブ」、エンコードを「UTF-8」に設定してください）',
+    '(スプレッドシート側で「データをインポート」し、区切り文字を「タブ」、エンコードを「UTF-8」に設定してください)',
 );
 ```
 

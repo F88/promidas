@@ -4,9 +4,9 @@ title: Server Execution Use Cases
 title-en: Server Execution Use Cases
 title-ja: サーバー実行向けユースケース
 related:
-    - ./usecase.md "Use Cases Overview"
-    - ./usecase-local.md "Local Execution Use Cases"
-    - ./getting-started.md "Getting Started"
+    - ./index.md "Use Cases Overview"
+    - ./local.md "Local Execution Use Cases"
+    - ../getting-started.md "Getting Started"
     - https://github.com/F88/promidas/blob/main/lib/repository/README.md "Repository Module"
 instructions-for-ais:
     - This document should be written in Japanese.
@@ -25,16 +25,16 @@ instructions-for-ais:
 
 サーバー実行を行う前に、以下のリスクと責任を完全に理解している必要があります。
 
-- **[セキュリティガイドライン](./security.md)**: **BEARER TOKEN** の漏洩リスクとその対策を理解していること。
+- **[セキュリティガイドライン](../security.md)**: **BEARER TOKEN** の漏洩リスクとその対策を理解していること。
 - **アーキテクチャ**: フロントエンドとバックエンドの境界、環境変数の扱いについて理解していること。
 
 ## 🗺️ 上級者向けリソースマップ
 
-目的別に、読むべき詳細ドキュメント（各モジュールの設計書）を案内します。
+目的別に、読むべき詳細ドキュメント(各モジュールの設計書)を案内します。
 
 ### 1. Webアプリケーションへの組み込み
 
-Webアプリ（Next.js API Route, Remix Loader, Express.jsなど）でPROMIDASを使用する場合。
+Webアプリ(Next.js API Route, Remix Loader, Express.jsなど)でPROMIDASを使用する場合。
 
 - **Repositoryの基本実装パターン**
     - 👉 **[Repository Usage Guide](https://github.com/F88/promidas/blob/main/lib/repository/docs/USAGE.md)**
@@ -54,7 +54,7 @@ Webアプリ（Next.js API Route, Remix Loader, Express.jsなど）でPROMIDAS�
 
 - **ログ出力の統合 (Pino, Winston)**
     - 👉 **[Logger Usage Guide](https://github.com/F88/promidas/blob/main/lib/logger/docs/USAGE.md)**
-    - アプリケーション既存のロガー（Pino, Winstonなど）とPROMIDASのログ出力を統合する方法。`Logger` インターフェースの実装。
+    - アプリケーション既存のロガー(Pino, Winstonなど)とPROMIDASのログ出力を統合する方法。`Logger` インターフェースの実装。
 
 - **型定義とユーティリティ**
     - 👉 **[Utils Usage Guide](https://github.com/F88/promidas/blob/main/lib/utils/docs/USAGE.md)**
@@ -65,17 +65,17 @@ Webアプリ（Next.js API Route, Remix Loader, Express.jsなど）でPROMIDAS�
 GitHub Actionsなどで定期的にデータを取得する場合。
 
 - **CLIツールの作成**
-    - 👉 **[Local Use Cases](./usecase-local.md)**
+    - 👉 **[Local Use Cases](./local.md)**
     - ローカル実行のノウハウはCI環境でもそのまま応用可能です。
 
 ## 実装のヒント
 
-### 基本コード（Next.js App Router API Route例）
+### 基本コード(Next.js App Router API Route例)
 
 ```typescript
 import { createPromidasForServer } from '@f88/promidas';
 
-// キャッシュをグローバルに保持（HMR対策などは適宜行う）
+// キャッシュをグローバルに保持(HMR対策などは適宜行う)
 const repo = createPromidasForServer();
 
 export async function GET() {

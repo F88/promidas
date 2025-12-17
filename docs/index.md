@@ -6,6 +6,8 @@ title-ja: ドキュメント一覧
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.
+    - Prohibit updating this front-matter.
+    - Prohibit updating title line (1st line) in this document.
 ---
 
 # PROMIDAS ドキュメント
@@ -21,7 +23,7 @@ PROMIDASのドキュメントへようこそ。
 
 1. **[超初心者向けクイックスタート](./quickstart-beginners.md)**
     - Node.jsの知識がゼロでも安心。インストールから実行までを最短で行うためのガイドです。
-2. **[ユースケース (Use Cases)](./usecase.md)**
+2. **[ユースケース (Use Cases)](./use-case/index.md)**
     - ⚠️ **最重要**: 「どこで実行するか」によるセキュリティリスクの違いを理解します。
 3. **[Getting Started](./getting-started.md)**
     - インストール、トークン取得、そして最初のコードを実行するまでのステップバイステップガイドです。
@@ -30,16 +32,16 @@ PROMIDASのドキュメントへようこそ。
 
 ローカル環境(自分のPC)で安全にデータを活用するためのガイドです。
 
-1. **[ローカル実行向けユースケース](./usecase-local.md)**
+1. **[ローカル実行向けユースケース](./use-case/local.md)**
     - データ分析、静的サイト生成、個人用ツール開発などの実践ガイド。
 2. **[Cookbook (逆引きレシピ集)](./cookbook.md)**
-    - 「特定のタグを検索したい」「CSV出力したい」「ランキングを作りたい」など、コピー＆ペーストで使えるコード集。
+    - 「特定のタグを検索したい」「CSV出力したい」「ランキングを作りたい」など、コピー&ペーストで使えるコード集。
 
 ### 💻 Webアプリを作りたい・サーバーで動かしたい
 
 **上級者向け**。セキュリティとアーキテクチャの深い理解が必要です。
 
-1. **[サーバー実行向けユースケース](./usecase-webapp.md)**
+1. **[サーバー実行向けユースケース](./use-case/webapp.md)**
     - Webアプリケーション開発のためのリソースマップ。高度なカスタマイズやセキュリティ設計について。
 2. **[モジュール別リファレンス](#-モジュール別リファレンス)**
     - 各コンポーネントの詳細設計書へのリンクです。
@@ -50,15 +52,15 @@ PROMIDASのドキュメントへようこそ。
 
 ### 入門・ガイド
 
-- **[ユースケース (Use Cases)](./usecase.md)** - 実行場所とセキュリティの基礎
+- **[ユースケース (Use Cases)](./use-case/index.md)** - 実行場所とセキュリティの基礎
 - **[Getting Started](./getting-started.md)** - 導入とチュートリアル
 - **[トラブルシューティング (FAQ)](./troubleshooting.md)** - よくあるエラーと対処法
 
 ### 実践レシピ
 
-- **[ローカル実行向けユースケース](./usecase-local.md)** - 分析・ツール開発ガイド
+- **[ローカル実行向けユースケース](./use-case/local.md)** - 分析・ツール開発ガイド
 - **[Cookbook (逆引きレシピ集)](./cookbook.md)** - 実用コードスニペット集
-- **[サーバー実行向けユースケース](./usecase-webapp.md)** - WebApp開発リソースマップ
+- **[サーバー実行向けユースケース](./use-case/webapp.md)** - WebApp開発リソースマップ
 
 ### 🔧 モジュール別リファレンス (高度な内容)
 
@@ -72,7 +74,7 @@ PROMIDASの内部構造や高度なカスタマイズを行いたい開発者向
 
 #### Fetcher (APIクライアント)
 
-API通信部分のカスタマイズ（リトライ制御、モックなど）を行いたい場合。
+API通信部分のカスタマイズ(リトライ制御、モックなど)を行いたい場合。
 
 - [README](https://github.com/F88/promidas/blob/main/lib/fetcher/README.md) / [Usage](https://github.com/F88/promidas/blob/main/lib/fetcher/docs/USAGE.md) / [Design](https://github.com/F88/promidas/blob/main/lib/fetcher/docs/DESIGN.md)
 
@@ -100,7 +102,7 @@ API通信部分のカスタマイズ（リトライ制御、モックなど）�
 
 ### 理念・方針
 
-- **[Philosophy](./philosophy.md)** - プロジェクトの設計思想
+- **[プロジェクトの設計思想](./philosophy.md)** - プロジェクトの設計思想
 - **[セキュリティガイドライン](./security.md)** - Token管理の詳細
 
 ### 貢献・開発

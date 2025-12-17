@@ -4,8 +4,8 @@ title: Getting Started
 title-en: Getting Started
 title-ja: はじめに
 related:
-    - ./usecase.md "Use Cases"
-    - ./usecase-local.md "Local Execution Use Cases"
+    - ./use-case/index.md "Use Cases"
+    - ./use-case/local.md "Local Execution Use Cases"
     - ../README.md "Project Overview"
 instructions-for-ais:
     - This document should be written in Japanese.
@@ -31,11 +31,11 @@ instructions-for-ais:
 
 ## まず読んでください
 
-⚠️ **コードを書く前に、必ず[ユースケース](./usecase.md)を読んでください**
+⚠️ **コードを書く前に、必ず[ユースケース](./use-case/index.md)を読んでください**
 
 PROMIDASの使用には**BEARER TOKEN**が必要です。実行場所(ローカル/サーバー)によってセキュリティリスクが大きく異なるため、自分の用途に合った使い方を理解することが重要です。
 
-**特にAPI初心者の方は、[ユースケース](./usecase.md)の「実行場所とセキュリティ」セクションを必ず読んでください。**
+**特にAPI初心者の方は、[ユースケース](./use-case/index.md)の「実行場所とセキュリティ」セクションを必ず読んでください。**
 
 ## ProtoPedia API Ver 2.0について
 
@@ -83,7 +83,7 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。パ
 **詳しくは以下をご覧ください:**
 
 - **[セキュリティガイドライン](./security.md)**: TOKEN管理とセキュリティのベストプラクティス
-- **[ユースケース](./usecase.md)**: 実行場所とセキュリティの基礎
+- **[ユースケース](./use-case/index.md)**: 実行場所とセキュリティの基礎
 
 ## インストール
 
@@ -223,7 +223,7 @@ node your-script.js
 
 ## データ構造を見てみよう
 
-PROMIDASが取得するデータ（`NormalizedPrototype`）は、以下のような構造をしています。
+PROMIDASが取得するデータ(`NormalizedPrototype`)は、以下のような構造をしています。
 このJSON構造を知っておくと、どんなことができるかイメージしやすくなります。
 
 ```json
@@ -382,7 +382,7 @@ const random = await repo.getRandomPrototypeFromSnapshot();
 
 ### TTL (Time To Live)
 
-**TTL**は、Snapshotの有効期限です。TTLが切れた後、`getAllFromSnapshot()` などのメソッドを呼ぶと、データが期限切れであることを検知できます（`isExpired: true`）。明示的に `refreshSnapshot()` を呼ぶことで最新データを取得します。
+**TTL**は、Snapshotの有効期限です。TTLが切れた後、`getAllFromSnapshot()` などのメソッドを呼ぶと、データが期限切れであることを検知できます(`isExpired: true`)。明示的に `refreshSnapshot()` を呼ぶことで最新データを取得します。
 
 ```typescript
 import { PromidasRepositoryBuilder } from '@f88/promidas';
@@ -468,10 +468,10 @@ console.log(`Remaining TTL: ${stats.remainingTtlMs}ms`);
 
 ### 🍳 実用的なコードをコピペする
 
-次は **[Cookbook (逆引きレシピ集)](./cookbook.md)** を見てみましょう！
-以下のようなすぐに使えるコードがたくさん載っています：
+次は **[Cookbook (逆引きレシピ集)](./cookbook.md)** を見てみましょう!
+以下のようなすぐに使えるコードがたくさん載っています:
 
-- 「特定のタグ（M5Stackなど）の作品一覧を取得する」
+- 「特定のタグ(M5Stackなど)の作品一覧を取得する」
 - 「JSONやCSVファイルとして保存する」
 - 「人気のタグランキングを作る」
 
@@ -481,7 +481,7 @@ console.log(`Remaining TTL: ${stats.remainingTtlMs}ms`);
 
 安全なローカル実行についてさらに深く知りたい場合:
 
-- **[ローカル実行向けユースケース](./usecase-local.md)**
+- **[ローカル実行向けユースケース](./use-case/local.md)**
 
 ### トラブルシューティング
 

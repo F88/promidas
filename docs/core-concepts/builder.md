@@ -28,13 +28,13 @@ const repository = builder.build();
 
 ## 設定メソッド
 
-Builder はメソッドチェーン（Fluent Interface）をサポートしています。
+Builder はメソッドチェーン(Fluent Interface)をサポートしています。
 
 ### `setStoreConfig(config)`
 
 メモリ内ストアの設定を行います。
 
-- `ttlMs`: データの有効期限（ミリ秒）
+- `ttlMs`: データの有効期限(ミリ秒)
 - `maxDataSizeBytes`: メモリ使用量の上限
 - `logger`: ストア専用のロガー
 
@@ -85,7 +85,7 @@ const repository = new PromidasRepositoryBuilder()
     .setApiClientConfig({
         protoPediaApiClientOptions: {
             token: '...',
-            timeoutMs: 5000, // 5秒でタイムアウト（高速応答を強制）
+            timeoutMs: 5000, // 5秒でタイムアウト(高速応答を強制)
         },
     })
     .build();
@@ -94,5 +94,5 @@ const repository = new PromidasRepositoryBuilder()
 ## 設計思想: イミュータビリティ
 
 Builder の設定メソッドは、設定オブジェクトをディープマージして保持します。
-また、`build()` メソッド呼び出し時に各コンポーネントに設定のコピー（またはマージされた結果）を渡すため、
+また、`build()` メソッド呼び出し時に各コンポーネントに設定のコピー(またはマージされた結果)を渡すため、
 生成後の Repository インスタンスが Builder の内部状態の影響を受けることはありません。
