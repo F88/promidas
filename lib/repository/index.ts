@@ -95,6 +95,7 @@ export type { PrototypeInMemoryStoreConfig } from '../store/index.js';
  *
  * - {@link ProtopediaInMemoryRepository} - Main repository interface
  * - {@link ProtopediaInMemoryRepositoryConfig} - Repository configuration options
+ * - {@link RepositoryEvents} - Event types for snapshot operations (Issue #19)
  * - {@link SnapshotOperationResult} - Result type for setup/refresh operations
  * - {@link SnapshotOperationSuccess} - Success variant with metadata
  * - {@link SnapshotOperationFailure} - Failure variant with error details
@@ -103,6 +104,7 @@ export type { PrototypeInMemoryStoreConfig } from '../store/index.js';
 export type {
   ProtopediaInMemoryRepository,
   ProtopediaInMemoryRepositoryConfig,
+  RepositoryEvents,
   PrototypeAnalysisResult,
   SnapshotOperationResult,
   SnapshotOperationSuccess,

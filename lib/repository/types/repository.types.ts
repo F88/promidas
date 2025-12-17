@@ -5,6 +5,7 @@
  */
 import type { ListPrototypesParams } from 'protopedia-api-v2-client';
 import type { DeepReadonly } from 'ts-essentials';
+import type { TypedEmitter } from 'typed-emitter';
 
 import type { Logger, LogLevel } from '../../logger/index.js';
 import type {
@@ -14,6 +15,7 @@ import type {
 import type { NormalizedPrototype } from '../../types/index.js';
 
 import type { PrototypeAnalysisResult } from './analysis.types.js';
+import type { RepositoryEvents } from './repository-events.types.js';
 import type { SnapshotOperationResult } from './snapshot-operation.types.js';
 
 /**
@@ -43,6 +45,25 @@ export type ProtopediaInMemoryRepositoryConfig = {
    * @default 'info'
    */
   logLevel?: LogLevel;
+
+  /**
+   * Enable event notifications for snapshot operations.
+   *
+   * When enabled, the repository will create an EventEmitter instance and
+   * emit events during snapshot operations (snapshotStarted, snapshotCompleted, snapshotFailed).
+   *
+   * @remarks
+   * - Events are disabled by default to minimize overhead for CLI/script users
+   * - When enabled, access events via the `events` property
+   * - Always call `dispose()` to clean up event listeners when done
+   * - Designed primarily for WebApp/SPA scenarios
+   *
+   * @default false
+   *
+   * @see {@link RepositoryEvents} for available event types
+   * @see {@link https://github.com/F88/promidas/issues/19 | Issue #19: Event Notification System}
+   */
+  enableEvents?: boolean;
 };
 
 /**
@@ -60,6 +81,40 @@ export type ProtopediaInMemoryRepositoryConfig = {
  *   implement TTL-based refresh strategies in the calling code.
  */
 export interface ProtopediaInMemoryRepository {
+  /**
+   * Event emitter for snapshot operation notifications.
+   *
+   * This property is only defined when `enableEvents: true` is set in the repository configuration.
+   * Use optional chaining (`events?.on(...)`) to safely access event methods.
+   *
+   * @remarks
+   * **Available Events:**
+   * - `snapshotStarted` - Emitted when setupSnapshot or refreshSnapshot begins
+   * - `snapshotCompleted` - Emitted when snapshot operation succeeds (includes stats)
+   * - `snapshotFailed` - Emitted when snapshot operation fails (includes error details)
+   *
+   * **Cleanup:**
+   * Always call `dispose()` to remove all event listeners and prevent memory leaks.
+   *
+   * @example
+   * ```typescript
+   * const repo = new PromidasRepositoryBuilder()
+   *   .setRepositoryConfig({ enableEvents: true })
+   *   .build();
+   *
+   * repo.events?.on('snapshotCompleted', (stats) => {
+   *   console.log(`Updated: ${stats.size} prototypes`);
+   * });
+   *
+   * // Cleanup
+   * repo.dispose();
+   * ```
+   *
+   * @see {@link RepositoryEvents} for event type definitions
+   * @see {@link dispose} for cleanup method
+   */
+  readonly events?: TypedEmitter<RepositoryEvents>;
+
   /**
    * Retrieve the configuration used to initialize the underlying store.
    *
@@ -191,4 +246,40 @@ export interface ProtopediaInMemoryRepository {
   getRandomSampleFromSnapshot(
     size: number,
   ): Promise<readonly DeepReadonly<NormalizedPrototype>[]>;
+
+  /**
+   * Clean up event listeners and release resources.
+   *
+   * This method removes all event listeners from the internal EventEmitter.
+   * Always call this method in cleanup paths to prevent memory leaks.
+   *
+   * @remarks
+   * **When to call:**
+   * - Test cleanup (`afterEach` in test suites)
+   * - Component unmounting (React `useEffect` cleanup)
+   * - Before creating a new repository instance
+   * - When the repository is no longer needed
+   *
+   * **Safety:**
+   * - Safe to call even when events are disabled (`enableEvents: false`)
+   * - Safe to call multiple times
+   * - Does nothing if no event listeners exist
+   *
+   * @example
+   * ```typescript
+   * // In tests
+   * afterEach(() => {
+   *   repo.dispose();
+   * });
+   *
+   * // In React components
+   * useEffect(() => {
+   *   repo.events?.on('snapshotCompleted', handleComplete);
+   *   return () => repo.dispose();
+   * }, []);
+   * ```
+   *
+   * @see {@link events} for event emitter property
+   */
+  dispose(): void;
 }
