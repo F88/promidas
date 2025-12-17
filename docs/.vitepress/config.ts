@@ -14,50 +14,53 @@ export default defineConfig({
     logo: '/logo.svg',
 
     nav: [
-      { text: 'Home', link: '/' },
-      { text: 'Use Cases', link: '/usecase' },
+      { text: 'ホーム', link: '/' },
+      { text: 'ユースケース', link: '/usecase' },
       { text: 'GitHub', link: 'https://github.com/F88/promidas' },
     ],
 
     sidebar: [
       {
-        text: 'Getting Started',
+        text: '🚀 はじめに',
         items: [
-          { text: 'Documentation Index', link: '/' },
-          { text: 'Beginner Quickstart', link: '/quickstart-beginners' },
-          { text: 'Getting Started', link: '/getting-started' },
-          { text: 'Use Cases', link: '/usecase' },
-          { text: 'Philosophy', link: '/philosophy' },
+          { text: 'PROMIDAS とは', link: '/' },
+          { text: '初心者向けクイックスタート', link: '/quickstart-beginners' },
+          { text: 'スタートガイド', link: '/getting-started' },
+          { text: 'ユースケース概要', link: '/usecase' },
+          { text: '設計思想', link: '/philosophy' },
         ],
       },
       {
-        text: 'Use Cases',
+        text: '💡 ユースケース詳細',
         items: [
-          { text: 'Local Execution', link: '/usecase-local' },
-          { text: 'Server Execution', link: '/usecase-webapp' },
+          { text: 'ローカルでの実行', link: '/usecase-local' },
+          { text: 'サーバーでの実行', link: '/usecase-webapp' },
         ],
       },
       {
-        text: 'Core Concepts',
-        items: [
-          { text: 'Repository', link: '/core-concepts/repository' },
-          { text: 'Factory', link: '/core-concepts/factory' },
-          { text: 'Builder', link: '/core-concepts/builder' },
-        ],
-      },
-      {
-        text: 'Security',
-        items: [{ text: 'Security Guidelines', link: '/security' }],
-      },
-      {
-        text: 'Development',
+        text: '🧠 コアコンセプト',
         items: [
           {
-            text: 'Development Guide',
+            text: 'Repository (リポジトリ)',
+            link: '/core-concepts/repository',
+          },
+          { text: 'Factory (ファクトリ)', link: '/core-concepts/factory' },
+          { text: 'Builder (ビルダー)', link: '/core-concepts/builder' },
+        ],
+      },
+      {
+        text: '🛡️ セキュリティ',
+        items: [{ text: 'セキュリティガイドライン', link: '/security' }],
+      },
+      {
+        text: '💻 開発',
+        items: [
+          {
+            text: '開発ガイド',
             link: 'https://github.com/F88/promidas/blob/main/DEVELOPMENT.md',
           },
           {
-            text: 'Contributing',
+            text: 'コントリビューション',
             link: 'https://github.com/F88/promidas/blob/main/CONTRIBUTING.md',
           },
         ],
