@@ -135,10 +135,7 @@ export async function GET() {
 
     const setupResult = await repo.setupSnapshot({ limit: 1000 });
     if (!setupResult.ok) {
-        return Response.json(
-            { error: setupResult.error.message },
-            { status: 500 },
-        );
+        return Response.json({ error: setupResult.error }, { status: 500 });
     }
 
     const data = await repo.getAllFromSnapshot();

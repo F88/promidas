@@ -333,9 +333,9 @@ const repo = new PromidasRepositoryBuilder()
     .build();
 ```
 
-- TTL: デフォルト (1時間)
+- TTL: 30分
 - ログレベル: `info`
-- データサイズ制限: 10MB
+- データサイズ制限: 30MiB
 
 ### パターン2: デバッグログ有効
 
@@ -540,7 +540,7 @@ const repo = new PromidasRepositoryBuilder()
 ```typescript
 const result = await repo.setupSnapshot({ limit: 1000 });
 if (!result.ok) {
-    console.error('Error:', result.error.message);
+    console.error('Error:', result.error);
     process.exit(1);
 }
 ```

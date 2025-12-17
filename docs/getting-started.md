@@ -89,7 +89,7 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。パ
 
 ### 前提条件
 
-- Node.js 18以上
+- Node.js 20以上
 - npm または yarn
 
 ### パッケージのインストール
@@ -382,7 +382,7 @@ const random = await repo.getRandomPrototypeFromSnapshot();
 
 ### TTL (Time To Live)
 
-**TTL**は、Snapshotの有効期限です。TTLが切れると、次回アクセス時に自動的にAPIから最新データを取得します。
+**TTL**は、Snapshotの有効期限です。TTLが切れた後、`getAllFromSnapshot()` などのメソッドを呼ぶと、データが期限切れであることを検知できます（`isExpired: true`）。明示的に `refreshSnapshot()` を呼ぶことで最新データを取得します。
 
 ```typescript
 import { PromidasRepositoryBuilder } from '@f88/promidas';
@@ -419,7 +419,7 @@ await repo.setupSnapshot({ limit: 1000 });
 const data = await repo.getAllFromSnapshot();
 ```
 
-#### 2. TTLベース自動更新 (推奨: 長時間稼働アプリ)
+#### 2. TTLベース更新チェック (推奨: 長時間稼働アプリ)
 
 ```typescript
 import { PromidasRepositoryBuilder } from '@f88/promidas';
@@ -435,9 +435,13 @@ const repo = new PromidasRepositoryBuilder()
     .build();
 
 // 初回取得
-await repo.setupSnapshot();
+await repo.setupSnapshot({});
 
-// TTL切れ時に自動的に再取得される
+// TTL切れをチェックし、必要なら更新
+const stats = repo.getStats();
+if (stats.isExpired) {
+    await repo.refreshSnapshot();
+}
 const data = await repo.getAllFromSnapshot();
 ```
 

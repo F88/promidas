@@ -180,7 +180,7 @@ const prototype = await repo.getPrototypeFromSnapshotByPrototypeId(123);
 
 ### メモリ効率
 
-TTLによる自動データ更新とメモリ管理:
+TTLによる期限管理とメモリ制限:
 
 ```typescript
 import { PromidasRepositoryBuilder } from '@f88/promidas';

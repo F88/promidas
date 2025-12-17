@@ -438,6 +438,6 @@ const setupResult = await repo.setupSnapshot({ limit: 10000 });
 // Download complete: 2670000 bytes received (estimated 2670000 bytes) in 1.23s (total: 1.28s)
 
 if (setupResult.ok) {
-    console.log(`スナップショット作成完了: ${setupResult.stats.count} 件`);
+    console.log(`スナップショット作成完了: ${setupResult.stats.size} 件`);
 }
 ```
