@@ -30,6 +30,14 @@ export default defineConfig({
         ],
       },
       {
+        text: 'Core Concepts',
+        items: [
+          { text: 'Repository', link: '/core-concepts/repository' },
+          { text: 'Factory', link: '/core-concepts/factory' },
+          { text: 'Builder', link: '/core-concepts/builder' },
+        ],
+      },
+      {
         text: 'Use Cases',
         items: [
           { text: 'Local Execution', link: '/usecase-local' },
