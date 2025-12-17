@@ -4,9 +4,9 @@ title: Security Guidelines
 title-en: Security Guidelines
 title-ja: セキュリティガイドライン
 related:
-    - ./usecase.md "Use Cases"
+    - ./use-case/index.md "Use Cases"
     - ./getting-started.md "Getting Started"
-    - ./usecase-webapp.md "Server Execution Use Cases"
+    - ./use-case/webapp.md "Server Execution Use Cases"
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.
@@ -48,7 +48,7 @@ ProtoPedia API Ver 2.0の公式ドキュメントには、 `Bearer Token` の取
 - **形式**: 32文字の16進数文字列
 - **構造**: JWT等の署名付きトークンとは異なるシンプルな形式
 - **公式情報**: APIドキュメントに取り扱いに関する明確な記載なし
-- **推測される目的**: ユーザー識別と緊急時のTOKEN無効化（推測）
+- **推測される目的**: ユーザー識別と緊急時のTOKEN無効化(推測)
 
 ### 不明な点
 
@@ -82,19 +82,19 @@ ProtoPedia API Ver 2.0の公式ドキュメントには、 `Bearer Token` の取
 
 **対策:**
 
-- 環境変数（`.env`ファイル）を使用
+- 環境変数(`.env`ファイル)を使用
 - `.gitignore`に必ず`.env`を追加
-- Secrets管理サービスを利用（GitHub Secrets、Vercel環境変数等）
+- Secrets管理サービスを利用(GitHub Secrets、Vercel環境変数等)
 
 ### 🟡 慎重に判断すべき
 
-**フロントエンド（ブラウザ）での使用**
+**フロントエンド(ブラウザ)での使用**
 
 #### 潜在的なリスク
 
 - **DevToolsで確認可能**: ブラウザの開発者ツールでTOKENが見える
 - **書き込み操作を含む不正使用**: API仕様上、POST/DELETE操作が可能
-- **Rate Limit消費**: 全ユーザーで共有されるRate Limitへの影響（仕様不明）
+- **Rate Limit消費**: 全ユーザーで共有されるRate Limitへの影響(仕様不明)
 - **影響範囲が不明**: ユーザーデータへのアクセス範囲が不明確
 
 ⚠️ **PROMIDASは読み取り専用ですが、TOKEN自体は書き込み可能なため注意が必要です**
@@ -103,7 +103,7 @@ ProtoPedia API Ver 2.0の公式ドキュメントには、 `Bearer Token` の取
 
 以下の条件を**すべて満たす場合のみ**、リスクを理解した上で検討可能:
 
-- 短期間のデモ・プロトタイプ（限定的な用途）
+- 短期間のデモ・プロトタイプ(限定的な用途)
 - 影響範囲とリスクを完全に理解している
 - Rate Limitが問題にならない小規模利用
 - 緊急時にTOKENを無効化できる準備がある
@@ -112,7 +112,7 @@ ProtoPedia API Ver 2.0の公式ドキュメントには、 `Bearer Token` の取
 
 ### 🟢 強く推奨する
 
-**バックエンド（サーバー）での使用**
+**バックエンド(サーバー)での使用**
 
 #### メリット
 
@@ -135,10 +135,7 @@ export async function GET() {
 
     const setupResult = await repo.setupSnapshot({ limit: 1000 });
     if (!setupResult.ok) {
-        return Response.json(
-            { error: setupResult.error.message },
-            { status: 500 },
-        );
+        return Response.json({ error: setupResult.error }, { status: 500 });
     }
 
     const data = await repo.getAllFromSnapshot();
@@ -163,7 +160,7 @@ PROTOPEDIA_API_V2_TOKEN=your-token-here
 
 ### サポートするエンドポイント
 
-PROMIDASは `GET https://protopedia.net/v2/api/prototype/list`（作品一覧取得）**のみ**をサポートしています。
+PROMIDASは `GET https://protopedia.net/v2/api/prototype/list`(作品一覧取得)**のみ**をサポートしています。
 
 これらの操作が必要な場合は、ProtoPedia APIを直接使用する必要があります。
 
@@ -171,9 +168,9 @@ PROMIDASは `GET https://protopedia.net/v2/api/prototype/list`（作品一覧取
 
 ### 関連ドキュメント
 
-- **[ユースケース](./usecase.md)**: 実行場所とセキュリティの基礎
+- **[ユースケース](./use-case/index.md)**: 実行場所とセキュリティの基礎
 - **[Getting Started](./getting-started.md)**: TOKENの取得と環境設定
-- **[サーバー実行向けユースケース](./usecase-webapp.md)**: サーバー環境での実装パターン
+- **[サーバー実行向けユースケース](./use-case/webapp.md)**: サーバー環境での実装パターン
 
 ### 公式リソース
 

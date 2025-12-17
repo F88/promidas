@@ -14,7 +14,7 @@ instructions-for-ais:
 
 # ProtopediaInMemoryRepository Usage Guide
 
-**📌 Note**: For getting started with PROMIDAS, please refer to the [Getting Started Guide](https://f88.github.io/promidas/getting-started.html) which covers the recommended factory functions (`createPromidasForLocal`, `createPromidasForServer`).
+**📌 Note**: For getting started with PROMIDAS, please refer to the [Getting Started Guide](https://f88.github.io/promidas/getting-started) which covers the recommended factory functions (`createPromidasForLocal`, `createPromidasForServer`).
 
 This document describes the advanced usage of the ProtoPedia-specific in-memory repository and the `PromidasRepositoryBuilder` for custom configurations.
 

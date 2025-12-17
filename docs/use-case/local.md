@@ -4,8 +4,8 @@ title: Local Script Use Cases
 title-en: Local Script Use Cases
 title-ja: ローカルスクリプト向けユースケース
 related:
-    - ./usecase.md "Use Cases Overview"
-    - ./usecase-webapp.md "Server Execution Use Cases"
+    - ./index.md "Use Cases Overview"
+    - ./webapp.md "Server Execution Use Cases"
     - https://github.com/F88/promidas/blob/main/lib/repository/README.md "Repository Module"
 instructions-for-ais:
     - This document should be written in Japanese.
@@ -333,9 +333,9 @@ const repo = new PromidasRepositoryBuilder()
     .build();
 ```
 
-- TTL: デフォルト (1時間)
+- TTL: 30分
 - ログレベル: `info`
-- データサイズ制限: 10MB
+- データサイズ制限: 30MiB
 
 ### パターン2: デバッグログ有効
 
@@ -540,7 +540,7 @@ const repo = new PromidasRepositoryBuilder()
 ```typescript
 const result = await repo.setupSnapshot({ limit: 1000 });
 if (!result.ok) {
-    console.error('Error:', result.error.message);
+    console.error('Error:', result.error);
     process.exit(1);
 }
 ```
@@ -599,7 +599,7 @@ const prototypes: NormalizedPrototype[] = await repo.getAllFromSnapshot();
 ## 次のステップ
 
 - [Repository Usage Guide](https://github.com/F88/promidas/blob/main/lib/repository/docs/USAGE.md): より高度な使い方
-- Application Integration Use Cases: アプリケーション組み込み向けガイド（準備中）
+- Application Integration Use Cases: アプリケーション組み込み向けガイド(準備中)
 - [Repository Design Document](https://github.com/F88/promidas/blob/main/lib/repository/docs/DESIGN.md): 内部アーキテクチャ
 
 ## サポート

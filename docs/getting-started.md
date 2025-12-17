@@ -4,8 +4,8 @@ title: Getting Started
 title-en: Getting Started
 title-ja: はじめに
 related:
-    - ./usecase.md "Use Cases"
-    - ./usecase-local.md "Local Execution Use Cases"
+    - ./use-case/index.md "Use Cases"
+    - ./use-case/local.md "Local Execution Use Cases"
     - ../README.md "Project Overview"
 instructions-for-ais:
     - This document should be written in Japanese.
@@ -25,16 +25,17 @@ instructions-for-ais:
 - [インストール](#インストール)
 - [環境変数の設定](#環境変数の設定)
 - [最初のコード例](#最初のコード例)
+- [データ構造を見てみよう](#データ構造を見てみよう)
 - [基本概念](#基本概念)
 - [次のステップ](#次のステップ)
 
 ## まず読んでください
 
-⚠️ **コードを書く前に、必ず[ユースケース](./usecase.md)を読んでください**
+⚠️ **コードを書く前に、必ず[ユースケース](./use-case/index.md)を読んでください**
 
 PROMIDASの使用には**BEARER TOKEN**が必要です。実行場所(ローカル/サーバー)によってセキュリティリスクが大きく異なるため、自分の用途に合った使い方を理解することが重要です。
 
-**特にAPI初心者の方は、[ユースケース](./usecase.md)の「実行場所とセキュリティ」セクションを必ず読んでください。**
+**特にAPI初心者の方は、[ユースケース](./use-case/index.md)の「実行場所とセキュリティ」セクションを必ず読んでください。**
 
 ## ProtoPedia API Ver 2.0について
 
@@ -82,13 +83,13 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。パ
 **詳しくは以下をご覧ください:**
 
 - **[セキュリティガイドライン](./security.md)**: TOKEN管理とセキュリティのベストプラクティス
-- **[ユースケース](./usecase.md)**: 実行場所とセキュリティの基礎
+- **[ユースケース](./use-case/index.md)**: 実行場所とセキュリティの基礎
 
 ## インストール
 
 ### 前提条件
 
-- Node.js 18以上
+- Node.js 20以上
 - npm または yarn
 
 ### パッケージのインストール
@@ -220,6 +221,52 @@ npx tsc your-script.ts
 node your-script.js
 ```
 
+## データ構造を見てみよう
+
+PROMIDASが取得するデータ(`NormalizedPrototype`)は、以下のような構造をしています。
+このJSON構造を知っておくと、どんなことができるかイメージしやすくなります。
+
+```json
+{
+    "id": 1234,
+    "prototypeNm": "My IoT Project",
+    "status": 3,
+    "viewCount": 500,
+    "likes": 15,
+    "createdUser": 1001,
+    "createDate": "2024-01-01T09:00:00.000Z", // Dateオブジェクトとして扱える
+    "updateDate": "2024-02-01T15:00:00.000Z",
+    "tags": ["IoT", "M5Stack", "Beginner"],
+    "materials": ["Arduino", "Sensor"],
+    "mainUrl": "https://protopedia.net/prototype/1234",
+    "images": [
+        {
+            "id": 5001,
+            "url": "https://protopedia.net/...",
+            "mainFlg": 1
+        }
+    ],
+    "members": [
+        {
+            "userId": 1001,
+            "userNm": "Protopedia User",
+            "role": "Leader"
+        }
+    ],
+    "summary": "概要文が入ります...",
+    "statusName": "完成" // statusコードに対応するラベル
+}
+```
+
+### 主要なプロパティ
+
+- `id` (number): 作品のユニークID。
+- `prototypeNm` (string): 作品のタイトル。
+- `status` (number): 開発状況のコード (3: 完成, 2: 開発中 など)。
+- `tags` (string[]): タグの配列。検索によく使われます。
+- `members` (object[]): 開発メンバーの情報。
+- `createDate` / `updateDate` (string): 日付文字列。
+
 ## 基本概念
 
 ### Factory関数 (推奨 - 初心者向け)
@@ -336,7 +383,7 @@ const random = await repo.getRandomPrototypeFromSnapshot();
 
 ### TTL (Time To Live)
 
-**TTL**は、Snapshotの有効期限です。TTLが切れると、次回アクセス時に自動的にAPIから最新データを取得します。
+**TTL**は、Snapshotの有効期限です。TTLが切れた後、`getAllFromSnapshot()` などのメソッドを呼ぶと、データが期限切れであることを検知できます(`isExpired: true`)。明示的に `refreshSnapshot()` を呼ぶことで最新データを取得します。
 
 ```typescript
 import { PromidasRepositoryBuilder } from '@f88/promidas';
@@ -373,7 +420,7 @@ await repo.setupSnapshot({ limit: 1000 });
 const data = await repo.getAllFromSnapshot();
 ```
 
-#### 2. TTLベース自動更新 (推奨: 長時間稼働アプリ)
+#### 2. TTLベース更新チェック (推奨: 長時間稼働アプリ)
 
 ```typescript
 import { PromidasRepositoryBuilder } from '@f88/promidas';
@@ -389,9 +436,13 @@ const repo = new PromidasRepositoryBuilder()
     .build();
 
 // 初回取得
-await repo.setupSnapshot();
+await repo.setupSnapshot({});
 
-// TTL切れ時に自動的に再取得される
+// TTL切れをチェックし、必要なら更新
+const stats = repo.getStats();
+if (stats.isExpired) {
+    await repo.refreshSnapshot();
+}
 const data = await repo.getAllFromSnapshot();
 ```
 
@@ -416,31 +467,30 @@ console.log(`Remaining TTL: ${stats.remainingTtlMs}ms`);
 
 ## 次のステップ
 
-### ローカル実行を試す
+### 🍳 実用的なコードをコピペする
 
-まずは安全なローカル実行から始めましょう:
+次は **[Cookbook (逆引きレシピ集)](./cookbook.md)** を見てみましょう!
+以下のようなすぐに使えるコードがたくさん載っています:
 
-1. **[ローカル実行向けユースケース](./usecase-local.md)**を読む
-2. サンプルコードを試す
-3. 自分の用途に合わせてカスタマイズ
+- 「特定のタグ(M5Stackなど)の作品一覧を取得する」
+- 「JSONやCSVファイルとして保存する」
+- 「人気のタグランキングを作る」
 
-### より詳しく学ぶ
+👉 **[Cookbook へ移動する](./cookbook.md)**
 
-- **[Repository Module README](https://github.com/F88/promidas/blob/main/lib/repository/README.md)**: Repository APIの詳細
-- **[Repository Usage Guide](https://github.com/F88/promidas/blob/main/lib/repository/docs/USAGE.md)**: 実装パターンとサンプルコード
-- **[Repository Design Document](https://github.com/F88/promidas/blob/main/lib/repository/docs/DESIGN.md)**: 内部アーキテクチャと設計思想
+### ローカル実行を詳しく学ぶ
 
-### Webアプリ開発へ進む場合
+安全なローカル実行についてさらに深く知りたい場合:
 
-**重要**: Webアプリ開発に進む前に、以下を必ず理解してください:
+- **[ローカル実行向けユースケース](./use-case/local.md)**
 
-1. [ユースケース](./usecase.md)の「実行場所とセキュリティ」
-2. [ローカル実行](./usecase-local.md)での基礎知識
-3. セキュリティとTOKEN管理の基本
+### トラブルシューティング
 
-その後、[サーバー実行向けユースケース](./usecase-webapp.md)へ進んでください。
+エラーが出たり、うまくいかない場合:
 
-## サポート
+- **[トラブルシューティング (FAQ)](./troubleshooting.md)**
+
+### サポート
 
 困ったときは:
 

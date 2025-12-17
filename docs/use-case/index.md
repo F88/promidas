@@ -4,10 +4,10 @@ title: Use Cases
 title-en: Use Cases
 title-ja: ユースケース
 related:
-    - ../README.md "Project Overview"
-    - ./getting-started.md "Getting Started"
-    - ./usecase-local.md "Local Execution Use Cases"
-    - ./usecase-webapp.md "Server Execution Use Cases"
+    - ../../README.md "Project Overview"
+    - ../getting-started.md "Getting Started"
+    - ./local.md "Local Execution Use Cases"
+    - ./webapp.md "Server Execution Use Cases"
     - https://github.com/F88/promidas/blob/main/DEVELOPMENT.md "Development Guide"
 instructions-for-ais:
     - This document should be written in Japanese.
@@ -41,7 +41,7 @@ PROMIDASを使い始める前に、このドキュメントで**実行場所**�
 ### 主な特徴
 
 - **🚀 高速アクセス**: APIから取得したデータをメモリに保持し、O(1)での検索を実現
-- **⏱️ 自動更新**: TTL (Time To Live) による自動データ更新
+- **⏱️ TTL管理**: TTL (Time To Live) による期限切れ検知と更新制御
 - **🔧 モジュラー設計**: 用途に応じて必要なモジュールのみを使用可能
 - **📊 型安全**: TypeScriptによる完全な型サポート
 - **🛠️ 柔軟なAPI**: シンプルなファクトリ関数と高度なBuilderパターンの両方をサポート
@@ -89,8 +89,8 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。こ
 
 **詳しくは以下をご覧ください:**
 
-- **[セキュリティガイドライン](./security.md)**: TOKEN管理とセキュリティのベストプラクティス
-- **[Getting Started](./getting-started.md)**: TOKENの取得方法と基本的な使い方
+- **[セキュリティガイドライン](../security.md)**: TOKEN管理とセキュリティのベストプラクティス
+- **[Getting Started](../getting-started.md)**: TOKENの取得方法と基本的な使い方
 
 ## ユースケース例
 
@@ -104,7 +104,7 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。こ
 | 品質管理           | データ品質チェック           | ローカル ✅ | 初級   | 必須項目の欠損チェック、画像リンク切れ検出、タグの一貫性確認、異常値検出によるデータ品質保証                                                 |
 | 可視化             | レポート・グラフ生成         | ローカル ✅ | 初級   | 月別投稿数グラフ、タグクラウド、ユーザーランキング等を生成。静的HTMLレポートやプレゼン資料作成にも活用                                       |
 | 個人用途           | 個人用管理ツール             | ローカル ✅ | 初級   | コンテスト応募作品チェックリスト、自分の作品管理、類似プロジェクト検索、個人メモ・タグ付けツール                                             |
-| イベント支援       | コンテスト応募作品一覧作成   | ローカル ✅ | 初級   | 特定タグ（コンテスト名等）の作品を抽出し、応募作品リストや投票用資料を自動生成。審査支援にも活用                                             |
+| イベント支援       | コンテスト応募作品一覧作成   | ローカル ✅ | 初級   | 特定タグ(コンテスト名等)の作品を抽出し、応募作品リストや投票用資料を自動生成。審査支援にも活用                                               |
 | 学習教材           | 教育・学習向け利用           | ローカル ✅ | 初級   | データサイエンス学習の実践教材、API連携の練習、TypeScript/Node.js学習題材、チーム開発演習データソース                                        |
 | 作業管理           | 作品評価シートアプリ開発     | ローカル ✅ | 中級   | ローカルで動作する作品評価アプリ。ローカルストレージに評価情報を保存、ショートカットキーによる快適な操作、評価進捗管理、コメント記録機能など |
 | 高度な分析         | トレンド分析・予測           | ローカル ✅ | 中級   | タグトレンド分析、投稿数予測、人気プロジェクトの傾向分析、時系列での成長パターン可視化と将来予測                                             |
@@ -124,13 +124,13 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。こ
 - **中級**: ツール開発やフレームワークの知識が必要
 - **上級**: セキュリティ、バックエンド開発の深い知識が必要
 
-**注意**: サーバー上でのTOKEN管理が必要です。詳細は[サーバー実行向けユースケース](./usecase-webapp.md)を参照してください。
+**注意**: サーバー上でのTOKEN管理が必要です。詳細は[サーバー実行向けユースケース](./webapp.md)を参照してください。
 
 ## 実行環境別の判断基準
 
 | 項目                   | ローカル実行                     | サーバー実行                   |
 | ---------------------- | -------------------------------- | ------------------------------ |
-| **実行時間**           | 短時間 (分〜時間単位)            | 長時間 (日〜月単位)            |
+| **実行時間**           | 短時間 (分~時間単位)             | 長時間 (日~月単位)             |
 | **実行頻度**           | 1回限り、または定期実行 (cron等) | 常時稼働                       |
 | **トークン管理**       | 環境変数で十分 (.env)            | 安全な管理が必要 (Secrets等)   |
 | **セキュリティリスク** | 低 (PC内に閉じる)                | 高 (外部からアクセス可能)      |
@@ -144,7 +144,7 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。こ
 
 ### はじめる前に
 
-**[Getting Started](./getting-started.md)**
+**[Getting Started](../getting-started.md)**
 
 - ProtoPedia API Ver 2.0について
 - BEARER TOKENの取得方法
@@ -154,7 +154,7 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。こ
 
 ### ローカル実行の詳細
 
-**[ローカル実行向けユースケース](./usecase-local.md)**
+**[ローカル実行向けユースケース](./local.md)**
 
 - データ分析・調査の詳細
 - ツール開発のパターン
@@ -163,7 +163,7 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。こ
 
 ### サーバー実行の詳細
 
-**[サーバー実行向けユースケース](./usecase-webapp.md)** (準備中)
+**[サーバー実行向けユースケース](./webapp.md)** (準備中)
 
 - Webアプリケーション開発
 - TOKEN管理のベストプラクティス
@@ -176,9 +176,9 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。こ
 ### 初心者の方へ
 
 1. **このドキュメントを読む** - 実行場所とセキュリティを理解する
-2. **[Getting Started](./getting-started.md)を読む** - TOKENの取得と基本的な使い方を学ぶ
-3. **ローカルで試す** - [ローカル実行向けユースケース](./usecase-local.md)を参考に安全に実験
-4. **必要なら応用へ** - Webアプリ開発が必要な場合のみ[サーバー実行](./usecase-webapp.md)へ進む
+2. **[Getting Started](../getting-started.md)を読む** - TOKENの取得と基本的な使い方を学ぶ
+3. **ローカルで試す** - [ローカル実行向けユースケース](./local.md)を参考に安全に実験
+4. **必要なら応用へ** - Webアプリ開発が必要な場合のみ[サーバー実行](./webapp.md)へ進む
 
 ### 重要な注意点
 

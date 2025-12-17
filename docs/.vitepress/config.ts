@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress';
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: 'PROMIDAS',
+  title: '🧰 PROMIDAS',
   description:
     'In-memory snapshot manager for ProtoPedia prototypes with TTL and efficient data access',
   lang: 'ja',
@@ -14,41 +14,71 @@ export default defineConfig({
     logo: '/logo.svg',
 
     nav: [
-      { text: 'Home', link: '/' },
-      { text: 'Use Cases', link: '/usecase' },
-      { text: 'GitHub', link: 'https://github.com/F88/promidas' },
+      { text: 'ホーム', link: '/' },
+      { text: 'デモ', link: 'https://f88.github.io/PROMIDAS-demo/' },
+      {
+        text: `ProtoPedia`,
+        link: 'https://protopedia.net/prototype/7917',
+      },
     ],
 
     sidebar: [
       {
-        text: 'Getting Started',
+        text: '🚀 はじめに',
+        collapsed: true,
         items: [
-          { text: 'Documentation Index', link: '/' },
-          { text: 'Getting Started', link: '/getting-started' },
-          { text: 'Use Cases', link: '/usecase' },
-          { text: 'Philosophy', link: '/philosophy' },
+          { text: 'PROMIDAS とは', link: '/' },
+          { text: '初心者向けクイックスタート', link: '/quickstart-beginners' },
+          { text: 'スタートガイド', link: '/getting-started' },
         ],
       },
       {
-        text: 'Use Cases',
+        text: '💡 ユースケース',
+        collapsed: false,
         items: [
-          { text: 'Local Execution', link: '/usecase-local' },
-          { text: 'Server Execution', link: '/usecase-webapp' },
+          { text: 'ユースケース概要', link: '/use-case/' },
+          { text: 'ローカルでの実行', link: '/use-case/local' },
+          { text: 'サーバーでの実行', link: '/use-case/webapp' },
         ],
       },
       {
-        text: 'Security',
-        items: [{ text: 'Security Guidelines', link: '/security' }],
+        text: '🍳 クックブック',
+        collapsed: false,
+        items: [{ text: '逆引きレシピ集', link: '/cookbook' }],
       },
       {
-        text: 'Development',
+        text: '🧩 主な機能',
+        collapsed: false,
         items: [
           {
-            text: 'Development Guide',
+            text: 'Repository (リポジトリ)',
+            link: '/features/repository',
+          },
+          { text: 'Factory (ファクトリー)', link: '/features/factory' },
+          { text: 'Builder (ビルダー)', link: '/features/builder' },
+        ],
+      },
+      {
+        text: '❓ 困ったときは',
+        collapsed: false,
+        items: [{ text: 'トラブルシューティング', link: '/troubleshooting' }],
+      },
+      {
+        text: '🛡️ セキュリティ',
+        collapsed: false,
+        items: [{ text: 'セキュリティガイドライン', link: '/security' }],
+      },
+      {
+        text: '🔍 深掘りPROMIDAS',
+        collapsed: true,
+        items: [
+          { text: 'プロジェクトの哲学', link: '/philosophy' },
+          {
+            text: '開発ガイド',
             link: 'https://github.com/F88/promidas/blob/main/DEVELOPMENT.md',
           },
           {
-            text: 'Contributing',
+            text: 'コントリビューション',
             link: 'https://github.com/F88/promidas/blob/main/CONTRIBUTING.md',
           },
         ],

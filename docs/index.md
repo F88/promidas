@@ -6,132 +6,141 @@ title-ja: ドキュメント一覧
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.
+    - Prohibit updating this front-matter.
+    - Prohibit updating title line (1st line) in this document.
 ---
 
-# PROMIDAS ドキュメント
+# PROMIDAS
 
-PROMIDASのドキュメント一覧です。目的に応じて適切なドキュメントを参照してください。
+PROMIDASのドキュメントへようこそ。
+あなたの目的や習熟度に合わせて、最適なガイドを選んでください。
 
-## 🚀 はじめに
+## 🧰 PROMIDAS とは
 
-### 初めての方へ
+**ProtoPediaのデータを「もっと手軽に」「もっと高速に」扱うためのツールセットです。**
 
-1. **[ユースケース](./usecase.md)** - まずここから
-    - 実行場所(ローカル/サーバー)とセキュリティについて理解する
-    - 自分の用途に合ったユースケースを選ぶ
-    - API初心者の方は特に重要
+APIから取得したデータをメモリ上に保存(キャッシュ)することで、以下のようなメリットを提供します：
 
-2. **[Getting Started](./getting-started.md)** - 基本的な使い方
-    - ProtoPedia API Ver 2.0について
-    - BEARER TOKENの取得方法
-    - インストールと初期設定
-    - 最初のコード例
+- 🧩 **扱いやすい**: 複雑なAPI通信やキャッシュ管理を意識せず、直感的なコードで開発できます。
+- ⚡ **効率的なAPI利用**: 無駄なリクエストを削減し、APIサーバーへの負荷を軽減します。
+- 🚀 **高速アクセス**: 一度取得したデータはメモリから即座に検索できます。
 
-### 推奨学習フロー
+データ分析スクリプトから本格的なWebアプリケーションまで、幅広く活用できます。
 
-```
-ユースケース確認 → Getting Started → ローカル実行で試す → (必要なら)サーバー実行へ
-```
+## 🗺️ 目的別ガイド
 
-## 📚 ユースケース別ドキュメント
+### 🔰 初めての方・APIを試してみたい
 
-### ローカル実行(安全・初心者向け)
+まずはここから始めましょう。セキュリティの基本と導入手順を解説します。
 
-- **[ローカル実行向けユースケース](./usecase-local.md)**
-    - データ分析・調査
-    - ツール開発
-    - 設定パターンとサンプルコード
-    - FAQ
-- **[Cookbook (逆引きレシピ集)](./cookbook.md)**
-    - よくあるデータ操作のコード例
-    - 検索、フィルタリング、集計、エクスポート
+1. **[超初心者向けクイックスタート](./quickstart-beginners.md)**
+    - Node.jsの知識がゼロでも安心。インストールから実行までを最短で行うためのガイドです。
+2. **[ユースケース (Use Cases)](./use-case/index.md)**
+    - ⚠️ **最重要**: 「どこで実行するか」によるセキュリティリスクの違いを理解します。
+3. **[Getting Started](./getting-started.md)**
+    - インストール、トークン取得、そして最初のコードを実行するまでのステップバイステップガイドです。
 
-### サーバー実行(セキュリティ知識必須)
+### 🧪 データを分析したい・ツールを作りたい
 
-- **[サーバー実行向けユースケース](./usecase-webapp.md)** (準備中)
-    - Webアプリケーション開発
-    - TOKEN管理のベストプラクティス
-    - CI/CD統合
-    - セキュリティ考慮事項
+ローカル環境(自分のPC)で安全にデータを活用するためのガイドです。
 
-## 🔧 モジュール別リファレンス
+1. **[ローカル実行向けユースケース](./use-case/local.md)**
+    - データ分析、静的サイト生成、個人用ツール開発などの実践ガイド。
+2. **[Cookbook (逆引きレシピ集)](./cookbook.md)**
+    - 「特定のタグを検索したい」「CSV出力したい」「ランキングを作りたい」など、コピー&ペーストで使えるコード集。
 
-### Repository (統合モジュール)
+### 💻 Webアプリを作りたい・サーバーで動かしたい
 
-- **[README](https://github.com/F88/promidas/blob/main/lib/repository/README.md)** - Repository APIの概要
-- **[Usage Guide](https://github.com/F88/promidas/blob/main/lib/repository/docs/USAGE.md)** - 実装パターンとサンプル
-- **[Design Document](https://github.com/F88/promidas/blob/main/lib/repository/docs/DESIGN.md)** - 内部アーキテクチャ
+**上級者向け**。セキュリティとアーキテクチャの深い理解が必要です。
 
-### Store (In-memoryストレージ)
+1. **[サーバー実行向けユースケース](./use-case/webapp.md)**
+    - Webアプリケーション開発のためのリソースマップ。高度なカスタマイズやセキュリティ設計について。
+2. **[モジュール別リファレンス](#-モジュール別リファレンス)**
+    - 各コンポーネントの詳細設計書へのリンクです。
 
-- **[README](https://github.com/F88/promidas/blob/main/lib/store/README.md)** - Store APIの概要
-- **[Usage Guide](https://github.com/F88/promidas/blob/main/lib/store/docs/USAGE.md)** - 使い方とパターン
-- **[Design Document](https://github.com/F88/promidas/blob/main/lib/store/docs/DESIGN.md)** - 設計思想
+---
 
-### Fetcher (APIクライアント)
+## 📚 ドキュメント一覧
 
-- **[README](https://github.com/F88/promidas/blob/main/lib/fetcher/README.md)** - Fetcher APIの概要
-- **[Usage Guide](https://github.com/F88/promidas/blob/main/lib/fetcher/docs/USAGE.md)** - カスタムフェッチャーの実装
-- **[Design Document](https://github.com/F88/promidas/blob/main/lib/fetcher/docs/DESIGN.md)** - アーキテクチャ詳細
+### 入門・ガイド
 
-### Logger (ロギング)
+- **[ユースケース (Use Cases)](./use-case/index.md)** - 実行場所とセキュリティの基礎
+- **[Getting Started](./getting-started.md)** - 導入とチュートリアル
+- **[トラブルシューティング (FAQ)](./troubleshooting.md)** - よくあるエラーと対処法
 
-- **[README](https://github.com/F88/promidas/blob/main/lib/logger/README.md)** - Logger インターフェース
-- **[Usage Guide](https://github.com/F88/promidas/blob/main/lib/logger/docs/USAGE.md)** - カスタムロガーの実装
-- **[Design Document](https://github.com/F88/promidas/blob/main/lib/logger/docs/DESIGN.md)** - 設計原則
+### 実践レシピ
 
-### Utils (ユーティリティ)
+- **[ローカル実行向けユースケース](./use-case/local.md)** - 分析・ツール開発ガイド
+- **[Cookbook (逆引きレシピ集)](./cookbook.md)** - 実用コードスニペット集
+- **[サーバー実行向けユースケース](./use-case/webapp.md)** - WebApp開発リソースマップ
 
-- **[README](https://github.com/F88/promidas/blob/main/lib/utils/README.md)** - ユーティリティ関数
-- **[Usage Guide](https://github.com/F88/promidas/blob/main/lib/utils/docs/USAGE.md)** - 関数リファレンス
-- **[Design Document](https://github.com/F88/promidas/blob/main/lib/utils/docs/DESIGN.md)** - 型定義と変換
+### 🧩 主な機能
 
-## 🛠️ 開発者向け
+PROMIDASの主要な機能についての解説です。
 
-### プロジェクト理念
+- **[Repository (リポジトリ)](./features/repository.md)** - データ管理の中核
+- **[Factory (ファクトリ)](./features/factory.md)** - 簡単な初期化
+- **[Builder (ビルダー)](./features/builder.md)** - 高度な設定
 
-- **[Philosophy](./philosophy.md)** - プロジェクトの設計思想と判断基準
+### 🔧 モジュール別リファレンス (高度な内容)
 
-### プロジェクト貢献
+PROMIDASの内部構造や高度なカスタマイズを行いたい開発者向けの詳細資料です。各ディレクトリ内のドキュメントへリンクしています。
 
-- **[Development Guide](https://github.com/F88/promidas/blob/main/DEVELOPMENT.md)** - 開発環境のセットアップ
-- **[Contributing Guide](https://github.com/F88/promidas/blob/main/CONTRIBUTING.md)** - プロジェクトへの貢献方法
+#### Repository (統合モジュール)
+
+最も一般的な利用形態である `Repository` の詳細です。
+
+- [README](https://github.com/F88/promidas/blob/main/lib/repository/README.md) / [Usage](https://github.com/F88/promidas/blob/main/lib/repository/docs/USAGE.md) / [Design](https://github.com/F88/promidas/blob/main/lib/repository/docs/DESIGN.md)
+
+#### Fetcher (APIクライアント)
+
+API通信部分のカスタマイズ(リトライ制御、モックなど)を行いたい場合。
+
+- [README](https://github.com/F88/promidas/blob/main/lib/fetcher/README.md) / [Usage](https://github.com/F88/promidas/blob/main/lib/fetcher/docs/USAGE.md) / [Design](https://github.com/F88/promidas/blob/main/lib/fetcher/docs/DESIGN.md)
+
+#### Store (In-memoryストレージ)
+
+キャッシュの挙動やデータ保持の仕組みを深く理解したい場合。
+
+- [README](https://github.com/F88/promidas/blob/main/lib/store/README.md) / [Usage](https://github.com/F88/promidas/blob/main/lib/store/docs/USAGE.md) / [Design](https://github.com/F88/promidas/blob/main/lib/store/docs/DESIGN.md)
+
+#### Logger (ロギング)
+
+ログ出力先を変更したり、独自のロガーを組み込みたい場合。
+
+- [README](https://github.com/F88/promidas/blob/main/lib/logger/README.md) / [Usage](https://github.com/F88/promidas/blob/main/lib/logger/docs/USAGE.md) / [Design](https://github.com/F88/promidas/blob/main/lib/logger/docs/DESIGN.md)
+
+#### Utils (ユーティリティ)
+
+日付変換や型定義などのヘルパー関数について。
+
+- [README](https://github.com/F88/promidas/blob/main/lib/utils/README.md) / [Usage](https://github.com/F88/promidas/blob/main/lib/utils/docs/USAGE.md) / [Design](https://github.com/F88/promidas/blob/main/lib/utils/docs/DESIGN.md)
+
+---
+
+## 🛠️ プロジェクト情報
+
+### 🛡️ セキュリティ
+
+- **[セキュリティガイドライン](./security.md)** - Token管理の詳細
+
+### 🔍 深掘りPROMIDAS
+
+- **[プロジェクトの哲学](./philosophy.md)** - 設計思想と判断基準
+
+### 貢献・開発
+
+- **[Development Guide](https://github.com/F88/promidas/blob/main/DEVELOPMENT.md)** - 開発環境セットアップ
+- **[Contributing Guide](https://github.com/F88/promidas/blob/main/CONTRIBUTING.md)** - 貢献の手引き
 - **[Release Process](https://github.com/F88/promidas/blob/main/RELEASE.md)** - リリース手順
+- **[Changelog](https://github.com/F88/promidas/blob/main/CHANGELOG.md)** - 変更履歴
 
-### 変更履歴
+## 🔗 リンク
 
-- **[Changelog](https://github.com/F88/promidas/blob/main/CHANGELOG.md)** - バージョンごとの変更内容
-
-## 🔗 外部リソース
-
-### デモサイト
-
-- **[PROMIDAS Demo](https://f88.github.io/PROMIDAS-demo/)** - 実際の動作デモ (作成中)
-
-### 公式リソース
-
-- **[ProtoPedia API Ver 2.0 · Apiary](https://protopediav2.docs.apiary.io/)** - API仕様とTOKEN取得
-- **[GitHub Repository](https://github.com/F88/promidas)** - ソースコード
-- **[GitHub Issues](https://github.com/F88/promidas/issues)** - バグ報告・機能リクエスト
-- **[GitHub Discussions](https://github.com/F88/promidas/discussions)** - 質問・議論
-
-## 💡 よくある質問
-
-### どのドキュメントから読めば良いですか?
-
-1. 初めての方: [ユースケース](./usecase.md) → [Getting Started](./getting-started.md)
-2. ローカルで試したい: [ローカル実行向けユースケース](./usecase-local.md)
-3. Webアプリに組み込みたい: まず[ローカル実行](./usecase-local.md)で基礎を学んでから[サーバー実行](./usecase-webapp.md)へ
-4. APIリファレンスが見たい: 各モジュールの[Usage Guide](#-モジュール別リファレンス)
-
-### API初心者ですが大丈夫ですか?
-
-はい、[ユースケース](./usecase.md)と[Getting Started](./getting-started.md)でAPI初心者向けに基礎から説明しています。特にBEARER TOKENの扱いとセキュリティについて理解してから使い始めることをお勧めします。
-
-### すぐにコードを試したいのですが?
-
-[Getting Started](./getting-started.md)に最小限のコード例があります。ただし、**必ず先に[ユースケース](./usecase.md)で実行場所とセキュリティを確認してください**。
+- [GitHub Repository](https://github.com/F88/promidas)
+- [ProtoPedia API Ver 2.0 Docs](https://protopediav2.docs.apiary.io/)
+- [PROMIDAS Demo (GitHub Pages)](https://f88.github.io/PROMIDAS-demo/)
 
 ## 📄 ライセンス
 
-MIT License - 詳細は[LICENSE](https://github.com/F88/promidas/blob/main/LICENSE)を参照してください。
+MIT License - See [LICENSE](https://github.com/F88/promidas/blob/main/LICENSE)
