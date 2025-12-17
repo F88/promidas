@@ -70,5 +70,5 @@ Repository は内部的に以下のコンポーネントを組み合わせて動
 
 より詳細な仕様や設計については、以下のドキュメントを参照してください：
 
-- [Repository Design](../lib/repository/docs/DESIGN.md)
-- [Repository Usage](../lib/repository/docs/USAGE.md)
+- [Repository Design](https://github.com/F88/promidas/blob/main/lib/repository/docs/DESIGN.md)
+- [Repository Usage](https://github.com/F88/promidas/blob/main/lib/repository/docs/USAGE.md)

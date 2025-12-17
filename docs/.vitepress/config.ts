@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress';
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: 'PROMIDAS',
+  title: '🧰 PROMIDAS',
   description:
     'In-memory snapshot manager for ProtoPedia prototypes with TTL and efficient data access',
   lang: 'ja',
@@ -24,9 +24,17 @@ export default defineConfig({
         text: 'Getting Started',
         items: [
           { text: 'Documentation Index', link: '/' },
+          { text: 'Beginner Quickstart', link: '/quickstart-beginners' },
           { text: 'Getting Started', link: '/getting-started' },
           { text: 'Use Cases', link: '/usecase' },
           { text: 'Philosophy', link: '/philosophy' },
+        ],
+      },
+      {
+        text: 'Use Cases',
+        items: [
+          { text: 'Local Execution', link: '/usecase-local' },
+          { text: 'Server Execution', link: '/usecase-webapp' },
         ],
       },
       {
@@ -35,13 +43,6 @@ export default defineConfig({
           { text: 'Repository', link: '/core-concepts/repository' },
           { text: 'Factory', link: '/core-concepts/factory' },
           { text: 'Builder', link: '/core-concepts/builder' },
-        ],
-      },
-      {
-        text: 'Use Cases',
-        items: [
-          { text: 'Local Execution', link: '/usecase-local' },
-          { text: 'Server Execution', link: '/usecase-webapp' },
         ],
       },
       {
