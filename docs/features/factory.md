@@ -1,8 +1,8 @@
 ---
 lang: ja
-title: Factory Concept
-title-en: Factory Concept
-title-ja: ファクトリーコンセプト
+title: Repository Factory
+title-en: Repository Factory
+title-ja: リポジトリファクトリー
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.
@@ -10,7 +10,7 @@ instructions-for-ais:
     - Prohibit updating title line (1st line) in this document
 ---
 
-# Factory Concept
+# Repository Factory (リポジトリ ファクトリー)
 
 `Factory` は、Repository インスタンスを素早く簡単に作成するためのヘルパー関数群です。
 一般的なユースケースに合わせて事前に最適化された設定を提供するため、多くのユーザーにとって推奨されるエントリーポイントです。

@@ -47,15 +47,15 @@ export default defineConfig({
         items: [{ text: '逆引きレシピ集', link: '/cookbook' }],
       },
       {
-        text: '📦 主要コンポーネント',
+        text: '🧩 主な機能',
         collapsed: false,
         items: [
           {
             text: 'Repository (リポジトリ)',
-            link: '/core-concepts/repository',
+            link: '/features/repository',
           },
-          { text: 'Factory (ファクトリ)', link: '/core-concepts/factory' },
-          { text: 'Builder (ビルダー)', link: '/core-concepts/builder' },
+          { text: 'Factory (ファクトリー)', link: '/features/factory' },
+          { text: 'Builder (ビルダー)', link: '/features/builder' },
         ],
       },
       {

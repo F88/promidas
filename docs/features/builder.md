@@ -1,8 +1,8 @@
 ---
 lang: ja
-title: Builder Concept
-title-en: Builder Concept
-title-ja: ビルダーコンセプト
+title: Repository Builder
+title-en: Repository Builder
+title-ja: リポジトリビルダー
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.
@@ -10,7 +10,7 @@ instructions-for-ais:
     - Prohibit updating title line (1st line) in this document
 ---
 
-# Builder Concept
+# Repository Builder (リポジトリ ビルダー)
 
 `Builder` パターンは、Repository の詳細なカスタマイズが必要な上級ユーザー向けの機能です。
 `PromidasRepositoryBuilder` クラスを使用することで、Store、API Client、Repository の各コンポーネントをきめ細かく設定できます。

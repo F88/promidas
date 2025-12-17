@@ -1,8 +1,8 @@
 ---
 lang: ja
-title: Repository Concept
-title-en: Repository Concept
-title-ja: リポジトリコンセプト
+title: Repository
+title-en: Repository
+title-ja: リポジトリ
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.
@@ -10,7 +10,7 @@ instructions-for-ais:
     - Prohibit updating title line (1st line) in this document
 ---
 
-# Repository Concept
+# Repository (リポジトリ)
 
 `Repository` は、このライブラリの中核となるコンポーネントです。
 API から取得したプロトタイプ情報をメモリに保存し、高速に検索・アクセスする機能を提供します。
