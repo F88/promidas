@@ -77,13 +77,13 @@ import { createPromidasForServer } from '@f88/promidas';
 
 // HMR (Hot Module Replacement) 対策: 開発環境でキャッシュがリセットされるのを防ぎます。
 const globalForPromidas = global as unknown as {
-  promidasRepo?: ReturnType<typeof createPromidasForServer>;
+    promidasRepo?: ReturnType<typeof createPromidasForServer>;
 };
 
 const repo = globalForPromidas.promidasRepo ?? createPromidasForServer();
 
 if (process.env.NODE_ENV !== 'production') {
-  globalForPromidas.promidasRepo = repo;
+    globalForPromidas.promidasRepo = repo;
 }
 
 export async function GET() {
