@@ -237,6 +237,7 @@ PROMIDASが取得するデータ(`NormalizedPrototype`)は、以下のような�
     "createDate": "2024-01-01T09:00:00.000Z", // Dateオブジェクトとして扱える
     "updateDate": "2024-02-01T15:00:00.000Z",
     "tags": ["IoT", "M5Stack", "Beginner"],
+    "materials": ["Arduino", "Sensor"],
     "mainUrl": "https://protopedia.net/prototype/1234",
     "images": [
         {
