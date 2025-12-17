@@ -25,6 +25,7 @@ This document describes the architecture, design decisions, and implementation p
 - [Error Handling Strategy](#error-handling-strategy)
 - [Validation Approach](#validation-approach)
 - [Concurrency Considerations](#concurrency-considerations)
+- [Event System](#event-system)
 - [Future Enhancements](#future-enhancements)
 
 ## Architecture Overview
@@ -143,7 +144,7 @@ export const createPromidasForLocal = (options?: {
 
 ```typescript
 type SnapshotOperationResult =
-    | { ok: true; size: number; cachedAt: Date }
+    | { ok: true; stats: PrototypeInMemoryStats }
     | { ok: false; error: string; status?: number; code?: string };
 ```
 
@@ -369,27 +370,23 @@ try {
 
 **Protection**: Store's `runExclusive()` prevents concurrent modifications
 
-### Known Limitations
+### Promise Coalescing (Issue #17 - ✅ Implemented)
 
-1. **No Promise reuse**: Multiple simultaneous `setupSnapshot()` calls create multiple HTTP requests
-2. **Last-write-wins**: Concurrent refreshes may overwrite with older data
-3. **No request coalescing**: Stampeding herd problem not addressed
+**Feature**: Multiple concurrent calls to `setupSnapshot()` or `refreshSnapshot()` are automatically coalesced into a single API request.
 
-### Future Considerations (See Issues)
-
-**Issue #17**: Add concurrency control for `refreshSnapshot()`
-
-**Proposed solution**:
+**Implementation**:
 
 ```typescript
 #ongoingFetch: Promise<SnapshotOperationResult> | null = null;
 
-async refreshSnapshot() {
+async #executeWithCoalescing(
+  fetchFn: () => Promise<SnapshotOperationResult>,
+): Promise<SnapshotOperationResult> {
   if (this.#ongoingFetch) {
     return this.#ongoingFetch; // Reuse in-flight request
   }
 
-  this.#ongoingFetch = this.#performRefresh();
+  this.#ongoingFetch = fetchFn();
   try {
     return await this.#ongoingFetch;
   } finally {
@@ -398,19 +395,100 @@ async refreshSnapshot() {
 }
 ```
 
-**Trade-off**: Increased complexity vs. better resource utilization
+**Benefits**:
+
+- Prevents stampeding herd problem
+- Reduces redundant HTTP requests
+- All concurrent callers receive the same result
+- No race conditions between overlapping refreshes
+
+**Behavior**:
+
+- First caller's parameters are used
+- Subsequent concurrent callers wait for the same Promise
+- After completion, new calls start fresh requests
+
+## Event System
+
+The repository provides an optional event notification system for real-time state change notifications during snapshot operations. This feature is designed primarily for interactive WebApp/SPA scenarios where UI needs to respond to repository state changes.
+
+### Overview
+
+Three events are provided:
+
+- `snapshotStarted` - Emitted when `setupSnapshot` or `refreshSnapshot` begins
+- `snapshotCompleted` - Emitted when snapshot operation succeeds (includes stats)
+- `snapshotFailed` - Emitted when snapshot operation fails (includes error details)
+
+### Opt-in Design
+
+Events are **disabled by default** and must be explicitly enabled:
+
+```typescript
+const repo = new ProtopediaInMemoryRepositoryImpl({
+    store,
+    apiClient,
+    repositoryConfig: {
+        enableEvents: true, // default: false
+    },
+});
+
+// Subscribe to events
+repo.events?.on('snapshotStarted', (operation) => {
+    console.log(`${operation} started`);
+});
+
+repo.events?.on('snapshotCompleted', (stats) => {
+    console.log('Snapshot updated:', stats);
+});
+
+repo.events?.on('snapshotFailed', (error) => {
+    console.error('Snapshot failed:', error);
+});
+```
+
+### Rationale
+
+- **Zero Cost**: CLI/script users (primary use case) don't pay EventEmitter instantiation cost
+- **Explicit Intent**: WebApp developers consciously opt-in
+- **Resource Efficiency**: Memory used only when actually needed
+
+### Cleanup
+
+The repository provides a `dispose()` method for cleaning up event listeners:
+
+```typescript
+repo.dispose(); // Remove all listeners
+```
+
+This should be called in:
+
+- Test cleanup (`afterEach`)
+- Component unmounting (React `useEffect` cleanup)
+- Before creating new repository instances
+
+### Detailed Design
+
+For complete design documentation, see [DESIGN_EVENTS.md](DESIGN_EVENTS.md), which covers:
+
+- Event payload design rationale
+- Concurrent call behavior
+- Comparison with Progress Callback (Issue #44)
+- Browser compatibility considerations
+- Memory management best practices
+- Why `setTimeout`-based `snapshotExpired` was rejected
 
 ## Future Enhancements
 
 ### Tracked in GitHub Issues
 
-| Issue | Enhancement            | Priority | Complexity |
-| ----- | ---------------------- | -------- | ---------- |
-| #17   | Concurrency control    | High     | Medium     |
-| #18   | Incremental updates    | Medium   | High       |
-| #19   | Event notifications    | Medium   | Medium     |
-| #20   | Deterministic sampling | Low      | Low        |
-| #21   | Unified config object  | Low      | Low        |
+| Issue | Enhancement            | Priority | Complexity | Status      |
+| ----- | ---------------------- | -------- | ---------- | ----------- |
+| #17   | Concurrency control    | High     | Medium     | ✅ Complete |
+| #18   | Incremental updates    | Medium   | High       | Tracked     |
+| #19   | Event notifications    | Medium   | Medium     | ✅ Complete |
+| #20   | Deterministic sampling | Low      | Low        | Tracked     |
+| #21   | Unified config object  | Low      | Low        | Tracked     |
 
 ### Not Currently Planned
 

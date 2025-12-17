@@ -6,6 +6,8 @@
 
 export type { PrototypeAnalysisResult } from './analysis.types.js';
 
+export type { RepositoryEvents } from './repository-events.types.js';
+
 export type {
   ProtopediaInMemoryRepository,
   ProtopediaInMemoryRepositoryConfig,
