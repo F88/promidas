@@ -61,12 +61,7 @@ import type {
 import type { DeepReadonly } from 'ts-essentials';
 
 import { ProtopediaApiCustomClient } from '../fetcher/index.js';
-import {
-  ConsoleLogger,
-  type Logger,
-  type LogLevel,
-  createConsoleLogger,
-} from '../logger/index.js';
+import { ConsoleLogger, type Logger, type LogLevel } from '../logger/index.js';
 import {
   PrototypeInMemoryStore,
   type PrototypeInMemoryStats,
@@ -75,6 +70,7 @@ import {
 import type { NormalizedPrototype } from '../types/index.js';
 import { sanitizeDataForLogging } from '../utils/index.js'; // 追加
 
+import { ValidationError } from './errors/validation-error.js';
 import { prototypeIdSchema, sampleSizeSchema } from './schemas/validation.js';
 import type {
   ProtopediaInMemoryRepositoryConfig,
@@ -395,12 +391,18 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    *
    * @param prototypeId - The prototype ID to look up. Must be a positive integer.
    * @returns The prototype if found, null otherwise
-   * @throws {z.ZodError} If prototypeId is not a positive integer
+   * @throws {ValidationError} If prototypeId is not a positive integer
    */
   async getPrototypeFromSnapshotByPrototypeId(
     prototypeId: number,
   ): Promise<DeepReadonly<NormalizedPrototype> | null> {
-    prototypeIdSchema.parse(prototypeId);
+    const validation = prototypeIdSchema.safeParse(prototypeId);
+    if (!validation.success) {
+      throw new ValidationError(
+        'Invalid prototype ID: must be a positive integer',
+        'prototypeId',
+      );
+    }
     return this.#store.getByPrototypeId(prototypeId);
   }
 
@@ -440,7 +442,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    *
    * @param size - Maximum number of samples to return. Must be an integer.
    * @returns Array of random prototypes (empty array if size <= 0 or snapshot is empty)
-   * @throws {z.ZodError} If size is not an integer
+   * @throws {ValidationError} If size is not an integer
    *
    * @remarks
    * **Implementation Note**: Uses a hybrid approach for optimal performance:
@@ -457,7 +459,13 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
   async getRandomSampleFromSnapshot(
     size: number,
   ): Promise<readonly DeepReadonly<NormalizedPrototype>[]> {
-    sampleSizeSchema.parse(size);
+    const validation = sampleSizeSchema.safeParse(size);
+    if (!validation.success) {
+      throw new ValidationError(
+        'Invalid sample size: must be an integer',
+        'size',
+      );
+    }
 
     if (size <= 0 || this.#store.size === 0) {
       return [];

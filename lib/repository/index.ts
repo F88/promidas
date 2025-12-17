@@ -112,6 +112,17 @@ export type {
 } from './types/index.js';
 
 /**
+ * Validation error thrown when invalid arguments are provided.
+ *
+ * This error is thrown by repository methods when arguments fail validation.
+ * It wraps internal validation errors to provide a consistent error interface.
+ *
+ * @see {@link ProtopediaInMemoryRepository.getPrototypeFromSnapshotByPrototypeId}
+ * @see {@link ProtopediaInMemoryRepository.getRandomSampleFromSnapshot}
+ */
+export { ValidationError } from './errors/validation-error.js';
+
+/**
  * Implementation class for the in-memory repository.
  *
  * This is the concrete implementation of {@link ProtopediaInMemoryRepository}.
