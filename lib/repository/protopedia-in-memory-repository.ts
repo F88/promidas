@@ -59,7 +59,6 @@ import type {
   ProtoPediaApiClientOptions,
 } from 'protopedia-api-v2-client';
 import type { DeepReadonly } from 'ts-essentials';
-import type TypedEmitter from 'typed-emitter';
 
 import { ProtopediaApiCustomClient } from '../fetcher/index.js';
 import {
