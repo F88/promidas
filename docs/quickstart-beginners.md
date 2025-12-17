@@ -128,7 +128,7 @@ async function main() {
         console.log(`✨ 今日のラッキー作品: ${randomPrototype.prototypeNm}`);
         console.log(`🔗 URL: ${randomPrototype.mainUrl}`);
         console.log(`🏷️ タグ: ${randomPrototype.tags.join(', ')}`);
-        console.log(`️🧱 素材: ${randomPrototype.materials.join(', ')}`);
+        console.log(`🧱 素材: ${randomPrototype.materials.join(', ')}`);
         console.log('=============================================\n');
     } else {
         console.log('作品が見つかりませんでした。');
