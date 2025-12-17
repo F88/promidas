@@ -42,7 +42,7 @@ import type { ListPrototypesParams } from 'protopedia-api-v2-client';
 
 export interface ProtopediaInMemoryRepositoryStats {
     size: number;
-    cachedAt: number | null;
+    cachedAt: Date | null;
     isExpired: boolean;
 }
 

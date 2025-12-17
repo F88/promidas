@@ -144,7 +144,7 @@ export const createPromidasForLocal = (options?: {
 
 ```typescript
 type SnapshotOperationResult =
-    | { ok: true; size: number; cachedAt: Date }
+    | { ok: true; stats: PrototypeInMemoryStats }
     | { ok: false; error: string; status?: number; code?: string };
 ```
 
