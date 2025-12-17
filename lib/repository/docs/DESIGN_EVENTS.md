@@ -141,7 +141,7 @@ export interface RepositoryEvents {
 
 Events are disabled by default and must be explicitly enabled via configuration.
 
-### Rationale
+### Why Opt-in?
 
 1. **Primary Use Case**: PROMIDAS is used more often for CLI/scripting than WebApps
 2. **Zero Overhead**: CLI users don't pay the cost of EventEmitter instantiation
@@ -160,7 +160,7 @@ const repo = new ProtopediaInMemoryRepositoryImpl({
 });
 ```
 
-### Implementation
+### Opt-in Implementation
 
 ```typescript
 class ProtopediaInMemoryRepositoryImpl {
@@ -194,7 +194,7 @@ We chose to include complete information in event payloads rather than empty not
 
 **Alternatives Considered**:
 
-**Option A: Empty Payloads**
+#### Option A: Empty Payloads
 
 ```typescript
 snapshotStarted: () => void;
@@ -206,7 +206,7 @@ snapshotFailed: () => void;
 - ❌ Error details not available in listener
 - ✅ Simplest signature
 
-**Option B: Failed Only**
+#### Option B: Failed Only
 
 ```typescript
 snapshotStarted: () => void;
@@ -218,7 +218,7 @@ snapshotFailed: (error: SnapshotOperationFailure) => void;
 - ✅ Error handling convenient
 - ⚠️ Inconsistent payload design
 
-**Option C: Rich Payloads** ✅ **Selected**
+#### Option C: Rich Payloads ✅ Selected
 
 ```typescript
 snapshotStarted: (operation: 'setup' | 'refresh') => void;
@@ -231,7 +231,7 @@ snapshotFailed: (error: SnapshotOperationFailure) => void;
 - ✅ Consistent with "events provide useful information" principle
 - ⚠️ Slight duplication with `getStats()` (acceptable trade-off)
 
-### Rationale
+### Why Include Stats in Payload?
 
 Including stats in `snapshotCompleted` eliminates the need for:
 
@@ -296,7 +296,7 @@ repo.events?.on('snapshotCompleted', (stats) => {
 // - Both listeners execute (A and B receive the event)
 ```
 
-### Implementation
+### Event Emission Implementation
 
 ```typescript
 async setupSnapshot(params: ListPrototypesParams) {
