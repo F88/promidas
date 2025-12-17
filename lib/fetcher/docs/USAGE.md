@@ -564,9 +564,3 @@ interface ProtoPediaApiClientOptions {
     fetch?: typeof globalThis.fetch;
 }
 ```
-
----
-
-**Document Version**: 0.9.0
-**Last Updated**: 2025-12-16
-**Related Documents**: DESIGN.md

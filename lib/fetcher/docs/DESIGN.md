@@ -243,30 +243,30 @@ The download progress tracking system implements a three-module architecture:
 
 ```typescript
 export function createFetchWithProgress(
-    originalFetch: typeof fetch,
-    callbacks: ProgressCallbacks,
-    estimatedTotal: number,
+    config: FetchWithProgressConfig,
 ): typeof fetch {
     return async (url, init) => {
-        // 1. Execute original fetch
-        // 2. Check Content-Length header
+        // 1. Execute baseFetch (or globalThis.fetch if not provided)
+        // 2. Check Content-Length header (or estimate from URL)
         // 3. Stream response body with progress updates
-        // 4. Trigger callbacks at appropriate times
+        // 4. Trigger callbacks and logging at appropriate times
     };
 }
 
 export function shouldProgressLog(logger: Logger): boolean {
     // Returns true for 'debug' or 'info' levels
-    // Controls stderr output
+    // Controls stderr output filtering
 }
 ```
 
 **Design Decisions**:
 
 - Uses `Response.body.getReader()` for streaming
-- Estimates download size from limit parameter (267 bytes per prototype)
+- Estimates download size from limit parameter (2670 bytes per prototype)
+- Falls back to estimation when Content-Length header is missing
+- Wraps user's `baseFetch` to preserve custom behavior (timeouts, retries, etc.)
 - Separate timing for preparation vs. download phases
-- Callbacks fire only when Content-Length header is present
+  Callbacks fire when `Content-Length` is present or when the total size can be estimated
 
 #### 2. select-custom-fetch
 
@@ -1070,9 +1070,3 @@ tracking is added transparently.
 - Error details still available separately if needed
 
 **Trade-off**: Less customization vs. simpler usage
-
----
-
-**Document Version**: 2.0.0
-**Last Updated**: 2025-12-16
-**Related Modules**: lib/repository, lib/logger
