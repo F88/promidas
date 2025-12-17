@@ -32,7 +32,6 @@ vi.mock('../../../store/index', async (importOriginal) => {
 import {
   createTestContext,
   makeNormalizedPrototype,
-  makePrototype,
   setupMocks,
 } from './test-helpers.js';
 
