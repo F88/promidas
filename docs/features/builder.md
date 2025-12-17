@@ -37,6 +37,7 @@ Builder はメソッドチェーン(Fluent Interface)をサポートしていま
 - `ttlMs`: データの有効期限(ミリ秒)
 - `maxDataSizeBytes`: メモリ使用量の上限
 - `logger`: ストア専用のロガー
+- `logLevel`: ストア専用のログレベル
 
 ### `setApiClientConfig(config)`
 
