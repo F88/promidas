@@ -75,8 +75,16 @@ GitHub Actionsなどで定期的にデータを取得する場合。
 ```typescript
 import { createPromidasForServer } from '@f88/promidas';
 
-// キャッシュをグローバルに保持(HMR対策などは適宜行う)
-const repo = createPromidasForServer();
+// HMR (Hot Module Replacement) 対策: 開発環境でキャッシュがリセットされるのを防ぎます。
+const globalForPromidas = global as unknown as {
+  promidasRepo?: ReturnType<typeof createPromidasForServer>;
+};
+
+const repo = globalForPromidas.promidasRepo ?? createPromidasForServer();
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForPromidas.promidasRepo = repo;
+}
 
 export async function GET() {
     // キャッシュがあれば即座に返す、なければAPI取得
