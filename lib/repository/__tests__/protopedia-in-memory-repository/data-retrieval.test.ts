@@ -468,6 +468,9 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
           name: 'ValidationError',
           message: 'Invalid sample size: must be an integer',
           field: 'size',
+          cause: expect.objectContaining({
+            name: 'ZodError',
+          }),
         });
       });
 
@@ -483,6 +486,9 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
           name: 'ValidationError',
           message: 'Invalid sample size: must be an integer',
           field: 'size',
+          cause: expect.objectContaining({
+            name: 'ZodError',
+          }),
         });
       });
     });
@@ -929,6 +935,9 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
           name: 'ValidationError',
           message: 'Invalid prototype ID: must be a positive integer',
           field: 'prototypeId',
+          cause: expect.objectContaining({
+            name: 'ZodError',
+          }),
         });
       });
 
@@ -944,6 +953,9 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
           name: 'ValidationError',
           message: 'Invalid prototype ID: must be a positive integer',
           field: 'prototypeId',
+          cause: expect.objectContaining({
+            name: 'ZodError',
+          }),
         });
       });
 
@@ -959,6 +971,9 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
           name: 'ValidationError',
           message: 'Invalid prototype ID: must be a positive integer',
           field: 'prototypeId',
+          cause: expect.objectContaining({
+            name: 'ZodError',
+          }),
         });
       });
 
@@ -974,6 +989,9 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
           name: 'ValidationError',
           message: 'Invalid prototype ID: must be a positive integer',
           field: 'prototypeId',
+          cause: expect.objectContaining({
+            name: 'ZodError',
+          }),
         });
       });
     });

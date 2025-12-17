@@ -16,9 +16,16 @@ export class ValidationError extends Error {
    *
    * @param message - Human-readable error message
    * @param field - The name of the field that failed validation
+   * @param options - Error options, including the original error cause for debugging
    */
-  constructor(message: string, field: string) {
-    super(message);
+  constructor(
+    message: string,
+    field: string,
+    options?: {
+      cause?: Error;
+    },
+  ) {
+    super(message, options);
     this.name = 'ValidationError';
     this.field = field;
   }

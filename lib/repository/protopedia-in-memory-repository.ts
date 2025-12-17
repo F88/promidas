@@ -401,6 +401,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
       throw new ValidationError(
         'Invalid prototype ID: must be a positive integer',
         'prototypeId',
+        { cause: validation.error },
       );
     }
     return this.#store.getByPrototypeId(prototypeId);
@@ -464,6 +465,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
       throw new ValidationError(
         'Invalid sample size: must be an integer',
         'size',
+        { cause: validation.error },
       );
     }
 
