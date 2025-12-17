@@ -291,6 +291,179 @@ environments.
     - The repository makes it easy to perform repeated lookups or random sampling
       during the batch job.
 
+## Event Notifications
+
+The repository provides an optional event system for real-time state change notifications during snapshot operations. This feature is designed for interactive WebApp/SPA scenarios.
+
+### Enabling Events
+
+Events are **disabled by default**. Enable them via `enableEvents: true`:
+
+```ts
+import { PromidasRepositoryBuilder } from '@f88/promidas';
+
+const repo = new PromidasRepositoryBuilder()
+    .setStoreConfig({ ttlMs: 30_000 })
+    .setApiClientConfig({
+        protoPediaApiClientOptions: {
+            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        },
+    })
+    .setRepositoryConfig({
+        enableEvents: true, // Enable event notifications
+    })
+    .build();
+```
+
+### Event Types
+
+Three events are available:
+
+#### `snapshotStarted`
+
+Emitted when `setupSnapshot` or `refreshSnapshot` begins.
+
+```ts
+repo.events?.on('snapshotStarted', (operation: 'setup' | 'refresh') => {
+    console.log(`${operation} operation started`);
+    setLoading(true);
+});
+```
+
+#### `snapshotCompleted`
+
+Emitted when snapshot operation completes successfully. Includes complete stats.
+
+```ts
+repo.events?.on('snapshotCompleted', (stats) => {
+    console.log(`Snapshot updated: ${stats.size} prototypes`);
+    console.log(`Cached at: ${stats.cachedAt}`);
+    setLoading(false);
+    setData(stats);
+});
+```
+
+#### `snapshotFailed`
+
+Emitted when snapshot operation fails. Includes error details.
+
+```ts
+repo.events?.on('snapshotFailed', (error) => {
+    console.error('Snapshot failed:', error.error);
+    if (error.status) {
+        console.error('HTTP status:', error.status);
+    }
+    setLoading(false);
+    setError(error.error);
+});
+```
+
+### WebApp Usage Example (React)
+
+```tsx
+import { useEffect, useState } from 'react';
+import type { PrototypeInMemoryStats } from '@f88/promidas/store';
+
+function PrototypeList({ repo }) {
+    const [loading, setLoading] = useState(false);
+    const [stats, setStats] = useState<PrototypeInMemoryStats | null>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        // Subscribe to events
+        repo.events?.on('snapshotStarted', () => {
+            setLoading(true);
+            setError(null);
+        });
+
+        repo.events?.on('snapshotCompleted', (newStats) => {
+            setLoading(false);
+            setStats(newStats);
+        });
+
+        repo.events?.on('snapshotFailed', (err) => {
+            setLoading(false);
+            setError(err.error);
+        });
+
+        // Cleanup on unmount
+        return () => {
+            repo.dispose();
+        };
+    }, [repo]);
+
+    const handleRefresh = async () => {
+        await repo.refreshSnapshot();
+    };
+
+    if (loading) return <div>Loading...</div>;
+    if (error) return <div>Error: {error}</div>;
+    if (!stats) return <div>No data</div>;
+
+    return (
+        <div>
+            <h2>Prototypes: {stats.size}</h2>
+            <p>Cached at: {stats.cachedAt?.toLocaleString()}</p>
+            <p>Expired: {stats.isExpired ? 'Yes' : 'No'}</p>
+            <button onClick={handleRefresh}>Refresh</button>
+        </div>
+    );
+}
+```
+
+### Cleanup
+
+**Important**: Always call `dispose()` to prevent memory leaks.
+
+#### In Tests
+
+```ts
+describe('Repository tests', () => {
+    let repo: ProtopediaInMemoryRepository;
+
+    beforeEach(() => {
+        repo = new PromidasRepositoryBuilder()
+            .setRepositoryConfig({ enableEvents: true })
+            .build();
+    });
+
+    afterEach(() => {
+        repo.dispose(); // Clean up listeners
+    });
+
+    it('should emit events', (done) => {
+        repo.events?.on('snapshotCompleted', (stats) => {
+            expect(stats.size).toBeGreaterThan(0);
+            done();
+        });
+
+        repo.setupSnapshot({ limit: 10 });
+    });
+});
+```
+
+#### In React Components
+
+```tsx
+useEffect(() => {
+    const handleComplete = (stats) => setStats(stats);
+    repo.events?.on('snapshotCompleted', handleComplete);
+
+    return () => {
+        repo.dispose(); // Cleanup on unmount
+    };
+}, [repo]);
+```
+
+### Design Notes
+
+- **Opt-in**: Events are disabled by default (zero overhead for CLI/script users)
+- **Rich Payloads**: Events include complete information (stats, error details)
+- **Concurrent Calls**: Multiple concurrent calls result in one event (matches API behavior)
+- **Browser Compatible**: Uses `events` package (Node.js EventEmitter polyfill)
+
+For detailed design rationale, see [DESIGN_EVENTS.md](DESIGN_EVENTS.md).
+
 ## Notes
 
 - `setupSnapshot` and `refreshSnapshot` are the only methods that
@@ -301,3 +474,4 @@ environments.
 - `isExpired` in `ProtopediaInMemoryRepositoryStats` comes from the
   underlying `PrototypeInMemoryStore` TTL logic. You can use it directly or
   implement your own policy based on `cachedAt`.
+- Events are optional and disabled by default. Enable with `enableEvents: true` for WebApp scenarios.
