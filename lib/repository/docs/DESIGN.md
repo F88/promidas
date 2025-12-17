@@ -426,24 +426,24 @@ Events are **disabled by default** and must be explicitly enabled:
 
 ```typescript
 const repo = new ProtopediaInMemoryRepositoryImpl({
-  store,
-  apiClient,
-  repositoryConfig: {
-    enableEvents: true, // default: false
-  },
+    store,
+    apiClient,
+    repositoryConfig: {
+        enableEvents: true, // default: false
+    },
 });
 
 // Subscribe to events
 repo.events?.on('snapshotStarted', (operation) => {
-  console.log(`${operation} started`);
+    console.log(`${operation} started`);
 });
 
 repo.events?.on('snapshotCompleted', (stats) => {
-  console.log('Snapshot updated:', stats);
+    console.log('Snapshot updated:', stats);
 });
 
 repo.events?.on('snapshotFailed', (error) => {
-  console.error('Snapshot failed:', error);
+    console.error('Snapshot failed:', error);
 });
 ```
 

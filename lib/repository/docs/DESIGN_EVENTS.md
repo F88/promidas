@@ -46,7 +46,7 @@ The event notification system provides real-time state change notifications duri
 The event system follows these core principles:
 
 1. **Opt-in by Design**: Events are disabled by default to minimize overhead for CLI/script users
-2. **Timing Notification**: Events signal *when* state changes occur, not *what* changed
+2. **Timing Notification**: Events signal _when_ state changes occur, not _what_ changed
 3. **Pull-Push Hybrid**: Events notify timing (push), detailed data retrieved via `getStats()` (pull)
 4. **Zero Cost When Disabled**: No EventEmitter instance created unless explicitly enabled
 5. **User Action Focus**: Events represent user-initiated actions, not internal implementation details
@@ -117,23 +117,23 @@ import type { SnapshotOperationFailure } from './snapshot-operation.types.js';
  * Event types emitted by the repository during snapshot operations.
  */
 export interface RepositoryEvents {
-  /**
-   * Emitted when a snapshot operation starts.
-   * @param operation - Type of operation ('setup' or 'refresh')
-   */
-  snapshotStarted: (operation: 'setup' | 'refresh') => void;
+    /**
+     * Emitted when a snapshot operation starts.
+     * @param operation - Type of operation ('setup' or 'refresh')
+     */
+    snapshotStarted: (operation: 'setup' | 'refresh') => void;
 
-  /**
-   * Emitted when a snapshot operation completes successfully.
-   * @param stats - Current snapshot statistics
-   */
-  snapshotCompleted: (stats: PrototypeInMemoryStats) => void;
+    /**
+     * Emitted when a snapshot operation completes successfully.
+     * @param stats - Current snapshot statistics
+     */
+    snapshotCompleted: (stats: PrototypeInMemoryStats) => void;
 
-  /**
-   * Emitted when a snapshot operation fails.
-   * @param error - Error details including message, status, and code
-   */
-  snapshotFailed: (error: SnapshotOperationFailure) => void;
+    /**
+     * Emitted when a snapshot operation fails.
+     * @param error - Error details including message, status, and code
+     */
+    snapshotFailed: (error: SnapshotOperationFailure) => void;
 }
 ```
 
@@ -152,11 +152,11 @@ Events are disabled by default and must be explicitly enabled via configuration.
 
 ```typescript
 const repo = new ProtopediaInMemoryRepositoryImpl({
-  store,
-  apiClient,
-  repositoryConfig: {
-    enableEvents: true, // default: false
-  },
+    store,
+    apiClient,
+    repositoryConfig: {
+        enableEvents: true, // default: false
+    },
 });
 ```
 
@@ -164,19 +164,19 @@ const repo = new ProtopediaInMemoryRepositoryImpl({
 
 ```typescript
 class ProtopediaInMemoryRepositoryImpl {
-  readonly events?: TypedEmitter<RepositoryEvents>;
+    readonly events?: TypedEmitter<RepositoryEvents>;
 
-  constructor({ repositoryConfig }) {
-    if (repositoryConfig.enableEvents === true) {
-      this.events = new EventEmitter();
-      this.events.setMaxListeners(0); // Allow unlimited listeners
+    constructor({ repositoryConfig }) {
+        if (repositoryConfig.enableEvents === true) {
+            this.events = new EventEmitter();
+            this.events.setMaxListeners(0); // Allow unlimited listeners
+        }
     }
-  }
 
-  async setupSnapshot(params) {
-    this.events?.emit('snapshotStarted', 'setup');
-    // ... operation logic
-  }
+    async setupSnapshot(params) {
+        this.events?.emit('snapshotStarted', 'setup');
+        // ... operation logic
+    }
 }
 ```
 
@@ -238,13 +238,13 @@ Including stats in `snapshotCompleted` eliminates the need for:
 ```typescript
 // Without payload
 repo.events?.on('snapshotCompleted', () => {
-  const stats = repo.getStats(); // Additional call required
-  updateUI(stats);
+    const stats = repo.getStats(); // Additional call required
+    updateUI(stats);
 });
 
 // With payload (selected approach)
 repo.events?.on('snapshotCompleted', (stats) => {
-  updateUI(stats); // Immediate use, cleaner code
+    updateUI(stats); // Immediate use, cleaner code
 });
 ```
 
@@ -259,9 +259,9 @@ The repository implements promise coalescing for concurrent `setupSnapshot` / `r
 ```typescript
 // All three calls share one API request
 Promise.all([
-  repo.setupSnapshot(params), // Call 1
-  repo.setupSnapshot(params), // Call 2 (coalesced)
-  repo.setupSnapshot(params), // Call 3 (coalesced)
+    repo.setupSnapshot(params), // Call 1
+    repo.setupSnapshot(params), // Call 2 (coalesced)
+    repo.setupSnapshot(params), // Call 3 (coalesced)
 ]);
 ```
 
@@ -281,13 +281,13 @@ Promise.all([
 // Component A
 const promise1 = repo.setupSnapshot(params);
 repo.events?.on('snapshotCompleted', (stats) => {
-  console.log('A received:', stats);
+    console.log('A received:', stats);
 });
 
 // Component B (concurrent)
 const promise2 = repo.setupSnapshot(params);
 repo.events?.on('snapshotCompleted', (stats) => {
-  console.log('B received:', stats);
+    console.log('B received:', stats);
 });
 
 // Result:
@@ -358,24 +358,24 @@ dispose(): void {
 ```typescript
 // Test environment
 describe('Repository tests', () => {
-  let repo: ProtopediaInMemoryRepository;
+    let repo: ProtopediaInMemoryRepository;
 
-  afterEach(() => {
-    repo.dispose(); // Clean up listeners
-  });
+    afterEach(() => {
+        repo.dispose(); // Clean up listeners
+    });
 
-  it('should handle events', () => {
-    // ... test logic
-  });
+    it('should handle events', () => {
+        // ... test logic
+    });
 });
 
 // React useEffect cleanup
 useEffect(() => {
-  repo.events?.on('snapshotCompleted', handleComplete);
+    repo.events?.on('snapshotCompleted', handleComplete);
 
-  return () => {
-    repo.dispose(); // Clean up on unmount
-  };
+    return () => {
+        repo.dispose(); // Clean up on unmount
+    };
 }, []);
 ```
 
@@ -385,8 +385,8 @@ The implementation sets `maxListeners` to `0` (unlimited):
 
 ```typescript
 if (config.enableEvents === true) {
-  this.events = new EventEmitter();
-  this.events.setMaxListeners(0); // Allow unlimited listeners
+    this.events = new EventEmitter();
+    this.events.setMaxListeners(0); // Allow unlimited listeners
 }
 ```
 
@@ -407,11 +407,17 @@ PROMIDAS provides two separate notification mechanisms for different layers:
 
 ```typescript
 const client = new ProtopediaApiCustomClient({
-  progressCallback: {
-    onStart: (total) => { /* ... */ },
-    onProgress: (received, total, percentage) => { /* ... */ },
-    onComplete: (total, duration) => { /* ... */ },
-  },
+    progressCallback: {
+        onStart: (total) => {
+            /* ... */
+        },
+        onProgress: (received, total, percentage) => {
+            /* ... */
+        },
+        onComplete: (total, duration) => {
+            /* ... */
+        },
+    },
 });
 ```
 
@@ -428,9 +434,15 @@ const client = new ProtopediaApiCustomClient({
 **Scope**: Business-level snapshot lifecycle
 
 ```typescript
-repo.events?.on('snapshotStarted', (operation) => { /* ... */ });
-repo.events?.on('snapshotCompleted', (stats) => { /* ... */ });
-repo.events?.on('snapshotFailed', (error) => { /* ... */ });
+repo.events?.on('snapshotStarted', (operation) => {
+    /* ... */
+});
+repo.events?.on('snapshotCompleted', (stats) => {
+    /* ... */
+});
+repo.events?.on('snapshotFailed', (error) => {
+    /* ... */
+});
 ```
 
 **Information**:
@@ -448,22 +460,22 @@ Both mechanisms can be used together for comprehensive UX:
 ```typescript
 // Detailed progress during download
 const client = new ProtopediaApiCustomClient({
-  progressCallback: {
-    onProgress: (received, total, percentage) => {
-      setDownloadProgress(percentage);
+    progressCallback: {
+        onProgress: (received, total, percentage) => {
+            setDownloadProgress(percentage);
+        },
     },
-  },
 });
 
 // High-level state changes
 repo.events?.on('snapshotStarted', () => {
-  setLoading(true);
+    setLoading(true);
 });
 
 repo.events?.on('snapshotCompleted', (stats) => {
-  setLoading(false);
-  setData(stats);
-  setDownloadProgress(0);
+    setLoading(false);
+    setData(stats);
+    setDownloadProgress(0);
 });
 
 // User sees: "Downloading 60% ..." → "Processing..." → "Complete!"
@@ -471,10 +483,10 @@ repo.events?.on('snapshotCompleted', (stats) => {
 
 ### Abstraction Levels
 
-| Layer | Abstraction | Information | Granularity |
-|-------|------------|-------------|-------------|
-| Fetcher | HTTP transport | Bytes, percentage | Fine (per chunk) |
-| Repository | Business logic | Stats, errors | Coarse (per operation) |
+| Layer      | Abstraction    | Information       | Granularity            |
+| ---------- | -------------- | ----------------- | ---------------------- |
+| Fetcher    | HTTP transport | Bytes, percentage | Fine (per chunk)       |
+| Repository | Business logic | Stats, errors     | Coarse (per operation) |
 
 Both are valuable but serve different purposes. The repository layer events hide HTTP details and provide snapshot-level notifications that align with business logic.
 
@@ -486,9 +498,9 @@ The implementation uses the `events` package (Node.js EventEmitter polyfill for 
 
 ```json
 {
-  "dependencies": {
-    "events": "^3.3.0"
-  }
+    "dependencies": {
+        "events": "^3.3.0"
+    }
 }
 ```
 
@@ -516,9 +528,9 @@ We use `typed-emitter` for compile-time type checking:
 
 ```json
 {
-  "devDependencies": {
-    "typed-emitter": "^2.1.0"
-  }
+    "devDependencies": {
+        "typed-emitter": "^2.1.0"
+    }
 }
 ```
 
@@ -526,15 +538,15 @@ We use `typed-emitter` for compile-time type checking:
 import type { TypedEmitter } from 'typed-emitter';
 
 interface RepositoryEvents {
-  snapshotStarted: (operation: 'setup' | 'refresh') => void;
-  // ...
+    snapshotStarted: (operation: 'setup' | 'refresh') => void;
+    // ...
 }
 
 const events: TypedEmitter<RepositoryEvents> = new EventEmitter();
 
 // Type-safe: ✅
 events.on('snapshotStarted', (operation) => {
-  console.log(operation); // 'setup' | 'refresh'
+    console.log(operation); // 'setup' | 'refresh'
 });
 
 // Compile error: ❌
@@ -561,12 +573,12 @@ Users who need expiration notifications can implement their own timers based on 
 
 ```typescript
 repo.events?.on('snapshotCompleted', (stats) => {
-  // Set timer for next expiration check
-  setTimeout(() => {
-    if (repo.getStats().isExpired) {
-      handleExpiration();
-    }
-  }, stats.remainingTtlMs);
+    // Set timer for next expiration check
+    setTimeout(() => {
+        if (repo.getStats().isExpired) {
+            handleExpiration();
+        }
+    }, stats.remainingTtlMs);
 });
 ```
 
@@ -605,8 +617,8 @@ Empty payload would force this pattern:
 ```typescript
 // Rejected: Extra call required
 repo.events?.on('snapshotCompleted', () => {
-  const stats = repo.getStats(); // Additional call
-  updateUI(stats);
+    const stats = repo.getStats(); // Additional call
+    updateUI(stats);
 });
 ```
 
