@@ -299,12 +299,21 @@ repo.events?.on('snapshotCompleted', (stats) => {
 ### Implementation
 
 ```typescript
+async setupSnapshot(params: ListPrototypesParams) {
+  this.events?.emit('snapshotStarted', 'setup');
+  return this.#executeWithCoalescing(() => this.#fetchAndNormalize(params));
+}
+
+async refreshSnapshot() {
+  this.events?.emit('snapshotStarted', 'refresh');
+  return this.#executeWithCoalescing(() => this.#fetchAndNormalize(this.#lastFetchParams));
+}
+
 async #executeWithCoalescing(fetchFn) {
   if (this.#ongoingFetch) {
     return this.#ongoingFetch; // Return existing promise, no new event
   }
 
-  this.events?.emit('snapshotStarted', operation); // Emit only once
   this.#ongoingFetch = fetchFn();
 
   try {
@@ -464,8 +473,8 @@ repo.events?.on('snapshotCompleted', (stats) => {
 
 | Layer | Abstraction | Information | Granularity |
 |-------|------------|-------------|-------------|
-| Fetcher | HTTP transport | Bytes, percentage | High (per chunk) |
-| Repository | Business logic | Stats, errors | Low (per operation) |
+| Fetcher | HTTP transport | Bytes, percentage | Fine (per chunk) |
+| Repository | Business logic | Stats, errors | Coarse (per operation) |
 
 Both are valuable but serve different purposes. The repository layer events hide HTTP details and provide snapshot-level notifications that align with business logic.
 
@@ -514,7 +523,7 @@ We use `typed-emitter` for compile-time type checking:
 ```
 
 ```typescript
-import type { TypedEmitter } from 'tiny-typed-emitter';
+import type { TypedEmitter } from 'typed-emitter';
 
 interface RepositoryEvents {
   snapshotStarted: (operation: 'setup' | 'refresh') => void;
@@ -686,4 +695,4 @@ These enhancements are tracked but not currently planned. User feedback will gui
 - [Issue #44: Progress Callback (Fetcher Layer)](https://github.com/F88/promidas/issues/44)
 - [Node.js EventEmitter Documentation](https://nodejs.org/api/events.html)
 - [events Package (npm)](https://www.npmjs.com/package/events)
-- [typed-emitter Package (npm)](https://www.npmjs.com/package/tiny-typed-emitter)
+- [typed-emitter Package (npm)](https://www.npmjs.com/package/typed-emitter)

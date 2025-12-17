@@ -370,27 +370,23 @@ try {
 
 **Protection**: Store's `runExclusive()` prevents concurrent modifications
 
-### Known Limitations
+### Promise Coalescing (Issue #17 - ✅ Implemented)
 
-1. **No Promise reuse**: Multiple simultaneous `setupSnapshot()` calls create multiple HTTP requests
-2. **Last-write-wins**: Concurrent refreshes may overwrite with older data
-3. **No request coalescing**: Stampeding herd problem not addressed
+**Feature**: Multiple concurrent calls to `setupSnapshot()` or `refreshSnapshot()` are automatically coalesced into a single API request.
 
-### Future Considerations (See Issues)
-
-**Issue #17**: Add concurrency control for `refreshSnapshot()`
-
-**Proposed solution**:
+**Implementation**:
 
 ```typescript
 #ongoingFetch: Promise<SnapshotOperationResult> | null = null;
 
-async refreshSnapshot() {
+async #executeWithCoalescing(
+  fetchFn: () => Promise<SnapshotOperationResult>,
+): Promise<SnapshotOperationResult> {
   if (this.#ongoingFetch) {
     return this.#ongoingFetch; // Reuse in-flight request
   }
 
-  this.#ongoingFetch = this.#performRefresh();
+  this.#ongoingFetch = fetchFn();
   try {
     return await this.#ongoingFetch;
   } finally {
@@ -399,7 +395,18 @@ async refreshSnapshot() {
 }
 ```
 
-**Trade-off**: Increased complexity vs. better resource utilization
+**Benefits**:
+
+- Prevents stampeding herd problem
+- Reduces redundant HTTP requests
+- All concurrent callers receive the same result
+- No race conditions between overlapping refreshes
+
+**Behavior**:
+
+- First caller's parameters are used
+- Subsequent concurrent callers wait for the same Promise
+- After completion, new calls start fresh requests
 
 ## Event System
 

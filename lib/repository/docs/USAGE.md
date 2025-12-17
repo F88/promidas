@@ -390,7 +390,7 @@ function PrototypeList({ repo }) {
         return () => {
             repo.dispose();
         };
-    }, [repo]);
+    }, []); // Empty deps: repo instance should not change during component lifetime
 
     const handleRefresh = async () => {
         await repo.refreshSnapshot();
@@ -452,7 +452,7 @@ useEffect(() => {
     return () => {
         repo.dispose(); // Cleanup on unmount
     };
-}, [repo]);
+}, []); // Empty deps: repo instance should remain stable
 ```
 
 ### Design Notes
