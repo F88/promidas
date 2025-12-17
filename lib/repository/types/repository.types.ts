@@ -3,9 +3,10 @@
  *
  * @module
  */
+import type { EventEmitter } from 'events';
+
 import type { ListPrototypesParams } from 'protopedia-api-v2-client';
 import type { DeepReadonly } from 'ts-essentials';
-import type { TypedEmitter } from 'typed-emitter';
 
 import type { Logger, LogLevel } from '../../logger/index.js';
 import type {
@@ -113,7 +114,7 @@ export interface ProtopediaInMemoryRepository {
    * @see {@link RepositoryEvents} for event type definitions
    * @see {@link dispose} for cleanup method
    */
-  readonly events?: TypedEmitter<RepositoryEvents>;
+  readonly events?: EventEmitter;
 
   /**
    * Retrieve the configuration used to initialize the underlying store.

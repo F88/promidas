@@ -53,12 +53,13 @@
  * @see {@link ProtopediaInMemoryRepository} for the public interface
  */
 import { EventEmitter } from 'events';
+
 import type {
   ListPrototypesParams,
   ProtoPediaApiClientOptions,
 } from 'protopedia-api-v2-client';
 import type { DeepReadonly } from 'ts-essentials';
-import type { TypedEmitter } from 'typed-emitter';
+import type TypedEmitter from 'typed-emitter';
 
 import { ProtopediaApiCustomClient } from '../fetcher/index.js';
 import {
@@ -172,7 +173,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    *
    * Only defined when enableEvents: true is set in repository configuration.
    */
-  readonly events?: TypedEmitter<RepositoryEvents>;
+  readonly events?: EventEmitter;
 
   /**
    * Internal logger instance.
@@ -238,7 +239,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
 
     // Initialize event emitter if events are enabled
     if (enableEvents === true) {
-      this.events = new EventEmitter() as TypedEmitter<RepositoryEvents>;
+      this.events = new EventEmitter();
       this.events.setMaxListeners(0); // Allow unlimited listeners
     }
 
