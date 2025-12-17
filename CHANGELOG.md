@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2025-12-17
+
 ### Added
 
 - **ValidationError for Better Error Handling**: Implemented custom `ValidationError` class to improve validation error handling (#13)
