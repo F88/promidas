@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking Changes
 
+## [0.12.2] - 2025-12-20
+
+### Fixed
+
+- **Network error code**: Adds a stable `NETWORK_ERROR` code for browser-like fetch failures so `SnapshotOperationFailure.code` is no longer `undefined` (#56)
+
 ## [0.12.1] - 2025-12-19
 
 ### Fixed
