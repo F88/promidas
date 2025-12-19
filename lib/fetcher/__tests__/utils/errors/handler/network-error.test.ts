@@ -215,6 +215,60 @@ describe('error-handler', () => {
         });
       });
 
+      it('maps browser fetch TypeError("Failed to fetch") to NETWORK_ERROR code', () => {
+        const error = new TypeError('Failed to fetch');
+        const result = handleApiError(error);
+
+        expect(result).toEqual({
+          ok: false,
+          error: 'Failed to fetch',
+          details: {
+            res: {
+              code: 'NETWORK_ERROR',
+            },
+          },
+        });
+      });
+
+      it.each([
+        'fetch failed',
+        'Load failed',
+        'NetworkError when attempting to fetch resource.',
+      ])(
+        'maps browser fetch TypeError(%s) to NETWORK_ERROR code',
+        (message) => {
+          const error = new TypeError(message);
+          const result = handleApiError(error);
+
+          expect(result).toEqual({
+            ok: false,
+            error: message,
+            details: {
+              res: {
+                code: 'NETWORK_ERROR',
+              },
+            },
+          });
+        },
+      );
+
+      it('does not overwrite extracted code with NETWORK_ERROR', () => {
+        const error = Object.assign(new TypeError('Failed to fetch'), {
+          code: 'CUSTOM_CODE',
+        });
+        const result = handleApiError(error);
+
+        expect(result).toEqual({
+          ok: false,
+          error: 'Failed to fetch',
+          details: {
+            res: {
+              code: 'CUSTOM_CODE',
+            },
+          },
+        });
+      });
+
       it('handles array as error', () => {
         const error = ['error', 'occurred'];
         const result = handleApiError(error);
