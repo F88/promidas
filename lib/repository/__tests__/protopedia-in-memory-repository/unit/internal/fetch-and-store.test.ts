@@ -210,7 +210,6 @@ describe('ProtopediaInMemoryRepositoryImpl - fetchAndStore', () => {
     it('returns failure result when API client throws a non-Error value', async () => {
       vi.mocked(mockApiClientInstance.fetchPrototypes).mockImplementationOnce(
         async () => {
-           
           throw 'API client threw';
         },
       );
@@ -236,7 +235,6 @@ describe('ProtopediaInMemoryRepositoryImpl - fetchAndStore', () => {
       });
 
       vi.mocked(mockStoreInstance.setAll).mockImplementationOnce(() => {
-         
         throw 'Store threw';
       });
 
