@@ -266,7 +266,7 @@ export function handleApiError(error: unknown): FetchPrototypesResult {
       }
     }
     if (statusText !== undefined || code !== undefined) {
-      details.res = {};
+      details.res ??= {};
       if (statusText !== undefined) {
         details.res.statusText = statusText;
       }
@@ -295,7 +295,8 @@ export function handleApiError(error: unknown): FetchPrototypesResult {
     };
     const code = errorObj.code ?? errorObj.cause?.code;
     if (code !== undefined) {
-      details.res = { code };
+      details.res ??= {};
+      details.res.code = code;
     }
   }
 
@@ -306,7 +307,8 @@ export function handleApiError(error: unknown): FetchPrototypesResult {
     error instanceof TypeError &&
     KNOWN_FETCH_NETWORK_ERROR_MESSAGES.has(message)
   ) {
-    details.res = { code: DEFAULT_NETWORK_ERROR_CODE };
+    details.res ??= {};
+    details.res.code ??= DEFAULT_NETWORK_ERROR_CODE;
   }
 
   const result = createFailureResult(message, details);
