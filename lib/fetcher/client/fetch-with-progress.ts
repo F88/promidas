@@ -275,7 +275,7 @@ export function createFetchWithProgress(
       shouldProgressLog(logger)
     ) {
       logger.info(
-        `Download starting (limit=${estimatedItemCount}, estimated ~${total} bytes) (prepared in ${prepareTime}s)`,
+        `Download starting (limit=${estimatedItemCount}, ${total} bytes (estimated)) (prepared in ${prepareTime}s)`,
       );
       // Don't set lastLoggedTime here - let first chunk log immediately
     }

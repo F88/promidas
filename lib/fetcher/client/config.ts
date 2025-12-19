@@ -102,13 +102,13 @@ export type ProtopediaApiCustomClientConfig = {
    * const client = new ProtopediaApiCustomClient({
    *   progressCallback: {
    *     onStart: (estimatedTotal, limit, prepareTime) => {
-   *       console.log(`Starting: ~${estimatedTotal} bytes`);
+   *       console.log(`Starting: ${estimatedTotal} bytes (estimated)`);
    *     },
    *     onProgress: (received, total, percentage) => {
    *       updateProgressBar(percentage);
    *     },
    *     onComplete: (received, estimatedTotal, downloadTime, totalTime) => {
-   *       console.log(`Complete: ${received} bytes in ${downloadTime}s`);
+   *       console.log(`Complete: ${received} bytes (${estimatedTotal} bytes estimated) in ${downloadTime}s (total ${totalTime}s)`);
    *     },
    *   },
    * });

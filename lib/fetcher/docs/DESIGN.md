@@ -375,7 +375,7 @@ function shouldProgressLog(logger: Logger): boolean {
 **Output Format**:
 
 ```plaintext
-Download starting (limit=10000, estimated ~2670000 bytes) (prepared in 0.05s)
+Download starting (limit=10000, 2670000 bytes (estimated)) (prepared in 0.05s)
 Download complete: 2670000 bytes received (estimated 2670000 bytes) in 1.23s (total: 1.28s)
 ```
 

@@ -52,7 +52,7 @@ const client2 = new ProtopediaApiCustomClient({
   progressCallback: {
     onStart: (estimatedTotal, limit, prepareTime) => {
       console.log(
-        `🚀 Start: limit=${limit}, estimated ~${estimatedTotal} bytes (prepared in ${prepareTime}s)`,
+        `🚀 Start: limit=${limit}, ${estimatedTotal} bytes (estimated) (prepared in ${prepareTime}s)`,
       );
     },
     onProgress: (received, total, percentage) => {

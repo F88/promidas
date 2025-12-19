@@ -446,7 +446,7 @@ const repo = createPromidasForLocal({
 // 10000件取得時は自動的に進捗が stderr に表示されます
 const setupResult = await repo.setupSnapshot({ limit: 10000 });
 // stderr output:
-// Download starting (limit=10000, estimated ~2670000 bytes) (prepared in 0.05s)
+Download starting (limit=10000, 2670000 bytes (estimated)) (prepared in 0.05s)
 // Download complete: 2670000 bytes received (estimated 2670000 bytes) in 1.23s (total: 1.28s)
 
 if (setupResult.ok) {
