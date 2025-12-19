@@ -130,6 +130,13 @@ describe('PrototypeInMemoryStore', () => {
     });
   });
 
+  describe('internal helpers (via any)', () => {
+    it('getElapsedTime returns 0 when no data is cached', () => {
+      const store = new PrototypeInMemoryStore();
+      expect((store as any).getElapsedTime()).toBe(0);
+    });
+  });
+
   describe('configuration and statistics', () => {
     describe('getConfig', () => {
       it('returns configuration with default values', () => {
@@ -310,6 +317,29 @@ describe('PrototypeInMemoryStore', () => {
       });
 
       expect(() => store.setAll([createPrototype({ id: 1 })])).toThrow();
+    });
+
+    it('wraps non-Error thrown values with undefined cause', () => {
+      const store = new PrototypeInMemoryStore();
+
+      vi.spyOn(JSON, 'stringify').mockImplementationOnce(() => {
+        throw 'Stringify failed';
+      });
+
+      expect(() => store.setAll([createPrototype({ id: 1 })])).toThrow();
+    });
+
+    it('re-throws unexpected errors from estimateSize wrapper', () => {
+      const store = new PrototypeInMemoryStore();
+
+      const unexpected = new Error('Unexpected estimateSize failure');
+      (store as any).estimateSize = () => {
+        throw unexpected;
+      };
+
+      expect(() => store.setAll([createPrototype({ id: 1 })])).toThrow(
+        unexpected,
+      );
     });
 
     it('deduplicates prototypes by ID and ensures consistency between size and getAll().length', () => {

@@ -10,6 +10,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProtopediaApiCustomClient } from '../../../../../fetcher/index.js';
 import {
   DataSizeExceededError,
+  SizeEstimationError,
   PrototypeInMemoryStore,
 } from '../../../../../store/index.js';
 import { ProtopediaInMemoryRepositoryImpl } from '../../../../protopedia-in-memory-repository.js';
@@ -205,6 +206,53 @@ describe('ProtopediaInMemoryRepositoryImpl - fetchAndStore', () => {
       const stats = repo.getStats();
       expect(stats.size).toBe(0);
     });
+
+    it('returns failure result when API client throws a non-Error value', async () => {
+      vi.mocked(mockApiClientInstance.fetchPrototypes).mockImplementationOnce(
+        async () => {
+           
+          throw 'API client threw';
+        },
+      );
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {},
+      });
+
+      const result = await (repo as any).fetchAndStore({}, true);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toBe('API client threw');
+      }
+    });
+
+    it('returns failure result when store throws a non-Error value', async () => {
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [makePrototype({ id: 1 })],
+      });
+
+      vi.mocked(mockStoreInstance.setAll).mockImplementationOnce(() => {
+         
+        throw 'Store threw';
+      });
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {},
+      });
+
+      const result = await (repo as any).fetchAndStore({}, true);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toBe('Store threw');
+      }
+    });
   });
 
   describe('updateLastFetchParams parameter', () => {
@@ -335,6 +383,75 @@ describe('ProtopediaInMemoryRepositoryImpl - fetchAndStore', () => {
       if (!result.ok) {
         expect(result.error).toContain('exceeds maximum limit');
       }
+    });
+
+    it('logs and returns error when size estimation fails', async () => {
+      const repositoryLogger = {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+        level: 'info' as const,
+      };
+
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [makePrototype({ id: 1 })],
+      });
+
+      vi.mocked(mockStoreInstance.setAll).mockImplementationOnce(() => {
+        throw new SizeEstimationError(
+          'UNCHANGED',
+          new Error('Stringify failed'),
+        );
+      });
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: { logger: repositoryLogger as any },
+      });
+
+      const result = await (repo as any).fetchAndStore({}, true);
+
+      expect(result.ok).toBe(false);
+      expect(repositoryLogger.error).toHaveBeenCalledWith(
+        'Snapshot storage failed: size estimation error',
+        expect.anything(),
+      );
+    });
+
+    it('logs and returns error on unexpected store errors', async () => {
+      const repositoryLogger = {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+        level: 'info' as const,
+      };
+
+      fetchPrototypesMock.mockResolvedValueOnce({
+        ok: true,
+        data: [makePrototype({ id: 1 })],
+      });
+
+      vi.mocked(mockStoreInstance.setAll).mockImplementationOnce(() => {
+        throw new Error('Unexpected store failure');
+      });
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: { logger: repositoryLogger as any },
+      });
+
+      const result = await (repo as any).fetchAndStore({}, true);
+
+      expect(result.ok).toBe(false);
+      expect(repositoryLogger.error).toHaveBeenCalledWith(
+        'Snapshot storage failed: unexpected error',
+        expect.anything(),
+      );
     });
   });
 });
