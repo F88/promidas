@@ -133,16 +133,16 @@ export class DataSizeExceededError extends StoreError {
    */
   constructor(
     dataState: StoreDataState = 'UNKNOWN',
-    dataSizeBytes?: number,
-    maxDataSizeBytes?: number,
+    dataSizeBytes: number,
+    maxDataSizeBytes: number,
   ) {
     super(
       `Snapshot data size (${dataSizeBytes} bytes) exceeds maximum limit (${maxDataSizeBytes} bytes)`,
       dataState,
     );
     this.name = 'DataSizeExceededError';
-    this.dataSizeBytes = dataSizeBytes!;
-    this.maxDataSizeBytes = maxDataSizeBytes!;
+    this.dataSizeBytes = dataSizeBytes;
+    this.maxDataSizeBytes = maxDataSizeBytes;
   }
 }
 
