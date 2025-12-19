@@ -24,7 +24,11 @@ import type {
   PrototypeAnalysisResult,
 } from './repository/types/index.js';
 import {
+  ConfigurationError,
+  DataSizeExceededError,
   PrototypeInMemoryStore,
+  SizeEstimationError,
+  StoreError,
   type PrototypeInMemoryStats,
   type PrototypeInMemoryStoreConfig,
 } from './store/index.js';
@@ -165,54 +169,142 @@ export class PromidasRepositoryBuilder {
    * ```
    */
   build(): ProtopediaInMemoryRepository {
+    // Design Decision: Builder ensures logger instance exists
+    //
+    // Why Builder creates loggers instead of delegating to modules:
+    // 1. Responsibility clarity: Builder guarantees logger presence
+    // 2. Loose coupling: Reduces dependency on module's logger creation logic
+    // 3. Consistency: Uniform logger creation strategy across all components
+    //
+    // Alternative (simpler but more coupled):
+    //   Just pass config as-is: new PrototypeInMemoryStore(this.#storeConfig)
+    //   Modules would handle logger creation internally
+    //   Trade-off: Tighter coupling to module implementation details
+    const storeConfig: PrototypeInMemoryStoreConfig = {
+      ...this.#storeConfig,
+      logger:
+        this.#storeConfig.logger ??
+        new ConsoleLogger(this.#storeConfig.logLevel ?? 'info'),
+    };
+
+    const apiClientConfig: ProtopediaApiCustomClientConfig = {
+      ...this.#apiClientConfig,
+      logger:
+        this.#apiClientConfig.logger ??
+        new ConsoleLogger(this.#apiClientConfig.logLevel ?? 'info'),
+    };
+
+    // Ensure logger exists before constructing repository config
+    const repositoryLogger =
+      this.#repositoryConfig.logger ??
+      new ConsoleLogger(this.#repositoryConfig.logLevel ?? 'info');
+
+    const repositoryConfig: ProtopediaInMemoryRepositoryConfig = {
+      ...this.#repositoryConfig,
+      logger: repositoryLogger,
+    };
+
+    // Build Store and API Client
+    const store = this.buildStore(storeConfig, repositoryLogger);
+    const apiClient = this.buildApiClient(apiClientConfig, repositoryLogger);
+
+    // Build Repository
     try {
-      // Design Decision: Builder ensures logger instance exists
-      //
-      // Why Builder creates loggers instead of delegating to modules:
-      // 1. Responsibility clarity: Builder guarantees logger presence
-      // 2. Loose coupling: Reduces dependency on module's logger creation logic
-      // 3. Consistency: Uniform logger creation strategy across all components
-      //
-      // Alternative (simpler but more coupled):
-      //   Just pass config as-is: new PrototypeInMemoryStore(this.#storeConfig)
-      //   Modules would handle logger creation internally
-      //   Trade-off: Tighter coupling to module implementation details
-      const storeConfig: PrototypeInMemoryStoreConfig = {
-        ...this.#storeConfig,
-        logger:
-          this.#storeConfig.logger ??
-          new ConsoleLogger(this.#storeConfig.logLevel ?? 'info'),
-      };
-
-      const apiClientConfig: ProtopediaApiCustomClientConfig = {
-        ...this.#apiClientConfig,
-        logger:
-          this.#apiClientConfig.logger ??
-          new ConsoleLogger(this.#apiClientConfig.logLevel ?? 'info'),
-      };
-
-      const repositoryConfig: ProtopediaInMemoryRepositoryConfig = {
-        ...this.#repositoryConfig,
-        logger:
-          this.#repositoryConfig.logger ??
-          new ConsoleLogger(this.#repositoryConfig.logLevel ?? 'info'),
-      };
-
-      const store = new PrototypeInMemoryStore(storeConfig);
-
-      const apiClient = new ProtopediaApiCustomClient(apiClientConfig);
-
       return new ProtopediaInMemoryRepositoryImpl({
         store,
         apiClient,
         repositoryConfig,
       });
     } catch (error) {
-      // Log the error before re-throwing, ensuring sensitive data is sanitized
-      const logger = this.#repositoryConfig.logger ?? console;
-      if (typeof logger.error === 'function') {
-        logger.error(
-          'Failed to build ProtopediaInMemoryRepository',
+      // Handle Repository construction errors
+      if (typeof repositoryLogger.error === 'function') {
+        repositoryLogger.error(
+          'Failed to create ProtopediaInMemoryRepositoryImpl',
+          sanitizeDataForLogging({ error }),
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Creates a PrototypeInMemoryStore instance with detailed error handling.
+   *
+   * @param config - Store configuration
+   * @param repositoryLogger - Logger instance for error reporting
+   * @returns Initialized store instance
+   * @throws {ConfigurationError} When store configuration is invalid
+   * @throws {StoreError} When other store-related errors occur
+   *
+   * @internal This method is private and intended for internal use and testing only
+   */
+  private buildStore(
+    config: PrototypeInMemoryStoreConfig,
+    repositoryLogger: Logger | Console,
+  ): PrototypeInMemoryStore {
+    try {
+      return new PrototypeInMemoryStore(config);
+    } catch (error) {
+      // Handle Store construction errors (e.g., ConfigurationError)
+      if (typeof repositoryLogger.error === 'function') {
+        // Build detailed error information based on error type
+        let errorDetails: Record<string, unknown> = { error };
+
+        if (error instanceof DataSizeExceededError) {
+          errorDetails = {
+            error,
+            dataState: error.dataState,
+            dataSizeBytes: error.dataSizeBytes,
+            maxDataSizeBytes: error.maxDataSizeBytes,
+          };
+        } else if (error instanceof SizeEstimationError) {
+          errorDetails = {
+            error,
+            dataState: error.dataState,
+            cause: error.cause,
+          };
+        } else if (error instanceof ConfigurationError) {
+          errorDetails = {
+            error,
+            dataState: error.dataState,
+          };
+        } else if (error instanceof StoreError) {
+          errorDetails = {
+            error,
+            dataState: error.dataState,
+          };
+        }
+
+        repositoryLogger.error(
+          'Failed to create PrototypeInMemoryStore',
+          sanitizeDataForLogging(errorDetails),
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Creates a ProtopediaApiCustomClient instance with detailed error handling.
+   *
+   * @param config - API client configuration
+   * @param repositoryLogger - Logger instance for error reporting
+   * @returns Initialized API client instance
+   * @throws When API client construction fails
+   *
+   * @internal This method is private and intended for internal use and testing only
+   */
+  private buildApiClient(
+    config: ProtopediaApiCustomClientConfig,
+    repositoryLogger: Logger | Console,
+  ): ProtopediaApiCustomClient {
+    try {
+      return new ProtopediaApiCustomClient(config);
+    } catch (error) {
+      // Handle API client construction errors
+      if (typeof repositoryLogger.error === 'function') {
+        repositoryLogger.error(
+          'Failed to create ProtopediaApiCustomClient',
           sanitizeDataForLogging({ error }),
         );
       }

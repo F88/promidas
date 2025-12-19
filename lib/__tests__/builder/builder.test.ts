@@ -33,9 +33,12 @@
  * ### 5. Build Process
  * - Successfully builds repository with all configurations
  * - Builds repository with partial configurations
- * - Throws error on build failure
  *
- * ### 6. Method Chaining
+ * ### 6. Error Handling
+ * - Propagates errors from Store construction through build()
+ * - Error logging with proper context
+ *
+ * ### 7. Method Chaining
  * - Allows chaining of all setter methods
  * - Maintains configuration across chained calls
  *
@@ -271,6 +274,37 @@ describe('PromidasRepositoryBuilder', () => {
     });
   });
 
+  describe('Error Handling', () => {
+    it('should propagate errors from Store construction through build()', () => {
+      const mockLogger = {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+        level: 'info' as const,
+      };
+
+      const builder = new PromidasRepositoryBuilder()
+        .setRepositoryConfig({ logger: mockLogger })
+        .setStoreConfig({
+          maxDataSizeBytes: 100_000_000, // Exceeds 30 MiB limit
+        });
+
+      // Store construction should fail and error should be logged
+      expect(() => builder.build()).toThrow();
+
+      // Verify error was logged by buildStore
+      expect(mockLogger.error).toHaveBeenCalled();
+      const errorCall = mockLogger.error.mock.calls[0];
+      expect(errorCall).toBeDefined();
+      expect(errorCall![0]).toBe('Failed to create PrototypeInMemoryStore');
+    });
+
+    // Note: ProtopediaApiCustomClient constructor does not throw errors in normal scenarios,
+    // so API Client construction error testing is covered in build-api-client.test.ts
+    // using mock implementations.
+  });
+
   describe('Method Chaining', () => {
     it('should allow chaining all setter methods', () => {
       const builder = new PromidasRepositoryBuilder();
@@ -392,22 +426,6 @@ describe('PromidasRepositoryBuilder', () => {
       const config = repo.getConfig();
       expect(config.ttlMs).toBe(30000); // Should be preserved
       expect(config.maxDataSizeBytes).toBe(10000); // Should be set
-    });
-  });
-
-  describe('Error Handling', () => {
-    it('should handle build errors gracefully', () => {
-      const builder = new PromidasRepositoryBuilder();
-
-      // Try building with invalid configuration that might cause errors
-      // Store constructor will validate and throw if needed
-      expect(() => {
-        builder
-          .setStoreConfig({
-            maxDataSizeBytes: 200 * 1024 * 1024, // Exceeds max allowed
-          })
-          .build();
-      }).toThrow();
     });
   });
 

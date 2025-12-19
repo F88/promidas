@@ -36,17 +36,20 @@ The `setAll()` method return type changed from `{ dataSizeBytes: number } | null
 
 Wrap `setAll()` calls in try-catch blocks to handle exceptions properly.
 
+**Note**: Repository layer internally handles these exceptions and converts them to `SnapshotOperationResult` with `ok: false`. Repository users are not directly affected.
+
 **Files affected:**
 
 - `lib/store/store.ts` - Updated error handling
 - `lib/store/errors/store-error.ts` - New error classes
 - `lib/store/index.ts` - Export error classes
+- `lib/repository/protopedia-in-memory-repository.ts` - Added exception handling in fetchAndStore
 
 #### Store Constructor Now Throws `ConfigurationError`
 
 The constructor now throws `ConfigurationError` instead of generic `Error` when `maxDataSizeBytes` exceeds 30 MiB limit.
 
-**Note**: Repository layer users are not affected as it already handles exceptions via try-catch.
+**Impact**: Affects all users who instantiate `PrototypeInMemoryStore` directly or through builder/factory functions.
 
 ## [0.11.0] - 2025-12-17
 
