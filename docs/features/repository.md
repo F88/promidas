@@ -33,6 +33,10 @@ Repository は以下の役割を担います:
 const result = await repository.setupSnapshot({
     limit: 1000, // 最大読み込み件数
 });
+
+if (!result.ok) {
+    console.error('Failed to setup snapshot:', result.error);
+}
 ```
 
 ### 高速な検索 (Query)
@@ -54,6 +58,10 @@ const completed = all.filter((p) => p.status === 3);
 
 ```typescript
 const result = await repository.refreshSnapshot();
+
+if (!result.ok) {
+    console.error('Failed to refresh snapshot:', result.error);
+}
 ```
 
 ## 内部構造

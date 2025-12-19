@@ -202,6 +202,11 @@ async function main() {
 
     // 以降は同じ
     const result = await repo.setupSnapshot({ limit: 100 });
+    if (!result.ok) {
+        console.error('Failed to fetch data:', result.error);
+        process.exit(1);
+    }
+
     // ...
 }
 
@@ -367,7 +372,10 @@ const repo = new PromidasRepositoryBuilder()
 
 ```typescript
 // Snapshotの作成
-await repo.setupSnapshot({ limit: 1000 });
+const setupResult = await repo.setupSnapshot({ limit: 1000 });
+if (!setupResult.ok) {
+    throw new Error(`Failed to setup snapshot: ${setupResult.error}`);
+}
 
 // Snapshotからデータ取得
 const allData = await repo.getAllFromSnapshot();
@@ -414,7 +422,10 @@ Snapshotを更新する方法は3つあります:
 
 ```typescript
 // スクリプト開始時に1回だけ取得
-await repo.setupSnapshot({ limit: 1000 });
+const setupResult = await repo.setupSnapshot({ limit: 1000 });
+if (!setupResult.ok) {
+    throw new Error(`Failed to setup snapshot: ${setupResult.error}`);
+}
 
 // 以降はメモリ内のデータを使用
 const data = await repo.getAllFromSnapshot();
@@ -436,12 +447,18 @@ const repo = new PromidasRepositoryBuilder()
     .build();
 
 // 初回取得
-await repo.setupSnapshot({});
+const setupResult = await repo.setupSnapshot({});
+if (!setupResult.ok) {
+    throw new Error(`Failed to setup snapshot: ${setupResult.error}`);
+}
 
 // TTL切れをチェックし、必要なら更新
 const stats = repo.getStats();
 if (stats.isExpired) {
-    await repo.refreshSnapshot();
+    const refreshResult = await repo.refreshSnapshot();
+    if (!refreshResult.ok) {
+        throw new Error(`Failed to refresh snapshot: ${refreshResult.error}`);
+    }
 }
 const data = await repo.getAllFromSnapshot();
 ```
@@ -450,7 +467,10 @@ const data = await repo.getAllFromSnapshot();
 
 ```typescript
 // 必要なタイミングで明示的に更新
-await repo.refreshSnapshot();
+const result = await repo.refreshSnapshot();
+if (!result.ok) {
+    throw new Error(`Failed to refresh snapshot: ${result.error}`);
+}
 ```
 
 ### Stats (統計情報)
