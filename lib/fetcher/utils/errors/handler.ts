@@ -8,7 +8,8 @@
  * exceptions) into a consistent {@link FetchPrototypesResult} failure shape.
  *
  * Key responsibilities:
- * - Detecting `AbortError` (timeout) and mapping it to network failure.
+ * - Mapping `PromidasTimeoutError` (timeout) to a TIMEOUT failure.
+ * - Detecting `AbortError` (caller-driven abort) and mapping it to an ABORTED failure.
  * - Extracting metadata (status, statusText, code, url) from
  *   HTTP-like error objects.
  * - Preserving network error codes (ENOTFOUND, ECONNREFUSED, etc.) in

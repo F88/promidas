@@ -9,6 +9,7 @@ export class PromidasTimeoutError extends Error {
 
   constructor(timeoutMs: number, message?: string) {
     super(message ?? `Upstream request timed out after ${timeoutMs}ms`);
+    Object.setPrototypeOf(this, PromidasTimeoutError.prototype);
     this.name = 'PromidasTimeoutError';
     this.timeoutMs = timeoutMs;
   }

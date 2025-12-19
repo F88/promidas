@@ -151,7 +151,7 @@ export class ProtopediaApiCustomClient {
       typeof timeoutMs === 'number'
         ? createFetchWithTimeout({
             timeoutMs,
-            ...(providedFetch !== undefined && { baseFetch: providedFetch }),
+            baseFetch: providedFetch,
           })
         : providedFetch;
 
