@@ -533,7 +533,11 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
         data: largePrototypes,
       });
 
-      vi.mocked(mockStoreInstance.setAll).mockReturnValueOnce(null);
+      vi.mocked(mockStoreInstance.setAll).mockImplementationOnce(() => {
+        throw new Error(
+          'Snapshot data size (20000 bytes) exceeds maximum limit (10000 bytes)',
+        );
+      });
 
       const repo = new ProtopediaInMemoryRepositoryImpl({
         store: mockStoreInstance,
@@ -544,7 +548,8 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.error).toContain('data size exceeds maximum limit');
+        expect(result.error).toContain('data size');
+        expect(result.error).toContain('exceeds maximum limit');
       }
       expect(mockStoreInstance.setAll).toHaveBeenCalledWith(largePrototypes);
     });
@@ -559,7 +564,9 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
         data: largePrototypes,
       });
 
-      vi.mocked(mockStoreInstance.setAll).mockReturnValueOnce(null);
+      vi.mocked(mockStoreInstance.setAll).mockImplementationOnce(() => {
+        throw new Error('Snapshot data size exceeds maximum limit');
+      });
 
       const repo = new ProtopediaInMemoryRepositoryImpl({
         store: mockStoreInstance,
@@ -628,15 +635,16 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
         data: largePrototypes,
       });
 
-      vi.mocked(mockStoreInstance.setAll).mockReturnValueOnce(null);
+      vi.mocked(mockStoreInstance.setAll).mockImplementationOnce(() => {
+        throw new Error('Snapshot data size exceeds maximum limit');
+      });
 
       const refreshResult = await repo.refreshSnapshot();
 
       expect(refreshResult.ok).toBe(false);
       if (!refreshResult.ok) {
-        expect(refreshResult.error).toContain(
-          'data size exceeds maximum limit',
-        );
+        expect(refreshResult.error).toContain('data size');
+        expect(refreshResult.error).toContain('exceeds maximum limit');
       }
 
       // Verify old snapshot is still accessible

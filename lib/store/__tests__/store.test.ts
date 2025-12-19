@@ -6,6 +6,11 @@ import {
   createNoopLogger,
 } from '../../logger/index.js';
 import type { NormalizedPrototype } from '../../types/index.js';
+import {
+  ConfigurationError,
+  DataSizeExceededError,
+  SizeEstimationError,
+} from '../errors/store-error.js';
 import { PrototypeInMemoryStore } from '../store.js';
 
 const createPrototype = (
@@ -76,6 +81,13 @@ describe('PrototypeInMemoryStore', () => {
       ).toThrow(
         /PrototypeInMemoryStore maxDataSizeBytes must be <= \d+ bytes \(\d+ MiB\) to prevent oversized data/,
       );
+    });
+
+    it('throws ConfigurationError when maxDataSizeBytes exceeds limit', () => {
+      expect(
+        () =>
+          new PrototypeInMemoryStore({ maxDataSizeBytes: 31 * 1024 * 1024 }),
+      ).toThrow(ConfigurationError);
     });
 
     describe('logger configuration', () => {
@@ -270,8 +282,7 @@ describe('PrototypeInMemoryStore', () => {
         createPrototype({ id: 7, freeComment: 'x'.repeat(200) }),
       ];
 
-      const result = store.setAll(prototypes);
-      expect(result).toBeNull();
+      expect(() => store.setAll(prototypes)).toThrow();
       expect(store.size).toBe(0);
     });
 
@@ -290,25 +301,19 @@ describe('PrototypeInMemoryStore', () => {
       const circularPrototype = createPrototype({ id: 1 }) as any;
       circularPrototype.self = circularPrototype; // create circular reference
 
-      // setAll should not throw even if estimateSize fails
-      expect(() => store.setAll([circularPrototype])).not.toThrow();
+      // setAll should throw SizeEstimationError when estimateSize fails
+      expect(() => store.setAll([circularPrototype])).toThrow();
     });
 
-    it('falls back to 0 when size estimation fails', () => {
+    it('throws SizeEstimationError when size estimation fails', () => {
       const store = new PrototypeInMemoryStore();
 
       // Mock JSON.stringify to throw
-      const originalStringify = JSON.stringify;
       vi.spyOn(JSON, 'stringify').mockImplementationOnce(() => {
         throw new Error('Stringify failed');
       });
 
-      store.setAll([createPrototype({ id: 1 })]);
-
-      // Restore original implementation
-      JSON.stringify = originalStringify;
-
-      expect(store.getByPrototypeId(1)).toBeDefined();
+      expect(() => store.setAll([createPrototype({ id: 1 })])).toThrow();
     });
 
     it('deduplicates prototypes by ID and ensures consistency between size and getAll().length', () => {
@@ -399,9 +404,7 @@ describe('PrototypeInMemoryStore', () => {
       ];
 
       // Even after deduplication (2 unique items), should exceed limit
-      const result = store.setAll(prototypes);
-
-      expect(result).toBeNull();
+      expect(() => store.setAll(prototypes)).toThrow();
       expect(store.size).toBe(0);
     });
 

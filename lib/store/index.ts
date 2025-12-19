@@ -26,6 +26,14 @@ export {
   type Snapshot as PrototypeInMemorySnapshot,
 } from './store.js';
 
+export {
+  StoreError,
+  ConfigurationError,
+  DataSizeExceededError,
+  SizeEstimationError,
+  type StoreDataState,
+} from './errors/store-error.js';
+
 export type { NormalizedPrototype } from '../types/index.js';
 
 export type { Logger, LogLevel } from '../logger/index.js';

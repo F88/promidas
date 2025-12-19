@@ -157,3 +157,102 @@ The store uses logging for:
 - **Snapshot Updates**: Logs when prototypes are cached via `setAll()`
 - **Size Violations**: Warns when payload size exceeds configured limits
 - **State Changes**: Tracks refresh operations and cache invalidation
+
+## Error Handling Design
+
+The store uses exception-based error handling with explicit data state tracking to ensure safe and predictable failure behavior.
+
+### Design Rationale
+
+**Why Exceptions Over Null Returns**:
+
+- **Explicit Error Information**: Exceptions carry rich context (data sizes, error causes) that null values cannot provide
+- **Type Safety**: Return type is non-nullable, eliminating need for null checks at call sites
+- **Fail-Fast**: Errors surface immediately rather than propagating as silent null values
+- **Composability**: Exceptions naturally propagate through async call stacks without explicit checks
+
+### Error Classes Hierarchy
+
+```typescript
+StoreError (base)
+├── ConfigurationError
+├── DataSizeExceededError
+└── SizeEstimationError
+```
+
+**Base Class**: `StoreError`
+
+- Extends native `Error`
+- Includes `dataState: StoreDataState` property
+- Provides common foundation for all store-specific errors
+
+**Specialized Errors**:
+
+- `ConfigurationError`: Invalid store configuration
+    - Thrown during construction when configuration parameters are invalid
+    - Example: `maxDataSizeBytes` exceeds 30 MiB hard limit
+    - Context: No store instance exists yet, so `dataState` is always `'UNKNOWN'`
+
+- `DataSizeExceededError`: Payload exceeds `maxDataSizeBytes`
+    - Properties: `dataSizeBytes`, `maxDataSizeBytes`
+    - Context: Includes both actual and maximum sizes for debugging
+
+- `SizeEstimationError`: JSON serialization failure
+    - Property: `cause?: Error` (original error, e.g., circular reference)
+    - Context: Preserves stack trace of underlying serialization error
+
+### Data State Tracking
+
+The `dataState` property indicates whether the store's data was affected when an error occurred:
+
+```typescript
+type StoreDataState = 'UNCHANGED' | 'UNKNOWN';
+```
+
+- **`'UNCHANGED'`**: Store data remains intact (safe to continue using)
+- **`'UNKNOWN'`**: Data state is uncertain (extensibility for future cases)
+
+### Atomic Operations Guarantee
+
+The store guarantees atomicity for `setAll()` operations:
+
+1. **Validation Phase** (before any store updates):
+    - Deduplication: Creates local `Map` (no store mutation)
+    - Size estimation: Calculates size (may throw `SizeEstimationError`)
+    - Size check: Validates against limit (may throw `DataSizeExceededError`)
+
+2. **Update Phase** (after all validation passes):
+    - Replace `prototypeIdIndex` and `prototypes` atomically
+    - Update metadata (`cachedAt`, `dataSizeBytes`)
+
+**Key Property**: If any error occurs during validation, the store remains in its previous state (`dataState: 'UNCHANGED'`). The update phase contains only simple assignments that cannot fail under normal conditions.
+
+### Error Constructor Design
+
+Error constructors accept `dataState` as the first parameter:
+
+```typescript
+throw new DataSizeExceededError('UNCHANGED', dataSizeBytes, maxDataSizeBytes);
+throw new SizeEstimationError('UNKNOWN', cause);
+```
+
+**Rationale**:
+
+- **Explicit State**: Forces callers to consider data state at throw site
+- **Default to Unknown**: Constructor defaults to `'UNKNOWN'` for safety
+- **Context-Specific**: Each call site can specify appropriate state
+
+### Layer-Specific Responsibilities
+
+**Low-level methods** (e.g., `estimateSize()`):
+
+- Pure calculation functions without store context
+- Throw errors with `dataState: 'UNKNOWN'` (context-agnostic)
+
+**High-level methods** (e.g., `setAll()`):
+
+- Catch low-level errors
+- Re-throw with accurate `dataState: 'UNCHANGED'` when validation fails
+- Know store update hasn't occurred yet
+
+This layered approach keeps pure functions context-free while allowing call sites to provide accurate state information.

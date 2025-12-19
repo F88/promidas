@@ -9,6 +9,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Store Custom Error Classes**: Implemented custom error classes for `PrototypeInMemoryStore` (#58)
+    - `ConfigurationError`: Invalid constructor configuration
+    - `DataSizeExceededError`: Data exceeds `maxDataSizeBytes` limit
+    - `SizeEstimationError`: JSON serialization failure
+    - All errors include `dataState` property indicating store state
+    - Exported from `@f88/promidas/store` with comprehensive documentation
+
+### Changed
+
+- **Store Error Handling**: `setAll()` now throws exceptions instead of returning `null` (#58)
+    - Throws `DataSizeExceededError` when data size limit exceeded (previously returned `null`)
+    - Throws `SizeEstimationError` when size estimation fails (previously silently returned 0)
+- **Store Constructor**: Logs before validation to capture failed initialization attempts
+
+### Breaking Changes
+
+#### Store `setAll()` Method Now Throws Exceptions Instead of Returning Null
+
+The `setAll()` method return type changed from `{ dataSizeBytes: number } | null` to `{ dataSizeBytes: number }`. Instead of returning `null` on failure, it now throws custom error classes:
+
+- Throws `DataSizeExceededError` when data size exceeds `maxDataSizeBytes` limit (previously returned `null`)
+- Throws `SizeEstimationError` when JSON serialization fails (previously silently returned 0)
+
+Wrap `setAll()` calls in try-catch blocks to handle exceptions properly.
+
+**Files affected:**
+
+- `lib/store/store.ts` - Updated error handling
+- `lib/store/errors/store-error.ts` - New error classes
+- `lib/store/index.ts` - Export error classes
+
+#### Store Constructor Now Throws `ConfigurationError`
+
+The constructor now throws `ConfigurationError` instead of generic `Error` when `maxDataSizeBytes` exceeds 30 MiB limit.
+
+**Note**: Repository layer users are not affected as it already handles exceptions via try-catch.
+
 ## [0.11.0] - 2025-12-17
 
 ### Added
