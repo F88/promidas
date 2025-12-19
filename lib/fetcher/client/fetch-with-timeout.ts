@@ -1,4 +1,4 @@
-import { PromidasTimeoutError } from '../utils/errors/timeout-error.js';
+import { PromidasTimeoutError } from '../errors/fetcher-error.js';
 
 export interface FetchWithTimeoutConfig {
   timeoutMs: number;

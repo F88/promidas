@@ -1,3 +1,9 @@
+/**
+ * Error classes for fetcher operations.
+ *
+ * @module
+ */
+
 export class PromidasTimeoutError extends Error {
   readonly timeoutMs: number;
 

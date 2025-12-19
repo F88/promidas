@@ -70,6 +70,9 @@ export type { Logger, LogLevel } from '../logger/index.js';
 export { ProtopediaApiCustomClient } from './client/protopedia-api-custom-client.js';
 export type { ProtopediaApiCustomClientConfig } from './client/config.js';
 
+// Errors
+export { PromidasTimeoutError } from './errors/fetcher-error.js';
+
 // Result Types
 export type { FetchPrototypesResult } from './types/result.types.js';
 export type { UpstreamPrototype } from './types/prototype-api.types.js';

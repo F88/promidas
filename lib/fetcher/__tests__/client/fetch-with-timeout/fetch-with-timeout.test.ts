@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createFetchWithTimeout } from '../../../client/fetch-with-timeout.js';
-import { PromidasTimeoutError } from '../../../utils/errors/timeout-error.js';
+import { PromidasTimeoutError } from '../../../errors/fetcher-error.js';
 
 describe('createFetchWithTimeout', () => {
   it('throws PromidasTimeoutError when the timeout triggers', async () => {
