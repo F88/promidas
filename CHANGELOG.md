@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking Changes
 
+## [0.12.1] - 2025-12-19
+
+### Fixed
+
+- **Fetcher Timeout vs Abort**: Distinguishes request timeouts from caller-initiated aborts in fetcher error handling (#60)
+
 ## [0.12.0] - 2025-12-19
 
 ### Added
