@@ -127,12 +127,12 @@ export class DataSizeExceededError extends StoreError {
   /**
    * Creates a new DataSizeExceededError.
    *
-   * @param dataState - State of the store's data (defaults to 'UNKNOWN')
+   * @param dataState - State of the store's data
    * @param dataSizeBytes - Actual size of the data in bytes
    * @param maxDataSizeBytes - Maximum allowed size in bytes
    */
   constructor(
-    dataState: StoreDataState = 'UNKNOWN',
+    dataState: StoreDataState,
     dataSizeBytes: number,
     maxDataSizeBytes: number,
   ) {

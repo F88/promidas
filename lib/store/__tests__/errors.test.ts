@@ -22,14 +22,6 @@ describe('Store Error Classes', () => {
       expect(error.message).toContain('5000 bytes');
       expect(error.message).toContain('1000 bytes');
     });
-
-    it('creates error with default dataState when first parameter is undefined', () => {
-      const error = new DataSizeExceededError(undefined, 3000, 2000);
-
-      expect(error.dataState).toBe('UNKNOWN');
-      expect(error.dataSizeBytes).toBe(3000);
-      expect(error.maxDataSizeBytes).toBe(2000);
-    });
   });
 
   describe('SizeEstimationError', () => {
