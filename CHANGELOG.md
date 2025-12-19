@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Breaking Changes
+
+## [0.12.0] - 2025-12-19
+
+### Added
+
 - **Store Custom Error Classes**: Implemented custom error classes for `PrototypeInMemoryStore` (#58)
     - `ConfigurationError`: Invalid constructor configuration
     - `DataSizeExceededError`: Data exceeds `maxDataSizeBytes` limit
