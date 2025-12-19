@@ -6,6 +6,7 @@ title-ja: 開発ガイド
 related:
     - ./README.md "Project Overview"
     - ./CONTRIBUTING.md "Contributing Guide"
+    - ./DOCUMENTATION.md "Documentation Standards"
 instructions-for-ais:
     - This document should be written in English for AI readability.
     - Content within code fences may be written in languages other than English.
@@ -58,6 +59,12 @@ Vitest automatically loads environment variables in the following order (later f
 4. `.env.test.local` - Local test overrides (ignored by git)
 
 **Note:** In tests, you typically don't need to set `PROTOPEDIA_API_V2_TOKEN` as API calls are mocked. However, if you need to run integration tests against the real API, set it in `.env.test.local`.
+
+## Documentation Standards
+
+This project follows strict documentation standards to ensure consistency and clarity across all modules. Each module should have three documentation files: README.md (Japanese, beginner-friendly), DESIGN.md (English, design specifications), and USAGE.md (English, usage examples).
+
+For detailed documentation standards and guidelines, see [DOCUMENTATION.md](DOCUMENTATION.md).
 
 ## Development Workflow
 
