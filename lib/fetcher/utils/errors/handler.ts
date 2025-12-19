@@ -30,12 +30,15 @@ const ERROR_NAMES = {
  * Standard error messages for common failure scenarios.
  */
 const ERROR_MESSAGES = {
+  ABORTED: 'Upstream request aborted',
   TIMEOUT: 'Upstream request timed out',
   UNKNOWN: 'Failed to fetch prototypes',
 } as const;
 
 import type { NetworkFailure } from '../../types/prototype-api.types.js';
 import type { FetchPrototypesResult } from '../../types/result.types.js';
+
+import { PromidasTimeoutError } from './timeout-error.js';
 
 /**
  * Type guard to check if an error is an AbortError.
@@ -172,9 +175,24 @@ function createFailureResult(
  * ```
  */
 export function handleApiError(error: unknown): FetchPrototypesResult {
-  // Handle AbortError (timeout) - network error, no status
+  // Handle explicit timeout errors (distinguishable from AbortError)
+  if (error instanceof PromidasTimeoutError) {
+    const result = createFailureResult(ERROR_MESSAGES.TIMEOUT, {
+      res: {
+        code: 'TIMEOUT',
+      },
+    });
+
+    return result;
+  }
+
+  // Handle AbortError (caller-driven abort) - network error, no status
   if (isAbortError(error)) {
-    const result = createFailureResult(ERROR_MESSAGES.TIMEOUT, {});
+    const result = createFailureResult(ERROR_MESSAGES.ABORTED, {
+      res: {
+        code: 'ABORTED',
+      },
+    });
 
     return result;
   }
