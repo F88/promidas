@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { PromidasRepositoryBuilder } from '../../builder.js';
 import { createNoopLogger } from '../../logger/index.js';
 
 vi.mock('../../fetcher/index', async (importOriginal) => {
@@ -28,8 +29,6 @@ vi.mock('../../repository/protopedia-in-memory-repository.js', async () => {
     ProtopediaInMemoryRepositoryImpl,
   };
 });
-
-import { PromidasRepositoryBuilder } from '../../builder.js';
 
 describe('PromidasRepositoryBuilder - repository construction', () => {
   beforeEach(() => {
