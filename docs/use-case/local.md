@@ -58,7 +58,11 @@ const repo = createPromidasForLocal({
 });
 
 // 起動時に全データ取得
-await repo.setupSnapshot({ limit: 10000 });
+const setupResult = await repo.setupSnapshot({ limit: 10000 });
+if (!setupResult.ok) {
+    console.error('Failed to fetch data:', setupResult.error);
+    process.exit(1);
+}
 
 // あとはメモリ内のデータを使うだけ
 const allData = await repo.getAllFromSnapshot();

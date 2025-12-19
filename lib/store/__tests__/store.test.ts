@@ -6,6 +6,7 @@ import {
   createNoopLogger,
 } from '../../logger/index.js';
 import type { NormalizedPrototype } from '../../types/index.js';
+import { ConfigurationError } from '../errors/store-error.js';
 import { PrototypeInMemoryStore } from '../store.js';
 
 const createPrototype = (
@@ -78,6 +79,13 @@ describe('PrototypeInMemoryStore', () => {
       );
     });
 
+    it('throws ConfigurationError when maxDataSizeBytes exceeds limit', () => {
+      expect(
+        () =>
+          new PrototypeInMemoryStore({ maxDataSizeBytes: 31 * 1024 * 1024 }),
+      ).toThrow(ConfigurationError);
+    });
+
     describe('logger configuration', () => {
       it('uses default console logger when no logger provided', () => {
         const store = new PrototypeInMemoryStore();
@@ -119,6 +127,13 @@ describe('PrototypeInMemoryStore', () => {
 
         debugSpy.mockRestore();
       });
+    });
+  });
+
+  describe('internal helpers (via any)', () => {
+    it('getElapsedTime returns 0 when no data is cached', () => {
+      const store = new PrototypeInMemoryStore();
+      expect((store as any).getElapsedTime()).toBe(0);
     });
   });
 
@@ -270,8 +285,7 @@ describe('PrototypeInMemoryStore', () => {
         createPrototype({ id: 7, freeComment: 'x'.repeat(200) }),
       ];
 
-      const result = store.setAll(prototypes);
-      expect(result).toBeNull();
+      expect(() => store.setAll(prototypes)).toThrow();
       expect(store.size).toBe(0);
     });
 
@@ -290,25 +304,42 @@ describe('PrototypeInMemoryStore', () => {
       const circularPrototype = createPrototype({ id: 1 }) as any;
       circularPrototype.self = circularPrototype; // create circular reference
 
-      // setAll should not throw even if estimateSize fails
-      expect(() => store.setAll([circularPrototype])).not.toThrow();
+      // setAll should throw SizeEstimationError when estimateSize fails
+      expect(() => store.setAll([circularPrototype])).toThrow();
     });
 
-    it('falls back to 0 when size estimation fails', () => {
+    it('throws SizeEstimationError when size estimation fails', () => {
       const store = new PrototypeInMemoryStore();
 
       // Mock JSON.stringify to throw
-      const originalStringify = JSON.stringify;
       vi.spyOn(JSON, 'stringify').mockImplementationOnce(() => {
         throw new Error('Stringify failed');
       });
 
-      store.setAll([createPrototype({ id: 1 })]);
+      expect(() => store.setAll([createPrototype({ id: 1 })])).toThrow();
+    });
 
-      // Restore original implementation
-      JSON.stringify = originalStringify;
+    it('wraps non-Error thrown values with undefined cause', () => {
+      const store = new PrototypeInMemoryStore();
 
-      expect(store.getByPrototypeId(1)).toBeDefined();
+      vi.spyOn(JSON, 'stringify').mockImplementationOnce(() => {
+        throw 'Stringify failed';
+      });
+
+      expect(() => store.setAll([createPrototype({ id: 1 })])).toThrow();
+    });
+
+    it('re-throws unexpected errors from estimateSize wrapper', () => {
+      const store = new PrototypeInMemoryStore();
+
+      const unexpected = new Error('Unexpected estimateSize failure');
+      (store as any).estimateSize = () => {
+        throw unexpected;
+      };
+
+      expect(() => store.setAll([createPrototype({ id: 1 })])).toThrow(
+        unexpected,
+      );
     });
 
     it('deduplicates prototypes by ID and ensures consistency between size and getAll().length', () => {
@@ -399,9 +430,7 @@ describe('PrototypeInMemoryStore', () => {
       ];
 
       // Even after deduplication (2 unique items), should exceed limit
-      const result = store.setAll(prototypes);
-
-      expect(result).toBeNull();
+      expect(() => store.setAll(prototypes)).toThrow();
       expect(store.size).toBe(0);
     });
 

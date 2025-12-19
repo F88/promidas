@@ -8,35 +8,34 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ProtopediaApiCustomClient } from '../../../fetcher/index.js';
-import { PrototypeInMemoryStore } from '../../../store/index.js';
-import { ValidationError } from '../../index.js';
-import { ProtopediaInMemoryRepositoryImpl } from '../../protopedia-in-memory-repository.js';
+import { ProtopediaApiCustomClient } from '../../../../../fetcher/index.js';
+import { PrototypeInMemoryStore } from '../../../../../store/index.js';
+import { ValidationError } from '../../../../index.js';
+import { ProtopediaInMemoryRepositoryImpl } from '../../../../protopedia-in-memory-repository.js';
+import {
+  createTestContext,
+  makeNormalizedPrototype,
+  makePrototype,
+  setupMocks,
+} from '../../test-helpers.js';
 
-vi.mock('../../../fetcher/index', async (importOriginal) => {
+vi.mock('../../../../../fetcher/index', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../../../fetcher/index.js')>();
+    await importOriginal<typeof import('../../../../../fetcher/index.js')>();
   return {
     ...actual,
     ProtopediaApiCustomClient: vi.fn(),
   };
 });
 
-vi.mock('../../../store/index', async (importOriginal) => {
+vi.mock('../../../../../store/index', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../../../store/index.js')>();
+    await importOriginal<typeof import('../../../../../store/index.js')>();
   return {
     ...actual,
     PrototypeInMemoryStore: vi.fn(),
   };
 });
-
-import {
-  createTestContext,
-  makeNormalizedPrototype,
-  makePrototype,
-  setupMocks,
-} from './test-helpers.js';
 
 describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
   const { fetchPrototypesMock, resetMocks } = setupMocks();
@@ -57,7 +56,8 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
   });
 
   describe('getRandomPrototypeFromSnapshot', () => {
-    it('returns undefined when the store is empty', async () => {
+    it('returns null when the store is empty', async () => {
+      (mockStoreInstance as any).size = 0;
       vi.mocked(mockStoreInstance.getStats).mockReturnValueOnce({
         size: 0,
         cachedAt: null,
@@ -78,6 +78,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
     });
 
     it('returns a prototype when the snapshot is populated', async () => {
+      (mockStoreInstance as any).size = 1;
       fetchPrototypesMock.mockResolvedValueOnce({
         ok: true,
         data: [
@@ -109,6 +110,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
       });
       await repo.setupSnapshot({});
 
+      vi.spyOn(Math, 'random').mockReturnValueOnce(0);
       const random = await repo.getRandomPrototypeFromSnapshot();
       expect(random).not.toBeNull();
       expect(random?.id).toBe(42);
@@ -120,6 +122,7 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
         makeNormalizedPrototype({ id: 2, prototypeNm: 'beta' }),
         makeNormalizedPrototype({ id: 3, prototypeNm: 'gamma' }),
       ];
+      (mockStoreInstance as any).size = prototypes.length;
       fetchPrototypesMock.mockResolvedValueOnce({
         ok: true,
         data: prototypes,
@@ -148,6 +151,19 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
       expect(random).not.toBeNull();
       expect([1, 2, 3]).toContain(random?.id);
       expect(['alpha', 'beta', 'gamma']).toContain(random?.prototypeNm);
+    });
+
+    it('returns null when size is non-zero but getAll is empty', async () => {
+      (mockStoreInstance as any).size = 1;
+      vi.mocked(mockStoreInstance.getAll).mockReturnValueOnce([]);
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {},
+      });
+
+      const random = await repo.getRandomPrototypeFromSnapshot();
+      expect(random).toBeNull();
     });
   });
 

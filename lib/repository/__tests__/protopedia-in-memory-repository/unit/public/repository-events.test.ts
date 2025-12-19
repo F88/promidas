@@ -7,33 +7,32 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ProtopediaApiCustomClient } from '../../../fetcher/index.js';
-import { PrototypeInMemoryStore } from '../../../store/index.js';
-import { ProtopediaInMemoryRepositoryImpl } from '../../protopedia-in-memory-repository.js';
+import { ProtopediaApiCustomClient } from '../../../../../fetcher/index.js';
+import { PrototypeInMemoryStore } from '../../../../../store/index.js';
+import { ProtopediaInMemoryRepositoryImpl } from '../../../../protopedia-in-memory-repository.js';
+import {
+  createTestContext,
+  makeNormalizedPrototype,
+  setupMocks,
+} from '../../test-helpers.js';
 
-vi.mock('../../../fetcher/index', async (importOriginal) => {
+vi.mock('../../../../../fetcher/index', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../../../fetcher/index.js')>();
+    await importOriginal<typeof import('../../../../../fetcher/index.js')>();
   return {
     ...actual,
     ProtopediaApiCustomClient: vi.fn(),
   };
 });
 
-vi.mock('../../../store/index', async (importOriginal) => {
+vi.mock('../../../../../store/index', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../../../store/index.js')>();
+    await importOriginal<typeof import('../../../../../store/index.js')>();
   return {
     ...actual,
     PrototypeInMemoryStore: vi.fn(),
   };
 });
-
-import {
-  createTestContext,
-  makeNormalizedPrototype,
-  setupMocks,
-} from './test-helpers.js';
 
 describe('ProtopediaInMemoryRepositoryImpl - event system', () => {
   const { fetchPrototypesMock, resetMocks } = setupMocks();
@@ -238,6 +237,46 @@ describe('ProtopediaInMemoryRepositoryImpl - event system', () => {
       if (result.ok) {
         expect(snapshotCompletedMock).toHaveBeenCalledWith(result.stats);
       }
+    });
+
+    it('does not reject when snapshotCompleted listener throws (logs error)', async () => {
+      vi.mocked(mockApiClientInstance.fetchPrototypes).mockResolvedValue({
+        ok: true,
+        data: [makeNormalizedPrototype({ id: 1 })],
+      });
+
+      const mockLogger = {
+        error: vi.fn(),
+        warn: vi.fn(),
+        info: vi.fn(),
+        debug: vi.fn(),
+      };
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {
+          enableEvents: true,
+          logger: mockLogger,
+        },
+      });
+
+      const throwingListener = vi.fn(() => {
+        throw new Error('listener boom');
+      });
+      repo.events?.on('snapshotCompleted', throwingListener);
+
+      const result = await repo.setupSnapshot({});
+
+      expect(result.ok).toBe(true);
+      expect(throwingListener).toHaveBeenCalledTimes(1);
+      expect(mockLogger.error).toHaveBeenCalledTimes(1);
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Repository event emission failed',
+        expect.objectContaining({
+          eventName: 'snapshotCompleted',
+        }),
+      );
     });
   });
 

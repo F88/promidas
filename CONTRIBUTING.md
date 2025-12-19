@@ -6,6 +6,7 @@ title-ja: コントリビューティングガイド
 related:
     - ./README.md "Project Overview"
     - ./DEVELOPMENT.md "Development Guide"
+    - ./DOCUMENTATION.md "Documentation Standards"
     - ./RELEASE.md "Release Guide"
 instructions-for-ais:
     - This document should be written in English for AI readability.
@@ -21,6 +22,8 @@ This document provides contribution guidelines for this project.
 **Package Distribution:** This package is published to [GitHub Packages](https://github.com/F88/promidas/packages) (`@f88/promidas`).
 
 For development environment setup and daily development workflow, see [DEVELOPMENT.md](./DEVELOPMENT.md).
+
+For documentation standards and guidelines, see [DOCUMENTATION.md](./DOCUMENTATION.md).
 
 For release procedures (maintainers only), see [RELEASE.md](./RELEASE.md).
 

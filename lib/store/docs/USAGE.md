@@ -54,11 +54,7 @@ All methods live on `PrototypeInMemoryStore` in `lib/store/store.ts`.
 
 #### Logger Configuration
 
-The store follows the Fastify-style logger configuration pattern, accepting both `logger` and `logLevel` parameters.
-
-##### Pattern 1: Default Logger with Log Level
-
-When no logger is provided, the store creates a `ConsoleLogger` with the specified level:
+The store accepts both `logger` and `logLevel` parameters. When no logger is provided, a `ConsoleLogger` is created with the specified level (default: `'info'`).
 
 ```ts
 import { PrototypeInMemoryStore } from '@f88/promidas/store';
@@ -66,77 +62,21 @@ import { PrototypeInMemoryStore } from '@f88/promidas/store';
 // Default logger with 'info' level
 const store1 = new PrototypeInMemoryStore({ ttlMs: 30000 });
 
-// Default logger with custom level
+// Custom log level
 const store2 = new PrototypeInMemoryStore({
     ttlMs: 30000,
-    logLevel: 'warn', // Creates ConsoleLogger('warn')
+    logLevel: 'warn',
 });
 
-// Debug level for verbose output
+// Custom logger
+import { createConsoleLogger } from '@f88/promidas/logger';
 const store3 = new PrototypeInMemoryStore({
     ttlMs: 30000,
-    logLevel: 'debug', // Creates ConsoleLogger('debug')
-});
-
-// Completely silent
-const store4 = new PrototypeInMemoryStore({
-    ttlMs: 30000,
-    logLevel: 'silent', // Creates ConsoleLogger('silent')
+    logger: createConsoleLogger('debug'),
 });
 ```
 
-##### Pattern 2: Custom Logger with Level Override
-
-When both logger and logLevel are provided, the store attempts to update the logger's level:
-
-```ts
-import { createConsoleLogger } from '@f88/promidas/logger';
-
-const logger = createConsoleLogger(); // Default 'info' level
-
-const store = new PrototypeInMemoryStore({
-    ttlMs: 30000,
-    logger,
-    logLevel: 'debug', // Updates logger.level to 'debug' if mutable
-});
-```
-
-##### Pattern 3: Custom Logger Integration
-
-For production environments, integrate with your application's logging framework:
-
-```ts
-import type { Logger } from '@f88/promidas/logger';
-import winston from 'winston';
-
-const winstonLogger = winston.createLogger({
-    level: 'warn',
-    transports: [new winston.transports.Console()],
-});
-
-// Adapt Winston to the Logger interface
-const loggerAdapter: Logger = {
-    error: (msg, meta) => winstonLogger.error(msg, meta),
-    warn: (msg, meta) => winstonLogger.warn(msg, meta),
-    info: (msg, meta) => winstonLogger.info(msg, meta),
-    debug: (msg, meta) => winstonLogger.debug(msg, meta),
-};
-
-const store = new PrototypeInMemoryStore({
-    ttlMs: 30000,
-    logger: loggerAdapter, // Used as-is
-});
-```
-
-##### Logger Usage
-
-The store uses the logger for:
-
-- Initialization messages (`info`)
-- Snapshot update confirmations (`info`)
-- Warnings when data size exceeds limits (`warn`)
-
-> **Note:** The logger is set during store construction. If you need to change logging behavior at runtime, pass a custom logger implementation that supports dynamic level changes.
+For custom logger integration (e.g., Winston, Pino), see [lib/logger/README.md](../../logger/README.md).
 
 - `getConfig(): Omit<Required<PrototypeInMemoryStoreConfig>, 'logger'>`
     - Returns the resolved configuration values (TTL and max data size) that were
@@ -144,15 +84,17 @@ The store uses the logger for:
 
 ### Write operations
 
-- `setAll(prototypes: NormalizedPrototype[]): { dataSizeBytes: number } | null`
+- `setAll(prototypes: NormalizedPrototype[]): { dataSizeBytes: number }`
     - Estimates the JSON payload size of `prototypes`.
     - If the payload fits within `maxDataSizeBytes`, replaces the
       internal index and ordered array, updates metadata, and returns
       `{ dataSizeBytes }`.
-    - If the payload exceeds the limit, leaves the store unchanged and
-      returns `null`.
+    - **Throws** `DataSizeExceededError` when the payload exceeds the limit.
+    - **Throws** `SizeEstimationError` when JSON serialization fails (e.g., circular references).
     - If duplicate IDs exist in the input array, the last occurrence wins
       (see [DESIGN.md](DESIGN.md#handling-duplicate-ids) for details).
+    - **Error Safety**: When an error is thrown, the store is NOT modified.
+      Previously stored data remains intact and accessible.
 
 - `clear(): void`
     - Resets the store to an empty state and clears all metadata.
@@ -290,6 +232,53 @@ async function refreshTask(client: ProtoPediaApiClient): Promise<void> {
 // Somewhere in your request handling or UI logic:
 await ensureFreshSnapshot(store, refreshTask);
 const prototype = store.getByPrototypeId(123);
+```
+
+## Error Handling
+
+### Configuration Errors
+
+The constructor throws `ConfigurationError` when invalid configuration is provided:
+
+```typescript
+import { ConfigurationError } from '@f88/promidas/store';
+
+try {
+    const store = new PrototypeInMemoryStore({
+        maxDataSizeBytes: 50 * 1024 * 1024, // 50 MiB exceeds 30 MiB limit
+    });
+} catch (error) {
+    if (error instanceof ConfigurationError) {
+        console.error('Invalid configuration:', error.message);
+    }
+}
+```
+
+### Operation Errors
+
+`setAll()` throws specific error types when validation fails. All errors guarantee that store data remains unchanged. For design details, see [DESIGN.md](DESIGN.md#error-handling-design).
+
+```typescript
+import {
+    DataSizeExceededError,
+    SizeEstimationError,
+} from '@f88/promidas/store';
+
+try {
+    const result = store.setAll(prototypes);
+    console.log(`Stored ${result.dataSizeBytes} bytes`);
+} catch (error) {
+    if (error instanceof DataSizeExceededError) {
+        console.error(
+            `Data too large: ${error.dataSizeBytes} bytes ` +
+                `(max: ${error.maxDataSizeBytes})`,
+        );
+    } else if (error instanceof SizeEstimationError) {
+        console.error('Invalid data structure:', error.cause);
+    } else {
+        throw error;
+    }
+}
 ```
 
 ## Notes

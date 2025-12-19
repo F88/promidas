@@ -14,7 +14,13 @@ import {
   createConsoleLogger,
 } from '../logger/index.js';
 import type { NormalizedPrototype } from '../types/index.js';
-import { sanitizeDataForLogging } from '../utils/index.js'; // 追加
+import { sanitizeDataForLogging } from '../utils/index.js';
+
+import {
+  ConfigurationError,
+  DataSizeExceededError,
+  SizeEstimationError,
+} from './errors/store-error.js';
 
 const DEFAULT_TTL_MS = 30 * 60 * 1_000; // 30 minutes
 const DEFAULT_DATA_SIZE_BYTES = 10 * 1024 * 1024; // 10 MiB
@@ -140,7 +146,7 @@ export class PrototypeInMemoryStore {
    *   creates a ConsoleLogger with this level. When `logger` is provided and mutable,
    *   updates the logger's level property.
    *
-   * @throws {Error} When maxDataSizeBytes exceeds LIMIT_DATA_SIZE_BYTES (30 MiB)
+   * @throws {ConfigurationError} When maxDataSizeBytes exceeds LIMIT_DATA_SIZE_BYTES (30 MiB)
    */
   constructor({
     ttlMs = DEFAULT_TTL_MS,
@@ -148,14 +154,6 @@ export class PrototypeInMemoryStore {
     logger,
     logLevel,
   }: PrototypeInMemoryStoreConfig = {}) {
-    // Throw if maxDataSizeBytes exceeds the hard limit
-    if (maxDataSizeBytes > LIMIT_DATA_SIZE_BYTES) {
-      const maxMiB = (LIMIT_DATA_SIZE_BYTES / (1024 * 1024)).toFixed(0);
-      throw new Error(
-        `PrototypeInMemoryStore maxDataSizeBytes must be <= ${LIMIT_DATA_SIZE_BYTES} bytes (${maxMiB} MiB) to prevent oversized data`,
-      );
-    }
-
     this.ttlMs = ttlMs;
     this.maxDataSizeBytes = maxDataSizeBytes;
 
@@ -181,6 +179,14 @@ export class PrototypeInMemoryStore {
       logger: logger ? 'custom' : undefined,
       logLevel,
     });
+
+    // Throw if maxDataSizeBytes exceeds the hard limit
+    if (maxDataSizeBytes > LIMIT_DATA_SIZE_BYTES) {
+      const maxMiB = (LIMIT_DATA_SIZE_BYTES / (1024 * 1024)).toFixed(0);
+      throw new ConfigurationError(
+        `PrototypeInMemoryStore maxDataSizeBytes must be <= ${LIMIT_DATA_SIZE_BYTES} bytes (${maxMiB} MiB) to prevent oversized data`,
+      );
+    }
   }
 
   /**
@@ -270,7 +276,8 @@ export class PrototypeInMemoryStore {
    * the risk of out-of-memory errors, especially with large datasets.
    *
    * @param data - The array of NormalizedPrototypes to estimate the size for.
-   * @returns The estimated size in bytes of the JSON-serialized data, or 0 if estimation fails.
+   * @returns The estimated size in bytes of the JSON-serialized data.
+   * @throws {SizeEstimationError} When JSON serialization fails (e.g., circular references).
    */
   private estimateSize(data: readonly NormalizedPrototype[]): number {
     try {
@@ -300,11 +307,14 @@ export class PrototypeInMemoryStore {
       }
       return totalBytes;
     } catch (error) {
-      this.logger.warn('Failed to estimate payload size, defaulting to 0', {
+      this.logger.error('Failed to estimate payload size', {
         error: sanitizeDataForLogging(error),
       });
+      throw new SizeEstimationError(
+        'UNKNOWN',
+        error instanceof Error ? error : undefined,
+      );
     }
-    return 0;
   }
 
   /**
@@ -348,10 +358,16 @@ export class PrototypeInMemoryStore {
    * Creates a shallow copy of the input array to prevent external mutations.
    *
    * @param prototypes - Array of normalized prototypes to store (array will be copied)
-   * @returns Metadata about the stored snapshot including the exact data size in bytes,
-   *          or null when the payload exceeded the configured maximum size limit.
+   * @returns Metadata about the stored snapshot including the exact data size in bytes
+   * @throws {SizeEstimationError} When data size estimation fails
+   * @throws {DataSizeExceededError} When the payload exceeds the configured maximum size limit
    *
    * @remarks
+   * **Error Handling**: When an error is thrown, the store is NOT modified.
+   * Any previously stored snapshot remains intact and accessible. This ensures
+   * that applications can continue serving data from the last successful snapshot
+   * even when new data cannot be stored.
+   *
    * The method creates a shallow copy of the input array to ensure the store's
    * internal state cannot be corrupted by external mutations of the array.
    * However, the prototype objects themselves are not cloned. Callers must not
@@ -360,7 +376,7 @@ export class PrototypeInMemoryStore {
    * Size calculation is performed AFTER deduplication to ensure accurate size checking.
    * If duplicate IDs are present in the input array, only the last occurrence is kept.
    */
-  setAll(prototypes: NormalizedPrototype[]): { dataSizeBytes: number } | null {
+  setAll(prototypes: NormalizedPrototype[]): { dataSizeBytes: number } {
     // Build O(1) lookup index by prototype ID first to deduplicate
     // Note: If duplicate IDs are present in the input array, the last one wins.
     const uniqueMap = new Map(
@@ -380,16 +396,31 @@ export class PrototypeInMemoryStore {
     const uniquePrototypes = Array.from(uniqueMap.values());
 
     // Validate payload size AFTER deduplication
-    const dataSizeBytes = this.estimateSize(uniquePrototypes);
+    const dataSizeBytes = (() => {
+      try {
+        return this.estimateSize(uniquePrototypes);
+      } catch (error) {
+        // At this point, store data is unchanged (estimation failed before any store updates)
+        if (error instanceof SizeEstimationError) {
+          throw new SizeEstimationError('UNCHANGED', error.cause as Error);
+        }
+        // Re-throw unexpected errors
+        throw error;
+      }
+    })();
 
     if (dataSizeBytes > this.maxDataSizeBytes) {
-      this.logger.warn('Snapshot skipped: data exceeds maximum size', {
+      this.logger.warn('Snapshot rejected: data exceeds maximum size', {
         dataSizeBytes,
         maxDataSizeBytes: this.maxDataSizeBytes,
         inputCount: prototypes.length,
         uniqueCount: uniqueMap.size,
       });
-      return null;
+      throw new DataSizeExceededError(
+        'UNCHANGED',
+        dataSizeBytes,
+        this.maxDataSizeBytes,
+      );
     }
 
     // Store the deduplicated data

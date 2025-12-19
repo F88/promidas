@@ -307,9 +307,17 @@ async setupSnapshot() {
       };
     }
 
-    // Success path
-    await this.#store.setAll(apiResult.data);
-    return { ok: true, size: apiResult.data.length, ... };
+    // Success path - Store operation may throw
+    try {
+      await this.#store.setAll(apiResult.data);
+      return { ok: true, size: apiResult.data.length, ... };
+    } catch (storeError) {
+      // Store exception (DataSizeExceededError, SizeEstimationError) - convert to Result
+      return {
+        ok: false,
+        error: storeError instanceof Error ? storeError.message : 'Store operation failed'
+      };
+    }
 
   } catch (error) {
     // Network exception - convert to Result

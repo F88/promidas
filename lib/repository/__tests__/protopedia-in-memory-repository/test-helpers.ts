@@ -21,7 +21,7 @@
  *
  * ### Option 1: Manual Mocks (for unit tests)
  * **Use when:** Testing specific behaviors, need fine-grained control over return values
- * **Files:** config-and-stats.test.ts, setup.test.ts, analyze.test.ts, data-retrieval.test.ts
+ * **Files:** unit/public/*.test.ts, unit/internal/*.test.ts
  *
  * ```typescript
  * const mockStoreInstance = {
@@ -42,7 +42,7 @@
  *
  * ### Option 2: createMockStore (for integration/performance tests)
  * **Use when:** Testing end-to-end flows, performance, or when real store behavior is needed
- * **Files:** integration.test.ts, fetch-error-handling.test.ts, concurrency.test.ts, data-access.perf.test.ts
+ * **Files:** integration/*.test.ts, perf/*.test.ts
  *
  * ```typescript
  * const store = createMockStore({ ttlMs: 30_000 });
