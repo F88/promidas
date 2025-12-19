@@ -957,8 +957,17 @@ async setupSnapshot(params: ListPrototypesParams) {
     };
   }
 
-  await this.#store.setAll(fetchResult.data);
-  return { ok: true, size: fetchResult.data.length };
+  // Store operation may throw - handle exceptions
+  try {
+    await this.#store.setAll(fetchResult.data);
+    return { ok: true, size: fetchResult.data.length };
+  } catch (storeError) {
+    // Store exception (DataSizeExceededError, SizeEstimationError)
+    return {
+      ok: false,
+      error: storeError instanceof Error ? storeError.message : 'Store operation failed'
+    };
+  }
 }
 ```
 
