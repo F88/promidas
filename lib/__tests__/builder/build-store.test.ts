@@ -1,15 +1,61 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PromidasRepositoryBuilder } from '../../builder.js';
-import { ConfigurationError } from '../../store/index.js';
+type BuilderModule = typeof import('../../builder.js');
+type StoreModule = typeof import('../../store/index.js');
+
+async function importBuilder(): Promise<BuilderModule> {
+  vi.resetModules();
+  vi.doUnmock('../../store/store.js');
+  return await import('../../builder.js');
+}
+
+async function importBuilderWithStoreConstructorThrowing(
+  getThrown: (storeModule: StoreModule) => unknown,
+): Promise<{ builderModule: BuilderModule; storeModule: StoreModule }> {
+  vi.resetModules();
+
+  let thrown: unknown;
+  vi.doMock('../../store/store.js', () => ({
+    PrototypeInMemoryStore: class PrototypeInMemoryStoreMock {
+      constructor() {
+        throw thrown;
+      }
+    },
+  }));
+
+  const builderModule = await import('../../builder.js');
+  const storeModule = await import('../../store/index.js');
+  thrown = getThrown(storeModule);
+  return { builderModule, storeModule };
+}
+
+function captureThrown(fn: () => unknown): unknown {
+  try {
+    fn();
+    throw new Error('Expected function to throw');
+  } catch (error) {
+    return error;
+  }
+}
+
+function expectErrorName(error: unknown, errorName: string): void {
+  const actualName = (error as { name?: unknown } | null | undefined)?.name;
+  expect(actualName).toBe(errorName);
+}
 
 describe('PromidasRepositoryBuilder - buildStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.resetModules();
+    vi.doUnmock('../../store/store.js');
+  });
+
   describe('success cases', () => {
-    it('creates store successfully with valid config', () => {
+    it('creates store successfully with valid config', async () => {
       const mockLogger = {
         info: vi.fn(),
         warn: vi.fn(),
@@ -18,6 +64,7 @@ describe('PromidasRepositoryBuilder - buildStore', () => {
         level: 'info' as const,
       };
 
+      const { PromidasRepositoryBuilder } = await importBuilder();
       const builder = new PromidasRepositoryBuilder().setStoreConfig({
         ttlMs: 60000,
         maxDataSizeBytes: 1024 * 1024,
@@ -38,7 +85,7 @@ describe('PromidasRepositoryBuilder - buildStore', () => {
   });
 
   describe('error cases', () => {
-    it('logs detailed error with dataState when ConfigurationError occurs', () => {
+    it('logs detailed error with dataState when ConfigurationError occurs', async () => {
       const mockLogger = {
         info: vi.fn(),
         warn: vi.fn(),
@@ -47,6 +94,7 @@ describe('PromidasRepositoryBuilder - buildStore', () => {
         level: 'info' as const,
       };
 
+      const { PromidasRepositoryBuilder } = await importBuilder();
       const builder = new PromidasRepositoryBuilder();
 
       const invalidConfig = {
@@ -55,9 +103,10 @@ describe('PromidasRepositoryBuilder - buildStore', () => {
         logger: mockLogger,
       };
 
-      expect(() => {
+      const thrown = captureThrown(() => {
         (builder as any).buildStore(invalidConfig, mockLogger);
-      }).toThrow(ConfigurationError);
+      });
+      expectErrorName(thrown, 'ConfigurationError');
 
       expect(mockLogger.error).toHaveBeenCalled();
 
@@ -70,17 +119,39 @@ describe('PromidasRepositoryBuilder - buildStore', () => {
     });
 
     it('logs error without dataState for non-StoreError exceptions', async () => {
-      //  This test verifies that non-StoreError exceptions don't include dataState
-      // Since mocking constructors is complex in vitest with ESM, we verify the logic by code review
+      const mockLogger = {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+        level: 'info' as const,
+      };
 
-      // Skip mock test - the code review shows buildStore() correctly:
-      // - Does NOT add dataState for non-StoreError exceptions
-      // - Only logs error without extra metadata
-      // See builder.ts lines for implementation
-      expect(true).toBe(true); // Placeholder - implementation verified by code review
+      const { builderModule } = await importBuilderWithStoreConstructorThrowing(
+        () => new TypeError('Invalid type'),
+      );
+      const { PromidasRepositoryBuilder } = builderModule;
+
+      const builder = new PromidasRepositoryBuilder();
+      const config = { maxDataSizeBytes: 10_000_000, logger: mockLogger };
+
+      const thrown = captureThrown(() => {
+        (builder as any).buildStore(config, mockLogger);
+      });
+      expectErrorName(thrown, 'TypeError');
+
+      expect(mockLogger.error).toHaveBeenCalledTimes(1);
+      const errorCall = mockLogger.error.mock.calls[0];
+      expect(errorCall![0]).toBe('Failed to create PrototypeInMemoryStore');
+      expect(errorCall![1].error.name).toBe('TypeError');
+      expect(errorCall![1].error.message).toBe('Invalid type');
+      expect(errorCall![1].dataState).toBeUndefined();
+      expect(errorCall![1].dataSizeBytes).toBeUndefined();
+      expect(errorCall![1].maxDataSizeBytes).toBeUndefined();
+      expect(errorCall![1].cause).toBeUndefined();
     });
 
-    it('does not log when logger.error is not a function', () => {
+    it('does not log when logger.error is not a function', async () => {
       const mockLoggerWithoutError = {
         info: vi.fn(),
         warn: vi.fn(),
@@ -90,6 +161,7 @@ describe('PromidasRepositoryBuilder - buildStore', () => {
         level: 'info' as const,
       };
 
+      const { PromidasRepositoryBuilder } = await importBuilder();
       const builder = new PromidasRepositoryBuilder();
 
       const invalidConfig = {
@@ -98,12 +170,13 @@ describe('PromidasRepositoryBuilder - buildStore', () => {
         logger: mockLoggerWithoutError,
       };
 
-      expect(() => {
+      const thrown = captureThrown(() => {
         (builder as any).buildStore(
           invalidConfig,
           mockLoggerWithoutError as any,
         );
-      }).toThrow(ConfigurationError);
+      });
+      expectErrorName(thrown, 'ConfigurationError');
 
       // Should not crash, just skip logging
       expect(mockLoggerWithoutError.error).toBeUndefined();
@@ -111,7 +184,7 @@ describe('PromidasRepositoryBuilder - buildStore', () => {
   });
 
   describe('error details extraction', () => {
-    it('includes dataState for ConfigurationError', () => {
+    it('includes dataState for ConfigurationError', async () => {
       const mockLogger = {
         info: vi.fn(),
         warn: vi.fn(),
@@ -120,6 +193,7 @@ describe('PromidasRepositoryBuilder - buildStore', () => {
         level: 'info' as const,
       };
 
+      const { PromidasRepositoryBuilder } = await importBuilder();
       const builder = new PromidasRepositoryBuilder();
 
       const invalidConfig = {
@@ -128,9 +202,10 @@ describe('PromidasRepositoryBuilder - buildStore', () => {
         logger: mockLogger,
       };
 
-      expect(() => {
+      const thrown = captureThrown(() => {
         (builder as any).buildStore(invalidConfig, mockLogger);
-      }).toThrow();
+      });
+      expectErrorName(thrown, 'ConfigurationError');
 
       const errorCall = mockLogger.error.mock.calls[0]?.[1];
       expect(errorCall).toBeDefined();
@@ -139,41 +214,6 @@ describe('PromidasRepositoryBuilder - buildStore', () => {
     });
 
     it('includes dataState, dataSizeBytes, maxDataSizeBytes for DataSizeExceededError', async () => {
-      // This test verifies the implementation handles DataSizeExceededError properly
-      // We can't easily trigger DataSizeExceededError in unit test since it requires large data
-      // So we test the structure of error handling in builder.ts directly by reading the code
-
-      // Skip mock test - the code review shows buildStore() correctly extracts:
-      // - dataState, dataSizeBytes, maxDataSizeBytes for DataSizeExceededError
-      // See builder.ts lines for implementation
-      expect(true).toBe(true); // Placeholder - implementation verified by code review
-    });
-
-    it('includes dataState and cause for SizeEstimationError', async () => {
-      // This test verifies the implementation handles SizeEstimationError properly
-      // We can't easily trigger SizeEstimationError in unit test
-      // So we test the structure of error handling in builder.ts directly by reading the code
-
-      // Skip mock test - the code review shows buildStore() correctly extracts:
-      // - dataState, cause for SizeEstimationError
-      // See builder.ts lines for implementation
-      expect(true).toBe(true); // Placeholder - implementation verified by code review
-    });
-
-    it('includes only dataState for generic StoreError', async () => {
-      // This test verifies the implementation handles generic StoreError properly
-      // We can't easily trigger generic StoreError in unit test
-      // So we test the structure of error handling in builder.ts directly by reading the code
-
-      // Skip mock test - the code review shows buildStore() correctly extracts:
-      // - only dataState for generic StoreError (no dataSizeBytes, maxDataSizeBytes, cause)
-      // See builder.ts lines for implementation
-      expect(true).toBe(true); // Placeholder - implementation verified by code review
-    });
-  });
-
-  describe('integration tests via build()', () => {
-    it('logs error when build fails with custom logger', () => {
       const mockLogger = {
         info: vi.fn(),
         warn: vi.fn(),
@@ -182,13 +222,124 @@ describe('PromidasRepositoryBuilder - buildStore', () => {
         level: 'info' as const,
       };
 
+      const { builderModule, storeModule } =
+        await importBuilderWithStoreConstructorThrowing((m) => {
+          return new m.DataSizeExceededError(
+            'UNCHANGED',
+            50_000_000,
+            10_000_000,
+          );
+        });
+      const { PromidasRepositoryBuilder } = builderModule;
+      const builder = new PromidasRepositoryBuilder();
+      const config = { maxDataSizeBytes: 10_000_000, logger: mockLogger };
+
+      const thrown = captureThrown(() => {
+        (builder as any).buildStore(config, mockLogger);
+      });
+      expectErrorName(thrown, 'DataSizeExceededError');
+
+      expect(mockLogger.error).toHaveBeenCalledTimes(1);
+      const errorCall = mockLogger.error.mock.calls[0];
+      expect(errorCall![0]).toBe('Failed to create PrototypeInMemoryStore');
+      expect(errorCall![1].error.name).toBe('DataSizeExceededError');
+      expect(errorCall![1].dataState).toBe('UNCHANGED');
+      expect(errorCall![1].dataSizeBytes).toBe(50_000_000);
+      expect(errorCall![1].maxDataSizeBytes).toBe(10_000_000);
+      expect(errorCall![1].cause).toBeUndefined();
+    });
+
+    it('includes dataState and cause for SizeEstimationError', async () => {
+      const mockLogger = {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+        level: 'info' as const,
+      };
+
+      const underlyingError = new Error('Estimation failed');
+      const { builderModule } = await importBuilderWithStoreConstructorThrowing(
+        (m) => {
+          return new m.SizeEstimationError('UNCHANGED', underlyingError);
+        },
+      );
+      const { PromidasRepositoryBuilder } = builderModule;
+      const builder = new PromidasRepositoryBuilder();
+      const config = { maxDataSizeBytes: 10_000_000, logger: mockLogger };
+
+      const thrown = captureThrown(() => {
+        (builder as any).buildStore(config, mockLogger);
+      });
+      expectErrorName(thrown, 'SizeEstimationError');
+
+      expect(mockLogger.error).toHaveBeenCalledTimes(1);
+      const errorCall = mockLogger.error.mock.calls[0];
+      // DEBUG: inspect payload shape under ESM mocking
+
+      console.log('SizeEstimationError payload:', errorCall?.[1]);
+      expect(errorCall![0]).toBe('Failed to create PrototypeInMemoryStore');
+      expect(errorCall![1].error.name).toBe('SizeEstimationError');
+      expect(errorCall![1].dataState).toBe('UNCHANGED');
+      expect(errorCall![1].cause.name).toBe('Error');
+      expect(errorCall![1].cause.message).toBe('Estimation failed');
+      expect(errorCall![1].dataSizeBytes).toBeUndefined();
+      expect(errorCall![1].maxDataSizeBytes).toBeUndefined();
+    });
+
+    it('includes only dataState for generic StoreError', async () => {
+      const mockLogger = {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+        level: 'info' as const,
+      };
+
+      const { builderModule } = await importBuilderWithStoreConstructorThrowing(
+        (m) => {
+          return new m.StoreError('Generic store error', 'UNCHANGED');
+        },
+      );
+      const { PromidasRepositoryBuilder } = builderModule;
+      const builder = new PromidasRepositoryBuilder();
+      const config = { maxDataSizeBytes: 10_000_000, logger: mockLogger };
+
+      const thrown = captureThrown(() => {
+        (builder as any).buildStore(config, mockLogger);
+      });
+      expectErrorName(thrown, 'StoreError');
+
+      expect(mockLogger.error).toHaveBeenCalledTimes(1);
+      const errorCall = mockLogger.error.mock.calls[0];
+      expect(errorCall![0]).toBe('Failed to create PrototypeInMemoryStore');
+      expect(errorCall![1].error.name).toBe('StoreError');
+      expect(errorCall![1].dataState).toBe('UNCHANGED');
+      expect(errorCall![1].dataSizeBytes).toBeUndefined();
+      expect(errorCall![1].maxDataSizeBytes).toBeUndefined();
+      expect(errorCall![1].cause).toBeUndefined();
+    });
+  });
+
+  describe('integration tests via build()', () => {
+    it('logs error when build fails with custom logger', async () => {
+      const mockLogger = {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+        level: 'info' as const,
+      };
+
+      const { PromidasRepositoryBuilder } = await importBuilder();
       const builder = new PromidasRepositoryBuilder()
         .setRepositoryConfig({ logger: mockLogger })
         .setStoreConfig({
           maxDataSizeBytes: 100_000_000, // Exceeds limit
         });
 
-      expect(() => builder.build()).toThrow(ConfigurationError);
+      const thrown = captureThrown(() => builder.build());
+      expectErrorName(thrown, 'ConfigurationError');
       expect(mockLogger.error).toHaveBeenCalledTimes(1);
 
       const errorCall = mockLogger.error.mock.calls[0];
@@ -198,7 +349,7 @@ describe('PromidasRepositoryBuilder - buildStore', () => {
       expect(errorCall![1].dataState).toBe('UNKNOWN');
     });
 
-    it('logs error when build fails with independent logger', () => {
+    it('logs error when build fails with independent logger', async () => {
       const mockLogger = {
         info: vi.fn(),
         warn: vi.fn(),
@@ -212,6 +363,7 @@ describe('PromidasRepositoryBuilder - buildStore', () => {
         .spyOn(console, 'error')
         .mockImplementation(() => {});
 
+      const { PromidasRepositoryBuilder } = await importBuilder();
       const builder = new PromidasRepositoryBuilder()
         .setApiClientConfig({ logger: mockLogger })
         .setStoreConfig({
@@ -236,11 +388,12 @@ describe('PromidasRepositoryBuilder - buildStore', () => {
       consoleErrorSpy.mockRestore();
     });
 
-    it('logs error to console when no logger is available', () => {
+    it('logs error to console when no logger is available', async () => {
       const consoleErrorSpy = vi
         .spyOn(console, 'error')
         .mockImplementation(() => {});
 
+      const { PromidasRepositoryBuilder } = await importBuilder();
       const builder = new PromidasRepositoryBuilder().setStoreConfig({
         maxDataSizeBytes: 100_000_000, // Exceeds limit
       });
@@ -260,7 +413,7 @@ describe('PromidasRepositoryBuilder - buildStore', () => {
       consoleErrorSpy.mockRestore();
     });
 
-    it('does not log error when logger.error is not a function via build()', () => {
+    it('does not log error when logger.error is not a function via build()', async () => {
       const mockLoggerWithoutError = {
         info: vi.fn(),
         warn: vi.fn(),
@@ -274,6 +427,7 @@ describe('PromidasRepositoryBuilder - buildStore', () => {
         .spyOn(console, 'error')
         .mockImplementation(() => {});
 
+      const { PromidasRepositoryBuilder } = await importBuilder();
       const builder = new PromidasRepositoryBuilder()
         .setRepositoryConfig({ logger: mockLoggerWithoutError as any })
         .setStoreConfig({
