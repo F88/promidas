@@ -7,9 +7,7 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 
-import { ProtopediaApiCustomClient } from '../../../../../fetcher/index.js';
 import type { Logger } from '../../../../../logger/index.js';
-import { PrototypeInMemoryStore } from '../../../../../store/index.js';
 import { ProtopediaInMemoryRepositoryImpl } from '../../../../protopedia-in-memory-repository.js';
 import { createTestContext } from '../../test-helpers.js';
 

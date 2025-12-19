@@ -6,11 +6,7 @@ import {
   createNoopLogger,
 } from '../../logger/index.js';
 import type { NormalizedPrototype } from '../../types/index.js';
-import {
-  ConfigurationError,
-  DataSizeExceededError,
-  SizeEstimationError,
-} from '../errors/store-error.js';
+import { ConfigurationError } from '../errors/store-error.js';
 import { PrototypeInMemoryStore } from '../store.js';
 
 const createPrototype = (
