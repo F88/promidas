@@ -248,31 +248,18 @@ export class PromidasRepositoryBuilder {
       // Handle Store construction errors (e.g., ConfigurationError)
       if (typeof repositoryLogger.error === 'function') {
         // Build detailed error information based on error type
-        let errorDetails: Record<string, unknown> = { error };
+        let errorDetails: Record<string, unknown>;
 
-        if (error instanceof DataSizeExceededError) {
-          errorDetails = {
-            error,
-            dataState: error.dataState,
-            dataSizeBytes: error.dataSizeBytes,
-            maxDataSizeBytes: error.maxDataSizeBytes,
-          };
-        } else if (error instanceof SizeEstimationError) {
-          errorDetails = {
-            error,
-            dataState: error.dataState,
-            cause: error.cause,
-          };
-        } else if (error instanceof ConfigurationError) {
-          errorDetails = {
-            error,
-            dataState: error.dataState,
-          };
-        } else if (error instanceof StoreError) {
-          errorDetails = {
-            error,
-            dataState: error.dataState,
-          };
+        if (error instanceof StoreError) {
+          errorDetails = { error, dataState: error.dataState };
+          if (error instanceof DataSizeExceededError) {
+            errorDetails.dataSizeBytes = error.dataSizeBytes;
+            errorDetails.maxDataSizeBytes = error.maxDataSizeBytes;
+          } else if (error instanceof SizeEstimationError) {
+            errorDetails.cause = error.cause;
+          }
+        } else {
+          errorDetails = { error };
         }
 
         repositoryLogger.error(
