@@ -104,7 +104,6 @@ describe('ProtopediaApiCustomClient - Constructor - Initialization', () => {
 
     expect(createProtoPediaClientMock).toHaveBeenCalledWith({
       fetch: expect.any(Function),
-      timeoutMs,
       userAgent: expect.stringMatching(
         /^ProtopediaApiCustomClient\/\d+\.\d+\.\d+ \(promidas\)$/,
       ),

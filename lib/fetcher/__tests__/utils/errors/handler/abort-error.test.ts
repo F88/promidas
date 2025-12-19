@@ -23,8 +23,12 @@ describe('handleApiError - AbortError handling', () => {
 
     expect(result).toEqual({
       ok: false,
-      error: 'Upstream request timed out',
-      details: {},
+      error: 'Upstream request aborted',
+      details: {
+        res: {
+          code: 'ABORTED',
+        },
+      },
     });
   });
 

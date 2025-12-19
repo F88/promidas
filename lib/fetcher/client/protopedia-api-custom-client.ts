@@ -30,6 +30,7 @@ import { handleApiError } from '../utils/errors/handler.js';
 import { normalizePrototype } from '../utils/normalize-prototype.js';
 
 import type { ProtopediaApiCustomClientConfig } from './config.js';
+import { createFetchWithTimeout } from './fetch-with-timeout.js';
 import { selectCustomFetch } from './select-custom-fetch.js';
 
 /**
@@ -117,6 +118,12 @@ export class ProtopediaApiCustomClient {
       progressCallback,
     } = config ?? {};
 
+    const {
+      timeoutMs,
+      fetch: providedFetch,
+      ...sdkOptions
+    } = protoPediaApiClientOptions;
+
     // Fastify-style logger configuration
     if (logger) {
       this.#logger = logger;
@@ -138,8 +145,15 @@ export class ProtopediaApiCustomClient {
 
     // Set ProtopediaApiCustomClient User-Agent if not provided
     const userAgent =
-      protoPediaApiClientOptions.userAgent ??
-      `ProtopediaApiCustomClient/${VERSION} (promidas)`;
+      sdkOptions.userAgent ?? `ProtopediaApiCustomClient/${VERSION} (promidas)`;
+
+    const timeoutWrappedFetch =
+      typeof timeoutMs === 'number'
+        ? createFetchWithTimeout({
+            timeoutMs,
+            ...(providedFetch !== undefined && { baseFetch: providedFetch }),
+          })
+        : providedFetch;
 
     // Select appropriate custom fetch based on configuration
     // If user provides a custom fetch, wrap it with progress tracking
@@ -147,8 +161,8 @@ export class ProtopediaApiCustomClient {
     const customFetch = selectCustomFetch({
       logger: this.#logger,
       enableProgressLog: progressLog,
-      ...(protoPediaApiClientOptions.fetch !== undefined && {
-        baseFetch: protoPediaApiClientOptions.fetch,
+      ...(timeoutWrappedFetch !== undefined && {
+        baseFetch: timeoutWrappedFetch,
       }),
       ...(progressCallback?.onStart !== undefined && {
         onProgressStart: progressCallback.onStart,
@@ -164,7 +178,7 @@ export class ProtopediaApiCustomClient {
     // Create underlying protopedia-api-v2-client
     // Note: SDK client logging is controlled via protoPediaApiClientOptions
     this.#client = createProtoPediaClient({
-      ...protoPediaApiClientOptions,
+      ...sdkOptions,
       userAgent,
       ...(customFetch !== undefined && { fetch: customFetch }),
     });

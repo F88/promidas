@@ -6,6 +6,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import type { Logger } from '../../../../../logger/index.js';
 import { ProtopediaApiCustomClient } from '../../../../client/protopedia-api-custom-client.js';
+import { PromidasTimeoutError } from '../../../../utils/errors/timeout-error.js';
 
 vi.mock('protopedia-api-v2-client', async (importOriginal) => {
   const actual =
@@ -32,7 +33,7 @@ describe('ProtopediaApiCustomClient - Error Handling - AbortError', () => {
     vi.clearAllMocks();
   });
 
-  it('handles AbortError (timeout)', async () => {
+  it('handles AbortError (aborted)', async () => {
     const abortError = new DOMException('Aborted', 'AbortError');
     const clientInstance = {
       listPrototypes: vi.fn().mockRejectedValue(abortError),
@@ -44,9 +45,13 @@ describe('ProtopediaApiCustomClient - Error Handling - AbortError', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe('Upstream request timed out');
+      expect(result.error).toBe('Upstream request aborted');
       expect(result.status).toBeUndefined();
-      expect(result.details).toEqual({});
+      expect(result.details).toEqual({
+        res: {
+          code: 'ABORTED',
+        },
+      });
     }
     expect(mockLogger.error).toHaveBeenCalled();
   });
@@ -65,12 +70,34 @@ describe('ProtopediaApiCustomClient - Error Handling - AbortError', () => {
     await client.fetchPrototypes({ offset: 0, limit: 10 });
 
     expect(mockLogger.error).toHaveBeenCalledWith(
-      'Upstream request timed out',
+      'Upstream request aborted',
       expect.objectContaining({
         ok: false,
-        error: 'Upstream request timed out',
+        error: 'Upstream request aborted',
       }),
     );
+  });
+
+  it('handles PromidasTimeoutError (timeout)', async () => {
+    const timeoutError = new PromidasTimeoutError(5000);
+    const clientInstance = {
+      listPrototypes: vi.fn().mockRejectedValue(timeoutError),
+    };
+    createProtoPediaClientMock.mockReturnValue(clientInstance);
+
+    const client = new ProtopediaApiCustomClient({ logger: mockLogger });
+    const result = await client.fetchPrototypes({ offset: 0, limit: 10 });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('Upstream request timed out');
+      expect(result.status).toBeUndefined();
+      expect(result.details).toEqual({
+        res: {
+          code: 'TIMEOUT',
+        },
+      });
+    }
   });
 
   it('never throws exception for AbortError', async () => {
