@@ -51,18 +51,17 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ProtopediaInMemoryRepositoryImpl } from '../../protopedia-in-memory-repository.js';
+import { ProtopediaInMemoryRepositoryImpl } from '../../../protopedia-in-memory-repository.js';
+import { createMockStore, makePrototype, setupMocks } from '../test-helpers.js';
 
-vi.mock('../../../fetcher/index', async (importOriginal) => {
+vi.mock('../../../../fetcher/index', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../../../fetcher/index.js')>();
+    await importOriginal<typeof import('../../../../fetcher/index.js')>();
   return {
     ...actual,
     ProtopediaApiCustomClient: vi.fn(),
   };
 });
-
-import { createMockStore, makePrototype, setupMocks } from './test-helpers.js';
 
 describe('ProtopediaInMemoryRepositoryImpl - fetch error handling', () => {
   const { fetchPrototypesMock, resetMocks } = setupMocks();

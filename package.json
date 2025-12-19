@@ -31,7 +31,7 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:exports": "npm run build && vitest run --config vitest.exports.config.ts",
-    "test:perf": "vitest run lib/store/__tests__/store.perf.test.ts lib/repository/__tests__/protopedia-in-memory-repository/data-access.perf.test.ts",
+    "test:perf": "vitest run lib/store/__tests__/store.perf.test.ts lib/repository/__tests__/protopedia-in-memory-repository/perf/data-access.perf.test.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint \"**/*.ts\"",

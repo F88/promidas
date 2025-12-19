@@ -40,36 +40,35 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ProtopediaApiCustomClient } from '../../../fetcher/index.js';
+import { ProtopediaApiCustomClient } from '../../../../../fetcher/index.js';
 import {
   PrototypeInMemoryStore,
   type PrototypeInMemoryStoreConfig,
-} from '../../../store/index.js';
-import { ProtopediaInMemoryRepositoryImpl } from '../../protopedia-in-memory-repository.js';
+} from '../../../../../store/index.js';
+import { ProtopediaInMemoryRepositoryImpl } from '../../../../protopedia-in-memory-repository.js';
+import {
+  createBasicMockStore,
+  makePrototype,
+  setupMocks,
+} from '../../test-helpers.js';
 
-vi.mock('../../../fetcher/index', async (importOriginal) => {
+vi.mock('../../../../../fetcher/index', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../../../fetcher/index.js')>();
+    await importOriginal<typeof import('../../../../../fetcher/index.js')>();
   return {
     ...actual,
     ProtopediaApiCustomClient: vi.fn(),
   };
 });
 
-vi.mock('../../../store/index', async (importOriginal) => {
+vi.mock('../../../../../store/index', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../../../store/index.js')>();
+    await importOriginal<typeof import('../../../../../store/index.js')>();
   return {
     ...actual,
     PrototypeInMemoryStore: vi.fn(),
   };
 });
-
-import {
-  createBasicMockStore,
-  makePrototype,
-  setupMocks,
-} from './test-helpers.js';
 
 describe('ProtopediaInMemoryRepositoryImpl - configuration and statistics', () => {
   const { fetchPrototypesMock, resetMocks } = setupMocks();
