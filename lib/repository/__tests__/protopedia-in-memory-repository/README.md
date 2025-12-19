@@ -4,23 +4,31 @@ This directory contains comprehensive tests for the `ProtopediaInMemoryRepositor
 
 ## Test Files Overview
 
-### Core Functionality Tests
+### Unit Tests (Public API)
 
-| File                         | Purpose                                              | Mock Strategy | Lines |
-| ---------------------------- | ---------------------------------------------------- | ------------- | ----- |
-| **setup.test.ts**            | Constructor, setupSnapshot, refreshSnapshot          | Manual mocks  | ~500  |
-| **config-and-stats.test.ts** | Configuration & statistics (`getConfig`, `getStats`) | Manual mocks  | ~450  |
-| **data-retrieval.test.ts**   | Data access methods (getById, getAll, etc.)          | Manual mocks  | ~990  |
-| **analyze.test.ts**          | Analysis methods (`analyzePrototypes`)               | Manual mocks  | ~220  |
+| File                                         | Purpose                                              | Mock Strategy | Lines |
+| -------------------------------------------- | ---------------------------------------------------- | ------------- | ----- |
+| **unit/public/constructor.test.ts**          | Constructor initialization and configuration         | Manual mocks  | 122   |
+| **unit/public/config-and-stats.test.ts**     | Configuration & statistics (`getConfig`, `getStats`) | Manual mocks  | 451   |
+| **unit/public/snapshot-data-access.test.ts** | Snapshot data access methods (random/sample/lookup)  | Manual mocks  | 999   |
+| **unit/public/analyze.test.ts**              | Analysis methods (`analyzePrototypes`)               | Manual mocks  | 206   |
+| **unit/public/repository-events.test.ts**    | Event system (opt-in, emission, dispose)             | Manual mocks  | 586   |
+
+### Unit Tests (Internal Logic)
+
+| File                                      | Purpose                                                 | Mock Strategy | Lines |
+| ----------------------------------------- | ------------------------------------------------------- | ------------- | ----- |
+| **unit/internal/snapshot-update.test.ts** | setupSnapshot/refreshSnapshot delegation (internal spy) | Manual mocks  | 161   |
+| **unit/internal/fetch-and-store.test.ts** | Direct tests of internal `fetchAndStore` logic          | Manual mocks  | 341   |
 
 ### Integration & Special Tests
 
-| File                             | Purpose                           | Mock Strategy   | Lines |
-| -------------------------------- | --------------------------------- | --------------- | ----- |
-| **integration.test.ts**          | End-to-end flows, API integration | createMockStore | ~200  |
-| **fetch-error-handling.test.ts** | Error handling & recovery         | createMockStore | ~400  |
-| **concurrency.test.ts**          | Concurrent operations coalescing  | createMockStore | ~1500 |
-| **data-access.perf.test.ts**     | Performance with large datasets   | createMockStore | ~200  |
+| File                                         | Purpose                               | Mock Strategy   | Lines |
+| -------------------------------------------- | ------------------------------------- | --------------- | ----- |
+| **integration/scenarios.test.ts**            | End-to-end scenarios, API integration | createMockStore | 338   |
+| **integration/fetch-error-handling.test.ts** | Error handling & recovery             | createMockStore | 243   |
+| **integration/concurrency.test.ts**          | Concurrent operations coalescing      | createMockStore | 802   |
+| **perf/data-access.perf.test.ts**            | Performance with large datasets       | createMockStore | 221   |
 
 ### Shared Utilities
 
@@ -34,7 +42,7 @@ This test suite uses **two different mocking approaches** depending on the test 
 
 ### 1. Manual Mocks (Unit Tests)
 
-**Files:** setup.test.ts, config-and-stats.test.ts, analyze.test.ts, data-retrieval.test.ts
+**Files:** unit/public/constructor.test.ts, unit/public/config-and-stats.test.ts, unit/public/snapshot-data-access.test.ts, unit/public/analyze.test.ts, unit/public/repository-events.test.ts, unit/internal/snapshot-update.test.ts, unit/internal/fetch-and-store.test.ts
 
 **Use when:**
 
@@ -63,7 +71,7 @@ const mockStoreInstance = {
 
 ### 2. Functional Mock Store (Integration/Performance Tests)
 
-**Files:** integration.test.ts, fetch-error-handling.test.ts, concurrency.test.ts, data-access.perf.test.ts
+**Files:** integration/scenarios.test.ts, integration/fetch-error-handling.test.ts, integration/concurrency.test.ts, perf/data-access.perf.test.ts
 
 **Use when:**
 
@@ -166,10 +174,10 @@ describe('Integration tests', () => {
 
 ## Test Statistics
 
-- **Total Test Files:** 8
-- **Unit Test Files:** 4 (using manual mocks)
-- **Integration Test Files:** 4 (using createMockStore)
-- **Approximate Total Tests:** 120+ (85 active + 34 skipped)
+- **Total Test Files:** 11
+- **Unit Test Files:** 7 (using manual mocks)
+- **Integration/Perf Test Files:** 4 (using createMockStore)
+- **Approximate Total Tests:** 140+ (105 active + 34 skipped)
 - **Test Execution Time:** ~200ms
 - **Code Coverage:** High (repository logic fully covered)
 
@@ -180,7 +188,9 @@ describe('Integration tests', () => {
 npm test -- lib/repository/__tests__/protopedia-in-memory-repository
 
 # Run specific test file
-npm test -- lib/repository/__tests__/protopedia-in-memory-repository/setup.test.ts
+npm test -- lib/repository/__tests__/protopedia-in-memory-repository/unit/public/constructor.test.ts
+npm test -- lib/repository/__tests__/protopedia-in-memory-repository/unit/internal/snapshot-update.test.ts
+npm test -- lib/repository/__tests__/protopedia-in-memory-repository/integration/scenarios.test.ts
 
 # Run with coverage
 npm test -- --coverage lib/repository/__tests__/protopedia-in-memory-repository
