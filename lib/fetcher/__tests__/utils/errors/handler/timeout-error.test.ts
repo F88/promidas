@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { PromidasTimeoutError } from '../../../../errors/fetcher-error.js';
 import { handleApiError } from '../../../../utils/errors/handler.js';
-import { PromidasTimeoutError } from '../../../../utils/errors/timeout-error.js';
 
 describe('handleApiError - PromidasTimeoutError handling', () => {
   it('maps PromidasTimeoutError to TIMEOUT with code', () => {
