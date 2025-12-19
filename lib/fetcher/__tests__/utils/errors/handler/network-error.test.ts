@@ -215,6 +215,21 @@ describe('error-handler', () => {
         });
       });
 
+      it('maps browser fetch TypeError("Failed to fetch") to NETWORK_ERROR code', () => {
+        const error = new TypeError('Failed to fetch');
+        const result = handleApiError(error);
+
+        expect(result).toEqual({
+          ok: false,
+          error: 'Failed to fetch',
+          details: {
+            res: {
+              code: 'NETWORK_ERROR',
+            },
+          },
+        });
+      });
+
       it('handles array as error', () => {
         const error = ['error', 'occurred'];
         const result = handleApiError(error);

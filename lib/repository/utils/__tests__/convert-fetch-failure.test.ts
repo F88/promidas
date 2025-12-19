@@ -634,6 +634,26 @@ describe('convertFetchFailure', () => {
       });
     });
 
+    it('should handle browser-like fetch network errors without structured code', () => {
+      const fetchFailure: FetchPrototypesFailure = {
+        ok: false,
+        error: 'Failed to fetch',
+        details: {
+          res: {
+            code: 'NETWORK_ERROR',
+          },
+        },
+      };
+
+      const result = convertFetchFailure(fetchFailure);
+
+      expect(result).toStrictEqual({
+        ok: false,
+        error: 'Failed to fetch',
+        code: 'NETWORK_ERROR',
+      });
+    });
+
     it('should handle AbortError without status or code', () => {
       const fetchFailure: FetchPrototypesFailure = {
         ok: false,

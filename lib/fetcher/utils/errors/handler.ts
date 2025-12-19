@@ -41,6 +41,25 @@ const ERROR_MESSAGES = {
 } as const;
 
 /**
+ * Default error code for network failures where the runtime does not provide
+ * a more specific code (e.g. browser fetch TypeError("Failed to fetch")).
+ */
+const DEFAULT_NETWORK_ERROR_CODE = 'NETWORK_ERROR' as const;
+
+/**
+ * A small set of well-known fetch network error messages.
+ *
+ * Browsers commonly surface CORS/network failures as a generic TypeError with
+ * a short message (e.g. "Failed to fetch"), without any structured error code.
+ */
+const KNOWN_FETCH_NETWORK_ERROR_MESSAGES = new Set<string>([
+  'Failed to fetch',
+  'fetch failed',
+  'Load failed',
+  'NetworkError when attempting to fetch resource.',
+]);
+
+/**
  * Type guard to check if an error is an AbortError.
  *
  * @param error - The error to check
@@ -278,6 +297,16 @@ export function handleApiError(error: unknown): FetchPrototypesResult {
     if (code !== undefined) {
       details.res = { code };
     }
+  }
+
+  // If there is no structured code, but this looks like a fetch network error,
+  // attach a stable code for downstream error classification.
+  if (
+    details.res?.code === undefined &&
+    error instanceof TypeError &&
+    KNOWN_FETCH_NETWORK_ERROR_MESSAGES.has(message)
+  ) {
+    details.res = { code: DEFAULT_NETWORK_ERROR_CODE };
   }
 
   const result = createFailureResult(message, details);
