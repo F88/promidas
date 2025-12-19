@@ -239,6 +239,46 @@ describe('ProtopediaInMemoryRepositoryImpl - event system', () => {
         expect(snapshotCompletedMock).toHaveBeenCalledWith(result.stats);
       }
     });
+
+    it('does not reject when snapshotCompleted listener throws (logs error)', async () => {
+      vi.mocked(mockApiClientInstance.fetchPrototypes).mockResolvedValue({
+        ok: true,
+        data: [makeNormalizedPrototype({ id: 1 })],
+      });
+
+      const mockLogger = {
+        error: vi.fn(),
+        warn: vi.fn(),
+        info: vi.fn(),
+        debug: vi.fn(),
+      };
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {
+          enableEvents: true,
+          logger: mockLogger,
+        },
+      });
+
+      const throwingListener = vi.fn(() => {
+        throw new Error('listener boom');
+      });
+      repo.events?.on('snapshotCompleted', throwingListener);
+
+      const result = await repo.setupSnapshot({});
+
+      expect(result.ok).toBe(true);
+      expect(throwingListener).toHaveBeenCalledTimes(1);
+      expect(mockLogger.error).toHaveBeenCalledTimes(1);
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Repository event emission failed',
+        expect.objectContaining({
+          eventName: 'snapshotCompleted',
+        }),
+      );
+    });
   });
 
   describe('snapshotFailed event', () => {

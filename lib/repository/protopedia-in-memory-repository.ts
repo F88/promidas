@@ -61,14 +61,17 @@ import type {
 import type { DeepReadonly } from 'ts-essentials';
 
 import { ProtopediaApiCustomClient } from '../fetcher/index.js';
+import type { FetchPrototypesResult } from '../fetcher/types/result.types.js';
 import { ConsoleLogger, type Logger, type LogLevel } from '../logger/index.js';
 import {
+  DataSizeExceededError,
   PrototypeInMemoryStore,
+  SizeEstimationError,
   type PrototypeInMemoryStats,
   type PrototypeInMemoryStoreConfig,
 } from '../store/index.js';
 import type { NormalizedPrototype } from '../types/index.js';
-import { sanitizeDataForLogging } from '../utils/index.js'; // 追加
+import { sanitizeDataForLogging } from '../utils/index.js';
 
 import { ValidationError } from './errors/validation-error.js';
 import { prototypeIdSchema, sampleSizeSchema } from './schemas/validation.js';
@@ -76,8 +79,11 @@ import type {
   ProtopediaInMemoryRepositoryConfig,
   PrototypeAnalysisResult,
   RepositoryEvents,
+  SnapshotOperationFailure,
   SnapshotOperationResult,
 } from './types/index.js';
+import { emitRepositoryEventSafely } from './utils/emit-repository-event-safely.js';
+import { convertFetchFailure } from './utils/index.js';
 
 import type { ProtopediaInMemoryRepository } from './index.js';
 
@@ -249,47 +255,95 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
   }
 
   /**
-   * Fetch prototypes from ProtoPedia using the given params, normalize
-   * them, and replace the entire in-memory snapshot.
+   * Fetch and normalize prototypes from the ProtoPedia API.
    *
-   * On failure, returns a Result with ok: false and leaves the previous snapshot intact.
+   * @param params - Fetch parameters to merge with {@link DEFAULT_FETCH_PARAMS}
+   * @returns {@link FetchPrototypesResult} from the API client
+   *
+   * @remarks
+   * This method delegates directly to the API client's `fetchPrototypes()` method,
+   * which handles all error cases and returns them as {@link FetchPrototypesFailure}
+   * instead of throwing exceptions.
+   *
+   * **Responsibility Separation**:
+   * - This method only fetches and normalizes data
+   * - The caller is responsible for storing the data via {@link #storeSnapshot}
+   * - The caller must update {@link #lastFetchParams} on successful storage
+   *
+   * **Error Handling**:
+   * - The API client never throws exceptions under normal operation
+   * - The try-catch block is defensive programming for unexpected cases
+   * - All expected errors are returned as part of {@link FetchPrototypesResult}
+   *
+   * @see {@link ProtopediaApiCustomClient.fetchPrototypes} for API client implementation
    */
   async #fetchAndNormalize(
     params: ListPrototypesParams,
-  ): Promise<SnapshotOperationResult> {
+  ): Promise<FetchPrototypesResult> {
     const mergedParams: ListPrototypesParams = {
       ...DEFAULT_FETCH_PARAMS,
       ...params,
     };
 
     try {
-      const result = await this.#apiClient.fetchPrototypes(mergedParams);
+      return await this.#apiClient.fetchPrototypes(mergedParams);
+    } catch (error) {
+      // This should never happen as the API client catches all errors,
+      // but we handle it defensively in case of unexpected exceptions.
+      this.#logger.error('Unexpected exception from API client', {
+        error: sanitizeDataForLogging(error),
+        params: mergedParams,
+      });
 
-      if (!result.ok) {
-        return {
-          ok: false,
-          error: result.error,
-          status: result.status,
-          code: result.details?.res?.code,
-        };
-      }
+      return {
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+        details: {
+          req: {
+            method: 'GET',
+          },
+        },
+      };
+    }
+  }
 
-      const setResult = this.#store.setAll(result.data);
-
-      if (setResult === null) {
-        return {
-          ok: false,
-          error: 'Failed to store snapshot: data size exceeds maximum limit',
-        };
-      }
-
-      this.#lastFetchParams = { ...mergedParams };
+  /**
+   * Store normalized prototypes in the snapshot.
+   *
+   * Handles Store-specific errors (DataSizeExceededError, SizeEstimationError)
+   * and logs detailed information for debugging.
+   *
+   * @param data - Normalized prototypes to store
+   * @returns Result indicating success or failure
+   */
+  #storeSnapshot(data: NormalizedPrototype[]): SnapshotOperationResult {
+    try {
+      this.#store.setAll(data);
 
       return {
         ok: true,
         stats: this.#store.getStats(),
       };
     } catch (error) {
+      // Log detailed Store error information
+      if (error instanceof DataSizeExceededError) {
+        this.#logger.warn('Snapshot storage failed: data size exceeded', {
+          dataSizeBytes: error.dataSizeBytes,
+          maxDataSizeBytes: error.maxDataSizeBytes,
+          dataState: error.dataState,
+        });
+      } else if (error instanceof SizeEstimationError) {
+        this.#logger.error('Snapshot storage failed: size estimation error', {
+          cause: sanitizeDataForLogging(error.cause),
+          dataState: error.dataState,
+        });
+      } else {
+        // Unexpected store error
+        this.#logger.error('Snapshot storage failed: unexpected error', {
+          error: sanitizeDataForLogging(error),
+        });
+      }
+
       return {
         ok: false,
         error: error instanceof Error ? error.message : String(error),
@@ -312,39 +366,139 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
   }
 
   /**
-   * Initialize the in-memory snapshot using the provided fetch params.
-   * Typically called once at startup or before the first read.
+   * Fetch prototypes from the API and store them in memory.
+   *
+   * This is the core implementation shared by {@link setupSnapshot} and {@link refreshSnapshot}.
+   * It encapsulates the complete fetch-and-store workflow with proper error handling and
+   * optional parameter caching.
+   *
+   * @param params - Fetch parameters to merge with {@link DEFAULT_FETCH_PARAMS}
+   * @param updateLastFetchParams - Whether to update {@link #lastFetchParams} on successful storage.
+   *   Set to `true` for {@link setupSnapshot} to cache parameters for future {@link refreshSnapshot} calls.
+   *   Set to `false` for {@link refreshSnapshot} to avoid overwriting cached parameters.
+   * @returns {@link SnapshotOperationResult} indicating success or failure
    *
    * @remarks
-   * **Concurrency Control**: If multiple calls to `setupSnapshot` or `refreshSnapshot`
-   * occur simultaneously, they are coalesced into a single API request. All callers
-   * receive the same result. This prevents resource waste and race conditions.
+   * **Operation Flow**:
+   * 1. Fetch and normalize prototypes via {@link #fetchAndNormalize}
+   * 2. Convert fetch failures to {@link SnapshotOperationFailure} via {@link convertFetchFailure}
+   * 3. Store the data in memory via {@link #storeSnapshot}
+   * 4. Update {@link #lastFetchParams} only if `updateLastFetchParams` is `true` AND storage succeeds
    *
-   * The first caller's parameters are used for the fetch operation. Subsequent
-   * concurrent callers wait for the same result, even if they provide different
-   * parameters.
+   * **Parameter Handling**:
+   * - Input `params` are merged with {@link DEFAULT_FETCH_PARAMS} by {@link #fetchAndNormalize}
+   * - Merged parameters are cached in {@link #lastFetchParams} only when:
+   *   - `updateLastFetchParams` is `true` (typically {@link setupSnapshot})
+   *   - Storage operation succeeds
+   * - Failed operations never update {@link #lastFetchParams}
+   *
+   * **Concurrency Control**:
+   * - Uses {@link #executeWithCoalescing} to prevent concurrent API calls
+   * - Multiple concurrent calls are coalesced into a single API request
+   * - All callers receive the same result
+   * - The first caller's operation (fetch + store) is executed
+   * - Subsequent concurrent callers wait for the same result
+   *
+   * **Error Handling**:
+   * - Returns error result if API fetch fails (network, timeout, API errors)
+   * - Returns error result if storage fails (e.g., {@link DataSizeExceededError})
+   * - Previous snapshot remains intact on failure
+   * - Never throws exceptions - all errors are returned as {@link SnapshotOperationResult}
+   *
+   * @internal This method is private and used only by {@link setupSnapshot} and {@link refreshSnapshot}.
+   * It can be accessed in tests via `(repo as any).fetchAndStore(...)` for unit testing.
+   *
+   * @see {@link setupSnapshot} for initial snapshot setup with parameter caching
+   * @see {@link refreshSnapshot} for refreshing with cached parameters
+   */
+  private async fetchAndStore(
+    params: ListPrototypesParams,
+    updateLastFetchParams: boolean,
+  ): Promise<SnapshotOperationResult> {
+    return this.#executeWithCoalescing(async () => {
+      // Fetch and normalize prototypes
+      const fetchResult: FetchPrototypesResult =
+        await this.#fetchAndNormalize(params);
+
+      // Return early on fetch failure, converting to SnapshotOperationFailure
+      if (!fetchResult.ok) {
+        return convertFetchFailure(fetchResult);
+      }
+
+      // Store the fetched data
+      const storeResult: SnapshotOperationResult = this.#storeSnapshot(
+        fetchResult.data,
+      );
+
+      // Update lastFetchParams only on successful storage if requested
+      if (updateLastFetchParams) {
+        if (storeResult.ok) {
+          this.#lastFetchParams = { ...DEFAULT_FETCH_PARAMS, ...params };
+        }
+      }
+
+      return storeResult;
+    });
+  }
+
+  /**
+   * Initialize the in-memory snapshot using the provided fetch parameters.
+   *
+   * Typically called once at startup. Fetches data from the API, stores it in memory,
+   * and caches the parameters for future {@link refreshSnapshot} calls.
+   *
+   * @param params - Fetch parameters to merge with {@link DEFAULT_FETCH_PARAMS}
+   * @returns {@link SnapshotOperationResult} indicating success or failure
+   *
+   * @remarks
+   * Delegates to {@link fetchAndStore} with `updateLastFetchParams: true`.
+   * Emits `snapshotStarted('setup')` event before operation (if events enabled).
+   *
+   * See {@link fetchAndStore} for operation flow, concurrency control, and error handling details.
+   *
+   * @see {@link fetchAndStore}
+   * @see {@link refreshSnapshot}
    */
   async setupSnapshot(
     params: ListPrototypesParams,
   ): Promise<SnapshotOperationResult> {
-    this.events?.emit('snapshotStarted', 'setup');
-    return this.#executeWithCoalescing(() => this.#fetchAndNormalize(params));
+    emitRepositoryEventSafely(
+      this.events,
+      this.#logger,
+      'snapshotStarted',
+      'setup',
+    );
+
+    return this.fetchAndStore(params, true);
   }
 
   /**
-   * Refresh the in-memory snapshot using the last successful fetch params.
-   * If no previous fetch exists, falls back to {@link DEFAULT_FETCH_PARAMS}.
+   * Refresh the in-memory snapshot using cached fetch parameters.
+   *
+   * Typically called periodically to refresh expired data. Uses parameters
+   * cached by the last successful {@link setupSnapshot} call.
+   *
+   * @returns {@link SnapshotOperationResult} indicating success or failure
    *
    * @remarks
-   * **Concurrency Control**: If multiple calls to `refreshSnapshot` or `setupSnapshot`
-   * occur simultaneously, they are coalesced into a single API request. All callers
-   * receive the same result. This prevents resource waste and race conditions.
+   * Delegates to {@link fetchAndStore} with `updateLastFetchParams: false`.
+   * Emits `snapshotStarted('refresh')` event before operation (if events enabled).
+   *
+   * Falls back to {@link DEFAULT_FETCH_PARAMS} if {@link setupSnapshot} has never been called.
+   * See {@link fetchAndStore} for operation flow, concurrency control, and error handling details.
+   *
+   * @see {@link fetchAndStore}
+   * @see {@link setupSnapshot}
    */
   async refreshSnapshot(): Promise<SnapshotOperationResult> {
-    this.events?.emit('snapshotStarted', 'refresh');
-    return this.#executeWithCoalescing(() =>
-      this.#fetchAndNormalize(this.#lastFetchParams),
+    emitRepositoryEventSafely(
+      this.events,
+      this.#logger,
+      'snapshotStarted',
+      'refresh',
     );
+
+    return this.fetchAndStore(this.#lastFetchParams, false);
   }
 
   /**
@@ -373,9 +527,19 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
 
       // Emit events based on result
       if (result.ok) {
-        this.events?.emit('snapshotCompleted', result.stats);
+        emitRepositoryEventSafely(
+          this.events,
+          this.#logger,
+          'snapshotCompleted',
+          result.stats,
+        );
       } else {
-        this.events?.emit('snapshotFailed', result);
+        emitRepositoryEventSafely(
+          this.events,
+          this.#logger,
+          'snapshotFailed',
+          result,
+        );
       }
 
       return result;

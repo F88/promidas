@@ -1,7 +1,8 @@
 /**
  * Tests for ProtopediaInMemoryRepositoryImpl setup and initialization.
  *
- * Covers constructor, setupSnapshot, and refreshSnapshot operations.
+ * Covers constructor, setupSnapshot, and refreshSnapshot high-level behavior.
+ * Detailed fetch-and-store logic is tested in fetch-and-store.test.ts.
  *
  * @module
  */
@@ -33,12 +34,11 @@ vi.mock('../../../store/index', async (importOriginal) => {
 import {
   createTestContext,
   makeNormalizedPrototype,
-  makePrototype,
   setupMocks,
 } from './test-helpers.js';
 
 describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
-  const { fetchPrototypesMock, resetMocks } = setupMocks();
+  const { resetMocks } = setupMocks();
 
   let mockStoreInstance: PrototypeInMemoryStore;
   let mockApiClientInstance: InstanceType<typeof ProtopediaApiCustomClient>;
@@ -57,9 +57,6 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
 
     mockStoreInstance = testContext.mockStoreInstance;
     mockApiClientInstance = testContext.mockApiClientInstance;
-    vi.mocked(mockApiClientInstance.fetchPrototypes).mockImplementation(
-      fetchPrototypesMock,
-    );
   });
 
   describe('constructor', () => {
@@ -142,514 +139,102 @@ describe('ProtopediaInMemoryRepositoryImpl - setup and initialization', () => {
   });
 
   describe('setupSnapshot', () => {
-    it('uses DEFAULT_FETCH_PARAMS when called with an empty object', async () => {
-      fetchPrototypesMock.mockResolvedValueOnce({
-        ok: true,
-        data: [
-          makePrototype({
-            id: 1,
-            prototypeNm: 'test prototype',
-          }),
-        ],
-      });
-
+    it('calls fetchAndStore with params and updateLastFetchParams=true', async () => {
       const repo = new ProtopediaInMemoryRepositoryImpl({
         store: mockStoreInstance,
         apiClient: mockApiClientInstance,
         repositoryConfig: {},
       });
 
-      await repo.setupSnapshot({});
+      const fetchAndStoreSpy = vi
+        .spyOn(repo as any, 'fetchAndStore')
+        .mockResolvedValue({
+          ok: true,
+          stats: {
+            size: 1,
+            cachedAt: new Date(),
+            isExpired: false,
+            remainingTtlMs: 50000,
+            dataSizeBytes: 1000,
+            refreshInFlight: false,
+          },
+        });
 
-      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
-      expect(fetchPrototypesMock).toHaveBeenCalledWith({
-        offset: 0,
-        limit: 10,
-      });
+      const params = { offset: 5, limit: 20 };
+      await repo.setupSnapshot(params);
 
-      const stats = repo.getStats();
-      expect(stats.size).toBe(1);
-      expect(stats.isExpired).toBe(false);
+      expect(fetchAndStoreSpy).toHaveBeenCalledWith(params, true);
     });
 
-    it('merges defaults with overrides and respects custom limit', async () => {
-      fetchPrototypesMock.mockResolvedValueOnce({
-        ok: true,
-        data: [
-          makePrototype({
-            id: 100,
-            prototypeNm: 'override test',
-          }),
-        ],
-      });
-
-      // Override getByPrototypeId for this specific test
-      vi.mocked(mockStoreInstance.getByPrototypeId).mockReturnValueOnce(
-        makeNormalizedPrototype({ id: 100, prototypeNm: 'override test' }),
-      );
-
+    it('returns the result from fetchAndStore', async () => {
       const repo = new ProtopediaInMemoryRepositoryImpl({
         store: mockStoreInstance,
         apiClient: mockApiClientInstance,
+        repositoryConfig: {},
       });
 
-      await repo.setupSnapshot({ offset: 7, limit: 25 });
-
-      expect(fetchPrototypesMock).toHaveBeenCalledWith({
-        offset: 7,
-        limit: 25,
-      });
-
-      const found = await repo.getPrototypeFromSnapshotByPrototypeId(100);
-      expect(found?.prototypeNm).toBe('override test');
-    });
-
-    it('returns failure result when fetchPrototypes returns ok: false', async () => {
-      fetchPrototypesMock.mockResolvedValueOnce({
+      const mockResult = {
         ok: false,
+        error: 'test error',
         status: 500,
-        error: 'Internal server error',
-        details: {
-          res: { code: 'INTERNAL_ERROR' },
-        },
-      });
+      } as const;
 
-      const repo = new ProtopediaInMemoryRepositoryImpl({
-        store: mockStoreInstance,
-        apiClient: mockApiClientInstance,
-        repositoryConfig: {},
-      });
+      vi.spyOn(repo as any, 'fetchAndStore').mockResolvedValue(mockResult);
 
       const result = await repo.setupSnapshot({});
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error).toBe('Internal server error');
-        expect(result.status).toBe(500);
-        expect(result.code).toBe('INTERNAL_ERROR');
-      }
-
-      const stats = repo.getStats();
-      expect(stats.size).toBe(1); // Store mock returns 1 for size
-    });
-
-    it('applies default limit when only offset is provided', async () => {
-      fetchPrototypesMock.mockResolvedValueOnce({
-        ok: true,
-        data: [makePrototype({ id: 50 })],
-      });
-
-      const repo = new ProtopediaInMemoryRepositoryImpl({
-        store: mockStoreInstance,
-        apiClient: mockApiClientInstance,
-      });
-      await repo.setupSnapshot({ offset: 20 });
-
-      expect(fetchPrototypesMock).toHaveBeenCalledWith({
-        offset: 20,
-        limit: 10,
-      });
-    });
-
-    it('applies default offset when only limit is provided', async () => {
-      fetchPrototypesMock.mockResolvedValueOnce({
-        ok: true,
-        data: [makePrototype({ id: 60 })],
-      });
-
-      const repo = new ProtopediaInMemoryRepositoryImpl({
-        store: mockStoreInstance,
-        apiClient: mockApiClientInstance,
-      });
-      await repo.setupSnapshot({ limit: 50 });
-
-      expect(fetchPrototypesMock).toHaveBeenCalledWith({
-        offset: 0,
-        limit: 50,
-      });
-    });
-
-    it('handles empty data array from successful fetch', async () => {
-      fetchPrototypesMock.mockResolvedValueOnce({
-        ok: true,
-        data: [],
-      });
-
-      vi.mocked(mockStoreInstance.setAll).mockReturnValue({ dataSizeBytes: 2 }); // Empty array size
-      vi.mocked(mockStoreInstance.getStats).mockReturnValue({
-        size: 0,
-        cachedAt: new Date(),
-        isExpired: false,
-        remainingTtlMs: 50000,
-        dataSizeBytes: 2,
-        refreshInFlight: false,
-      });
-      vi.mocked(mockStoreInstance.getByPrototypeId).mockReturnValue(null);
-      vi.mocked(mockStoreInstance.getAll).mockReturnValue([]);
-
-      const repo = new ProtopediaInMemoryRepositoryImpl({
-        store: mockStoreInstance,
-        apiClient: mockApiClientInstance,
-      });
-      await repo.setupSnapshot({});
-
-      const stats = repo.getStats();
-      expect(stats.size).toBe(0);
-      expect(stats.cachedAt).not.toBeNull();
-
-      const random = await repo.getRandomPrototypeFromSnapshot();
-      expect(random).toBeNull();
+      expect(result).toEqual(mockResult);
     });
   });
 
   describe('refreshSnapshot', () => {
-    it('reuses merged params from the last setupSnapshot call', async () => {
-      fetchPrototypesMock
-        .mockResolvedValueOnce({
+    it('calls fetchAndStore with lastFetchParams and updateLastFetchParams=false', async () => {
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {},
+      });
+
+      const fetchAndStoreSpy = vi
+        .spyOn(repo as any, 'fetchAndStore')
+        .mockResolvedValue({
           ok: true,
-          data: [
-            makePrototype({
-              id: 1,
-              prototypeNm: 'first batch',
-            }),
-          ],
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          data: [
-            makePrototype({
-              id: 2,
-              prototypeNm: 'second batch',
-            }),
-          ],
+          stats: {
+            size: 1,
+            cachedAt: new Date(),
+            isExpired: false,
+            remainingTtlMs: 50000,
+            dataSizeBytes: 1000,
+            refreshInFlight: false,
+          },
         });
 
-      vi.mocked(mockStoreInstance.setAll).mockReturnValue({
-        dataSizeBytes: 100,
-      });
-      vi.mocked(mockStoreInstance.getStats).mockReturnValue({
-        size: 1,
-        cachedAt: new Date(),
-        isExpired: false,
-        remainingTtlMs: 50000,
-        dataSizeBytes: 100,
-        refreshInFlight: false,
-      });
-      vi.mocked(mockStoreInstance.getByPrototypeId)
-        .mockReturnValueOnce(makeNormalizedPrototype({ id: 1 }))
-        .mockReturnValueOnce(makeNormalizedPrototype({ id: 2 }));
-
-      const repo = new ProtopediaInMemoryRepositoryImpl({
-        store: mockStoreInstance,
-        apiClient: mockApiClientInstance,
-        repositoryConfig: {},
-      });
-
-      await repo.setupSnapshot({ offset: 5 });
-
-      expect(fetchPrototypesMock).toHaveBeenNthCalledWith(1, {
-        offset: 5,
-        limit: 10,
-      });
-
-      let prototype = await repo.getPrototypeFromSnapshotByPrototypeId(1);
-      expect(prototype?.id).toBe(1);
-
       await repo.refreshSnapshot();
 
-      expect(fetchPrototypesMock).toHaveBeenNthCalledWith(2, {
-        offset: 5,
-        limit: 10,
-      });
-
-      prototype = await repo.getPrototypeFromSnapshotByPrototypeId(2);
-      expect(prototype?.id).toBe(2);
-    });
-
-    it('falls back to defaults when setupSnapshot has not run yet', async () => {
-      fetchPrototypesMock.mockResolvedValueOnce({
-        ok: true,
-        data: [
-          makePrototype({
-            id: 3,
-            prototypeNm: 'fallback refresh',
-          }),
-        ],
-      });
-
-      vi.mocked(mockStoreInstance.setAll).mockReturnValue({
-        dataSizeBytes: 100,
-      });
-      vi.mocked(mockStoreInstance.getStats).mockReturnValue({
-        size: 1,
-        cachedAt: new Date(),
-        isExpired: false,
-        remainingTtlMs: 50000,
-        dataSizeBytes: 100,
-        refreshInFlight: false,
-      });
-
-      const repo = new ProtopediaInMemoryRepositoryImpl({
-        store: mockStoreInstance,
-        apiClient: mockApiClientInstance,
-      });
-
-      await repo.refreshSnapshot();
-
-      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
-      expect(fetchPrototypesMock).toHaveBeenCalledWith({
-        offset: 0,
-        limit: 10,
-      });
-
-      const stats = repo.getStats();
-      expect(stats.size).toBe(1);
-    });
-
-    it('preserves the snapshot when refreshSnapshot fails', async () => {
-      fetchPrototypesMock
-        .mockResolvedValueOnce({
-          ok: true,
-          data: [
-            makePrototype({
-              id: 1,
-              prototypeNm: 'initial',
-            }),
-          ],
-        })
-        .mockRejectedValueOnce(new Error('network failure'));
-
-      vi.mocked(mockStoreInstance.setAll).mockReturnValue({
-        dataSizeBytes: 100,
-      });
-      vi.mocked(mockStoreInstance.getStats).mockReturnValue({
-        size: 1,
-        cachedAt: new Date(),
-        isExpired: false,
-        remainingTtlMs: 50000,
-        dataSizeBytes: 100,
-        refreshInFlight: false,
-      });
-      vi.mocked(mockStoreInstance.getByPrototypeId).mockReturnValue(
-        makeNormalizedPrototype({ id: 1 }),
+      // Should call with DEFAULT_FETCH_PARAMS (initial value of lastFetchParams)
+      expect(fetchAndStoreSpy).toHaveBeenCalledWith(
+        { offset: 0, limit: 10 },
+        false,
       );
-      vi.mocked(mockStoreInstance.getAll).mockReturnValue([
-        makeNormalizedPrototype({ id: 1 }),
-      ]);
+    });
 
+    it('returns the result from fetchAndStore', async () => {
       const repo = new ProtopediaInMemoryRepositoryImpl({
         store: mockStoreInstance,
         apiClient: mockApiClientInstance,
         repositoryConfig: {},
       });
 
-      await repo.setupSnapshot({});
+      const mockResult = {
+        ok: false,
+        error: 'refresh failed',
+      } as const;
 
-      const beforeStats = repo.getStats();
-      expect(beforeStats.size).toBe(1);
+      vi.spyOn(repo as any, 'fetchAndStore').mockResolvedValue(mockResult);
 
       const result = await repo.refreshSnapshot();
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error).toBe('network failure');
-      }
-
-      const afterStats = repo.getStats();
-      expect(afterStats.size).toBe(1);
-
-      const random = await repo.getRandomPrototypeFromSnapshot();
-      expect(random).not.toBeNull();
-      expect(random?.id).toBe(1);
-    });
-
-    it('can refresh multiple times consecutively', async () => {
-      fetchPrototypesMock
-        .mockResolvedValueOnce({
-          ok: true,
-          data: [makePrototype({ id: 1, prototypeNm: 'first' })],
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          data: [makePrototype({ id: 2, prototypeNm: 'second' })],
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          data: [makePrototype({ id: 3, prototypeNm: 'third' })],
-        });
-
-      vi.mocked(mockStoreInstance.setAll).mockReturnValue({
-        dataSizeBytes: 100,
-      });
-      vi.mocked(mockStoreInstance.getStats).mockReturnValue({
-        size: 1,
-        cachedAt: new Date(),
-        isExpired: false,
-        remainingTtlMs: 50000,
-        dataSizeBytes: 100,
-        refreshInFlight: false,
-      });
-
-      // Override getByPrototypeId for this specific test
-      vi.mocked(mockStoreInstance.getByPrototypeId)
-        .mockReturnValueOnce(
-          makeNormalizedPrototype({ id: 1, prototypeNm: 'first' }),
-        )
-        .mockReturnValueOnce(
-          makeNormalizedPrototype({ id: 2, prototypeNm: 'second' }),
-        )
-        .mockReturnValueOnce(
-          makeNormalizedPrototype({ id: 3, prototypeNm: 'third' }),
-        );
-
-      const repo = new ProtopediaInMemoryRepositoryImpl({
-        store: mockStoreInstance,
-        apiClient: mockApiClientInstance,
-      });
-
-      await repo.refreshSnapshot();
-      let proto = await repo.getPrototypeFromSnapshotByPrototypeId(1);
-      expect(proto?.prototypeNm).toBe('first');
-
-      await repo.refreshSnapshot();
-      proto = await repo.getPrototypeFromSnapshotByPrototypeId(2);
-      expect(proto?.prototypeNm).toBe('second');
-
-      await repo.refreshSnapshot();
-      proto = await repo.getPrototypeFromSnapshotByPrototypeId(3);
-      expect(proto?.prototypeNm).toBe('third');
-    });
-  });
-
-  describe('setupSnapshot - data size limit', () => {
-    it('returns error when data size exceeds maxDataSizeBytes', async () => {
-      const largePrototypes = [
-        makePrototype({ id: 1, freeComment: 'x'.repeat(10000) }),
-        makePrototype({ id: 2, freeComment: 'y'.repeat(10000) }),
-      ];
-
-      fetchPrototypesMock.mockResolvedValueOnce({
-        ok: true,
-        data: largePrototypes,
-      });
-
-      vi.mocked(mockStoreInstance.setAll).mockImplementationOnce(() => {
-        throw new Error(
-          'Snapshot data size (20000 bytes) exceeds maximum limit (10000 bytes)',
-        );
-      });
-
-      const repo = new ProtopediaInMemoryRepositoryImpl({
-        store: mockStoreInstance,
-        apiClient: mockApiClientInstance,
-      });
-
-      const result = await repo.setupSnapshot({ limit: 100 });
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error).toContain('data size');
-        expect(result.error).toContain('exceeds maximum limit');
-      }
-      expect(mockStoreInstance.setAll).toHaveBeenCalledWith(largePrototypes);
-    });
-
-    it('does not update lastFetchParams when data size exceeds limit', async () => {
-      const largePrototypes = [
-        makePrototype({ id: 1, freeComment: 'x'.repeat(10000) }),
-      ];
-
-      fetchPrototypesMock.mockResolvedValueOnce({
-        ok: true,
-        data: largePrototypes,
-      });
-
-      vi.mocked(mockStoreInstance.setAll).mockImplementationOnce(() => {
-        throw new Error('Snapshot data size exceeds maximum limit');
-      });
-
-      const repo = new ProtopediaInMemoryRepositoryImpl({
-        store: mockStoreInstance,
-        apiClient: mockApiClientInstance,
-      });
-
-      const result = await repo.setupSnapshot({ limit: 100, offset: 50 });
-
-      expect(result.ok).toBe(false);
-
-      // Try to refresh with default params - should not use the failed fetch params
-      fetchPrototypesMock.mockResolvedValueOnce({
-        ok: true,
-        data: [makePrototype({ id: 2 })],
-      });
-
-      vi.mocked(mockStoreInstance.setAll).mockReturnValueOnce({
-        dataSizeBytes: 500,
-      });
-
-      await repo.refreshSnapshot();
-
-      // Should use DEFAULT_FETCH_PARAMS, not the params from the failed setupSnapshot
-      expect(fetchPrototypesMock).toHaveBeenLastCalledWith({
-        offset: 0,
-        limit: 10,
-      });
-    });
-  });
-
-  describe('refreshSnapshot - data size limit', () => {
-    it('preserves old snapshot when refresh data exceeds size limit', async () => {
-      // Initial successful setup
-      const initialPrototypes = [
-        makePrototype({ id: 1, prototypeNm: 'initial' }),
-      ];
-
-      fetchPrototypesMock.mockResolvedValueOnce({
-        ok: true,
-        data: initialPrototypes,
-      });
-
-      vi.mocked(mockStoreInstance.setAll).mockReturnValueOnce({
-        dataSizeBytes: 500,
-      });
-
-      vi.mocked(mockStoreInstance.getByPrototypeId)
-        .mockReturnValueOnce(null)
-        .mockReturnValueOnce(makeNormalizedPrototype({ id: 1 }));
-
-      const repo = new ProtopediaInMemoryRepositoryImpl({
-        store: mockStoreInstance,
-        apiClient: mockApiClientInstance,
-      });
-
-      const setupResult = await repo.setupSnapshot({ limit: 10 });
-      expect(setupResult.ok).toBe(true);
-
-      // Refresh with data that exceeds size limit
-      const largePrototypes = [
-        makePrototype({ id: 2, freeComment: 'x'.repeat(10000) }),
-      ];
-
-      fetchPrototypesMock.mockResolvedValueOnce({
-        ok: true,
-        data: largePrototypes,
-      });
-
-      vi.mocked(mockStoreInstance.setAll).mockImplementationOnce(() => {
-        throw new Error('Snapshot data size exceeds maximum limit');
-      });
-
-      const refreshResult = await repo.refreshSnapshot();
-
-      expect(refreshResult.ok).toBe(false);
-      if (!refreshResult.ok) {
-        expect(refreshResult.error).toContain('data size');
-        expect(refreshResult.error).toContain('exceeds maximum limit');
-      }
-
-      // Verify old snapshot is still accessible
-      const oldProto = await repo.getPrototypeFromSnapshotByPrototypeId(1);
-      expect(oldProto).toBeDefined();
+      expect(result).toEqual(mockResult);
     });
   });
 });
