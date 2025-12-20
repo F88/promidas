@@ -19,7 +19,7 @@ import {
   type LogLevel,
 } from '../../logger/index.js';
 import type { NormalizedPrototype } from '../../types/index.js';
-import { sanitizeDataForLogging } from '../../utils/index.js'; // 追加
+import { sanitizeDataForLogging } from '../../utils/index.js';
 import { VERSION } from '../../version.js';
 import type {
   NetworkFailure,
@@ -78,6 +78,8 @@ export class ProtopediaApiCustomClient {
    *
    * @param config - Configuration options for the client
    * @param config.protoPediaApiClientOptions - Options for protopedia-api-v2-client
+   * @param config.protoPediaApiClientOptions.timeoutMs - Optional request timeout in milliseconds
+   * @param config.protoPediaApiClientOptions.fetch - Optional custom fetch implementation
    * @param config.logger - Custom logger instance
    * @param config.logLevel - Log level for default logger or to update existing logger
    * @param config.progressLog - Enable download progress logging (default: true)
@@ -86,7 +88,7 @@ export class ProtopediaApiCustomClient {
    * @param config.progressCallback.onProgress - Called periodically during download
    * @param config.progressCallback.onComplete - Called when download completes
    *
-   * @throws {Error} If the underlying protopedia-api-v2-client initialization fails
+   * @throws {unknown} If the underlying protopedia-api-v2-client initialization fails
    *
    * @example Basic usage with progress logging
    * ```typescript
@@ -192,7 +194,7 @@ export class ProtopediaApiCustomClient {
    * the result in a {@link FetchPrototypesResult} discriminated union.
    *
    * This method never throws; all errors are caught and converted into
-   * failure results by {@link #handleApiError}.
+   * failure results by {@link handleApiError}.
    *
    * @param params - Query parameters for the upstream listPrototypes call
    * @returns A {@link FetchPrototypesResult} with normalized data or error details

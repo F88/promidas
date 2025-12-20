@@ -63,7 +63,7 @@
  *
  * **IMPORTANT**:
  * - Tests under `protopedia-in-memory-repository/` should NOT use
- *   `createProtopediaInMemoryRepository` factory function.
+ *   `PromidasRepositoryBuilder`.
  * - Use explicit dependency injection when constructing `ProtopediaInMemoryRepositoryImpl`.
  * - If you use {@link setupMocks}, each test file must include the `vi.mock()`
  *   call at the top level before importing this module.

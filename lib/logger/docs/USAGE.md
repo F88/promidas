@@ -316,13 +316,15 @@ describe('MyService', () => {
 ### With Fetcher
 
 ```typescript
-import { createProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
 import { createConsoleLogger } from '@f88/promidas/logger';
 
 const logger = createConsoleLogger();
 
-const client = createProtopediaApiCustomClient({
-    token: process.env.PROTOPEDIA_API_V2_TOKEN,
+const client = new ProtopediaApiCustomClient({
+    protoPediaApiClientOptions: {
+        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+    },
     logger,
     logLevel: 'info',
 });

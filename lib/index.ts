@@ -41,7 +41,7 @@
  *
  * // API client and data fetching
  * import {
- *   createProtopediaApiCustomClient
+ *   ProtopediaApiCustomClient
  * } from '@f88/promidas/fetcher';
  *
  * // In-memory store
