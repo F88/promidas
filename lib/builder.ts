@@ -152,8 +152,16 @@ export class PromidasRepositoryBuilder {
    * Configurations are deep-merged to prevent external mutations from affecting
    * the builder's internal state.
    *
+   * **Failure Logging:**
+   * When construction fails, this method logs the failure via the repository
+   * logger (if `logger.error` is a function) and rethrows the original error.
+   *
    * @returns A fully configured ProtopediaInMemoryRepository instance
-   * @throws {Error} If any dependency fails to initialize
+   * @throws {ConfigurationError} When store configuration is invalid
+   * @throws {DataSizeExceededError} When snapshot data exceeds size limit
+   * @throws {SizeEstimationError} When snapshot size estimation fails
+   * @throws {StoreError} When store initialization fails
+   * @throws {unknown} When API client or repository construction fails
    *
    * @example
    * ```typescript
@@ -234,7 +242,14 @@ export class PromidasRepositoryBuilder {
    * @param repositoryLogger - Logger instance for error reporting
    * @returns Initialized store instance
    * @throws {ConfigurationError} When store configuration is invalid
+   * @throws {DataSizeExceededError} When snapshot data exceeds size limit
+   * @throws {SizeEstimationError} When snapshot size estimation fails
    * @throws {StoreError} When other store-related errors occur
+   * @throws {unknown} When the store constructor throws an unexpected error
+   *
+   * @remarks
+   * On failure, this method logs via the repository logger (if `logger.error`
+   * is a function) and rethrows the original error.
    *
    * @internal This method is private and intended for internal use and testing only
    */
@@ -277,7 +292,11 @@ export class PromidasRepositoryBuilder {
    * @param config - API client configuration
    * @param repositoryLogger - Logger instance for error reporting
    * @returns Initialized API client instance
-   * @throws When API client construction fails
+   * @throws {unknown} When API client construction fails
+   *
+   * @remarks
+   * On failure, this method logs via the repository logger (if `logger.error`
+   * is a function) and rethrows the original error.
    *
    * @internal This method is private and intended for internal use and testing only
    */
