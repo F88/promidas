@@ -48,7 +48,7 @@ describe('createClientFetch', () => {
 
     const originalGlobalFetch = globalThis.fetch;
     // Simulate an environment where global fetch is not available.
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+     
     (globalThis as { fetch?: unknown }).fetch = undefined;
 
     selectCustomFetchMock.mockReturnValue(undefined);
