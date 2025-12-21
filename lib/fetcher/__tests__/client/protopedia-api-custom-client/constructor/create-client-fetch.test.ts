@@ -62,7 +62,7 @@ describe('ProtopediaApiCustomClient - Constructor - createClientFetch', () => {
     const firstCall = createClientFetchMock.mock.calls[0];
     const args = firstCall?.[0] as Record<string, unknown> | undefined;
     expect(args).toBeDefined();
-    expect('stripHeaders' in (args ?? {})).toBe(false);
+    expect(args?.stripHeaders).toBeUndefined();
   });
 
   it('sets stripHeaders in browser runtime (Issue #55)', () => {

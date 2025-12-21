@@ -151,6 +151,10 @@ export class ProtopediaApiCustomClient {
       typeof (globalThis as { document?: unknown }).document !== 'undefined';
     const isBrowserRuntime = hasWindow && hasDocument;
 
+    // Determine User-Agent header
+    const userAgent =
+      sdkOptions.userAgent ?? `ProtopediaApiCustomClient/${VERSION} (promidas)`;
+
     // Issue #55 (browser CORS): `protopedia-api-v2-client` adds
     // `x-client-user-agent` by design. In browsers, custom request headers
     // trigger a CORS preflight and the request may be blocked because the
@@ -159,8 +163,9 @@ export class ProtopediaApiCustomClient {
     // Mitigation (promidas-side): In browser runtimes, strip
     // `x-client-user-agent` from the outgoing request in our fetch wrapper.
     // Server-side Node.js execution is not affected.
-    const userAgent =
-      sdkOptions.userAgent ?? `ProtopediaApiCustomClient/${VERSION} (promidas)`;
+
+    // Determine headers to strip based on runtime environment
+    const stripHeaders = isBrowserRuntime ? ['x-client-user-agent'] : undefined;
 
     const customFetch = createClientFetch({
       logger: this.#logger,
@@ -168,7 +173,7 @@ export class ProtopediaApiCustomClient {
       progressCallback,
       timeoutMs,
       providedFetch: providedFetch as typeof fetch | undefined,
-      ...(isBrowserRuntime && { stripHeaders: ['x-client-user-agent'] }),
+      stripHeaders,
     });
 
     // Create underlying protopedia-api-v2-client
