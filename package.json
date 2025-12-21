@@ -1,6 +1,6 @@
 {
   "name": "@f88/promidas",
-  "version": "0.12.2",
+  "version": "0.13.0",
   "description": "In-memory snapshot manager for ProtoPedia prototypes with TTL and efficient data access.",
   "engines": {
     "node": ">=20"

@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking Changes
 
+## [0.13.0] - 2025-12-21
+
+### Fixed
+
+- **Browser CORS**: Strip `x-client-user-agent` in browser runtimes to avoid blocked preflight requests (#55)
+
 ## [0.12.2] - 2025-12-20
 
 ### Fixed
