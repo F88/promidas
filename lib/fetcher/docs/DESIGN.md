@@ -447,7 +447,7 @@ export type ProtopediaApiCustomClientConfig = {
 
 **Overhead**:
 
-- Minimal: Only wraps fetch when `progressLog: true`
+- Minimal: Only wraps fetch when `progressLog: true` (progress tracking) or when browser-only header stripping is enabled
 - Streaming processing: No buffering of entire response
 - Callback execution: Synchronous, non-blocking
 
@@ -486,19 +486,55 @@ export type ProtopediaApiCustomClientConfig = {
 
 ```typescript
 constructor(config?: ProtopediaApiCustomClientConfig | null) {
-    const { protoPediaApiClientOptions = {}, logger, logLevel } = config ?? {};
+    const {
+        protoPediaApiClientOptions = {},
+        logger,
+        logLevel,
+        progressLog = true,
+        progressCallback,
+    } = config ?? {};
+
+    const { timeoutMs, fetch: providedFetch, ...sdkOptions } =
+        protoPediaApiClientOptions;
+
+    const hasWindow =
+        typeof (globalThis as { window?: unknown }).window !== 'undefined';
+    const hasDocument =
+        typeof (globalThis as { document?: unknown }).document !== 'undefined';
+    const isBrowserRuntime = hasWindow && hasDocument;
 
     // Set ProtopediaApiCustomClient User-Agent if not provided
     const userAgent =
-        protoPediaApiClientOptions.userAgent ??
+        sdkOptions.userAgent ??
         `ProtopediaApiCustomClient/${VERSION} (promidas)`;
 
+    // Browser-only CORS mitigation:
+    // `protopedia-api-v2-client` adds `x-client-user-agent` derived from
+    // `userAgent` by design. In browsers, custom request headers trigger a
+    // CORS preflight and the request may be blocked by the server.
+    // Promidas strips `x-client-user-agent` in a fetch wrapper for browser runtimes.
+    const customFetch = createClientFetch({
+        logger: logger ?? new ConsoleLogger(logLevel ?? 'info'),
+        enableProgressLog: progressLog,
+        progressCallback,
+        timeoutMs,
+        providedFetch,
+        ...(isBrowserRuntime && { stripHeaders: ['x-client-user-agent'] }),
+    });
+
     this.#client = createProtoPediaClient({
-        ...protoPediaApiClientOptions,
+        ...sdkOptions,
         userAgent,
+        ...(customFetch !== undefined && { fetch: customFetch }),
     });
 }
 ```
+
+**Browser Runtime Note (Issue #55)**:
+
+In browser runtimes, Promidas strips `x-client-user-agent` to avoid triggering
+CORS preflight failures on servers that do not allow this custom header.
+This does not change server-side Node.js behavior.
 
 **User-Agent Format**:
 
