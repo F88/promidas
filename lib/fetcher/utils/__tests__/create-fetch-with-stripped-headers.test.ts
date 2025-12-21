@@ -130,7 +130,7 @@ describe('createFetchWithStrippedHeaders', () => {
     expect(headers.get('x-keep-me')).toBe('1');
   });
 
-  it('prefers init.headers over Request input headers', async () => {
+  it('strips configured headers from merged Request + init.headers', async () => {
     type BaseFetch = (
       input: string | URL | Request,
       init?: RequestInit,
@@ -161,15 +161,17 @@ describe('createFetchWithStrippedHeaders', () => {
     expect(firstCall).toBeDefined();
 
     const passedInput = firstCall?.[0];
-    expect(passedInput).toBe(request);
+    expect(passedInput).toBeInstanceOf(Request);
+    expect(passedInput).not.toBe(request);
 
-    const passedInit = firstCall?.[1];
-    const initHeaders = new Headers(passedInit?.headers);
-    expect(initHeaders.get('x-client-user-agent')).toBeNull();
-    expect(initHeaders.get('x-keep-init')).toBe('1');
+    const passedRequest = passedInput as unknown as Request;
+    const passedHeaders = new Headers(passedRequest.headers);
+    expect(passedHeaders.get('x-client-user-agent')).toBeNull();
+    expect(passedHeaders.get('x-keep-init')).toBe('1');
+    expect(passedHeaders.get('x-keep-request')).toBe('1');
 
-    const requestHeaders = new Headers(request.headers);
-    expect(requestHeaders.get('x-client-user-agent')).toBe('SDK/1.0');
-    expect(requestHeaders.get('x-keep-request')).toBe('1');
+    const originalRequestHeaders = new Headers(request.headers);
+    expect(originalRequestHeaders.get('x-client-user-agent')).toBe('SDK/1.0');
+    expect(originalRequestHeaders.get('x-keep-request')).toBe('1');
   });
 });

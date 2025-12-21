@@ -21,22 +21,33 @@ export function createFetchWithStrippedHeaders(
       return baseFetch(input, init);
     }
 
+    if (typeof Request !== 'undefined' && input instanceof Request) {
+      const headers = new Headers(input.headers);
+
+      if (init?.headers !== undefined) {
+        const initHeaders = new Headers(init.headers);
+        initHeaders.forEach((value, key) => {
+          headers.set(key, value);
+        });
+      }
+
+      for (const headerName of headerNames) {
+        headers.delete(headerName);
+      }
+
+      const strippedRequest = new Request(input, {
+        ...(init !== undefined && init),
+        headers,
+      });
+      return baseFetch(strippedRequest);
+    }
+
     if (init?.headers !== undefined) {
       const headers = new Headers(init.headers);
       for (const headerName of headerNames) {
         headers.delete(headerName);
       }
       return baseFetch(input, { ...init, headers });
-    }
-
-    if (typeof Request !== 'undefined' && input instanceof Request) {
-      const headers = new Headers(input.headers);
-      for (const headerName of headerNames) {
-        headers.delete(headerName);
-      }
-
-      const strippedRequest = new Request(input, { headers });
-      return baseFetch(strippedRequest);
     }
 
     return baseFetch(input, init);
