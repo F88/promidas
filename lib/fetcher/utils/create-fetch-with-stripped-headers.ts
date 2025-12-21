@@ -35,11 +35,10 @@ export function createFetchWithStrippedHeaders(
         headers.delete(headerName);
       }
 
-      const strippedRequest = new Request(input, {
-        ...(init !== undefined && init),
-        headers,
-      });
-      return baseFetch(strippedRequest);
+      const strippedRequest = new Request(input, { headers });
+      return init !== undefined
+        ? baseFetch(strippedRequest, { ...init, headers })
+        : baseFetch(strippedRequest);
     }
 
     if (init?.headers !== undefined) {

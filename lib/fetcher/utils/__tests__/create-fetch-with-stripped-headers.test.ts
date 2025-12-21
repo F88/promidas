@@ -149,12 +149,19 @@ describe('createFetchWithStrippedHeaders', () => {
       },
     });
 
-    await fetchWithStrippedHeaders(request, {
+    type NonstandardRequestInit = RequestInit & {
+      next?: { revalidate: number };
+    };
+
+    const init: NonstandardRequestInit = {
       headers: {
         'x-client-user-agent': 'FROM_INIT',
         'x-keep-init': '1',
       },
-    });
+      next: { revalidate: 60 },
+    };
+
+    await fetchWithStrippedHeaders(request, init);
 
     expect(baseFetch).toHaveBeenCalledTimes(1);
     const firstCall = baseFetch.mock.calls[0];
@@ -169,6 +176,16 @@ describe('createFetchWithStrippedHeaders', () => {
     expect(passedHeaders.get('x-client-user-agent')).toBeNull();
     expect(passedHeaders.get('x-keep-init')).toBe('1');
     expect(passedHeaders.get('x-keep-request')).toBe('1');
+
+    const passedInit = firstCall?.[1] as unknown as {
+      headers?: RequestInit['headers'];
+      next?: { revalidate: number };
+    };
+    expect(passedInit.next).toEqual({ revalidate: 60 });
+    const initHeaders = new Headers(passedInit.headers);
+    expect(initHeaders.get('x-client-user-agent')).toBeNull();
+    expect(initHeaders.get('x-keep-init')).toBe('1');
+    expect(initHeaders.get('x-keep-request')).toBe('1');
 
     const originalRequestHeaders = new Headers(request.headers);
     expect(originalRequestHeaders.get('x-client-user-agent')).toBe('SDK/1.0');
