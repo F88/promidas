@@ -26,12 +26,12 @@ import type {
   UpstreamPrototype,
 } from '../types/prototype-api.types.js';
 import type { FetchPrototypesResult } from '../types/result.types.js';
+import { createClientFetch } from '../utils/create-client-fetch.js';
 import { handleApiError } from '../utils/errors/handler.js';
+import { logTimestampNormalizationWarnings } from '../utils/log-timestamp-normalization-warnings.js';
 import { normalizePrototype } from '../utils/normalize-prototype.js';
 
 import type { ProtopediaApiCustomClientConfig } from './config.js';
-import { createFetchWithTimeout } from './fetch-with-timeout.js';
-import { selectCustomFetch } from './select-custom-fetch.js';
 
 /**
  * Custom API client that wraps protopedia-api-v2-client with logger management
@@ -145,36 +145,35 @@ export class ProtopediaApiCustomClient {
       sanitizeDataForLogging(config),
     );
 
-    // Set ProtopediaApiCustomClient User-Agent if not provided
+    const hasWindow =
+      typeof (globalThis as { window?: unknown }).window !== 'undefined';
+    const hasDocument =
+      typeof (globalThis as { document?: unknown }).document !== 'undefined';
+    const isBrowserRuntime = hasWindow && hasDocument;
+
+    // Determine User-Agent header
     const userAgent =
       sdkOptions.userAgent ?? `ProtopediaApiCustomClient/${VERSION} (promidas)`;
 
-    const timeoutWrappedFetch =
-      typeof timeoutMs === 'number'
-        ? createFetchWithTimeout({
-            timeoutMs,
-            baseFetch: providedFetch,
-          })
-        : providedFetch;
+    // Issue #55 (browser CORS): `protopedia-api-v2-client` adds
+    // `x-client-user-agent` by design. In browsers, custom request headers
+    // trigger a CORS preflight and the request may be blocked because the
+    // server may not allow that header.
+    //
+    // Mitigation (promidas-side): In browser runtimes, strip
+    // `x-client-user-agent` from the outgoing request in our fetch wrapper.
+    // Server-side Node.js execution is not affected.
 
-    // Select appropriate custom fetch based on configuration
-    // If user provides a custom fetch, wrap it with progress tracking
-    // Otherwise, progress tracking wraps the global fetch
-    const customFetch = selectCustomFetch({
+    // Determine headers to strip based on runtime environment
+    const stripHeaders = isBrowserRuntime ? ['x-client-user-agent'] : undefined;
+
+    const customFetch = createClientFetch({
       logger: this.#logger,
       enableProgressLog: progressLog,
-      ...(timeoutWrappedFetch !== undefined && {
-        baseFetch: timeoutWrappedFetch,
-      }),
-      ...(progressCallback?.onStart !== undefined && {
-        onProgressStart: progressCallback.onStart,
-      }),
-      ...(progressCallback?.onProgress !== undefined && {
-        onProgress: progressCallback.onProgress,
-      }),
-      ...(progressCallback?.onComplete !== undefined && {
-        onProgressComplete: progressCallback.onComplete,
-      }),
+      progressCallback,
+      timeoutMs,
+      providedFetch: providedFetch as typeof fetch | undefined,
+      stripHeaders,
     });
 
     // Create underlying protopedia-api-v2-client
@@ -222,43 +221,12 @@ export class ProtopediaApiCustomClient {
           const original = value as UpstreamPrototype;
           const normalized = normalizePrototype(original);
 
-          // Check for date normalization failures
-          // If the normalized value is the same as the original (and not null/undefined)
-          // but doesn't look like a normalized UTC ISO string (ending in 'Z'), it likely failed parsing.
-          const context = { prototypeId: original.id, index };
-
-          if (
-            original.createDate &&
-            normalized.createDate === original.createDate &&
-            !normalized.createDate.endsWith('Z')
-          ) {
-            this.#logger.warn('Failed to parse and normalize createDate', {
-              ...context,
-              originalValue: original.createDate,
-            });
-          }
-
-          if (
-            original.updateDate &&
-            normalized.updateDate === original.updateDate &&
-            !normalized.updateDate.endsWith('Z')
-          ) {
-            this.#logger.warn('Failed to parse and normalize updateDate', {
-              ...context,
-              originalValue: original.updateDate,
-            });
-          }
-
-          if (
-            original.releaseDate &&
-            normalized.releaseDate === original.releaseDate &&
-            !normalized.releaseDate.endsWith('Z')
-          ) {
-            this.#logger.warn('Failed to parse and normalize releaseDate', {
-              ...context,
-              originalValue: original.releaseDate,
-            });
-          }
+          logTimestampNormalizationWarnings({
+            logger: this.#logger,
+            original,
+            normalized,
+            index,
+          });
 
           return normalized;
         });
