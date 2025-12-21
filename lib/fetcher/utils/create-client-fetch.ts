@@ -90,11 +90,5 @@ export function createClientFetch(
     }),
   });
 
-  // If header stripping was requested, ensure we return a custom fetch even
-  // when progress tracking is disabled.
-  if (selected === undefined && strippedFetch !== undefined) {
-    return strippedFetch;
-  }
-
   return selected;
 }

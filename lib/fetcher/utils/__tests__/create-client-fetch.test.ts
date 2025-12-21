@@ -25,11 +25,13 @@ describe('createClientFetch', () => {
     selectCustomFetchMock.mockReset();
   });
 
-  it('returns strippedFetch when progress wrapper is disabled (selected undefined)', () => {
+  it('returns strippedFetch when stripping is enabled and progress wrapper is disabled', () => {
     const logger = new ConsoleLogger('info');
     const providedFetch = vi.fn();
 
-    selectCustomFetchMock.mockReturnValue(undefined);
+    selectCustomFetchMock.mockImplementation(
+      (args: { baseFetch?: typeof fetch | undefined }) => args.baseFetch,
+    );
 
     const result = createClientFetch({
       logger,
@@ -41,6 +43,13 @@ describe('createClientFetch', () => {
     });
 
     expect(result).toBeTypeOf('function');
+    expect(selectCustomFetchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        logger,
+        enableProgressLog: false,
+        baseFetch: expect.any(Function),
+      }),
+    );
   });
 
   it('returns undefined when stripping is requested but no fetch is available', () => {
