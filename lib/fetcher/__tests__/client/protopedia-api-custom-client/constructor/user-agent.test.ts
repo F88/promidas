@@ -17,25 +17,12 @@ describe('ProtopediaApiCustomClient - Constructor - User-Agent', () => {
   const createProtoPediaClientMock =
     createProtoPediaClient as unknown as ReturnType<typeof vi.fn>;
 
-  const originalWindow = (globalThis as { window?: unknown }).window;
-  const originalDocument = (globalThis as { document?: unknown }).document;
-
   beforeEach(() => {
     createProtoPediaClientMock.mockReset();
   });
 
   afterEach(() => {
-    if (originalWindow === undefined) {
-      delete (globalThis as { window?: unknown }).window;
-    } else {
-      (globalThis as { window?: unknown }).window = originalWindow;
-    }
-
-    if (originalDocument === undefined) {
-      delete (globalThis as { document?: unknown }).document;
-    } else {
-      (globalThis as { document?: unknown }).document = originalDocument;
-    }
+    vi.unstubAllGlobals();
   });
 
   it('sets default User-Agent with version when not provided', () => {
@@ -102,17 +89,16 @@ describe('ProtopediaApiCustomClient - Constructor - User-Agent', () => {
 
   it('strips x-client-user-agent in browser runtime (Issue #55)', async () => {
     // Simulate a browser-like environment.
-    (globalThis as { window?: unknown }).window = {};
-    (globalThis as { document?: unknown }).document = {};
+    vi.stubGlobal('window', {});
+    vi.stubGlobal('document', {});
 
-    const originalFetch = globalThis.fetch;
     type BaseFetch = (
       input: string | URL | Request,
       init?: RequestInit,
     ) => Promise<Response>;
 
     const baseFetchMock = vi.fn<BaseFetch>(async () => new Response('ok'));
-    globalThis.fetch = baseFetchMock as unknown as typeof fetch;
+    vi.stubGlobal('fetch', baseFetchMock as unknown as typeof fetch);
 
     const clientInstance = { listPrototypes: vi.fn() };
     createProtoPediaClientMock.mockReturnValue(clientInstance);
@@ -134,24 +120,20 @@ describe('ProtopediaApiCustomClient - Constructor - User-Agent', () => {
       fetch: expect.any(Function),
     });
 
-    try {
-      await callArgs.fetch('https://example.test', {
-        headers: {
-          'x-client-user-agent': 'SDK/1.0',
-          'x-keep-me': '1',
-        },
-      });
+    await callArgs.fetch('https://example.test', {
+      headers: {
+        'x-client-user-agent': 'SDK/1.0',
+        'x-keep-me': '1',
+      },
+    });
 
-      expect(baseFetchMock).toHaveBeenCalledTimes(1);
-      const firstCall = baseFetchMock.mock.calls[0];
-      expect(firstCall).toBeDefined();
-      const passedInit = firstCall?.[1];
+    expect(baseFetchMock).toHaveBeenCalledTimes(1);
+    const firstCall = baseFetchMock.mock.calls[0];
+    expect(firstCall).toBeDefined();
+    const passedInit = firstCall?.[1];
 
-      const passedHeaders = new Headers(passedInit?.headers);
-      expect(passedHeaders.get('x-client-user-agent')).toBeNull();
-      expect(passedHeaders.get('x-keep-me')).toBe('1');
-    } finally {
-      globalThis.fetch = originalFetch;
-    }
+    const passedHeaders = new Headers(passedInit?.headers);
+    expect(passedHeaders.get('x-client-user-agent')).toBeNull();
+    expect(passedHeaders.get('x-keep-me')).toBe('1');
   });
 });

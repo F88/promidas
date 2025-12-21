@@ -24,24 +24,13 @@ describe('ProtopediaApiCustomClient - Constructor - createClientFetch', () => {
     typeof vi.fn
   >;
 
-  function setBrowserGlobals(): void {
-    (globalThis as { window?: unknown }).window = {};
-    (globalThis as { document?: unknown }).document = {};
-  }
-
-  function clearBrowserGlobals(): void {
-    delete (globalThis as { window?: unknown }).window;
-    delete (globalThis as { document?: unknown }).document;
-  }
-
   beforeEach(() => {
-    clearBrowserGlobals();
     createProtoPediaClientMock.mockReset();
     createClientFetchMock.mockReset();
   });
 
   afterEach(() => {
-    clearBrowserGlobals();
+    vi.unstubAllGlobals();
   });
 
   it('does not set stripHeaders in non-browser runtime', () => {
@@ -66,7 +55,8 @@ describe('ProtopediaApiCustomClient - Constructor - createClientFetch', () => {
   });
 
   it('sets stripHeaders in browser runtime (Issue #55)', () => {
-    setBrowserGlobals();
+    vi.stubGlobal('window', {});
+    vi.stubGlobal('document', {});
 
     const clientInstance = { listPrototypes: vi.fn() };
     createProtoPediaClientMock.mockReturnValue(clientInstance);
