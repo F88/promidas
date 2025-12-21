@@ -25,6 +25,49 @@ describe('createClientFetch', () => {
     selectCustomFetchMock.mockReset();
   });
 
+  it('returns strippedFetch when progress wrapper is disabled (selected undefined)', () => {
+    const logger = new ConsoleLogger('info');
+    const providedFetch = vi.fn();
+
+    selectCustomFetchMock.mockReturnValue(undefined);
+
+    const result = createClientFetch({
+      logger,
+      enableProgressLog: false,
+      progressCallback: undefined,
+      timeoutMs: undefined,
+      providedFetch,
+      stripHeaders: ['x-client-user-agent'],
+    });
+
+    expect(result).toBeTypeOf('function');
+  });
+
+  it('returns undefined when stripping is requested but no fetch is available', () => {
+    const logger = new ConsoleLogger('info');
+
+    const originalGlobalFetch = globalThis.fetch;
+    // Simulate an environment where global fetch is not available.
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    (globalThis as { fetch?: unknown }).fetch = undefined;
+
+    selectCustomFetchMock.mockReturnValue(undefined);
+
+    const result = createClientFetch({
+      logger,
+      enableProgressLog: false,
+      progressCallback: undefined,
+      timeoutMs: undefined,
+      providedFetch: undefined,
+      stripHeaders: ['x-client-user-agent'],
+    });
+
+    expect(result).toBeUndefined();
+
+    // Restore global fetch for other tests.
+    globalThis.fetch = originalGlobalFetch;
+  });
+
   it('returns fetch returned by selectCustomFetch', () => {
     const logger = new ConsoleLogger('info');
     const expectedFetch = vi.fn();

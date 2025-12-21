@@ -3,6 +3,43 @@ import { describe, expect, it, vi } from 'vitest';
 import { createFetchWithStrippedHeaders } from '../create-fetch-with-stripped-headers.js';
 
 describe('createFetchWithStrippedHeaders', () => {
+  it('passes through when headerNames normalize to empty', async () => {
+    type BaseFetch = (
+      input: string | URL | Request,
+      init?: RequestInit,
+    ) => Promise<Response>;
+
+    const baseFetch = vi.fn<BaseFetch>(async () => new Response('ok'));
+    const fetchWithStrippedHeaders = createFetchWithStrippedHeaders({
+      baseFetch: baseFetch as unknown as typeof fetch,
+      headerNames: [' ', ''],
+    });
+
+    const init: RequestInit = { headers: { 'x-any': '1' } };
+    await fetchWithStrippedHeaders('https://example.test', init);
+
+    expect(baseFetch).toHaveBeenCalledTimes(1);
+    expect(baseFetch).toHaveBeenCalledWith('https://example.test', init);
+  });
+
+  it('passes through when init.headers is not provided and input is not Request', async () => {
+    type BaseFetch = (
+      input: string | URL | Request,
+      init?: RequestInit,
+    ) => Promise<Response>;
+
+    const baseFetch = vi.fn<BaseFetch>(async () => new Response('ok'));
+    const fetchWithStrippedHeaders = createFetchWithStrippedHeaders({
+      baseFetch: baseFetch as unknown as typeof fetch,
+      headerNames: ['x-client-user-agent'],
+    });
+
+    await fetchWithStrippedHeaders('https://example.test');
+
+    expect(baseFetch).toHaveBeenCalledTimes(1);
+    expect(baseFetch).toHaveBeenCalledWith('https://example.test', undefined);
+  });
+
   it('deletes configured headers from init.headers', async () => {
     type BaseFetch = (
       input: string | URL | Request,
