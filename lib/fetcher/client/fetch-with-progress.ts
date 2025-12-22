@@ -2,12 +2,14 @@
  * Custom fetch function factory with download progress tracking.
  *
  * This module provides a factory function that creates a custom fetch wrapper
- * which monitors download progress and provides callbacks/logging for UI updates.
+ * which monitors the complete request lifecycle and provides event-based
+ * progress tracking for UI updates and logging.
  *
  * @module
  */
 
 import type { Logger } from '../../logger/index.js';
+import type { FetchProgressEvent } from '../types/progress-event.types.js';
 
 /**
  * Check if the logger should output progress logs based on its current level.
@@ -46,8 +48,7 @@ export function shouldProgressLog(logger: Logger): boolean {
  *
  * @remarks
  * This interface defines all options needed to create a custom fetch wrapper
- * that monitors download progress. It supports both automatic logging (via logger)
- * and custom callbacks for UI integration.
+ * that monitors the complete request lifecycle through event callbacks.
  *
  * @example Basic usage with logging
  * ```typescript
@@ -57,13 +58,15 @@ export function shouldProgressLog(logger: Logger): boolean {
  * });
  * ```
  *
- * @example With callbacks for UI updates
+ * @example With event callback for UI updates
  * ```typescript
  * const customFetch = createFetchWithProgress({
  *   logger: myLogger,
- *   enableProgressLog: false, // Disable automatic logging
- *   onProgress: (received, total, percentage) => {
- *     updateProgressBar(percentage);
+ *   enableProgressLog: false,
+ *   onProgressEvent: (event) => {
+ *     if (event.type === 'download-progress') {
+ *       updateProgressBar(event.percentage);
+ *     }
  *   },
  * });
  * ```
@@ -86,41 +89,17 @@ export interface FetchWithProgressConfig {
   baseFetch?: typeof fetch;
 
   /**
-   * Optional callback when download starts.
+   * Optional callback for progress events.
    *
-   * @param estimatedTotal - Estimated total size in bytes
-   * @param limit - Number of items being fetched
-   * @param prepareTime - Time spent on request/headers in seconds
-   */
-  onProgressStart?: (
-    estimatedTotal: number,
-    limit: number,
-    prepareTime: number,
-  ) => void;
-
-  /**
-   * Optional callback for progress updates.
+   * Receives all lifecycle events:
+   * - request-start
+   * - response-received
+   * - download-progress (throttled to 500ms)
+   * - complete
    *
-   * @param received - Number of bytes received so far
-   * @param total - Total number of bytes (estimated or from Content-Length)
-   * @param percentage - Download progress percentage (0-100)
+   * @param event - Progress event with type-specific data
    */
-  onProgress?: (received: number, total: number, percentage: number) => void;
-
-  /**
-   * Optional callback when download completes.
-   *
-   * @param received - Total number of bytes received
-   * @param estimatedTotal - Estimated total size in bytes
-   * @param downloadTime - Time spent downloading body in seconds
-   * @param totalTime - Total time including preparation in seconds
-   */
-  onProgressComplete?: (
-    received: number,
-    estimatedTotal: number,
-    downloadTime: number,
-    totalTime: number,
-  ) => void;
+  onProgressEvent?: (event: FetchProgressEvent) => void;
 }
 
 /**
@@ -163,11 +142,11 @@ function estimateTotalSize(url: string): {
 }
 
 /**
- * Create a custom fetch function with download progress tracking.
+ * Create a custom fetch function with complete lifecycle progress tracking.
  *
- * This factory function creates a fetch wrapper that monitors download progress
- * and provides real-time feedback through callbacks and/or logging. The returned
- * function is compatible with the standard fetch API signature.
+ * This factory function creates a fetch wrapper that monitors the entire request
+ * lifecycle and provides real-time feedback through event callbacks and/or logging.
+ * The returned function is compatible with the standard fetch API signature.
  *
  * @param config - Configuration object containing logger and callback options
  * @returns A fetch-compatible function with progress tracking capabilities
@@ -175,6 +154,7 @@ function estimateTotalSize(url: string): {
  * @remarks
  * The returned fetch function:
  * - Maintains the same signature as standard fetch
+ * - Fires events for all lifecycle phases: request-start, response-received, download-progress, complete
  * - Wraps response body with a ReadableStream that tracks bytes received
  * - Throttles progress updates to 500ms intervals to avoid overhead
  * - Automatically estimates download size based on URL parameters (limit × 2670 bytes)
@@ -182,8 +162,8 @@ function estimateTotalSize(url: string): {
  *
  * Progress tracking behavior:
  * - If `enableProgressLog` is true and logger level is 'debug' or 'info', logs progress messages
- * - If callbacks are provided, calls them at appropriate times regardless of log level
- * - If neither logging nor callbacks are enabled, returns response without tracking overhead
+ * - If `onProgressEvent` callback is provided, fires events regardless of log level
+ * - If neither logging nor callback are enabled, returns response without tracking overhead
  *
  * @example With progress logging
  * ```typescript
@@ -197,22 +177,29 @@ function estimateTotalSize(url: string): {
  * const data = await response.json();
  * ```
  *
- * @example With custom callbacks
+ * @example With custom event handler
  * ```typescript
- * let progressBar: ProgressBar;
+ * let progressBar: ProgressBar | null = null;
  *
  * const customFetch = createFetchWithProgress({
  *   logger: myLogger,
  *   enableProgressLog: false,
- *   onProgressStart: (estimated, limit, prepareTime) => {
- *     progressBar = new ProgressBar({ total: estimated });
- *   },
- *   onProgress: (received, total, percentage) => {
- *     progressBar.update(percentage);
- *   },
- *   onProgressComplete: (received, estimated, downloadTime, totalTime) => {
- *     progressBar.complete();
- *     console.log(`Downloaded ${received} bytes in ${totalTime}s`);
+ *   onProgressEvent: (event) => {
+ *     switch (event.type) {
+ *       case 'request-start':
+ *         console.log('Starting request...');
+ *         break;
+ *       case 'response-received':
+ *         progressBar = new ProgressBar({ total: event.estimatedTotal });
+ *         break;
+ *       case 'download-progress':
+ *         progressBar?.update(event.percentage);
+ *         break;
+ *       case 'complete':
+ *         progressBar?.complete();
+ *         console.log(`Downloaded ${event.received} bytes in ${event.totalTimeMs}ms`);
+ *         break;
+ *     }
  *   },
  * });
  * ```
@@ -220,14 +207,7 @@ function estimateTotalSize(url: string): {
 export function createFetchWithProgress(
   config: FetchWithProgressConfig,
 ): typeof fetch {
-  const {
-    logger,
-    enableProgressLog,
-    baseFetch,
-    onProgressStart,
-    onProgress,
-    onProgressComplete,
-  } = config;
+  const { logger, enableProgressLog, baseFetch, onProgressEvent } = config;
 
   return async (url, init) => {
     // State for this request (reset for each request)
@@ -238,7 +218,13 @@ export function createFetchWithProgress(
     let estimatedItemCount = 0;
 
     // Start timing before fetch call
-    const downloadStartTime = Date.now();
+    const requestStartTime = Date.now();
+
+    // Fire request-start event
+    if (enableProgressLog && shouldProgressLog(logger)) {
+      logger.info('Request starting...');
+    }
+    onProgressEvent?.({ type: 'request-start' });
 
     // Use provided baseFetch or globalThis.fetch (allows mocking in tests)
     const fetchFn = baseFetch ?? globalThis.fetch;
@@ -246,13 +232,13 @@ export function createFetchWithProgress(
 
     // Calculate preparation time (request + response headers)
     const bodyStartTime = Date.now();
-    const prepareTime = ((bodyStartTime - downloadStartTime) / 1000).toFixed(2);
+    const prepareTimeMs = bodyStartTime - requestStartTime;
 
     // Get Content-Length header to calculate progress
     const contentLength = response.headers.get('Content-Length');
     let total = contentLength ? parseInt(contentLength, 10) : 0;
 
-    // Estimate item count from URL parameters for callbacks
+    // Estimate item count from URL parameters
     const estimation = estimateTotalSize(url.toString());
     estimatedItemCount = estimation.itemCount;
 
@@ -262,27 +248,23 @@ export function createFetchWithProgress(
       isEstimatedSize = total > 0; // Mark as estimated if we got a value
     }
 
+    // Fire response-received event
+    if (enableProgressLog && total > 0 && shouldProgressLog(logger)) {
+      const sizeNote = isEstimatedSize ? ' (estimated)' : '';
+      logger.info(
+        `Response received (${prepareTimeMs}ms) - ${total} bytes${sizeNote}, limit=${estimatedItemCount}`,
+      );
+    }
+    onProgressEvent?.({
+      type: 'response-received',
+      prepareTimeMs,
+      estimatedTotal: total,
+      limit: estimatedItemCount,
+    });
+
     // If no body, return response as-is
     if (!response.body) {
       return response;
-    }
-
-    // Log initial progress if estimated size is available
-    if (
-      enableProgressLog &&
-      isEstimatedSize &&
-      total > 0 &&
-      shouldProgressLog(logger)
-    ) {
-      logger.info(
-        `Download starting (limit=${estimatedItemCount}, ${total} bytes (estimated)) (prepared in ${prepareTime}s)`,
-      );
-      // Don't set lastLoggedTime here - let first chunk log immediately
-    }
-
-    // Call progress start callback if provided (always call when we have info)
-    if (onProgressStart && total > 0) {
-      onProgressStart(total, estimatedItemCount, parseFloat(prepareTime));
     }
 
     // Create a new ReadableStream that monitors progress
@@ -297,16 +279,14 @@ export function createFetchWithProgress(
 
             if (done) {
               // Finish progress logging
-              const totalElapsedMs = Date.now() - downloadStartTime;
-              const totalElapsedSeconds = (totalElapsedMs / 1000).toFixed(2);
+              const totalElapsedMs = Date.now() - requestStartTime;
               const bodyElapsedMs = Date.now() - bodyStartTime;
-              const bodyElapsedSeconds = (bodyElapsedMs / 1000).toFixed(2);
 
               if (enableProgressLog && shouldProgressLog(logger)) {
                 // Show final progress (always output, regardless of time)
                 const message = isEstimatedSize
-                  ? `Download complete: ${received} bytes received (estimated ${total} bytes) in ${bodyElapsedSeconds}s (total: ${totalElapsedSeconds}s)`
-                  : `Download complete: ${received} / ${total} bytes received in ${bodyElapsedSeconds}s (total: ${totalElapsedSeconds}s)`;
+                  ? `Download complete: ${received} bytes received (estimated ${total} bytes) in ${bodyElapsedMs}ms (total: ${totalElapsedMs}ms)`
+                  : `Download complete: ${received} / ${total} bytes received in ${bodyElapsedMs}ms (total: ${totalElapsedMs}ms)`;
 
                 // In Node.js, overwrite the progress line with \r; in browsers, use logger
                 if (typeof process !== 'undefined' && process.stderr?.write) {
@@ -316,13 +296,14 @@ export function createFetchWithProgress(
                 }
               }
 
-              // Call progress complete callback if provided
-              onProgressComplete?.(
+              // Fire complete event
+              onProgressEvent?.({
+                type: 'complete',
                 received,
-                total,
-                parseFloat(bodyElapsedSeconds),
-                parseFloat(totalElapsedSeconds),
-              );
+                estimatedTotal: total,
+                downloadTimeMs: bodyElapsedMs,
+                totalTimeMs: totalElapsedMs,
+              });
 
               controller.close();
               break;
@@ -352,8 +333,13 @@ export function createFetchWithProgress(
                 }
               }
 
-              // Call progress callback if provided
-              onProgress?.(received, total, percentage);
+              // Fire download-progress event
+              onProgressEvent?.({
+                type: 'download-progress',
+                received,
+                total,
+                percentage,
+              });
 
               lastLoggedPercentage = percentage;
               lastLoggedReceived = received;

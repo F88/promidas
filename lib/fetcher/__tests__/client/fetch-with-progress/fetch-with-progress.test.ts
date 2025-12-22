@@ -38,14 +38,14 @@ describe('createFetchWithProgress', () => {
   });
 
   describe('callback invocation', () => {
-    it('calls onProgress callback when provided', async () => {
+    it('calls onProgressEvent callback for download-progress events', async () => {
       const logger = createConsoleLogger();
-      const onProgress = vi.fn();
+      const onProgressEvent = vi.fn();
 
       const customFetch = createFetchWithProgress({
         logger,
         enableProgressLog: false,
-        onProgress,
+        onProgressEvent,
       });
 
       const mockBody = 'x'.repeat(10000);
@@ -61,21 +61,24 @@ describe('createFetchWithProgress', () => {
       );
       await response.text();
 
-      expect(onProgress).toHaveBeenCalled();
+      // Should receive download-progress events
+      const progressEvents = onProgressEvent.mock.calls.filter(
+        (call) => call[0].type === 'download-progress',
+      );
+      expect(progressEvents.length).toBeGreaterThan(0);
     });
 
-    it('works with all callbacks enabled simultaneously', async () => {
+    it('fires all lifecycle events in correct order', async () => {
       const logger = createConsoleLogger();
-      const onProgressStart = vi.fn();
-      const onProgress = vi.fn();
-      const onProgressComplete = vi.fn();
+      const events: string[] = [];
+      const onProgressEvent = vi.fn((event) => {
+        events.push(event.type);
+      });
 
       const customFetch = createFetchWithProgress({
         logger,
         enableProgressLog: false,
-        onProgressStart,
-        onProgress,
-        onProgressComplete,
+        onProgressEvent,
       });
 
       const mockBody = 'x'.repeat(5000);
@@ -92,19 +95,22 @@ describe('createFetchWithProgress', () => {
       await response.text();
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      expect(onProgressStart).toHaveBeenCalled();
-      expect(onProgress).toHaveBeenCalled();
-      expect(onProgressComplete).toHaveBeenCalled();
+      // Verify event order
+      expect(events[0]).toBe('request-start');
+      expect(events[1]).toBe('response-received');
+      expect(events[events.length - 1]).toBe('complete');
+      // Should have at least one download-progress event
+      expect(events.includes('download-progress')).toBe(true);
     });
 
-    it('calls onProgressStart callback even without onProgress', async () => {
+    it('fires response-received event with correct data', async () => {
       const logger = createConsoleLogger();
-      const onProgressStart = vi.fn();
+      const onProgressEvent = vi.fn();
 
       const customFetch = createFetchWithProgress({
         logger,
         enableProgressLog: false,
-        onProgressStart,
+        onProgressEvent,
       });
 
       const mockBody = 'test';
@@ -120,57 +126,27 @@ describe('createFetchWithProgress', () => {
       );
       await response.text();
 
-      expect(onProgressStart).toHaveBeenCalled();
-      expect(onProgressStart).toHaveBeenCalledWith(
-        expect.any(Number), // estimatedTotal
-        100, // limit
-        expect.any(Number), // prepareTime (number, not string)
+      const responseReceivedEvent = onProgressEvent.mock.calls.find(
+        (call) => call[0].type === 'response-received',
       );
+      expect(responseReceivedEvent).toBeDefined();
+      expect(responseReceivedEvent).toBeDefined();
+      expect(responseReceivedEvent![0]).toMatchObject({
+        type: 'response-received',
+        prepareTimeMs: expect.any(Number),
+        estimatedTotal: expect.any(Number),
+        limit: 100,
+      });
     });
 
-    it('calls onProgressComplete callback even without onProgress', async () => {
+    it('fires complete event with correct data', async () => {
       const logger = createConsoleLogger();
-      const onProgressComplete = vi.fn();
+      const onProgressEvent = vi.fn();
 
       const customFetch = createFetchWithProgress({
         logger,
         enableProgressLog: false,
-        onProgressComplete,
-      });
-
-      const mockBody = 'test';
-      const mockResponse = new Response(mockBody, {
-        status: 200,
-        headers: { 'Content-Length': String(mockBody.length) },
-      });
-
-      global.fetch = vi.fn().mockResolvedValue(mockResponse);
-
-      const response = await customFetch(
-        'https://api.example.com/data?limit=100',
-      );
-      await response.text();
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      expect(onProgressComplete).toHaveBeenCalled();
-      expect(onProgressComplete).toHaveBeenCalledWith(
-        4, // received
-        expect.any(Number), // estimatedTotal
-        expect.any(Number), // downloadTime (number, not string)
-        expect.any(Number), // totalTime (number, not string)
-      );
-    });
-
-    it('calls onProgressStart and onProgressComplete without onProgress', async () => {
-      const logger = createConsoleLogger();
-      const onProgressStart = vi.fn();
-      const onProgressComplete = vi.fn();
-
-      const customFetch = createFetchWithProgress({
-        logger,
-        enableProgressLog: false,
-        onProgressStart,
-        onProgressComplete,
+        onProgressEvent,
       });
 
       const mockBody = 'test';
@@ -187,8 +163,49 @@ describe('createFetchWithProgress', () => {
       await response.text();
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      expect(onProgressStart).toHaveBeenCalled();
-      expect(onProgressComplete).toHaveBeenCalled();
+      const completeEvent = onProgressEvent.mock.calls.find(
+        (call) => call[0].type === 'complete',
+      );
+      expect(completeEvent).toBeDefined();
+      expect(completeEvent).toBeDefined();
+      expect(completeEvent![0]).toMatchObject({
+        type: 'complete',
+        received: 4,
+        estimatedTotal: expect.any(Number),
+        downloadTimeMs: expect.any(Number),
+        totalTimeMs: expect.any(Number),
+      });
+    });
+
+    it('fires request-start and complete events', async () => {
+      const logger = createConsoleLogger();
+      const events: string[] = [];
+      const onProgressEvent = vi.fn((event) => {
+        events.push(event.type);
+      });
+
+      const customFetch = createFetchWithProgress({
+        logger,
+        enableProgressLog: false,
+        onProgressEvent,
+      });
+
+      const mockBody = 'test';
+      const mockResponse = new Response(mockBody, {
+        status: 200,
+        headers: { 'Content-Length': String(mockBody.length) },
+      });
+
+      global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
+      const response = await customFetch(
+        'https://api.example.com/data?limit=100',
+      );
+      await response.text();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(events).toContain('request-start');
+      expect(events).toContain('complete');
     });
   });
 
@@ -307,7 +324,7 @@ describe('createFetchWithProgress', () => {
       const customFetch = createFetchWithProgress({
         logger,
         enableProgressLog: true,
-        onProgress: () => {}, // Enable tracking
+        onProgressEvent: () => {}, // Enable tracking
       });
 
       const mockBody = 'test';
@@ -335,7 +352,7 @@ describe('createFetchWithProgress', () => {
       const customFetch = createFetchWithProgress({
         logger,
         enableProgressLog: true,
-        onProgress: () => {}, // Enable tracking
+        onProgressEvent: () => {}, // Enable tracking
       });
 
       const mockBody = 'test';
@@ -363,7 +380,7 @@ describe('createFetchWithProgress', () => {
       const customFetch = createFetchWithProgress({
         logger,
         enableProgressLog: true,
-        onProgress: () => {}, // Enable tracking
+        onProgressEvent: () => {}, // Enable tracking
       });
 
       const mockBody = 'test';
@@ -395,7 +412,7 @@ describe('createFetchWithProgress', () => {
       const customFetch = createFetchWithProgress({
         logger: customLogger,
         enableProgressLog: true,
-        onProgress: () => {}, // Enable tracking
+        onProgressEvent: () => {}, // Enable tracking
       });
 
       const mockBody = 'test';
@@ -645,7 +662,7 @@ describe('createFetchWithProgress', () => {
 
     it('wraps custom fetch with progress tracking', async () => {
       const logger = createConsoleLogger();
-      const onProgress = vi.fn();
+      const onProgressEvent = vi.fn();
 
       // Custom fetch that adds headers
       const customFetch = vi.fn().mockImplementation((url, init) => {
@@ -672,7 +689,7 @@ describe('createFetchWithProgress', () => {
         logger,
         enableProgressLog: true,
         baseFetch: customFetch,
-        onProgress,
+        onProgressEvent,
       });
 
       const response = await fetchWithProgress('https://api.example.com/data');
@@ -681,7 +698,9 @@ describe('createFetchWithProgress', () => {
       // Verify custom fetch was called
       expect(customFetch).toHaveBeenCalledOnce();
       // Verify progress tracking still works
-      expect(onProgress).toHaveBeenCalled();
+      const events = onProgressEvent.mock.calls.map((call) => call[0].type);
+      expect(events).toContain('request-start');
+      expect(events).toContain('complete');
     });
   });
 });

@@ -10,6 +10,7 @@
  */
 
 import type { Logger } from '../../logger/index.js';
+import type { FetchProgressEvent } from '../types/progress-event.types.js';
 
 import { createFetchWithProgress } from './fetch-with-progress.js';
 
@@ -34,28 +35,9 @@ export interface CustomFetchConfig {
   baseFetch?: typeof fetch;
 
   /**
-   * Optional callback when download starts.
+   * Optional callback for progress events.
    */
-  onProgressStart?: (
-    estimatedTotal: number,
-    limit: number,
-    prepareTime: number,
-  ) => void;
-
-  /**
-   * Optional callback for progress updates.
-   */
-  onProgress?: (received: number, total: number, percentage: number) => void;
-
-  /**
-   * Optional callback when download completes.
-   */
-  onProgressComplete?: (
-    received: number,
-    estimatedTotal: number,
-    downloadTime: number,
-    totalTime: number,
-  ) => void;
+  onProgressEvent?: (event: FetchProgressEvent) => void;
 }
 
 /**
@@ -83,30 +65,18 @@ export interface CustomFetchConfig {
 export function selectCustomFetch(
   config: CustomFetchConfig,
 ): typeof fetch | undefined {
-  const {
-    logger,
-    enableProgressLog,
-    baseFetch,
-    onProgressStart,
-    onProgress,
-    onProgressComplete,
-  } = config;
+  const { logger, enableProgressLog, baseFetch, onProgressEvent } = config;
 
   // Check if progress tracking is needed
   const needsProgressTracking =
-    enableProgressLog ||
-    onProgressStart !== undefined ||
-    onProgress !== undefined ||
-    onProgressComplete !== undefined;
+    enableProgressLog || onProgressEvent !== undefined;
 
   if (needsProgressTracking) {
     return createFetchWithProgress({
       logger,
       enableProgressLog,
       ...(baseFetch !== undefined && { baseFetch }),
-      ...(onProgressStart !== undefined && { onProgressStart }),
-      ...(onProgress !== undefined && { onProgress }),
-      ...(onProgressComplete !== undefined && { onProgressComplete }),
+      ...(onProgressEvent !== undefined && { onProgressEvent }),
     });
   }
 

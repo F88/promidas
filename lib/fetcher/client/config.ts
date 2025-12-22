@@ -6,6 +6,7 @@
 import type { ProtoPediaApiClientOptions } from 'protopedia-api-v2-client';
 
 import type { Logger, LogLevel } from '../../logger/index.js';
+import type { FetchProgressEvent } from '../types/progress-event.types.js';
 
 /**
  * Configuration options for ProtopediaApiCustomClient.
@@ -87,69 +88,58 @@ export type ProtopediaApiCustomClientConfig = {
   progressLog?: boolean;
 
   /**
-   * Download progress callbacks.
+   * Download progress callback.
+   *
+   * Receives events for all phases of the fetch request lifecycle:
+   * - `request-start`: Fired when fetch() is called
+   * - `response-received`: Fired when response headers are received
+   * - `download-progress`: Fired periodically during body download (throttled to 500ms)
+   * - `complete`: Fired when download completes successfully
    *
    * @remarks
-   * - All callbacks are optional and work independently
-   * - onStart: Called once when download begins (after HTTP headers received)
-   * - onProgress: Called periodically during download (throttled to 500ms intervals)
-   * - onComplete: Called once when download completes successfully
-   * - Useful for updating UI progress indicators or custom logging
-   * - Works independently of progressLog setting
+   * - All events are fired regardless of progressLog setting
+   * - Use TypeScript's discriminated union for type-safe event handling
+   * - Events are fired in order: request-start → response-received → download-progress (0+) → complete
    *
-   * @example
+   * @example Complete lifecycle handling
    * ```typescript
    * const client = new ProtopediaApiCustomClient({
-   *   progressCallback: {
-   *     onStart: (estimatedTotal, limit, prepareTime) => {
-   *       console.log(`Starting: ${estimatedTotal} bytes (estimated)`);
-   *     },
-   *     onProgress: (received, total, percentage) => {
-   *       updateProgressBar(percentage);
-   *     },
-   *     onComplete: (received, estimatedTotal, downloadTime, totalTime) => {
-   *       console.log(`Complete: ${received} bytes (${estimatedTotal} bytes estimated) in ${downloadTime}s (total ${totalTime}s)`);
-   *     },
+   *   progressCallback: (event) => {
+   *     switch (event.type) {
+   *       case 'request-start':
+   *         console.log('🚀 Request initiated...');
+   *         break;
+   *       case 'response-received':
+   *         console.log(`✓ Headers received (${event.prepareTimeMs}ms)`);
+   *         console.log(`  Estimated: ${event.estimatedTotal} bytes`);
+   *         break;
+   *       case 'download-progress':
+   *         console.log(`📥 ${event.percentage.toFixed(1)}%`);
+   *         break;
+   *       case 'complete':
+   *         console.log(`✅ Complete (${event.totalTimeMs}ms total)`);
+   *         break;
+   *     }
+   *   },
+   * });
+   * ```
+   *
+   * @example Progress bar integration
+   * ```typescript
+   * let progressBar: ProgressBar | null = null;
+   *
+   * const client = new ProtopediaApiCustomClient({
+   *   progressCallback: (event) => {
+   *     if (event.type === 'response-received') {
+   *       progressBar = new ProgressBar({ total: event.estimatedTotal });
+   *     } else if (event.type === 'download-progress' && progressBar) {
+   *       progressBar.update(event.percentage);
+   *     } else if (event.type === 'complete' && progressBar) {
+   *       progressBar.finish();
+   *     }
    *   },
    * });
    * ```
    */
-  progressCallback?: {
-    /**
-     * Called when download starts, after HTTP headers are received.
-     *
-     * @param estimatedTotal - Estimated total bytes (limit × 2670)
-     * @param limit - The limit parameter from the request
-     * @param prepareTime - Time spent preparing (request + response headers) in seconds
-     */
-    onStart?: (
-      estimatedTotal: number,
-      limit: number,
-      prepareTime: number,
-    ) => void;
-
-    /**
-     * Called periodically during data download (throttled to 500ms intervals).
-     *
-     * @param received - Number of bytes received so far
-     * @param total - Total number of bytes (0 if Content-Length header is missing)
-     * @param percentage - Download percentage (0-100, 0 if total is unknown)
-     */
-    onProgress?: (received: number, total: number, percentage: number) => void;
-
-    /**
-     * Called when download completes successfully.
-     *
-     * @param received - Actual number of bytes received
-     * @param estimatedTotal - Estimated total bytes (same as onStart)
-     * @param downloadTime - Time spent downloading body in seconds
-     * @param totalTime - Total time (prepare + download) in seconds
-     */
-    onComplete?: (
-      received: number,
-      estimatedTotal: number,
-      downloadTime: number,
-      totalTime: number,
-    ) => void;
-  };
+  progressCallback?: (event: FetchProgressEvent) => void;
 };

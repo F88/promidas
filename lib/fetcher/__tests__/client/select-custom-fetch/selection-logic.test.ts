@@ -36,39 +36,13 @@ describe('select-custom-fetch', () => {
       expect(typeof result).toBe('function');
     });
 
-    it('returns custom fetch when onProgressStart is provided', () => {
+    it('returns custom fetch when onProgressEvent is provided', () => {
       const logger = createMockLogger();
 
       const result = selectCustomFetch({
         logger,
         enableProgressLog: false,
-        onProgressStart: () => {},
-      });
-
-      expect(result).toBeDefined();
-      expect(typeof result).toBe('function');
-    });
-
-    it('returns custom fetch when onProgress is provided', () => {
-      const logger = createMockLogger();
-
-      const result = selectCustomFetch({
-        logger,
-        enableProgressLog: false,
-        onProgress: () => {},
-      });
-
-      expect(result).toBeDefined();
-      expect(typeof result).toBe('function');
-    });
-
-    it('returns custom fetch when onProgressComplete is provided', () => {
-      const logger = createMockLogger();
-
-      const result = selectCustomFetch({
-        logger,
-        enableProgressLog: false,
-        onProgressComplete: () => {},
+        onProgressEvent: () => {},
       });
 
       expect(result).toBeDefined();
@@ -77,28 +51,13 @@ describe('select-custom-fetch', () => {
   });
 
   describe('callback combinations', () => {
-    it('returns custom fetch when multiple callbacks are provided', () => {
-      const logger = createMockLogger();
-
-      const result = selectCustomFetch({
-        logger,
-        enableProgressLog: false,
-        onProgressStart: () => {},
-        onProgress: () => {},
-        onProgressComplete: () => {},
-      });
-
-      expect(result).toBeDefined();
-      expect(typeof result).toBe('function');
-    });
-
-    it('returns custom fetch when enableProgressLog and callbacks are combined', () => {
+    it('returns custom fetch when onProgressEvent and enableProgressLog are combined', () => {
       const logger = createMockLogger();
 
       const result = selectCustomFetch({
         logger,
         enableProgressLog: true,
-        onProgress: () => {},
+        onProgressEvent: () => {},
       });
 
       expect(result).toBeDefined();
@@ -195,21 +154,13 @@ describe('select-custom-fetch', () => {
 
     it('correctly passes defined callbacks to createFetchWithProgress', async () => {
       const logger = createMockLogger();
-      let startCalled = false;
-      let progressCalled = false;
-      let completeCalled = false;
+      const events: string[] = [];
 
       const customFetch = selectCustomFetch({
         logger,
         enableProgressLog: false,
-        onProgressStart: () => {
-          startCalled = true;
-        },
-        onProgress: () => {
-          progressCalled = true;
-        },
-        onProgressComplete: () => {
-          completeCalled = true;
+        onProgressEvent: (event) => {
+          events.push(event.type);
         },
       });
 
@@ -228,10 +179,10 @@ describe('select-custom-fetch', () => {
         // Consume the response body to trigger progress tracking
         await response.text();
 
-        // All callbacks should have been invoked
-        expect(startCalled).toBe(true);
-        expect(progressCalled).toBe(true);
-        expect(completeCalled).toBe(true);
+        // All event types should have been emitted
+        expect(events).toContain('request-start');
+        expect(events).toContain('response-received');
+        expect(events).toContain('complete');
       }
     });
   });

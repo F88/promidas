@@ -2,8 +2,14 @@
  * ProtopediaApiCustomClient class implementation.
  *
  * This module provides a class-based wrapper around the official
- * protopedia-api-v2-client with integrated logger management and
- * high-level helper methods for this library.
+ * protopedia-api-v2-client with integrated logger management,
+ * event-driven progress tracking, and high-level helper methods.
+ *
+ * Features:
+ * - Fastify-style logger configuration (logger + logLevel)
+ * - Event-driven progress tracking with type-safe discriminated unions
+ * - Automatic data normalization and validation
+ * - Result type for type-safe error handling
  *
  * @module
  */
@@ -34,15 +40,15 @@ import { normalizePrototype } from '../utils/normalize-prototype.js';
 import type { ProtopediaApiCustomClientConfig } from './config.js';
 
 /**
- * Custom API client that wraps protopedia-api-v2-client with logger management
- * and convenience methods.
+ * Custom API client that wraps protopedia-api-v2-client with enhanced features.
  *
  * This class manages:
  * - Logger configuration (Fastify-style with logger + logLevel)
  * - Integration with protopedia-api-v2-client
+ * - Event-driven progress tracking for download operations
  * - High-level fetchPrototypes helper with normalization and error handling
  *
- * @example
+ * @example Basic usage
  * ```typescript
  * const client = new ProtopediaApiCustomClient({
  *   protoPediaApiClientOptions: {
@@ -55,6 +61,28 @@ import type { ProtopediaApiCustomClientConfig } from './config.js';
  * if (result.ok) {
  *   console.log(result.data);
  * }
+ * ```
+ *
+ * @example With progress tracking
+ * ```typescript
+ * const client = new ProtopediaApiCustomClient({
+ *   protoPediaApiClientOptions: {
+ *     token: process.env.PROTOPEDIA_API_TOKEN,
+ *   },
+ *   progressCallback: (event) => {
+ *     switch (event.type) {
+ *       case 'request-start':
+ *         console.log('Starting request...');
+ *         break;
+ *       case 'download-progress':
+ *         console.log(`Progress: ${event.percentage.toFixed(1)}%`);
+ *         break;
+ *       case 'complete':
+ *         console.log(`Complete in ${event.totalTimeMs}ms`);
+ *         break;
+ *     }
+ *   },
+ * });
  * ```
  */
 export class ProtopediaApiCustomClient {
@@ -83,10 +111,7 @@ export class ProtopediaApiCustomClient {
    * @param config.logger - Custom logger instance
    * @param config.logLevel - Log level for default logger or to update existing logger
    * @param config.progressLog - Enable download progress logging (default: true)
-   * @param config.progressCallback - Optional callbacks for download progress events
-   * @param config.progressCallback.onStart - Called when download starts
-   * @param config.progressCallback.onProgress - Called periodically during download
-   * @param config.progressCallback.onComplete - Called when download completes
+   * @param config.progressCallback - Event handler for download progress lifecycle events
    *
    * @throws {unknown} If the underlying protopedia-api-v2-client initialization fails
    *
@@ -98,15 +123,15 @@ export class ProtopediaApiCustomClient {
    * });
    * ```
    *
-   * @example With custom callbacks
+   * @example With custom event handler
    * ```typescript
    * const client = new ProtopediaApiCustomClient({
    *   protoPediaApiClientOptions: { token: process.env.TOKEN },
    *   progressLog: false, // Disable automatic logging
-   *   progressCallback: {
-   *     onProgress: (received, total, percentage) => {
-   *       updateProgressBar(percentage);
-   *     },
+   *   progressCallback: (event) => {
+   *     if (event.type === 'download-progress') {
+   *       updateProgressBar(event.percentage);
+   *     }
    *   },
    * });
    * ```

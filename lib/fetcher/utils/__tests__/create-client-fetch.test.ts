@@ -134,9 +134,7 @@ describe('createClientFetch', () => {
   it('passes progress callbacks when provided', () => {
     const logger = new ConsoleLogger('info');
 
-    const onStart = vi.fn();
-    const onProgress = vi.fn();
-    const onComplete = vi.fn();
+    const onProgressEvent = vi.fn();
 
     const expectedFetch = vi.fn();
     selectCustomFetchMock.mockReturnValue(expectedFetch);
@@ -144,11 +142,7 @@ describe('createClientFetch', () => {
     const result = createClientFetch({
       logger,
       enableProgressLog: true,
-      progressCallback: {
-        onStart,
-        onProgress,
-        onComplete,
-      },
+      progressCallback: onProgressEvent,
       timeoutMs: undefined,
       providedFetch: undefined,
     });
@@ -156,9 +150,7 @@ describe('createClientFetch', () => {
     expect(selectCustomFetchMock).toHaveBeenCalledWith({
       logger,
       enableProgressLog: true,
-      onProgressStart: onStart,
-      onProgress,
-      onProgressComplete: onComplete,
+      onProgressEvent,
     });
 
     expect(result).toBe(expectedFetch);
