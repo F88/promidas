@@ -145,9 +145,15 @@ describe('subpath exports', () => {
       expect(fetcher).toHaveProperty('normalizePrototype');
       expect(typeof fetcher.normalizePrototype).toBe('function');
 
-      // Re-exported types for convenience (NormalizedPrototype is type-only)
-      // Logger and LogLevel are also type-only exports
+      // Re-exported types for convenience (type-only exports):
+      // - NormalizedPrototype
+      // - Logger, LogLevel
+      // - FetchProgressEvent (for progressCallback event handling)
+      // - ProtopediaApiCustomClientConfig
+      // - FetchPrototypesResult
+      // - UpstreamPrototype
       // Note: Type-only exports don't have runtime values, so we can't test them here
+      // TypeScript compilation validates these are exported correctly
     });
   });
 
