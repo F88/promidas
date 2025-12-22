@@ -186,10 +186,10 @@ describe('createPromidasForServer', () => {
       ).toBeUndefined();
       expect(
         apiClientConfigArg?.protoPediaApiClientOptions?.logger,
-      ).toBeUndefined();
-      expect(
-        apiClientConfigArg?.protoPediaApiClientOptions?.logLevel,
-      ).toBeUndefined();
+      ).toBeDefined();
+      expect(apiClientConfigArg?.protoPediaApiClientOptions?.logLevel).toBe(
+        'warn',
+      );
     });
   });
 

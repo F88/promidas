@@ -86,6 +86,8 @@ describe('createPromidasForLocal', () => {
         token: 'test-token-123',
         userAgent: `PromidasForLocal/${VERSION}`,
         timeoutMs: 90000, // 90 seconds
+        logger: expect.any(Object),
+        logLevel: 'info',
       },
       logger: expect.any(Object),
       progressLog: true,
@@ -108,8 +110,8 @@ describe('createPromidasForLocal', () => {
     expect(configArg).toBeDefined();
     expect(configArg?.protoPediaApiClientOptions?.baseUrl).toBeUndefined();
     expect(configArg?.protoPediaApiClientOptions?.fetch).toBeUndefined();
-    expect(configArg?.protoPediaApiClientOptions?.logger).toBeUndefined();
-    expect(configArg?.protoPediaApiClientOptions?.logLevel).toBeUndefined();
+    expect(configArg?.protoPediaApiClientOptions?.logger).toBeDefined();
+    expect(configArg?.protoPediaApiClientOptions?.logLevel).toBe('info');
   });
 
   it('should call builder methods in expected order', () => {

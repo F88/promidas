@@ -20,8 +20,8 @@ function createRepositoryWithFactory(
 ): ProtopediaInMemoryRepository {
   return createPromidasForLocal({
     protopediaApiToken: token,
-    // logLevel: 'info',
-    logLevel: 'debug',
+    logLevel: 'info',
+    // logLevel: 'debug',
   });
 }
 
@@ -35,19 +35,21 @@ function createRepositoryWithBuilder(
   token: string,
 ): ProtopediaInMemoryRepository {
   const prototypeInMemoryStoreConfig: PrototypeInMemoryStoreConfig = {
+    logLevel: 'debug',
     ttlMs: 60_000, // 60 seconds for testing
   };
   const protoPediaApiClientOptions: ProtoPediaApiClientOptions = {
+    logLevel: 'debug',
     token,
   };
 
   return new PromidasRepositoryBuilder()
     .setStoreConfig({ ...prototypeInMemoryStoreConfig, logLevel: 'debug' })
     .setApiClientConfig({
+      logLevel: 'debug',
       protoPediaApiClientOptions: {
         token: token,
       },
-      logLevel: 'debug',
     })
     .build();
 }
@@ -74,15 +76,13 @@ async function main() {
   console.log('✓ Repository created\n');
 
   // Test 2: Setup initial snapshot with 5 prototypes
-  // const limit = 5;
-  const limit = 1_000;
+  const limit = 5;
+  // const limit = 1_000;
   // const limit = 10_000;
   console.log(`=== Test 2: Setup snapshot (fetch ${limit} prototypes) ===`);
   const params: ListPrototypesParams = {
     offset: 0,
-    // limit: 5,
     limit: limit,
-    // limit: 1000,
   };
   await repo.setupSnapshot(params);
   console.log('✓ Snapshot setup complete\n');
