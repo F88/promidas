@@ -96,6 +96,13 @@ export class ConsoleLogger implements Logger {
   constructor(level: LogLevel = 'info') {
     this.level = level;
     this.hasConsole = hasConsole;
+
+    // Bind methods to preserve `this` when methods are passed around as callbacks.
+    // Some upstream libraries call logger methods without a receiver.
+    this.error = this.error.bind(this);
+    this.warn = this.warn.bind(this);
+    this.info = this.info.bind(this);
+    this.debug = this.debug.bind(this);
   }
 
   error(message: string, meta?: unknown): void {

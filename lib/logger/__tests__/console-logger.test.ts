@@ -33,6 +33,17 @@ describe('ConsoleLogger', () => {
       const logger = new ConsoleLogger('debug');
       expect(logger.level).toBe('debug');
     });
+
+    it('supports calling methods without receiver', () => {
+      const logger = new ConsoleLogger('debug');
+
+      const { debug, info, warn, error } = logger;
+
+      expect(() => debug('Debug')).not.toThrow();
+      expect(() => info('Info')).not.toThrow();
+      expect(() => warn('Warn')).not.toThrow();
+      expect(() => error('Error')).not.toThrow();
+    });
   });
 
   describe('level property', () => {

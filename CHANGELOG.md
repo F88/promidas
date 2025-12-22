@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking Changes
 
+## [0.13.1] - 2025-12-22
+
+### Fixed
+
+- **protopedia-api-v2-client logging**: Propagate `logger` and `logLevel` from factory defaults so HTTP request/response logs can be enabled when desired
+- **ConsoleLogger receiver loss**: Bind logger methods to avoid runtime errors when log methods are called without a receiver
+
 ## [0.13.0] - 2025-12-21
 
 ### Fixed

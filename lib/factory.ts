@@ -136,6 +136,10 @@ export function createPromidasForLocal(config: {
       //   - 0.5 Mbps: ~320s (5m20s)
       timeoutMs: 90 * 1_000, // 90 seconds (accommodates 1-2 Mbps)
       userAgent: `PromidasForLocal/${VERSION}`,
+      // Ensure SDK-level network logs are controlled consistently.
+      // Note: The SDK logger interface is compatible with promidas logger.
+      logger,
+      logLevel,
     },
     logger, // Shared logger - logLevel is NOT set because logger already contains it
     progressLog: true,
@@ -248,6 +252,9 @@ export function createPromidasForServer(config?: {
       token: protopediaApiToken,
       timeoutMs: 30 * 1_000, // 30 seconds
       userAgent: `PromidasForServer/${VERSION}`,
+      // Ensure SDK-level network logs are controlled consistently.
+      logger,
+      logLevel,
     },
     logger, // Shared logger - logLevel is NOT set because logger already contains it
     progressLog: true,
