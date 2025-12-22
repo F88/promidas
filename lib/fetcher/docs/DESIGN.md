@@ -208,13 +208,13 @@ type FetchPrototypesFailure = {
 
 ### Architecture
 
-The download progress tracking system implements a three-module architecture:
+The download progress tracking system implements an event-driven architecture with three modules:
 
 ```plaintext
 ┌─────────────────────────────────────────────────────────┐
 │  ProtopediaApiCustomClient                              │
 │  - progressLog: boolean (default: true)                 │
-│  - onProgressStart, onProgress, onProgressComplete      │
+│  - progressCallback: (event: FetchProgressEvent) => void│
 └─────────────────────────────────────────────────────────┘
                           │
                           ▼
@@ -222,14 +222,16 @@ The download progress tracking system implements a three-module architecture:
 │  select-custom-fetch                                    │
 │  - Wraps fetch with progress tracking                   │
 │  - Integrates createFetchWithProgress                   │
+│  - Passes onProgressEvent to wrapped fetch              │
 └─────────────────────────────────────────────────────────┘
                           │
                           ▼
 ┌─────────────────────────────────────────────────────────┐
 │  fetch-with-progress                                    │
 │  - Core progress tracking logic                         │
+│  - Event emission (request-start → complete)            │
 │  - Streaming response processing                        │
-│  - Callback management                                  │
+│  - Type-safe event management                           │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -237,7 +239,7 @@ The download progress tracking system implements a three-module architecture:
 
 #### 1. fetch-with-progress
 
-**Purpose**: Core progress tracking implementation
+**Purpose**: Core progress tracking implementation with event-driven architecture
 
 **Key Functions**:
 
@@ -246,10 +248,11 @@ export function createFetchWithProgress(
     config: FetchWithProgressConfig,
 ): typeof fetch {
     return async (url, init) => {
-        // 1. Execute baseFetch (or globalThis.fetch if not provided)
-        // 2. Check Content-Length header (or estimate from URL)
-        // 3. Stream response body with progress updates
-        // 4. Trigger callbacks and logging at appropriate times
+        // 1. Emit 'request-start' event
+        // 2. Execute baseFetch (or globalThis.fetch if not provided)
+        // 3. Emit 'response-received' with preparation timing
+        // 4. Stream response body with periodic 'download-progress' events
+        // 5. Emit 'complete' event with final timing
     };
 }
 
@@ -259,18 +262,52 @@ export function shouldProgressLog(logger: Logger): boolean {
 }
 ```
 
+**Event Lifecycle**:
+
+```typescript
+// 1. request-start: Fired immediately before fetch() call
+onProgressEvent?.({ type: 'request-start' });
+
+// 2. response-received: Fired when headers are received
+onProgressEvent?.({
+    type: 'response-received',
+    prepareTimeMs: number, // Time from request start to headers
+    estimatedTotal: number, // Estimated download size
+    limit: number, // From URL parameter
+});
+
+// 3. download-progress: Fired periodically during body download (throttled to 500ms)
+onProgressEvent?.({
+    type: 'download-progress',
+    received: number,
+    total: number,
+    percentage: number,
+});
+
+// 4. complete: Fired when download finishes
+onProgressEvent?.({
+    type: 'complete',
+    received: number,
+    estimatedTotal: number,
+    downloadTimeMs: number, // Body download time
+    totalTimeMs: number, // Request start to complete
+});
+```
+
 **Design Decisions**:
 
+- **Event-Driven**: Uses discriminated union types for type-safe event handling
+- **Complete Lifecycle**: Tracks from request initiation to completion (not just download phase)
+- **Millisecond Precision**: All timing values in milliseconds for consistency
 - Uses `Response.body.getReader()` for streaming
 - Estimates download size from limit parameter (2670 bytes per prototype)
 - Falls back to estimation when Content-Length header is missing
 - Wraps user's `baseFetch` to preserve custom behavior (timeouts, retries, etc.)
-- Separate timing for preparation vs. download phases
-  Callbacks fire when `Content-Length` is present or when the total size can be estimated
+- Separate timing for preparation (`prepareTimeMs`) vs. download (`downloadTimeMs`) phases
 
 #### 2. select-custom-fetch
 
-**Purpose**: Smart fetch selection with progress integration
+**Purpose**: Smart fetch selection with event-driven progress integration
 
 **Implementation**:
 
@@ -278,10 +315,22 @@ export function shouldProgressLog(logger: Logger): boolean {
 export function selectCustomFetch(
     config: CustomFetchConfig,
 ): typeof fetch | undefined {
-    // 1. Check if progress tracking is needed
-    // 2. If needed, wrap baseFetch (or global fetch) with progress tracking
-    // 3. If not needed, return baseFetch (preserves custom implementations)
-    // 4. Return undefined if no custom features needed
+    const { logger, enableProgressLog, baseFetch, onProgressEvent } = config;
+
+    // Check if progress tracking is needed
+    const needsProgressTracking =
+        enableProgressLog || onProgressEvent !== undefined;
+
+    if (needsProgressTracking) {
+        return createFetchWithProgress({
+            logger,
+            enableProgressLog,
+            ...(baseFetch !== undefined && { baseFetch }),
+            ...(onProgressEvent !== undefined && { onProgressEvent }),
+        });
+    }
+
+    return baseFetch;
 }
 ```
 
@@ -289,14 +338,55 @@ export function selectCustomFetch(
 
 - **Wraps user's custom fetch**: If user provides `baseFetch`, it gets wrapped with progress tracking
 - **Preserves custom behavior**: Timeouts, retries, caching, Next.js adapters all continue to work
-- **Automatic progress**: Progress tracking is transparent to the underlying fetch
-- **Conditional wrapping**: Only wraps when progress features are enabled
+- **Event-driven progress**: Progress events are transparent to the underlying fetch
+- **Conditional wrapping**: Only wraps when `enableProgressLog` or `onProgressEvent` is specified
+- **Type-safe events**: `onProgressEvent` receives strongly-typed discriminated union events
 
 #### 3. protopedia-api-custom-client
 
-**Purpose**: Integration point for progress tracking
+**Purpose**: Integration point for event-driven progress tracking
 
 **Constructor Logic**:
+
+```typescript
+constructor(config?: ProtopediaApiCustomClientConfig | null) {
+    const {
+        progressLog = true,
+        progressCallback,
+        // ... other config
+    } = config ?? {};
+
+    // Create customized fetch with progress tracking
+    const clientFetch = createClientFetch({
+        logger: this.#logger,
+        enableProgressLog: progressLog,
+        progressCallback, // Single event handler function
+        timeoutMs,
+        providedFetch,
+        stripHeaders, // Browser compatibility
+    });
+
+    // Pass to SDK client
+    this.#client = createProtoPediaClient({
+        ...sdkOptions,
+        fetch: clientFetch,
+    });
+}
+```
+
+**Configuration Interface**:
+
+```typescript
+export type ProtopediaApiCustomClientConfig = {
+    protoPediaApiClientOptions?: ProtoPediaApiClientOptions;
+    logger?: Logger;
+    logLevel?: LogLevel;
+    progressLog?: boolean; // Enable automatic logging
+    progressCallback?: (event: FetchProgressEvent) => void; // Event handler
+};
+```
+
+**Event Handler Usage**:
 
 ```typescript
 // User's custom fetch (if provided) is passed as baseFetch
@@ -304,9 +394,7 @@ const customFetch = selectCustomFetch({
     logger: this.#logger,
     enableProgressLog: progressLog,
     baseFetch: protoPediaApiClientOptions.fetch, // User's custom fetch
-    onProgressStart: progressCallback?.onStart,
-    onProgress: progressCallback?.onProgress,
-    onProgressComplete: progressCallback?.onComplete,
+    onProgressEvent: progressCallback, // Single event handler
 });
 
 this.#client = createProtoPediaClient({
@@ -322,6 +410,50 @@ this.#client = createProtoPediaClient({
 2. `selectCustomFetch` wraps it with progress tracking
 3. Wrapped fetch is passed to SDK
 4. Both custom behavior and progress tracking work together
+
+**Event Handler Examples**:
+
+```typescript
+// Example 1: Simple progress logging
+const client = new ProtopediaApiCustomClient({
+    progressLog: true, // Uses default logger output
+});
+
+// Example 2: Custom event handler
+const client = new ProtopediaApiCustomClient({
+    progressLog: false,
+    progressCallback: (event) => {
+        switch (event.type) {
+            case 'request-start':
+                console.log('Request initiated');
+                break;
+            case 'response-received':
+                console.log(`Headers received in ${event.prepareTimeMs}ms`);
+                break;
+            case 'download-progress':
+                updateProgressBar(event.percentage);
+                break;
+            case 'complete':
+                console.log(`Download complete in ${event.totalTimeMs}ms`);
+                break;
+        }
+    },
+});
+
+// Example 3: Combined logging and custom handler
+const client = new ProtopediaApiCustomClient({
+    progressLog: true, // Logs to stderr
+    progressCallback: (event) => {
+        // Also send to analytics
+        if (event.type === 'complete') {
+            analytics.track('download-complete', {
+                bytes: event.received,
+                duration: event.totalTimeMs,
+            });
+        }
+    },
+});
+```
 
 ### Progress Estimation Algorithm
 
@@ -341,24 +473,33 @@ function estimateDownloadSize(limit: number): number {
 - Based on actual ProtoPedia API data: 13,350,369 bytes / 5,000 items = 2670 bytes/item
 - Simple linear calculation without overhead estimation for accuracy
 
-### Callback Sequence
+### Event Emission Sequence
 
 ```plaintext
 1. fetchPrototypes() called
    ↓
 2. Preparation phase starts (SDK client initialization)
    ↓
-3. fetch() executed → Response received
+3. 'request-start' event fired
    ↓
-4. onProgressStart() fired (if Content-Length present)
+4. fetch() executed → Response received
    ↓
-5. Response body streamed
-   ├─ onProgress() fired for each chunk
-   └─ (multiple times during download)
+5. 'response-received' event fired
+   - prepareTimeMs: time from request start to headers
+   - estimatedTotal: estimated download size
+   - limit: from URL parameter
    ↓
-6. onProgressComplete() fired
+6. Response body streamed
+   ├─ 'download-progress' events fired for each chunk
+   └─ (throttled to max once per 500ms)
    ↓
-7. fetchPrototypes() returns result
+7. 'complete' event fired
+   - received: actual bytes downloaded
+   - estimatedTotal: original estimate
+   - downloadTimeMs: body download time
+   - totalTimeMs: request start to completion
+   ↓
+8. fetchPrototypes() returns result
 ```
 
 ### Logger Integration
@@ -376,7 +517,7 @@ function shouldProgressLog(logger: Logger): boolean {
 
 ```plaintext
 Download starting (limit=10000, 2670000 bytes (estimated)) (prepared in 0.05s)
-Download complete: 2670000 bytes received (estimated 2670000 bytes) in 1.23s (total: 1.28s)
+Download complete: 2670000 bytes received (estimated 2670000 bytes) in 1230ms (total: 1280ms)
 ```
 
 **Design Decisions**:
@@ -388,7 +529,30 @@ Download complete: 2670000 bytes received (estimated 2670000 bytes) in 1.23s (to
 
 ### Type Definitions
 
+The current type system uses event-driven architecture (v1.0+):
+
 ```typescript
+export type FetchProgressEvent =
+    | RequestStartEvent
+    | ResponseReceivedEvent
+    | DownloadProgressEvent
+    | CompleteEvent;
+
+export type ProtopediaApiCustomClientConfig = {
+    protoPediaApiClientOptions?: ProtoPediaApiClientOptions;
+    logger?: Logger;
+    logLevel?: LogLevel;
+    progressLog?: boolean; // Default: true
+    progressCallback?: (event: FetchProgressEvent) => void; // Event handler
+};
+```
+
+#### Deprecated (v0.x - Removed in v1.0)
+
+The old callback-based API used separate callback functions:
+
+```typescript
+// ❌ DEPRECATED - Removed in v1.0
 export type ProgressCallbacks = {
     onStart?: (
         estimatedTotal: number,
@@ -404,11 +568,8 @@ export type ProgressCallbacks = {
     ) => void;
 };
 
+// ❌ DEPRECATED - Removed in v1.0
 export type ProtopediaApiCustomClientConfig = {
-    protoPediaApiClientOptions?: ProtoPediaApiClientOptions;
-    logger?: Logger;
-    logLevel?: LogLevel;
-    progressLog?: boolean; // Default: true
     progressCallback?: {
         onStart?: ProgressCallbacks['onStart'];
         onProgress?: ProgressCallbacks['onProgress'];
@@ -416,6 +577,15 @@ export type ProtopediaApiCustomClientConfig = {
     };
 };
 ```
+
+**Migration to v1.0**:
+
+- Replace callback object with single event handler function
+- Use `switch(event.type)` pattern for type-safe event handling
+- Update timing references: seconds → milliseconds
+- Add handling for new `request-start` event type
+
+See [Migration Guide](#migration-from-v0x-to-v10) for details.
 
 ### Testing Strategy
 

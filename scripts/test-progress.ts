@@ -39,33 +39,43 @@ if (result1.ok) {
 }
 
 // Test 2: With custom callback
-console.log('Test 2: Custom callbacks (start, progress, complete)');
-console.log('Expected: Custom progress output with all callbacks\n');
+console.log('Test 2: Custom event-driven progress tracking');
+console.log('Expected: Custom progress output with all events\n');
 
 let progressCount = 0;
+let requestStartTime = 0;
+let responseReceivedTime = 0;
+
 const client2 = new ProtopediaApiCustomClient({
   protoPediaApiClientOptions: {
     token,
   },
   logLevel: 'info', // No debug logs
   progressLog: false, // Disable default logging
-  progressCallback: {
-    onStart: (estimatedTotal, limit, prepareTime) => {
-      console.log(
-        `🚀 Start: limit=${limit}, ${estimatedTotal} bytes (estimated) (prepared in ${prepareTime}s)`,
-      );
-    },
-    onProgress: (received, total, percentage) => {
-      progressCount++;
-      console.log(
-        `📥 Progress #${progressCount}: ${percentage.toFixed(1)}% (${received}/${total} bytes)`,
-      );
-    },
-    onComplete: (received, estimatedTotal, downloadTime, totalTime) => {
-      console.log(
-        `🏁 Complete: ${received} bytes (estimated ${estimatedTotal}) in ${downloadTime}s (total: ${totalTime}s)`,
-      );
-    },
+  progressCallback: (event) => {
+    switch (event.type) {
+      case 'request-start':
+        requestStartTime = Date.now();
+        console.log(`🚀 Request Start`);
+        break;
+      case 'response-received':
+        responseReceivedTime = Date.now();
+        console.log(
+          `📡 Response Received: limit=${event.limit}, ${event.estimatedTotal} bytes (estimated), prepared in ${event.prepareTimeMs}ms`,
+        );
+        break;
+      case 'download-progress':
+        progressCount++;
+        console.log(
+          `📥 Progress #${progressCount}: ${event.percentage.toFixed(1)}% (${event.received}/${event.total} bytes)`,
+        );
+        break;
+      case 'complete':
+        console.log(
+          `🏁 Complete: ${event.received} bytes in ${event.downloadTimeMs}ms (total: ${event.totalTimeMs}ms)`,
+        );
+        break;
+    }
   },
 });
 

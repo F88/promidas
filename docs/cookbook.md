@@ -389,34 +389,42 @@ console.log(
 ```typescript
 import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
 
-// 進捗コールバック付きのカスタムクライアントを作成
+// 進捗イベントハンドラー付きのカスタムクライアントを作成
 const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
         token: process.env.PROTOPEDIA_API_V2_TOKEN,
     },
     progressLog: false, // 自動ログを無効化
-    progressCallback: {
-        onStart: (estimatedTotal, limit, prepareTime) => {
-            console.log(
-                `ダウンロード開始: ${limit}件取得予定 (推定 ${estimatedTotal} バイト)`,
-            );
-            console.log(`準備時間: ${prepareTime.toFixed(2)}秒`);
-        },
-        onProgress: (received, total, percentage) => {
-            // プログレスバーの表示
-            const barLength = 40;
-            const filled = Math.floor((percentage / 100) * barLength);
-            const bar = '█'.repeat(filled) + '░'.repeat(barLength - filled);
-            process.stdout.write(
-                `\r[${bar}] ${percentage.toFixed(1)}% (${received}/${total} バイト)`,
-            );
-        },
-        onComplete: (received, estimatedTotal, downloadTime, totalTime) => {
-            console.log(
-                `\n完了: ${received} バイト受信 (${downloadTime.toFixed(2)}秒)`,
-            );
-            console.log(`合計時間: ${totalTime.toFixed(2)}秒`);
-        },
+    progressCallback: (event) => {
+        switch (event.type) {
+            case 'request-start':
+                console.log('リクエスト開始');
+                break;
+
+            case 'response-received':
+                console.log(
+                    `レスポンス受信: 準備時間 ${event.prepareTimeMs}ms`,
+                );
+                break;
+
+            case 'download-progress': {
+                // プログレスバーの表示
+                const barLength = 40;
+                const filled = Math.floor((event.percentage / 100) * barLength);
+                const bar = '█'.repeat(filled) + '░'.repeat(barLength - filled);
+                process.stdout.write(
+                    `\r[${bar}] ${event.percentage.toFixed(1)}% (${event.received}/${event.total} バイト)`,
+                );
+                break;
+            }
+
+            case 'complete':
+                console.log(
+                    `\n完了: ${event.received} バイト受信 (ダウンロード ${event.downloadTimeMs}ms)`,
+                );
+                console.log(`合計時間: ${event.totalTimeMs}ms`);
+                break;
+        }
     },
 });
 
