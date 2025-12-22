@@ -736,68 +736,54 @@ describe('createFetchWithProgress', () => {
 
     it('throttles download-progress events', async () => {
       vi.useFakeTimers();
-      const startTime = new Date(2024, 0, 1, 0, 0, 0);
-      vi.setSystemTime(startTime);
 
-      const logger = createConsoleLogger();
-      const onProgressEvent = vi.fn();
+      try {
+        const logger = createConsoleLogger();
+        const onProgressEvent = vi.fn();
 
-      const customFetch = createFetchWithProgress({
-        logger,
-        enableProgressLog: false,
-        onProgressEvent,
-      });
+        const customFetch = createFetchWithProgress({
+          logger,
+          enableProgressLog: false,
+          onProgressEvent,
+        });
 
-      // Create a stream that emits chunks slowly
-      const stream = new ReadableStream({
-        async start(controller) {
-          // Chunk 1 (t=0) -> Should trigger event (first log)
-          controller.enqueue(new Uint8Array(10));
+        // Emit four chunks over 600ms; throttling should allow only first and last
+        const stream = new ReadableStream({
+          start(controller) {
+            const enqueue = (delayMs: number) =>
+              setTimeout(() => controller.enqueue(new Uint8Array(10)), delayMs);
 
-          // Advance time by 100ms
-          vi.setSystemTime(new Date(startTime.getTime() + 100));
+            enqueue(0); // First chunk at t=0 -> logged
+            enqueue(100); // Throttled (elapsed < 500ms)
+            enqueue(200); // Throttled (elapsed < 500ms)
+            setTimeout(() => {
+              controller.enqueue(new Uint8Array(10));
+              controller.close();
+            }, 600); // Logged (elapsed >= 500ms from first)
+          },
+        });
 
-          // Chunk 2 (t=100) -> Should be throttled (elapsed < 500)
-          controller.enqueue(new Uint8Array(10));
+        const mockResponse = new Response(stream, {
+          status: 200,
+          headers: { 'Content-Length': '40' },
+        });
 
-          // Advance time by 100ms (total 200ms)
-          vi.setSystemTime(new Date(startTime.getTime() + 200));
+        global.fetch = vi.fn().mockResolvedValue(mockResponse);
 
-          // Chunk 3 (t=200) -> Should be throttled (elapsed < 500)
-          controller.enqueue(new Uint8Array(10));
+        const response = await customFetch('https://api.example.com/data');
+        const textPromise = response.text();
 
-          // Advance time by 400ms (total 600ms)
-          vi.setSystemTime(new Date(startTime.getTime() + 600));
+        await vi.advanceTimersByTimeAsync(1000);
+        await textPromise;
 
-          // Chunk 4 (t=600) -> Should trigger event (elapsed >= 500)
-          controller.enqueue(new Uint8Array(10));
+        const progressEvents = onProgressEvent.mock.calls.filter(
+          (call) => call[0].type === 'download-progress',
+        );
 
-          controller.close();
-        },
-      });
-
-      const mockResponse = new Response(stream, {
-        status: 200,
-        headers: { 'Content-Length': '40' },
-      });
-
-      global.fetch = vi.fn().mockResolvedValue(mockResponse);
-
-      const response = await customFetch('https://api.example.com/data');
-      await response.text();
-
-      const progressEvents = onProgressEvent.mock.calls.filter(
-        (call) => call[0].type === 'download-progress',
-      );
-
-      // Should have fewer events than chunks due to throttling
-      // Chunk 1: Triggered (First log)
-      // Chunk 2: Throttled
-      // Chunk 3: Throttled
-      // Chunk 4: Triggered (Time elapsed >= 500ms)
-      expect(progressEvents.length).toBe(2);
-
-      vi.useRealTimers();
+        expect(progressEvents.length).toBe(2);
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it('handles zero Content-Length correctly', async () => {
