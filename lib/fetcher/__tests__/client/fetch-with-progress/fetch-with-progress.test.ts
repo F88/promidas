@@ -436,6 +436,71 @@ describe('createFetchWithProgress', () => {
       stderrSpy.mockRestore();
     });
 
+    it('logs completion for empty body with estimated size to stderr', async () => {
+      const logger = createConsoleLogger();
+      const stderrSpy = vi.spyOn(process.stderr, 'write');
+
+      const mockResponse = new Response(null, {
+        status: 204,
+        headers: new Headers({
+          'content-type': 'application/json',
+        }),
+      });
+
+      global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
+      const customFetch = createFetchWithProgress({
+        logger,
+        enableProgressLog: true,
+      });
+
+      const response = await customFetch('https://api.example.com/data?limit=2');
+      expect(response.status).toBe(204);
+
+      expect(stderrSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Download complete: 0 bytes received (estimated 5340 bytes)',
+        ),
+      );
+
+      stderrSpy.mockRestore();
+    });
+
+    it('logs completion for empty body via logger when stderr is unavailable', async () => {
+      const logger = createConsoleLogger();
+      const loggerSpy = vi.spyOn(logger, 'info');
+
+      const originalWrite = process.stderr.write;
+      // @ts-expect-error - Simulating browser environment
+      process.stderr.write = undefined;
+
+      const mockResponse = new Response(null, {
+        status: 204,
+        headers: new Headers({
+          'content-type': 'application/json',
+          'content-length': '0',
+        }),
+      });
+
+      global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
+      const customFetch = createFetchWithProgress({
+        logger,
+        enableProgressLog: true,
+      });
+
+      try {
+        const response = await customFetch('https://api.example.com/data');
+        expect(response.status).toBe(204);
+
+        expect(loggerSpy).toHaveBeenCalledWith(
+          expect.stringContaining('Download complete: 0 / 0 bytes'),
+        );
+      } finally {
+        process.stderr.write = originalWrite;
+      }
+    });
+
     it('works with custom logger without level property', async () => {
       const customLogger = {
         info: vi.fn(),
