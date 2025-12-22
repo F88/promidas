@@ -499,7 +499,7 @@ function estimateDownloadSize(limit: number): number {
    - downloadTimeMs: body download time
    - totalTimeMs: request start to completion
    ↓
-7. fetchPrototypes() returns result
+8. fetchPrototypes() returns result
 ```
 
 ### Logger Integration
