@@ -130,7 +130,6 @@ describe('createFetchWithProgress', () => {
         (call) => call[0].type === 'response-received',
       );
       expect(responseReceivedEvent).toBeDefined();
-      expect(responseReceivedEvent).toBeDefined();
       expect(responseReceivedEvent![0]).toMatchObject({
         type: 'response-received',
         prepareTimeMs: expect.any(Number),
@@ -166,7 +165,6 @@ describe('createFetchWithProgress', () => {
       const completeEvent = onProgressEvent.mock.calls.find(
         (call) => call[0].type === 'complete',
       );
-      expect(completeEvent).toBeDefined();
       expect(completeEvent).toBeDefined();
       expect(completeEvent![0]).toMatchObject({
         type: 'complete',
@@ -534,6 +532,8 @@ describe('createFetchWithProgress', () => {
 
     it('handles response without body gracefully', async () => {
       const logger = createConsoleLogger();
+      const onProgressEvent = vi.fn();
+
       // 204 No Content responses have no body
       const mockResponse = new Response(null, {
         status: 204,
@@ -546,13 +546,33 @@ describe('createFetchWithProgress', () => {
 
       const customFetch = createFetchWithProgress({
         logger,
-        enableProgressLog: true,
+        enableProgressLog: false,
+        onProgressEvent,
       });
 
       const response = await customFetch('https://api.example.com/data');
 
       expect(response.status).toBe(204);
       expect(response.body).toBeNull();
+
+      // Verify complete lifecycle events are fired even without body
+      const eventTypes = onProgressEvent.mock.calls.map((call) => call[0].type);
+      expect(eventTypes).toContain('request-start');
+      expect(eventTypes).toContain('response-received');
+      expect(eventTypes).toContain('complete');
+
+      // Verify complete event has correct properties
+      const completeEvent = onProgressEvent.mock.calls.find(
+        (call) => call[0].type === 'complete',
+      );
+      expect(completeEvent).toBeDefined();
+      expect(completeEvent![0]).toMatchObject({
+        type: 'complete',
+        received: 0,
+        estimatedTotal: expect.any(Number),
+        downloadTimeMs: 0,
+        totalTimeMs: expect.any(Number),
+      });
     });
 
     it('handles stream reading errors gracefully', async () => {
@@ -627,6 +647,188 @@ describe('createFetchWithProgress', () => {
 
       // Restore original write
       process.stderr.write = originalWrite;
+    });
+  });
+
+  describe('progress calculation', () => {
+    it('uses Content-Length header when available', async () => {
+      const logger = createConsoleLogger();
+      const onProgressEvent = vi.fn();
+
+      const customFetch = createFetchWithProgress({
+        logger,
+        enableProgressLog: false,
+        onProgressEvent,
+      });
+
+      const mockBody = 'x'.repeat(100);
+      const mockResponse = new Response(mockBody, {
+        status: 200,
+        headers: { 'Content-Length': '100' },
+      });
+
+      global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
+      const response = await customFetch('https://api.example.com/data');
+      await response.text();
+
+      const responseEvent = onProgressEvent.mock.calls.find(
+        (call) => call[0].type === 'response-received',
+      );
+      expect(responseEvent![0].estimatedTotal).toBe(100);
+    });
+
+    it('falls back to estimation when Content-Length is missing', async () => {
+      const logger = createConsoleLogger();
+      const onProgressEvent = vi.fn();
+
+      const customFetch = createFetchWithProgress({
+        logger,
+        enableProgressLog: false,
+        onProgressEvent,
+      });
+
+      const mockResponse = new Response('test', {
+        status: 200,
+        headers: {}, // No Content-Length
+      });
+
+      global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
+      // limit=10 -> estimated size = 10 * 2670 = 26700
+      const response = await customFetch(
+        'https://api.example.com/data?limit=10',
+      );
+      await response.text();
+
+      const responseEvent = onProgressEvent.mock.calls.find(
+        (call) => call[0].type === 'response-received',
+      );
+      expect(responseEvent![0].estimatedTotal).toBe(26700);
+    });
+
+    it('handles invalid Content-Length gracefully', async () => {
+      const logger = createConsoleLogger();
+      const onProgressEvent = vi.fn();
+
+      const customFetch = createFetchWithProgress({
+        logger,
+        enableProgressLog: false,
+        onProgressEvent,
+      });
+
+      const mockResponse = new Response('test', {
+        status: 200,
+        headers: { 'Content-Length': 'invalid' },
+      });
+
+      global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
+      const response = await customFetch('https://api.example.com/data');
+      await response.text();
+
+      const responseEvent = onProgressEvent.mock.calls.find(
+        (call) => call[0].type === 'response-received',
+      );
+      // Should be 0 if parsing fails and no estimation available
+      expect(responseEvent![0].estimatedTotal).toBe(0);
+    });
+
+    it('throttles download-progress events', async () => {
+      vi.useFakeTimers();
+      const startTime = new Date(2024, 0, 1, 0, 0, 0);
+      vi.setSystemTime(startTime);
+
+      const logger = createConsoleLogger();
+      const onProgressEvent = vi.fn();
+
+      const customFetch = createFetchWithProgress({
+        logger,
+        enableProgressLog: false,
+        onProgressEvent,
+      });
+
+      // Create a stream that emits chunks slowly
+      const stream = new ReadableStream({
+        async start(controller) {
+          // Chunk 1 (t=0) -> Should trigger event (first log)
+          controller.enqueue(new Uint8Array(10));
+
+          // Advance time by 100ms
+          vi.setSystemTime(new Date(startTime.getTime() + 100));
+
+          // Chunk 2 (t=100) -> Should be throttled (elapsed < 500)
+          controller.enqueue(new Uint8Array(10));
+
+          // Advance time by 100ms (total 200ms)
+          vi.setSystemTime(new Date(startTime.getTime() + 200));
+
+          // Chunk 3 (t=200) -> Should be throttled (elapsed < 500)
+          controller.enqueue(new Uint8Array(10));
+
+          // Advance time by 400ms (total 600ms)
+          vi.setSystemTime(new Date(startTime.getTime() + 600));
+
+          // Chunk 4 (t=600) -> Should trigger event (elapsed >= 500)
+          controller.enqueue(new Uint8Array(10));
+
+          controller.close();
+        },
+      });
+
+      const mockResponse = new Response(stream, {
+        status: 200,
+        headers: { 'Content-Length': '40' },
+      });
+
+      global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
+      const response = await customFetch('https://api.example.com/data');
+      await response.text();
+
+      const progressEvents = onProgressEvent.mock.calls.filter(
+        (call) => call[0].type === 'download-progress',
+      );
+
+      // Should have fewer events than chunks due to throttling
+      // Chunk 1: Triggered (First log)
+      // Chunk 2: Throttled
+      // Chunk 3: Throttled
+      // Chunk 4: Triggered (Time elapsed >= 500ms)
+      expect(progressEvents.length).toBe(2);
+
+      vi.useRealTimers();
+    });
+
+    it('handles zero Content-Length correctly', async () => {
+      const logger = createConsoleLogger();
+      const onProgressEvent = vi.fn();
+
+      const customFetch = createFetchWithProgress({
+        logger,
+        enableProgressLog: false,
+        onProgressEvent,
+      });
+
+      const mockResponse = new Response('', {
+        status: 200,
+        headers: { 'Content-Length': '0' },
+      });
+
+      global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
+      const response = await customFetch('https://api.example.com/data');
+      await response.text();
+
+      const responseEvent = onProgressEvent.mock.calls.find(
+        (call) => call[0].type === 'response-received',
+      );
+      expect(responseEvent![0].estimatedTotal).toBe(0);
+
+      const completeEvent = onProgressEvent.mock.calls.find(
+        (call) => call[0].type === 'complete',
+      );
+      expect(completeEvent![0].received).toBe(0);
     });
   });
 
