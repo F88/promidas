@@ -269,12 +269,26 @@ export function createFetchWithProgress(
     // If no body, fire complete event and return response as-is
     if (!response.body) {
       const completionTime = Date.now();
+      const totalTimeMs = completionTime - requestStartTime;
+
+      if (enableProgressLog && shouldProgressLog(logger)) {
+        const message = isEstimatedSize
+          ? `Download complete: 0 bytes received (estimated ${total} bytes) in 0ms (total: ${totalTimeMs}ms)`
+          : `Download complete: 0 / ${total} bytes received in 0ms (total: ${totalTimeMs}ms)`;
+
+        if (typeof process !== 'undefined' && process.stderr?.write) {
+          process.stderr.write(`\r${message}\n`);
+        } else {
+          logger.info(message);
+        }
+      }
+
       onProgressEvent?.({
         type: 'complete',
         received: 0,
         estimatedTotal: total,
         downloadTimeMs: 0,
-        totalTimeMs: completionTime - requestStartTime,
+        totalTimeMs,
       });
       return response;
     }
