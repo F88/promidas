@@ -401,31 +401,39 @@ if (config.enableEvents === true) {
 
 PROMIDAS provides two separate notification mechanisms for different layers:
 
-### Fetcher Layer: Progress Callback (Issue #44)
+### Fetcher Layer: Progress Events (Issue #44, #67)
 
 **Scope**: HTTP download progress
 
 ```typescript
 const client = new ProtopediaApiCustomClient({
-    progressCallback: {
-        onStart: (total) => {
-            /* ... */
-        },
-        onProgress: (received, total, percentage) => {
-            /* ... */
-        },
-        onComplete: (total, duration) => {
-            /* ... */
-        },
+    progressCallback: (event) => {
+        switch (event.type) {
+            case 'request-start':
+                // リクエスト開始
+                break;
+            case 'response-received':
+                // レスポンスヘッダー受信
+                break;
+            case 'download-progress':
+                // ダウンロード進捗
+                console.log(`${event.percentage}% complete`);
+                break;
+            case 'complete':
+                // ダウンロード完了
+                console.log(`Completed in ${event.totalTimeMs}ms`);
+                break;
+        }
     },
 });
 ```
 
 **Information**:
 
-- Bytes downloaded
+- Complete request lifecycle (request-start → response-received → download-progress → complete)
+- Bytes downloaded (received/estimatedTotal)
 - Percentage complete
-- Download duration
+- Timing information in milliseconds (prepareTimeMs, downloadTimeMs, totalTimeMs)
 
 **Use Case**: Detailed download progress bars, network diagnostics
 
@@ -460,10 +468,10 @@ Both mechanisms can be used together for comprehensive UX:
 ```typescript
 // Detailed progress during download
 const client = new ProtopediaApiCustomClient({
-    progressCallback: {
-        onProgress: (received, total, percentage) => {
-            setDownloadProgress(percentage);
-        },
+    progressCallback: (event) => {
+        if (event.type === 'download-progress') {
+            setDownloadProgress(event.percentage);
+        }
     },
 });
 

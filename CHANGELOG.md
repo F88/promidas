@@ -9,13 +9,94 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking Changes
+
+#### Progress Tracking API Redesigned to Event-Driven Architecture
+
+The progress tracking system has been completely redesigned from callback-based to event-driven architecture for better extensibility and type safety.
+
+**OLD**:
+
+```typescript
+const client = new ProtopediaApiCustomClient({
+    progressCallback: {
+        onStart: (estimatedTotal, limit, prepareTime) => {
+            /* prepareTime in seconds */
+        },
+        onProgress: (received, total, percentage) => {
+            /* ... */
+        },
+        onComplete: (received, estimatedTotal, downloadTime, totalTime) => {
+            /* times in seconds */
+        },
+    },
+});
+```
+
+**NEW**:
+
+```typescript
+const client = new ProtopediaApiCustomClient({
+    progressCallback: (event) => {
+        switch (event.type) {
+            case 'request-start':
+                // NEW: Fired before fetch() call
+                // Properties: requestStartTime, limit, estimatedTotal
+                break;
+            case 'response-received':
+                // Replaces onStart
+                // Properties: prepareTimeMs (milliseconds), estimatedTotal, limit
+                break;
+            case 'download-progress':
+                // Replaces onProgress
+                // Properties: received, estimatedTotal, percentage
+                break;
+            case 'complete':
+                // Replaces onComplete
+                // Properties: received, estimatedTotal, downloadTimeMs, totalTimeMs (all in milliseconds)
+                break;
+        }
+    },
+});
+```
+
+**Migration Steps**:
+
+1. Replace callback object with single event handler function
+2. Use `switch(event.type)` pattern for type-safe event handling
+3. Update timing references: seconds → milliseconds (multiply by 1000 if needed)
+4. Add handling for new `request-start` event type (captures complete lifecycle)
+5. Rename timing properties: `prepareTime` → `prepareTimeMs`, `downloadTime` → `downloadTimeMs`, `totalTime` → `totalTimeMs`
+
+**Impact**: Affects all users who use `progressCallback` option in `ProtopediaApiCustomClient` configuration.
+
+**Files affected**:
+
+- `lib/fetcher/types/progress-event.types.ts` - NEW: Event type definitions
+- `lib/fetcher/client/config.ts` - Updated `progressCallback` type
+- `lib/fetcher/client/fetch-with-progress.ts` - Complete rewrite for event emission
+- `lib/fetcher/client/select-custom-fetch.ts` - Updated to pass event handler
+- `lib/fetcher/utils/create-client-fetch.ts` - Updated type signatures
+- All documentation files updated to reflect new API
+
 ### Added
+
+- **Progress Event System**: Event-driven architecture for complete fetch lifecycle tracking (#67)
+    - New `request-start` event fires before fetch() call (captures complete request lifecycle)
+    - `FetchProgressEvent` discriminated union type for type-safe event handling
+    - Four event types: `request-start`, `response-received`, `download-progress`, `complete`
+    - All timing values now in milliseconds for consistency and precision
+    - Exported `FetchProgressEvent` and all event type definitions from `@f88/promidas/fetcher`
 
 ### Changed
 
-### Fixed
+- **Progress Tracking API**: Complete redesign to event-driven architecture (#67)
+    - `progressCallback` now accepts single event handler function: `(event: FetchProgressEvent) => void`
+    - Timing properties renamed: `downloadStartTime` → `requestStartTime`, `prepareTime` → `prepareTimeMs`
+    - All timing values changed from seconds (number) to milliseconds (number)
+    - Event types use discriminated union pattern for type-safe `switch(event.type)` handling
 
-### Breaking Changes
+### Fixed
 
 ## [0.13.1] - 2025-12-22
 

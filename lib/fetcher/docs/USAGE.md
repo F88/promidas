@@ -177,9 +177,9 @@ client internally by providing the same options shape.
 
 ### Overview
 
-The `ProtopediaApiCustomClient` supports download progress tracking for large data fetches.
+The `ProtopediaApiCustomClient` supports event-driven download progress tracking for large data fetches.
 Progress information is logged to stderr by default when the logger level permits,
-and custom callbacks can be provided for advanced use cases.
+and custom event handlers can be provided for advanced use cases.
 
 ### Basic Usage (Automatic Logging)
 
@@ -196,11 +196,12 @@ const client = new ProtopediaApiCustomClient({
 
 const result = await client.fetchPrototypes({ limit: 10000 });
 // stderr output:
-// Download starting (limit=10000, 2670000 bytes (estimated)) (prepared in 0.05s)
-// Download complete: 2670000 bytes received (estimated 2670000 bytes) in 1.23s (total: 1.28s)
+// [INFO] Request starting...
+// [INFO] Response received (50ms) - 2670000 bytes (estimated), limit=10000
+// Download complete: 2670000 bytes received (estimated 2670000 bytes) in 1230ms (total: 1280ms)
 ```
 
-### Custom Progress Callbacks
+### Custom Progress Event Handler
 
 For custom progress handling (e.g., progress bars, UI updates):
 
@@ -210,25 +211,56 @@ const client = new ProtopediaApiCustomClient({
         token: process.env.PROTOPEDIA_API_V2_TOKEN,
     },
     progressLog: false, // Disable automatic logging
-    progressCallback: {
-        onStart: (estimatedTotal, limit, prepareTime) => {
-            console.log(
-                `Starting download: ${limit} items, {estimatedTotal} bytes (estimated)`,
-            );
-            console.log(`Preparation took ${prepareTime}s`);
-        },
-        onProgress: (received, total, percentage) => {
-            process.stdout.write(`\rProgress: ${percentage.toFixed(1)}%`);
-        },
-        onComplete: (received, estimatedTotal, downloadTime, totalTime) => {
-            console.log(`\nCompleted: ${received} bytes in ${downloadTime}s`);
-            console.log(`Total time (including preparation): ${totalTime}s`);
-        },
+    progressCallback: (event) => {
+        switch (event.type) {
+            case 'request-start':
+                console.log('Starting request...');
+                break;
+            case 'response-received':
+                console.log(
+                    `Headers received (${event.prepareTimeMs}ms) - ${event.estimatedTotal} bytes (estimated), limit=${event.limit}`,
+                );
+                break;
+            case 'download-progress':
+                process.stdout.write(
+                    `\rProgress: ${event.percentage.toFixed(1)}% (${event.received}/${event.total} bytes)`,
+                );
+                break;
+            case 'complete':
+                console.log(
+                    `\nComplete: ${event.received} bytes in ${event.downloadTimeMs}ms (total: ${event.totalTimeMs}ms)`,
+                );
+                break;
+        }
     },
 });
 
 const result = await client.fetchPrototypes({ limit: 10000 });
 ```
+
+### Progress Event Types
+
+The progress tracking system emits four event types during the fetch lifecycle:
+
+```typescript
+import type { FetchProgressEvent } from '@f88/promidas/fetcher';
+
+// Event types:
+type FetchProgressEvent =
+    | FetchProgressRequestStartEvent // Fired when fetch() is called
+    | FetchProgressResponseReceivedEvent // Fired when headers are received
+    | FetchProgressDownloadProgressEvent // Fired during body download (throttled to 500ms)
+    | FetchProgressCompleteEvent; // Fired when download completes
+```
+
+**Event Properties**:
+
+| Event Type          | Properties                                                    |
+| ------------------- | ------------------------------------------------------------- |
+| `request-start`     | `type: 'request-start'`                                       |
+| `response-received` | `type, prepareTimeMs, estimatedTotal, limit`                  |
+| `download-progress` | `type, received, total, percentage`                           |
+| `complete`          | `type, received, estimatedTotal, downloadTimeMs, totalTimeMs` |
 
 ### Controlling stderr Output
 
@@ -256,17 +288,19 @@ if (shouldProgressLog(logger)) {
 
 The progress tracking system consists of three modules:
 
-1. **fetch-with-progress**: Core progress tracking with callbacks
+1. **fetch-with-progress**: Core progress tracking with event emission
 2. **select-custom-fetch**: Smart fetch selection with progress integration
 3. **protopedia-api-custom-client**: Uses progress tracking by default
 
 **Key Features**:
 
+- Event-driven architecture with type-safe discriminated unions
+- Complete lifecycle tracking (request start → headers → download → complete)
 - Automatic estimation of download size based on limit parameter
 - Real-time progress updates during streaming
-- Separate timing for preparation vs. download phases
+- Separate timing for preparation vs. download phases (in milliseconds)
 - Logger-level filtering for stderr output
-- Custom callbacks for advanced use cases
+- Custom event handlers for advanced use cases
 
 ### Disabling Progress Tracking
 
