@@ -238,6 +238,10 @@ export function createFetchWithProgress(
     const contentLength = response.headers.get('Content-Length');
     let total = contentLength ? parseInt(contentLength, 10) : 0;
 
+    if (isNaN(total)) {
+      total = 0;
+    }
+
     // Estimate item count from URL parameters
     const estimation = estimateTotalSize(url.toString());
     estimatedItemCount = estimation.itemCount;
@@ -262,8 +266,16 @@ export function createFetchWithProgress(
       limit: estimatedItemCount,
     });
 
-    // If no body, return response as-is
+    // If no body, fire complete event and return response as-is
     if (!response.body) {
+      const completionTime = Date.now();
+      onProgressEvent?.({
+        type: 'complete',
+        received: 0,
+        estimatedTotal: total,
+        downloadTimeMs: 0,
+        totalTimeMs: completionTime - requestStartTime,
+      });
       return response;
     }
 
@@ -279,8 +291,9 @@ export function createFetchWithProgress(
 
             if (done) {
               // Finish progress logging
-              const totalElapsedMs = Date.now() - requestStartTime;
-              const bodyElapsedMs = Date.now() - bodyStartTime;
+              const completionTime = Date.now();
+              const totalElapsedMs = completionTime - requestStartTime;
+              const bodyElapsedMs = completionTime - bodyStartTime;
 
               if (enableProgressLog && shouldProgressLog(logger)) {
                 // Show final progress (always output, regardless of time)
