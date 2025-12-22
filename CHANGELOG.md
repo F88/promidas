@@ -41,7 +41,7 @@ const client = new ProtopediaApiCustomClient({
         switch (event.type) {
             case 'request-start':
                 // NEW: Fired before fetch() call
-                // Properties: requestStartTime, limit, estimatedTotal
+                // No properties other than `type`
                 break;
             case 'response-received':
                 // Replaces onStart
@@ -49,7 +49,7 @@ const client = new ProtopediaApiCustomClient({
                 break;
             case 'download-progress':
                 // Replaces onProgress
-                // Properties: received, estimatedTotal, percentage
+                // Properties: received, total, percentage
                 break;
             case 'complete':
                 // Replaces onComplete

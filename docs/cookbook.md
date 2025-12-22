@@ -398,9 +398,7 @@ const client = new ProtopediaApiCustomClient({
     progressCallback: (event) => {
         switch (event.type) {
             case 'request-start':
-                console.log(
-                    `リクエスト開始: ${event.limit}件取得予定 (推定 ${event.estimatedTotal} バイト)`,
-                );
+                console.log('リクエスト開始');
                 break;
 
             case 'response-received':
@@ -415,7 +413,7 @@ const client = new ProtopediaApiCustomClient({
                 const filled = Math.floor((event.percentage / 100) * barLength);
                 const bar = '█'.repeat(filled) + '░'.repeat(barLength - filled);
                 process.stdout.write(
-                    `\r[${bar}] ${event.percentage.toFixed(1)}% (${event.received}/${event.estimatedTotal} バイト)`,
+                    `\r[${bar}] ${event.percentage.toFixed(1)}% (${event.received}/${event.total} バイト)`,
                 );
                 break;
             }
