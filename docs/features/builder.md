@@ -12,7 +12,7 @@ instructions-for-ais:
 
 # Repository Builder (リポジトリ ビルダー)
 
-`Builder` パターンは、Repository の詳細なカスタマイズが必要な上級ユーザー向けの機能です。
+`Builder` は、Repository の詳細なカスタマイズが必要な上級ユーザー向けの機能です。
 `PromidasRepositoryBuilder` クラスを使用することで、Store、API Client、Repository の各コンポーネントをきめ細かく設定できます。
 
 ## 基本的な使い方
