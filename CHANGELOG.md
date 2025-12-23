@@ -9,13 +9,92 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking Changes
+
+#### Repository Snapshot Error Structure Redesigned
+
+The `SnapshotOperationFailure` type has been completely redesigned to use discriminated unions for type-safe error handling.
+
+**OLD**:
+
+```typescript
+const result = await repo.setupSnapshot({ limit: 100 });
+if (!result.ok) {
+    console.error(result.error);  // string
+    if (result.status === 404) {  // optional
+        // Handle HTTP error
+    }
+    if (result.code === 'SOME_CODE') {  // optional
+        // Handle specific error
+    }
+}
+```
+
+**NEW**:
+
+```typescript
+const result = await repo.setupSnapshot({ limit: 100 });
+if (!result.ok) {
+    switch (result.origin) {
+        case 'fetcher':
+            console.error(result.message);  // error → message
+            console.log(result.kind);       // 'http' | 'network' | 'timeout' | ...
+            console.log(result.code);       // FetcherErrorCode (always present)
+            if (result.status === 404) {    // optional, only for HTTP errors
+                // Handle HTTP error
+            }
+            break;
+        case 'store':
+            console.error(result.message);
+            console.log(result.kind);       // 'storage_limit' | 'serialization'
+            console.log(result.code);       // StoreErrorCode (always present)
+            console.log(result.dataState);  // 'UNCHANGED' | 'CLEARED' | 'UNKNOWN'
+            break;
+        case 'unknown':
+            console.error(result.message);
+            // No kind, code, or other fields
+            break;
+    }
+}
+```
+
+**Migration Guide**:
+
+1. Replace `result.error` with `result.message` (only when `origin !== 'fetcher'`)
+2. Use `result.origin` to discriminate error types before accessing fields
+3. `result.code` is now always present (type-specific)
+4. `result.status` is only available for `FetcherSnapshotFailure` with HTTP errors
+5. Store errors now include `dataState` instead of embedding it in the message
+
 ### Added
 
-- Nothing yet.
+- **Discriminated Union Error Types**: Repository snapshot failures now use type-discriminated errors (#72)
+    - `SnapshotOperationFailure` discriminated by `origin` field: `'fetcher' | 'store' | 'unknown'`
+    - Each origin has specific `kind` and `code` fields for precise error classification
+    - `FetcherSnapshotFailure`: HTTP/network errors with `FetcherErrorCode` and detailed request/response metadata
+    - `StoreSnapshotFailure`: Storage limit and serialization errors with `StoreErrorCode` and `dataState`
+    - `UnknownSnapshotFailure`: Fallback for unexpected errors
+    - Enables deterministic error handling without message parsing
+
+### Changed
+
+- **Repository Error Structure**: Standardized error field names
+    - Repository layer uses `message` field (consistent with discriminated union pattern)
+    - Fetcher layer maintains `error` field for backward compatibility
+    - All error types now include structured metadata for programmatic handling
+
+### Removed
+
+- **Legacy Error Types**: Removed deprecated error structures (#72)
+    - `LegacySnapshotOperationFailure` type and related TODO comments
+    - All code migrated to discriminated union pattern
 
 ### Fixed
 
-- Nothing yet.
+- **Test Coverage**: Updated all repository and fetcher tests for new error structure
+    - 554 fetcher tests updated to expect `origin`, `kind`, and `code` fields
+    - 190 repository tests updated to use discriminated error types
+    - Fixed error message expectations to use actual error messages instead of generic fallbacks
 
 ### Documentation
 
