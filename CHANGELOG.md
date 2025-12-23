@@ -20,11 +20,13 @@ The `SnapshotOperationFailure` type has been completely redesigned to use discri
 ```typescript
 const result = await repo.setupSnapshot({ limit: 100 });
 if (!result.ok) {
-    console.error(result.error);  // string
-    if (result.status === 404) {  // optional
+    console.error(result.error); // string
+    if (result.status === 404) {
+        // optional
         // Handle HTTP error
     }
-    if (result.code === 'SOME_CODE') {  // optional
+    if (result.code === 'SOME_CODE') {
+        // optional
         // Handle specific error
     }
 }
@@ -37,18 +39,19 @@ const result = await repo.setupSnapshot({ limit: 100 });
 if (!result.ok) {
     switch (result.origin) {
         case 'fetcher':
-            console.error(result.message);  // error → message
-            console.log(result.kind);       // 'http' | 'network' | 'timeout' | ...
-            console.log(result.code);       // FetcherErrorCode (always present)
-            if (result.status === 404) {    // optional, only for HTTP errors
+            console.error(result.message); // error → message
+            console.log(result.kind); // 'http' | 'network' | 'timeout' | ...
+            console.log(result.code); // FetcherErrorCode (always present)
+            if (result.status === 404) {
+                // optional, only for HTTP errors
                 // Handle HTTP error
             }
             break;
         case 'store':
             console.error(result.message);
-            console.log(result.kind);       // 'storage_limit' | 'serialization'
-            console.log(result.code);       // StoreErrorCode (always present)
-            console.log(result.dataState);  // 'UNCHANGED' | 'CLEARED' | 'UNKNOWN'
+            console.log(result.kind); // 'storage_limit' | 'serialization'
+            console.log(result.code); // StoreErrorCode (always present)
+            console.log(result.dataState); // 'UNCHANGED' | 'CLEARED' | 'UNKNOWN'
             break;
         case 'unknown':
             console.error(result.message);
