@@ -31,6 +31,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'unknown',
+        code: 'UNKNOWN',
         error: 'Unexpected crash',
         details: {},
       });
@@ -41,6 +44,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'unknown',
+        code: 'UNKNOWN',
         error: 'Failed to fetch prototypes',
         details: {},
       });
@@ -51,6 +57,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'unknown',
+        code: 'UNKNOWN',
         error: 'Failed to fetch prototypes',
         details: {},
       });
@@ -61,6 +70,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'unknown',
+        code: 'UNKNOWN',
         error: 'Failed to fetch prototypes',
         details: {},
       });
@@ -71,6 +83,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'unknown',
+        code: 'UNKNOWN',
         error: 'Failed to fetch prototypes',
         details: {},
       });
@@ -82,6 +97,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
+        expect(result.origin).toBe('fetcher');
+        expect(result.kind).toBe('unknown');
+        expect(result.code).toBe('UNKNOWN');
         expect(result.details).toEqual({});
       }
     });
@@ -97,6 +115,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'network',
+        code: 'ENOTFOUND',
         error: 'getaddrinfo ENOTFOUND',
         details: {
           res: {
@@ -120,6 +141,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'network',
+        code: 'ENOTFOUND',
         error: 'fetch failed',
         details: {
           res: {
@@ -140,6 +164,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
+        expect(result.origin).toBe('fetcher');
+        expect(result.kind).toBe('network');
+        expect(result.code).toBe('ECONNREFUSED');
         expect(result.status).toBeUndefined();
         expect(result.details?.res?.code).toBe('ECONNREFUSED');
       }
@@ -156,6 +183,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
+        expect(result.origin).toBe('fetcher');
+        expect(result.kind).toBe('network');
+        expect(result.code).toBe('ETIMEDOUT');
         expect(result.status).toBeUndefined();
         expect(result.details?.res?.code).toBe('ETIMEDOUT');
       }
@@ -171,6 +201,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
+        expect(result.origin).toBe('fetcher');
+        expect(result.kind).toBe('network');
+        expect(result.code).toBe('CUSTOM_CODE');
         expect(result.details?.res?.code).toBe('CUSTOM_CODE');
       }
     });
@@ -181,6 +214,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'unknown',
+        code: 'UNKNOWN',
         error: 'Cannot read property of undefined',
         details: {},
       });
@@ -192,6 +228,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
+        expect(result.origin).toBe('fetcher');
+        expect(result.kind).toBe('unknown');
+        expect(result.code).toBe('UNKNOWN');
         expect(result.status).toBeUndefined();
         expect(result.error).toBe('Array length out of bounds');
       }
@@ -203,6 +242,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'unknown',
+        code: 'UNKNOWN',
         error: '',
         details: {},
       });
@@ -214,6 +256,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'unknown',
+        code: 'UNKNOWN',
         error: 'Failed to fetch prototypes',
         details: {},
       });
@@ -225,6 +270,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'cors',
+        code: 'CORS_BLOCKED',
         error: 'Failed to fetch',
         details: {
           res: {
@@ -244,6 +292,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'cors',
+        code: 'CORS_BLOCKED',
         error: message,
         details: {
           res: {
@@ -261,6 +312,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'network',
+        code: 'CUSTOM_CODE',
         error: 'Failed to fetch',
         details: {
           res: {
@@ -276,6 +330,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'unknown',
+        code: 'UNKNOWN',
         error: 'Failed to fetch prototypes',
         details: {},
       });
@@ -287,6 +344,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'unknown',
+        code: 'UNKNOWN',
         error: 'Failed to fetch prototypes',
         details: {},
       });
@@ -298,6 +358,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'unknown',
+        code: 'UNKNOWN',
         error: 'Failed to fetch prototypes',
         details: {},
       });
@@ -308,6 +371,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'unknown',
+        code: 'UNKNOWN',
         error: 'Failed to fetch prototypes',
         details: {},
       });
@@ -319,6 +385,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'unknown',
+        code: 'UNKNOWN',
         error: 'Failed to fetch prototypes',
         details: {},
       });
@@ -330,6 +399,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'unknown',
+        code: 'UNKNOWN',
         error: 'Failed to fetch prototypes',
         details: {},
       });
@@ -341,6 +413,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'unknown',
+        code: 'UNKNOWN',
         error: 'Failed to fetch prototypes',
         details: {},
       });
@@ -352,6 +427,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'unknown',
+        code: 'UNKNOWN',
         error: 'Failed to fetch prototypes',
         details: {},
       });
@@ -363,6 +441,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'unknown',
+        code: 'UNKNOWN',
         error: 'Failed to fetch prototypes',
         details: {},
       });
@@ -376,6 +457,9 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'unknown',
+        code: 'UNKNOWN',
         error: 'Failed to fetch prototypes',
         details: {},
       });
@@ -389,12 +473,17 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
+        expect(result.origin).toBe('fetcher');
+        // DOMException has a numeric code property, so it's extracted as network
+        expect(result.kind).toBe('network');
+        expect(result.code).toBe(domError.code);
         expect(result.status).toBeUndefined();
         expect(result.error).toBe('Invalid state');
+        expect(result.details.res?.code).toBe(domError.code);
       }
     });
 
-    it('handles error with status 0', () => {
+    it('ignores status 0 on non-ProtoPediaApiError', () => {
       const httpError = Object.assign(new Error('Network error'), {
         status: 0,
       });
@@ -403,12 +492,15 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.status).toBe(0);
+        expect(result.origin).toBe('fetcher');
+        expect(result.kind).toBe('unknown');
+        expect(result.code).toBe('UNKNOWN');
+        expect(result.status).toBeUndefined();
         expect(result.error).toBe('Network error');
       }
     });
 
-    it('handles error with non-numeric status', () => {
+    it('ignores non-numeric status on non-ProtoPediaApiError', () => {
       const httpError = {
         status: 'NOT_A_NUMBER' as any,
         message: 'Invalid status',
@@ -418,8 +510,10 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        // Non-numeric status defaults to 500
-        expect(result.status).toBe(500);
+        expect(result.origin).toBe('fetcher');
+        expect(result.kind).toBe('unknown');
+        expect(result.code).toBe('UNKNOWN');
+        expect(result.status).toBeUndefined();
       }
     });
   });

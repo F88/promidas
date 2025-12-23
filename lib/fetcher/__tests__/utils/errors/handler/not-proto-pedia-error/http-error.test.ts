@@ -14,6 +14,10 @@
  * - network-error.test.ts - Network errors and edge cases
  *
  * This split improves test maintainability without fragmenting the implementation.
+ *
+ * NOTE: handleNotProtoPediaApiError does NOT treat errors with status property as HTTP errors.
+ * Only ProtoPediaApiError instances are treated as HTTP. All other errors are classified as
+ * network/timeout/abort/unknown/cors based on their properties, regardless of status field.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -26,7 +30,7 @@ import {
 describe('handleNotProtoPediaApiError', () => {
   describe('HTTP-like error handling', () => {
     describe('general cases', () => {
-      it('defaults to 500 when status is missing from HTTP-like error', () => {
+      it('maps error with status property to unknown (not HTTP)', () => {
         const httpError = {
           status: undefined,
           message: 'Unknown error',
@@ -34,26 +38,34 @@ describe('handleNotProtoPediaApiError', () => {
 
         const result = handleNotProtoPediaApiError(httpError);
 
-        expect(result.ok).toBe(false);
-        if (!result.ok) {
-          expect(result.status).toBe(500);
-        }
+        expect(result).toEqual({
+          ok: false,
+          origin: 'fetcher',
+          kind: 'unknown',
+          code: 'UNKNOWN',
+          error: 'Failed to fetch prototypes',
+          details: {},
+        });
       });
 
-      it('handles HTTP error with very large status code', () => {
+      it('ignores status property on non-ProtoPediaApiError', () => {
         const httpError = Object.assign(new Error('Invalid status'), {
           status: 999999,
         });
 
         const result = handleNotProtoPediaApiError(httpError);
 
-        expect(result.ok).toBe(false);
-        if (!result.ok) {
-          expect(result.status).toBe(999999);
-        }
+        expect(result).toEqual({
+          ok: false,
+          origin: 'fetcher',
+          kind: 'unknown',
+          code: 'UNKNOWN',
+          error: 'Invalid status',
+          details: {},
+        });
       });
 
-      it('handles HTTP error with null status', () => {
+      it('treats null status as unknown error', () => {
         const httpError = {
           status: null as any,
           message: 'Null status',
@@ -61,41 +73,53 @@ describe('handleNotProtoPediaApiError', () => {
 
         const result = handleNotProtoPediaApiError(httpError);
 
-        expect(result.ok).toBe(false);
-        if (!result.ok) {
-          expect(result.status).toBe(500); // status ?? 500
-        }
+        expect(result).toEqual({
+          ok: false,
+          origin: 'fetcher',
+          kind: 'unknown',
+          code: 'UNKNOWN',
+          error: 'Failed to fetch prototypes',
+          details: {},
+        });
       });
 
-      it('handles HTTP error with negative status', () => {
+      it('ignores negative status on non-ProtoPediaApiError', () => {
         const httpError = Object.assign(new Error('Negative status'), {
           status: -500,
         });
 
         const result = handleNotProtoPediaApiError(httpError);
 
-        expect(result.ok).toBe(false);
-        if (!result.ok) {
-          expect(result.status).toBe(-500);
-        }
+        expect(result).toEqual({
+          ok: false,
+          origin: 'fetcher',
+          kind: 'unknown',
+          code: 'UNKNOWN',
+          error: 'Negative status',
+          details: {},
+        });
       });
     });
 
     describe('4xx client errors', () => {
-      it('handles 400 Bad Request with fallback message', () => {
+      it('uses fallback message for non-Error object', () => {
         const httpError = {
           status: 400,
         };
 
         const result = handleNotProtoPediaApiError(httpError);
 
-        expect(result.ok).toBe(false);
-        if (!result.ok) {
-          expect(result.error).toBe('Failed to fetch prototypes');
-        }
+        expect(result).toEqual({
+          ok: false,
+          origin: 'fetcher',
+          kind: 'unknown',
+          code: 'UNKNOWN',
+          error: 'Failed to fetch prototypes',
+          details: {},
+        });
       });
 
-      it('handles 400 Bad Request with only req.url', () => {
+      it('ignores req metadata on non-ProtoPediaApiError', () => {
         const httpError = Object.assign(new Error('Request failed'), {
           status: 400,
           req: {
@@ -107,17 +131,15 @@ describe('handleNotProtoPediaApiError', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 400,
+          origin: 'fetcher',
+          kind: 'unknown',
+          code: 'UNKNOWN',
           error: 'Request failed',
-          details: {
-            req: {
-              url: 'https://protopedia.cc/api/prototypes',
-            },
-          },
+          details: {},
         });
       });
 
-      it('does not create empty res object when no res fields present (400)', () => {
+      it('does not preserve req metadata', () => {
         const httpError = Object.assign(new Error('Request failed'), {
           status: 400,
           req: {
@@ -130,12 +152,11 @@ describe('handleNotProtoPediaApiError', () => {
 
         expect(result.ok).toBe(false);
         if (!result.ok) {
-          expect(result.details?.req).toBeDefined();
-          expect(result.details?.res).toBeUndefined();
+          expect(result.details).toEqual({});
         }
       });
 
-      it('handles 400 Bad Request with empty string req.url', () => {
+      it('ignores req.url on non-ProtoPediaApiError', () => {
         const httpError = Object.assign(new Error('Empty URL'), {
           status: 400,
           req: {
@@ -146,13 +167,17 @@ describe('handleNotProtoPediaApiError', () => {
 
         const result = handleNotProtoPediaApiError(httpError);
 
-        expect(result.ok).toBe(false);
-        if (!result.ok) {
-          expect(result.details?.req?.url).toBe('');
-        }
+        expect(result).toEqual({
+          ok: false,
+          origin: 'fetcher',
+          kind: 'unknown',
+          code: 'UNKNOWN',
+          error: 'Empty URL',
+          details: {},
+        });
       });
 
-      it('handles 400 Bad Request with empty string req.method', () => {
+      it('ignores req.method on non-ProtoPediaApiError', () => {
         const httpError = Object.assign(new Error('Empty method'), {
           status: 400,
           req: {
@@ -163,13 +188,17 @@ describe('handleNotProtoPediaApiError', () => {
 
         const result = handleNotProtoPediaApiError(httpError);
 
-        expect(result.ok).toBe(false);
-        if (!result.ok) {
-          expect(result.details?.req?.method).toBe('');
-        }
+        expect(result).toEqual({
+          ok: false,
+          origin: 'fetcher',
+          kind: 'unknown',
+          code: 'UNKNOWN',
+          error: 'Empty method',
+          details: {},
+        });
       });
 
-      it('handles 401 Unauthorized with Error instance', () => {
+      it('ignores statusText on non-ProtoPediaApiError', () => {
         const httpError = Object.assign(new Error('Authentication failed'), {
           status: 401,
           statusText: 'Unauthorized',
@@ -179,17 +208,15 @@ describe('handleNotProtoPediaApiError', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 401,
+          origin: 'fetcher',
+          kind: 'unknown',
+          code: 'UNKNOWN',
           error: 'Authentication failed',
-          details: {
-            res: {
-              statusText: 'Unauthorized',
-            },
-          },
+          details: {},
         });
       });
 
-      it('handles 404 Not Found with all metadata fields', () => {
+      it('extracts code property as network error', () => {
         const httpError = Object.assign(new Error('Prototype not found'), {
           status: 404,
           statusText: 'Not Found',
@@ -204,22 +231,19 @@ describe('handleNotProtoPediaApiError', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 404,
+          origin: 'fetcher',
+          kind: 'network',
+          code: 'RESOURCE_NOT_FOUND',
           error: 'Prototype not found',
           details: {
-            req: {
-              url: 'https://protopedia.cc/api/prototypes',
-              method: 'GET',
-            },
             res: {
-              statusText: 'Not Found',
               code: 'RESOURCE_NOT_FOUND',
             },
           },
         });
       });
 
-      it('handles 404 Not Found with status as string number', () => {
+      it('treats string status as unknown error', () => {
         const httpError = {
           status: '404' as any,
           message: 'Not found',
@@ -227,13 +251,17 @@ describe('handleNotProtoPediaApiError', () => {
 
         const result = handleNotProtoPediaApiError(httpError);
 
-        expect(result.ok).toBe(false);
-        if (!result.ok) {
-          expect(result.status).toBe(404);
-        }
+        expect(result).toEqual({
+          ok: false,
+          origin: 'fetcher',
+          kind: 'unknown',
+          code: 'UNKNOWN',
+          error: 'Failed to fetch prototypes',
+          details: {},
+        });
       });
 
-      it('handles 405 Method Not Allowed with only req.method', () => {
+      it('does not preserve req.method without other fields', () => {
         const httpError = Object.assign(new Error('Method not allowed'), {
           status: 405,
           req: {
@@ -245,17 +273,15 @@ describe('handleNotProtoPediaApiError', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 405,
+          origin: 'fetcher',
+          kind: 'unknown',
+          code: 'UNKNOWN',
           error: 'Method not allowed',
-          details: {
-            req: {
-              method: 'DELETE',
-            },
-          },
+          details: {},
         });
       });
 
-      it('handles 422 Unprocessable Entity with all possible metadata', () => {
+      it('extracts code from error with mixed metadata', () => {
         const httpError = Object.assign(new Error('Complete error'), {
           status: 422,
           statusText: 'Unprocessable Entity',
@@ -270,18 +296,19 @@ describe('handleNotProtoPediaApiError', () => {
 
         expect(result.ok).toBe(false);
         if (!result.ok) {
-          expect(result.status).toBe(422);
+          expect(result.origin).toBe('fetcher');
+          expect(result.kind).toBe('network');
+          expect(result.code).toBe('VALIDATION_ERROR');
           expect(result.error).toBe('Complete error');
-          expect(result.details?.req?.url).toBe(
-            'https://protopedia.cc/api/prototypes',
-          );
-          expect(result.details?.req?.method).toBe('POST');
-          expect(result.details?.res?.statusText).toBe('Unprocessable Entity');
-          expect(result.details?.res?.code).toBe('VALIDATION_ERROR');
+          expect(result.details).toEqual({
+            res: {
+              code: 'VALIDATION_ERROR',
+            },
+          });
         }
       });
 
-      it('handles HTTP error with status 429 (Too Many Requests)', () => {
+      it('ignores all HTTP metadata on 429 error', () => {
         const httpError = Object.assign(new Error('Rate limit exceeded'), {
           status: 429,
           statusText: 'Too Many Requests',
@@ -295,21 +322,15 @@ describe('handleNotProtoPediaApiError', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 429,
+          origin: 'fetcher',
+          kind: 'unknown',
+          code: 'UNKNOWN',
           error: 'Rate limit exceeded',
-          details: {
-            req: {
-              url: 'https://protopedia.cc/api/prototypes',
-              method: 'GET',
-            },
-            res: {
-              statusText: 'Too Many Requests',
-            },
-          },
+          details: {},
         });
       });
 
-      it('handles HTTP error with status 499 (Client Closed Request)', () => {
+      it('ignores all HTTP metadata on 499 error', () => {
         const httpError = Object.assign(new Error('Client closed connection'), {
           status: 499,
           statusText: 'Client Closed Request',
@@ -323,37 +344,34 @@ describe('handleNotProtoPediaApiError', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 499,
+          origin: 'fetcher',
+          kind: 'unknown',
+          code: 'UNKNOWN',
           error: 'Client closed connection',
-          details: {
-            req: {
-              url: 'https://protopedia.cc/api/prototypes/stream',
-              method: 'GET',
-            },
-            res: {
-              statusText: 'Client Closed Request',
-            },
-          },
+          details: {},
         });
       });
     });
 
     describe('5xx server errors', () => {
-      it('handles 500 Internal Server Error with fallback message', () => {
+      it('uses fallback message for 500 without Error instance', () => {
         const httpError = {
           status: 500,
         };
 
         const result = handleNotProtoPediaApiError(httpError);
 
-        expect(result.ok).toBe(false);
-        if (!result.ok) {
-          expect(result.status).toBe(500);
-          expect(result.error).toBe('Failed to fetch prototypes');
-        }
+        expect(result).toEqual({
+          ok: false,
+          origin: 'fetcher',
+          kind: 'unknown',
+          code: 'UNKNOWN',
+          error: 'Failed to fetch prototypes',
+          details: {},
+        });
       });
 
-      it('handles 500 Internal Server Error with no req fields', () => {
+      it('ignores statusText on 500 error', () => {
         const httpError = Object.assign(new Error('Server error'), {
           status: 500,
           statusText: 'Internal Server Error',
@@ -361,15 +379,17 @@ describe('handleNotProtoPediaApiError', () => {
 
         const result = handleNotProtoPediaApiError(httpError);
 
-        expect(result.ok).toBe(false);
-        if (!result.ok) {
-          expect(result.status).toBe(500);
-          expect(result.details?.req).toBeUndefined();
-          expect(result.details?.res).toBeDefined();
-        }
+        expect(result).toEqual({
+          ok: false,
+          origin: 'fetcher',
+          kind: 'unknown',
+          code: 'UNKNOWN',
+          error: 'Server error',
+          details: {},
+        });
       });
 
-      it('handles 503 Service Unavailable with partial metadata', () => {
+      it('extracts code from 503 error as network failure', () => {
         const httpError = Object.assign(
           new Error('Service temporarily unavailable'),
           {
@@ -382,7 +402,9 @@ describe('handleNotProtoPediaApiError', () => {
 
         expect(result).toEqual({
           ok: false,
-          status: 503,
+          origin: 'fetcher',
+          kind: 'network',
+          code: 'SERVICE_UNAVAILABLE',
           error: 'Service temporarily unavailable',
           details: {
             res: {
