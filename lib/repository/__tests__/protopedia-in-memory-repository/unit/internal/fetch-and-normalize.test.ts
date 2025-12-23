@@ -329,8 +329,9 @@ describe('ProtopediaInMemoryRepositoryImpl - fetchAndNormalize', () => {
         expect(result.origin).toBe('fetcher');
         expect(result.kind).toBe('unknown');
         expect(result.code).toBe('UNKNOWN');
-        // null is converted to string 'null' by some environments
-        expect(typeof result.error).toBe('string');
+        // Defensive catch converts null to the string 'null'
+        expect(result.error).toBe('null');
+        expect(result.details).toEqual({ req: { method: 'GET' } });
       }
     });
   });
