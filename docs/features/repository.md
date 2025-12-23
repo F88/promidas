@@ -60,7 +60,7 @@ const completed = all.filter((p) => p.status === 3);
 const result = await repository.refreshSnapshot();
 
 if (!result.ok) {
-    console.error('Failed to refresh snapshot:', result.error);
+    console.error('Failed to refresh snapshot:', result.message);
 }
 ```
 

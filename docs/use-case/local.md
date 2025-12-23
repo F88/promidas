@@ -60,7 +60,7 @@ const repo = createPromidasForLocal({
 // 起動時に全データ取得
 const setupResult = await repo.setupSnapshot({ limit: 10000 });
 if (!setupResult.ok) {
-    console.error('Failed to fetch data:', setupResult.error);
+    console.error('Failed to fetch data:', setupResult.message);
     process.exit(1);
 }
 
@@ -75,7 +75,7 @@ const allData = await repo.getAllFromSnapshot();
 ```typescript
 const result = await repo.setupSnapshot({ limit: 1000 });
 if (!result.ok) {
-    console.error('Failed to fetch data:', result.error);
+    console.error('Failed to fetch data:', result.message);
     process.exit(1); // スクリプト終了
 }
 ```
@@ -120,7 +120,7 @@ const repo = createPromidasForLocal({
 // データ取得
 const result = await repo.setupSnapshot({ limit: 1000 });
 if (!result.ok) {
-    console.error('Error:', result.error);
+    console.error('Error:', result.message);
     process.exit(1);
 }
 
@@ -544,7 +544,7 @@ const repo = new PromidasRepositoryBuilder()
 ```typescript
 const result = await repo.setupSnapshot({ limit: 1000 });
 if (!result.ok) {
-    console.error('Error:', result.error);
+    console.error('Error:', result.message);
     process.exit(1);
 }
 ```
