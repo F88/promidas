@@ -60,14 +60,15 @@ if (!result.ok) {
     }
 }
 ```
+
 1. Replace `result.error` with `result.message`
-**Migration Guide**:
+   **Migration Guide**:
 
 1. Replace `result.error` with `result.message` for all repository-layer failures
-2. Use `result.origin` to discriminate error types before accessing fields
-3. `result.code` is now always present (type-specific)
-4. `result.status` is only available for `FetcherSnapshotFailure` with HTTP errors
-5. Store errors now include `dataState` instead of embedding it in the message
+1. Use `result.origin` to discriminate error types before accessing fields
+1. `result.code` is now always present (type-specific)
+1. `result.status` is only available for `FetcherSnapshotFailure` with HTTP errors
+1. Store errors now include `dataState` instead of embedding it in the message
 
 ### Added
 
