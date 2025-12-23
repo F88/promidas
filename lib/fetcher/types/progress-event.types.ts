@@ -126,11 +126,69 @@ export type FetchProgressCompleteEvent = {
 };
 
 /**
+ * Event fired when an error occurs during stream reading.
+ *
+ * This event is emitted when an error is thrown while reading the
+ * response body stream, such as network errors, timeout errors,
+ * or authentication failures (e.g., 401 Unauthorized).
+ *
+ * @example
+ * ```typescript
+ * if (event.type === 'error') {
+ *   console.error(`Download failed: ${event.error}`);
+ *   console.log(`Received ${event.received} bytes before error`);
+ *   console.log(`Failed after ${event.totalTimeMs}ms`);
+ * }
+ * ```
+ */
+export type FetchProgressErrorEvent = {
+  type: 'error';
+  /**
+   * Error message describing what went wrong.
+   */
+  error: string;
+  /**
+   * Number of bytes successfully received before the error occurred.
+   */
+  received: number;
+  /**
+   * Estimated total size in bytes (from headers or URL parameters).
+   */
+  estimatedTotal: number;
+  /**
+   * Time spent on download attempt before error (milliseconds).
+   */
+  downloadTimeMs: number;
+  /**
+   * Total time from request start to error (milliseconds).
+   * Includes both preparation and download time.
+   */
+  totalTimeMs: number;
+};
+
+/**
  * Discriminated union of all fetch progress events.
  *
  * This type represents all possible events that can occur during
  * a fetch request lifecycle. TypeScript's discriminated union feature
  * enables type-safe event handling based on the `type` property.
+ *
+ * ## Event Lifecycle
+ *
+ * **Success flow:**
+ * 1. `request-start` → Request initiated
+ * 2. `response-received` → Headers received
+ * 3. `download-progress` (multiple, throttled) → Body streaming
+ * 4. `complete` → Download finished successfully
+ *
+ * **Error flow (stream reading failure):**
+ * 1. `request-start` → Request initiated
+ * 2. `response-received` → Headers received
+ * 3. `download-progress` (optional) → Partial data received
+ * 4. `error` → Stream reading failed (e.g., network error, auth failure)
+ *
+ * Note: `download-progress` events may occur before `error` if some chunks
+ * were successfully read before the failure.
  *
  * @example Basic usage
  * ```typescript
@@ -147,6 +205,9 @@ export type FetchProgressCompleteEvent = {
  *       break;
  *     case 'complete':
  *       console.log(`Complete (${event.totalTimeMs}ms)`);
+ *       break;
+ *     case 'error':
+ *       console.error(`Error: ${event.error}`);
  *       break;
  *   }
  * }
@@ -166,4 +227,5 @@ export type FetchProgressEvent =
   | FetchProgressRequestStartEvent
   | FetchProgressResponseReceivedEvent
   | FetchProgressDownloadProgressEvent
-  | FetchProgressCompleteEvent;
+  | FetchProgressCompleteEvent
+  | FetchProgressErrorEvent;

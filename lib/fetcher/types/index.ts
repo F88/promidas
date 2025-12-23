@@ -10,6 +10,7 @@ export type {
   FetchProgressResponseReceivedEvent,
   FetchProgressDownloadProgressEvent,
   FetchProgressCompleteEvent,
+  FetchProgressErrorEvent,
 } from './progress-event.types.js';
 
 export type {

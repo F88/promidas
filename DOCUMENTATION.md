@@ -26,7 +26,7 @@ Each module in this project follows a consistent three-document structure to ser
 
 Every module under `lib/` should have the following core documentation files:
 
-```
+```plaintext
 lib/xxx/
 ├── README.md           # Japanese overview (beginner-friendly)
 └── docs/

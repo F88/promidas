@@ -2,26 +2,10 @@ import type { Logger, LogLevel } from './logger.types.js';
 
 const LEVEL_ORDER: LogLevel[] = ['debug', 'info', 'warn', 'error', 'silent'];
 
-const hasConsole = typeof console !== 'undefined';
-
-const isMergeableObject = (obj: unknown): obj is Record<string, unknown> => {
-  if (typeof obj !== 'object' || obj === null) return false;
-  if (Array.isArray(obj)) return false;
-
-  const proto = Object.getPrototypeOf(obj);
-  return proto === null || proto === Object.prototype;
-};
-
-const createPayload = (
-  level: LogLevel,
-  meta: unknown,
-): Record<string, unknown> => {
-  return isMergeableObject(meta) ? { level, ...meta } : { level, meta };
-};
-
 const getConsoleFn = (
   method: 'debug' | 'info' | 'warn' | 'error',
 ): ((message?: unknown, ...optionalParams: unknown[]) => void) | undefined => {
+  const hasConsole = typeof console !== 'undefined';
   return hasConsole && typeof console[method] === 'function'
     ? console[method].bind(console)
     : undefined;
@@ -95,7 +79,7 @@ export class ConsoleLogger implements Logger {
    */
   constructor(level: LogLevel = 'info') {
     this.level = level;
-    this.hasConsole = hasConsole;
+    this.hasConsole = typeof console !== 'undefined';
 
     // Bind methods to preserve `this` when methods are passed around as callbacks.
     // Some upstream libraries call logger methods without a receiver.
@@ -143,7 +127,6 @@ export class ConsoleLogger implements Logger {
 
   private shouldLog(target: LogLevel): boolean {
     if (this.level === 'silent') return false;
-    if (target === 'silent') return false;
     return LEVEL_ORDER.indexOf(target) >= LEVEL_ORDER.indexOf(this.level);
   }
 }

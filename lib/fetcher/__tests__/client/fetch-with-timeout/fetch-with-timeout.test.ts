@@ -57,6 +57,68 @@ describe('createFetchWithTimeout', () => {
     ).rejects.toBe(abortError);
   });
 
+  it('handles signal already aborted before fetch call', async () => {
+    const baseFetch = vi.fn((_, init) => {
+      // When signal is already aborted, fetch should throw immediately
+      if (init?.signal?.aborted) {
+        const error = new DOMException('Aborted', 'AbortError');
+        return Promise.reject(error);
+      }
+      return Promise.resolve(new Response('ok'));
+    });
+
+    const controller = new AbortController();
+    const reason = new Error('Custom abort reason');
+    controller.abort(reason);
+
+    const fetchWithTimeout = createFetchWithTimeout({
+      timeoutMs: 10,
+      baseFetch,
+    });
+
+    await expect(
+      fetchWithTimeout('https://example.test', { signal: controller.signal }),
+    ).rejects.toThrow('Aborted');
+
+    // baseFetch should be called (it checks the aborted signal internally)
+    expect(baseFetch).toHaveBeenCalled();
+  });
+
+  it('throws timeout error when baseFetch rejects with exact timeout error object', async () => {
+    vi.useFakeTimers();
+
+    try {
+      const baseFetch = vi.fn((_, init) => {
+        return new Promise<Response>((_, reject) => {
+          init?.signal?.addEventListener(
+            'abort',
+            () => {
+              // Reject with the exact timeout error object (not AbortError wrapper)
+              reject(init.signal.reason);
+            },
+            { once: true },
+          );
+        });
+      });
+
+      const fetchWithTimeout = createFetchWithTimeout({
+        timeoutMs: 10,
+        baseFetch,
+      });
+
+      const promise = fetchWithTimeout('https://example.test', {});
+      const assertion =
+        expect(promise).rejects.toBeInstanceOf(PromidasTimeoutError);
+
+      await vi.advanceTimersByTimeAsync(20);
+      await Promise.resolve();
+
+      await assertion;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('returns response when fetch resolves before timeout', async () => {
     vi.useFakeTimers();
 

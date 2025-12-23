@@ -376,6 +376,32 @@ export function createFetchWithProgress(
             controller.enqueue(value);
           }
         } catch (error) {
+          const completionTime = Date.now();
+          const totalElapsedMs = completionTime - requestStartTime;
+          const bodyElapsedMs = completionTime - bodyStartTime;
+
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
+
+          if (enableProgressLog && shouldProgressLog(logger)) {
+            const message = `Download error: ${errorMessage} (${totalElapsedMs}ms)`;
+            if (typeof process !== 'undefined' && process.stderr?.write) {
+              process.stderr.write(`\r${message}\n`);
+            } else {
+              logger.error(message);
+            }
+          }
+
+          // Fire error event
+          onProgressEvent?.({
+            type: 'error',
+            error: errorMessage,
+            received,
+            estimatedTotal: total,
+            downloadTimeMs: bodyElapsedMs,
+            totalTimeMs: totalElapsedMs,
+          });
+
           controller.error(error);
         }
       },

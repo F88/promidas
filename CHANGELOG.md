@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Error Event for Stream Reading Failures**: New `error` event type in progress tracking system (#69)
+    - Emitted when stream reading fails after response is received (e.g., 401, network timeout)
+    - `FetchProgressErrorEvent` type with error message, received bytes, and timing information
+    - Ensures progress callbacks receive completion notification even on errors
+    - Exported `FetchProgressErrorEvent` type from `@f88/promidas/fetcher`
+
+### Fixed
+
+- **Progress Event Lifecycle**: Stream reading errors now properly emit error event (#69)
+    - Previously, errors during response body streaming would leave progress listeners waiting indefinitely
+    - Now emits `error` event with partial download information and timing data
+    - Fixes incomplete event lifecycle: `request-start` → `response-received` → `download-progress` (optional) → `error`
+
+### Documentation
+
+- **Split DESIGN.md**: Created separate `DESIGN_PROGRESS.md` for progress tracking design
+    - DESIGN.md reduced from 1401 to 680 lines for better maintainability
+    - Progress tracking architecture, event design, and implementation details moved to DESIGN_PROGRESS.md
+    - Follows same pattern as lib/repository (DESIGN_EVENTS.md)
+
 ## [0.14.0] - 2025-12-22
 
 ### Breaking Changes

@@ -94,4 +94,24 @@ describe('ConsoleLogger - Edge Cases', () => {
       expect(errorSpy).not.toHaveBeenCalled();
     });
   });
+
+  describe('missing console environment', () => {
+    it('handles environment without console object', () => {
+      // Temporarily remove console
+      const originalConsole = global.console;
+      // @ts-expect-error - Intentionally removing console
+      delete global.console;
+
+      try {
+        const logger = new ConsoleLogger('info');
+
+        // Should not throw and should not log
+        expect(() => {
+          logger.info('Test message');
+        }).not.toThrow();
+      } finally {
+        global.console = originalConsole;
+      }
+    });
+  });
 });

@@ -231,6 +231,11 @@ const client = new ProtopediaApiCustomClient({
                     `\nComplete: ${event.received} bytes in ${event.downloadTimeMs}ms (total: ${event.totalTimeMs}ms)`,
                 );
                 break;
+            case 'error':
+                console.error(
+                    `\nError: ${event.error} (received ${event.received} bytes before failure)`,
+                );
+                break;
         }
     },
 });
@@ -240,7 +245,7 @@ const result = await client.fetchPrototypes({ limit: 10000 });
 
 ### Progress Event Types
 
-The progress tracking system emits four event types during the fetch lifecycle:
+The progress tracking system emits five event types during the fetch lifecycle:
 
 ```typescript
 import type { FetchProgressEvent } from '@f88/promidas/fetcher';
@@ -250,17 +255,24 @@ type FetchProgressEvent =
     | FetchProgressRequestStartEvent // Fired when fetch() is called
     | FetchProgressResponseReceivedEvent // Fired when headers are received
     | FetchProgressDownloadProgressEvent // Fired during body download (throttled to 500ms)
-    | FetchProgressCompleteEvent; // Fired when download completes
+    | FetchProgressCompleteEvent // Fired when download completes successfully
+    | FetchProgressErrorEvent; // Fired when stream reading fails
 ```
 
 **Event Properties**:
 
-| Event Type          | Properties                                                    |
-| ------------------- | ------------------------------------------------------------- |
-| `request-start`     | `type: 'request-start'`                                       |
-| `response-received` | `type, prepareTimeMs, estimatedTotal, limit`                  |
-| `download-progress` | `type, received, total, percentage`                           |
-| `complete`          | `type, received, estimatedTotal, downloadTimeMs, totalTimeMs` |
+| Event Type          | Properties                                                           |
+| ------------------- | -------------------------------------------------------------------- |
+| `request-start`     | `type: 'request-start'`                                              |
+| `response-received` | `type, prepareTimeMs, estimatedTotal, limit`                         |
+| `download-progress` | `type, received, total, percentage`                                  |
+| `complete`          | `type, received, estimatedTotal, downloadTimeMs, totalTimeMs`        |
+| `error`             | `type, error, received, estimatedTotal, downloadTimeMs, totalTimeMs` |
+
+**Event Lifecycle**:
+
+- **Success flow**: `request-start` → `response-received` → `download-progress` (multiple) → `complete`
+- **Error flow**: `request-start` → `response-received` → `download-progress` (optional) → `error` (stream reading fails)
 
 ### Controlling stderr Output
 
