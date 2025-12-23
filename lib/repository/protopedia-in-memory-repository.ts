@@ -267,8 +267,8 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    *
    * **Responsibility Separation**:
    * - This method only fetches and normalizes data
-   * - The caller is responsible for storing the data via {@link #storeSnapshot}
-   * - The caller must update {@link #lastFetchParams} on successful storage
+   * - The caller is responsible for storing the data via {@link storeSnapshot}
+   * - The caller must update lastFetchParams on successful storage
    *
    * **Error Handling**:
    * - The API client never throws exceptions under normal operation
@@ -276,8 +276,9 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    * - All expected errors are returned as part of {@link FetchPrototypesResult}
    *
    * @see {@link ProtopediaApiCustomClient.fetchPrototypes} for API client implementation
+   * @internal
    */
-  async #fetchAndNormalize(
+  private async fetchAndNormalize(
     params: ListPrototypesParams,
   ): Promise<FetchPrototypesResult> {
     const mergedParams: ListPrototypesParams = {
@@ -312,15 +313,27 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
   }
 
   /**
-   * Store normalized prototypes in the snapshot.
+   * Store normalized prototypes in the in-memory snapshot.
    *
-   * Handles Store-specific errors (DataSizeExceededError, SizeEstimationError)
-   * and logs detailed information for debugging.
+   * This private method handles:
+   * - Storing data via the memory store
+   * - Converting store errors to {@link StoreSnapshotFailure}
+   * - Logging detailed error information with sanitized data
    *
-   * @param data - Normalized prototypes to store
-   * @returns Result indicating success or failure
+   * @param data - Array of normalized prototypes to store
+   * @returns {@link SnapshotOperationResult} - Success with stats or failure details
+   *
+   * @remarks
+   * **Error Handling**:
+   * - {@link DataSizeExceededError} → {@link StoreSnapshotFailure} with kind='storage_limit'
+   * - {@link SizeEstimationError} → {@link StoreSnapshotFailure} with kind='serialization'
+   * - Unexpected errors → {@link UnknownSnapshotFailure}
+   *
+   * All store errors include `dataState` to indicate whether existing data was preserved.
+   *
+   * @internal
    */
-  #storeSnapshot(data: NormalizedPrototype[]): SnapshotOperationResult {
+  private storeSnapshot(data: NormalizedPrototype[]): SnapshotOperationResult {
     try {
       this.#store.setAll(data);
 
@@ -336,22 +349,42 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
           maxDataSizeBytes: error.maxDataSizeBytes,
           dataState: error.dataState,
         });
+
+        return {
+          ok: false,
+          origin: 'store' as const,
+          kind: 'storage_limit' as const,
+          code: 'STORE_CAPACITY_EXCEEDED' as const,
+          message: `Data size ${error.dataSizeBytes} bytes exceeds maximum ${error.maxDataSizeBytes} bytes`,
+          dataState: error.dataState,
+        };
       } else if (error instanceof SizeEstimationError) {
         this.#logger.error('Snapshot storage failed: size estimation error', {
           cause: sanitizeDataForLogging(error.cause),
           dataState: error.dataState,
         });
+
+        return {
+          ok: false,
+          origin: 'store' as const,
+          kind: 'serialization' as const,
+          code: 'STORE_SERIALIZATION_FAILED' as const,
+          message: 'Failed to estimate data size during serialization',
+          dataState: error.dataState,
+          cause: sanitizeDataForLogging(error.cause),
+        };
       } else {
         // Unexpected store error
         this.#logger.error('Snapshot storage failed: unexpected error', {
           error: sanitizeDataForLogging(error),
         });
-      }
 
-      return {
-        ok: false,
-        error: error instanceof Error ? error.message : String(error),
-      };
+        return {
+          ok: false,
+          origin: 'unknown' as const,
+          message: error instanceof Error ? error.message : String(error),
+        };
+      }
     }
   }
 
@@ -384,13 +417,13 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    *
    * @remarks
    * **Operation Flow**:
-   * 1. Fetch and normalize prototypes via {@link #fetchAndNormalize}
+   * 1. Fetch and normalize prototypes via {@link fetchAndNormalize}
    * 2. Convert fetch failures to {@link SnapshotOperationFailure} via {@link convertFetchFailure}
-   * 3. Store the data in memory via {@link #storeSnapshot}
+   * 3. Store the data in memory via {@link storeSnapshot}
    * 4. Update {@link #lastFetchParams} only if `updateLastFetchParams` is `true` AND storage succeeds
    *
    * **Parameter Handling**:
-   * - Input `params` are merged with {@link DEFAULT_FETCH_PARAMS} by {@link #fetchAndNormalize}
+   * - Input `params` are merged with {@link DEFAULT_FETCH_PARAMS} by {@link fetchAndNormalize}
    * - Merged parameters are cached in {@link #lastFetchParams} only when:
    *   - `updateLastFetchParams` is `true` (typically {@link setupSnapshot})
    *   - Storage operation succeeds
@@ -422,7 +455,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
     return this.#executeWithCoalescing(async () => {
       // Fetch and normalize prototypes
       const fetchResult: FetchPrototypesResult =
-        await this.#fetchAndNormalize(params);
+        await this.fetchAndNormalize(params);
 
       // Return early on fetch failure, converting to SnapshotOperationFailure
       if (!fetchResult.ok) {
@@ -430,7 +463,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
       }
 
       // Store the fetched data
-      const storeResult: SnapshotOperationResult = this.#storeSnapshot(
+      const storeResult: SnapshotOperationResult = this.storeSnapshot(
         fetchResult.data,
       );
 

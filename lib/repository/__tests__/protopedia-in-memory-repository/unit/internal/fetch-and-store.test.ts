@@ -117,10 +117,14 @@ describe('ProtopediaInMemoryRepositoryImpl - fetchAndStore', () => {
     it('returns failure result when fetchPrototypes returns ok: false', async () => {
       fetchPrototypesMock.mockResolvedValueOnce({
         ok: false,
-        status: 500,
+        kind: 'http',
+        code: 'FETCH_HTTP_ERROR_500',
         error: 'Internal server error',
+        status: 500,
         details: {
-          res: { code: 'INTERNAL_ERROR' },
+          url: 'https://protopedia.example.com/api/prototypes',
+          method: 'GET',
+          requestHeaders: {},
         },
       });
 
@@ -134,9 +138,11 @@ describe('ProtopediaInMemoryRepositoryImpl - fetchAndStore', () => {
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.error).toBe('Internal server error');
+        expect(result.origin).toBe('fetcher');
+        expect(result.kind).toBe('http');
+        expect(result.code).toBe('FETCH_HTTP_ERROR_500');
+        expect(result.message).toBe('Internal server error');
         expect(result.status).toBe(500);
-        expect(result.code).toBe('INTERNAL_ERROR');
       }
 
       const stats = repo.getStats();
@@ -224,7 +230,8 @@ describe('ProtopediaInMemoryRepositoryImpl - fetchAndStore', () => {
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.error).toBe('API client threw');
+        expect(result.origin).toBe('fetcher');
+        expect(result.message).toBe('API client threw');
       }
     });
 
@@ -248,7 +255,8 @@ describe('ProtopediaInMemoryRepositoryImpl - fetchAndStore', () => {
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.error).toBe('Store threw');
+        expect(result.origin).toBe('unknown');
+        expect(result.message).toBe('Store threw');
       }
     });
   });
@@ -379,7 +387,11 @@ describe('ProtopediaInMemoryRepositoryImpl - fetchAndStore', () => {
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.error).toContain('exceeds maximum limit');
+        expect(result.origin).toBe('store');
+        expect(result.kind).toBe('storage_limit');
+        expect(result.code).toBe('STORE_CAPACITY_EXCEEDED');
+        expect(result.dataState).toBe('UNCHANGED');
+        expect(result.message).toContain('exceeds maximum');
       }
     });
 

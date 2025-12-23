@@ -269,9 +269,9 @@ describe('ProtopediaInMemoryRepositoryImpl - concurrency (coalescing)', () => {
       expect(r2.ok).toBe(false);
       expect(r3.ok).toBe(false);
       if (!r1.ok && !r2.ok && !r3.ok) {
-        expect(r1.error).toBe('Network failure');
-        expect(r2.error).toBe('Network failure');
-        expect(r3.error).toBe('Network failure');
+        expect(r1.message).toBe('Network failure');
+        expect(r2.message).toBe('Network failure');
+        expect(r3.message).toBe('Network failure');
       }
     });
 
@@ -293,9 +293,15 @@ describe('ProtopediaInMemoryRepositoryImpl - concurrency (coalescing)', () => {
 
       deferred.resolve({
         ok: false,
-        status: 503,
+        kind: 'http',
+        code: 'FETCH_HTTP_ERROR_503',
         error: 'Service unavailable',
-        details: { res: { code: 'SERVICE_UNAVAILABLE' } },
+        status: 503,
+        details: {
+          url: 'https://protopedia.example.com/api/prototypes',
+          method: 'GET',
+          requestHeaders: {},
+        },
       });
 
       const [r1, r2, r3] = await pending;
@@ -303,9 +309,13 @@ describe('ProtopediaInMemoryRepositoryImpl - concurrency (coalescing)', () => {
       expect(r2.ok).toBe(false);
       expect(r3.ok).toBe(false);
       if (!r1.ok && !r2.ok && !r3.ok) {
-        expect(r1.status).toBe(503);
-        expect(r2.error).toBe('Service unavailable');
-        expect(r3.code).toBe('SERVICE_UNAVAILABLE');
+        if (r1.origin === 'fetcher') {
+          expect(r1.status).toBe(503);
+        }
+        expect(r2.message).toBe('Service unavailable');
+        if (r3.origin === 'fetcher') {
+          expect(r3.code).toBe('FETCH_HTTP_ERROR_503');
+        }
       }
     });
 
@@ -359,9 +369,9 @@ describe('ProtopediaInMemoryRepositoryImpl - concurrency (coalescing)', () => {
       const results = await pending;
       expect(results.every((r) => r.ok === false)).toBe(true);
       if (!results[0].ok && !results[1].ok && !results[2].ok) {
-        expect(results[0].error).toBe('Invalid response format');
-        expect(results[1].error).toBe('Invalid response format');
-        expect(results[2].error).toBe('Invalid response format');
+        expect(results[0].message).toBe('Invalid response format');
+        expect(results[1].message).toBe('Invalid response format');
+        expect(results[2].message).toBe('Invalid response format');
       }
     });
   });

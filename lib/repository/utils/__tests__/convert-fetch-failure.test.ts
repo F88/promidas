@@ -32,7 +32,12 @@ describe('convertFetchFailure', () => {
       const result = convertFetchFailure(fetchFailure);
 
       expect(result).toStrictEqual({
-        error: 'Network error',
+        ok: false,
+        origin: 'fetcher',
+        kind: 'unknown',
+        code: 'UNKNOWN',
+        message: 'Network error',
+        details: {},
       });
     });
 
@@ -102,8 +107,13 @@ describe('convertFetchFailure', () => {
       const result = convertFetchFailure(fetchFailure);
 
       expect(result).toStrictEqual({
-        error: 'Not Found',
+        ok: false,
+        origin: 'fetcher',
+        kind: 'unknown',
+        code: 'UNKNOWN',
+        message: 'Not Found',
         status: 404,
+        details: {},
       });
     });
 
@@ -141,10 +151,13 @@ describe('convertFetchFailure', () => {
     });
   });
 
-  describe('Error code handling', () => {
-    it('should include code when present in details.res', () => {
+  describe('Kind and code handling', () => {
+    it('should preserve kind and code from input', () => {
       const fetchFailure = makeFetchFailure({
+        kind: 'http',
+        code: 'CLIENT_NOT_FOUND',
         error: 'Resource not found',
+        status: 404,
         details: {
           res: {
             code: 'RESOURCE_NOT_FOUND',
@@ -154,30 +167,63 @@ describe('convertFetchFailure', () => {
 
       const result = convertFetchFailure(fetchFailure);
 
-      expect(result).toStrictEqual({
-        error: 'Resource not found',
-        code: 'RESOURCE_NOT_FOUND',
-      });
+      expect(result.kind).toBe('http');
+      expect(result.code).toBe('CLIENT_NOT_FOUND');
+    });
+
+    it('should handle various kinds', () => {
+      const testCases: Array<FetchPrototypesFailure['kind']> = [
+        'http',
+        'cors',
+        'network',
+        'timeout',
+        'abort',
+        'unknown',
+      ];
+
+      for (const kind of testCases) {
+        const fetchFailure = makeFetchFailure({
+          kind,
+          error: 'Error',
+          details: {},
+        });
+
+        const result = convertFetchFailure(fetchFailure);
+
+        expect(result.kind).toBe(kind);
+      }
     });
 
     it('should handle various error codes', () => {
       const testCases = [
-        'UNAUTHORIZED',
-        'FORBIDDEN',
-        'RESOURCE_NOT_FOUND',
-        'INTERNAL_ERROR',
+        'CLIENT_UNAUTHORIZED',
+        'CLIENT_FORBIDDEN',
+        'CLIENT_NOT_FOUND',
+        'CLIENT_RATE_LIMITED',
+        'CLIENT_BAD_REQUEST',
+        'CLIENT_METHOD_NOT_ALLOWED',
+        'CLIENT_TIMEOUT',
+        'CLIENT_ERROR',
+        'SERVER_INTERNAL_ERROR',
+        'SERVER_BAD_GATEWAY',
+        'SERVER_GATEWAY_TIMEOUT',
+        'SERVER_SERVICE_UNAVAILABLE',
+        'SERVER_ERROR',
+        'NETWORK_ERROR',
         'ECONNREFUSED',
+        'ENOTFOUND',
         'ETIMEDOUT',
+        'TIMEOUT',
+        'ABORTED',
+        'CORS_BLOCKED',
+        'UNKNOWN',
       ];
 
       for (const code of testCases) {
         const fetchFailure = makeFetchFailure({
+          code,
           error: 'Error',
-          details: {
-            res: {
-              code,
-            },
-          },
+          details: {},
         });
 
         const result = convertFetchFailure(fetchFailure);
@@ -185,42 +231,13 @@ describe('convertFetchFailure', () => {
         expect(result.code).toBe(code);
       }
     });
-
-    it('should omit code when details.res is undefined', () => {
-      const fetchFailure = makeFetchFailure({
-        error: 'Request failed',
-        details: {
-          req: {
-            method: 'GET',
-            url: 'https://example.com',
-          },
-        },
-      });
-
-      const result = convertFetchFailure(fetchFailure);
-
-      expect(result).not.toHaveProperty('code');
-    });
-
-    it('should omit code when details.res.code is undefined', () => {
-      const fetchFailure = makeFetchFailure({
-        error: 'Request failed',
-        details: {
-          res: {
-            statusText: 'Not Found',
-          },
-        },
-      });
-
-      const result = convertFetchFailure(fetchFailure);
-
-      expect(result).not.toHaveProperty('code');
-    });
   });
 
   describe('Combined properties', () => {
-    it('should include both status and code when both are present', () => {
+    it('should include all properties when present', () => {
       const fetchFailure = makeFetchFailure({
+        kind: 'http',
+        code: 'CLIENT_UNAUTHORIZED',
         error: 'Unauthorized',
         status: 401,
         details: {
@@ -234,14 +251,25 @@ describe('convertFetchFailure', () => {
       const result = convertFetchFailure(fetchFailure);
 
       expect(result).toStrictEqual({
-        error: 'Unauthorized',
+        ok: false,
+        origin: 'fetcher',
+        kind: 'http',
+        code: 'CLIENT_UNAUTHORIZED',
+        message: 'Unauthorized',
         status: 401,
-        code: 'UNAUTHORIZED',
+        details: {
+          res: {
+            code: 'UNAUTHORIZED',
+            statusText: 'Unauthorized',
+          },
+        },
       });
     });
 
-    it('should include all available properties', () => {
+    it('should include all available properties with request details', () => {
       const fetchFailure = makeFetchFailure({
+        kind: 'http',
+        code: 'SERVER_INTERNAL_ERROR',
         error: 'Server error',
         status: 500,
         details: {
@@ -259,15 +287,28 @@ describe('convertFetchFailure', () => {
       const result = convertFetchFailure(fetchFailure);
 
       expect(result).toStrictEqual({
-        error: 'Server error',
+        ok: false,
+        origin: 'fetcher',
+        kind: 'http',
+        code: 'SERVER_INTERNAL_ERROR',
+        message: 'Server error',
         status: 500,
-        code: 'INTERNAL_ERROR',
+        details: {
+          req: {
+            method: 'POST',
+            url: 'https://example.com/api',
+          },
+          res: {
+            code: 'INTERNAL_ERROR',
+            statusText: 'Internal Server Error',
+          },
+        },
       });
     });
   });
 
   describe('Details object handling', () => {
-    it('should omit details object from the result', () => {
+    it('should preserve details object in the result', () => {
       const fetchFailure = makeFetchFailure({
         error: 'Server error',
         status: 500,
@@ -285,10 +326,19 @@ describe('convertFetchFailure', () => {
 
       const result = convertFetchFailure(fetchFailure);
 
-      expect(result).not.toHaveProperty('details');
+      expect(result.details).toStrictEqual({
+        req: {
+          method: 'POST',
+          url: 'https://example.com/api',
+        },
+        res: {
+          statusText: 'Internal Server Error',
+          code: 'INTERNAL_ERROR',
+        },
+      });
     });
 
-    it('should handle empty details object', () => {
+    it('should preserve empty details object', () => {
       const fetchFailure = makeFetchFailure({
         error: 'Connection failed',
         details: {},
@@ -297,12 +347,16 @@ describe('convertFetchFailure', () => {
       const result = convertFetchFailure(fetchFailure);
 
       expect(result).toStrictEqual({
-        error: 'Connection failed',
+        ok: false,
+        origin: 'fetcher',
+        kind: 'unknown',
+        code: 'UNKNOWN',
+        message: 'Connection failed',
+        details: {},
       });
-      expect(result).not.toHaveProperty('details');
     });
 
-    it('should omit details.req information', () => {
+    it('should preserve details.req information', () => {
       const fetchFailure = makeFetchFailure({
         error: 'Request failed',
         details: {
@@ -315,11 +369,15 @@ describe('convertFetchFailure', () => {
 
       const result = convertFetchFailure(fetchFailure);
 
-      expect(result).not.toHaveProperty('details');
-      expect(result).not.toHaveProperty('req');
+      expect(result.details).toStrictEqual({
+        req: {
+          method: 'GET',
+          url: 'https://example.com',
+        },
+      });
     });
 
-    it('should omit details.res.statusText', () => {
+    it('should preserve details.res.statusText', () => {
       const fetchFailure = makeFetchFailure({
         error: 'Not Found',
         status: 404,
@@ -334,11 +392,19 @@ describe('convertFetchFailure', () => {
       const result = convertFetchFailure(fetchFailure);
 
       expect(result).toStrictEqual({
-        error: 'Not Found',
+        ok: false,
+        origin: 'fetcher',
+        kind: 'unknown',
+        code: 'UNKNOWN',
+        message: 'Not Found',
         status: 404,
-        code: 'RESOURCE_NOT_FOUND',
+        details: {
+          res: {
+            statusText: 'Not Found',
+            code: 'RESOURCE_NOT_FOUND',
+          },
+        },
       });
-      expect(result).not.toHaveProperty('statusText');
     });
   });
 
@@ -363,10 +429,10 @@ describe('convertFetchFailure', () => {
 
       const result = convertFetchFailure(fetchFailure);
 
-      expect(result.error).toBe('');
+      expect(result.message).toBe('');
     });
 
-    it('should handle empty string as code', () => {
+    it('should preserve details.res.code even when empty', () => {
       const fetchFailure = makeFetchFailure({
         error: 'Error',
         details: {
@@ -378,10 +444,10 @@ describe('convertFetchFailure', () => {
 
       const result = convertFetchFailure(fetchFailure);
 
-      // Empty string is still a defined value and should be preserved
-      expect(result).toStrictEqual({
-        error: 'Error',
-        code: '',
+      expect(result.details).toStrictEqual({
+        res: {
+          code: '',
+        },
       });
     });
 
@@ -394,8 +460,8 @@ describe('convertFetchFailure', () => {
 
       const result = convertFetchFailure(fetchFailure);
 
-      expect(result.error).toBe(longError);
-      expect(result.error.length).toBe(1000);
+      expect(result.message).toBe(longError);
+      expect(result.message.length).toBe(1000);
     });
 
     it('should handle error messages with special characters', () => {
@@ -407,7 +473,7 @@ describe('convertFetchFailure', () => {
 
       const result = convertFetchFailure(fetchFailure);
 
-      expect(result.error).toBe(
+      expect(result.message).toBe(
         'Error: Connection failed\nCause: ECONNREFUSED\t(127.0.0.1:8080)',
       );
     });
@@ -420,7 +486,7 @@ describe('convertFetchFailure', () => {
 
       const result = convertFetchFailure(fetchFailure);
 
-      expect(result.error).toBe('エラーが発生しました: 接続失敗 🚫');
+      expect(result.message).toBe('エラーが発生しました: 接続失敗 🚫');
     });
 
     it('should handle negative status codes', () => {
@@ -449,8 +515,10 @@ describe('convertFetchFailure', () => {
   });
 
   describe('Type safety', () => {
-    it('should return SnapshotOperationFailure type', () => {
+    it('should return FetcherSnapshotFailure type', () => {
       const fetchFailure = makeFetchFailure({
+        kind: 'http',
+        code: 'SERVER_INTERNAL_ERROR',
         error: 'Error',
         status: 500,
         details: {
@@ -462,16 +530,20 @@ describe('convertFetchFailure', () => {
 
       const result = convertFetchFailure(fetchFailure);
 
-      // Type assertions to verify the return type matches SnapshotOperationFailure
+      // Type assertions to verify the return type matches FetcherSnapshotFailure
       expect(result).toHaveProperty('ok');
-      expect(result).toHaveProperty('error');
+      expect(result).toHaveProperty('message');
+      expect(result).toHaveProperty('origin');
+      expect(result).toHaveProperty('kind');
+      expect(result).toHaveProperty('code');
+      expect(result).toHaveProperty('details');
       expect(result.ok).toBe(false);
-      expect(typeof result.error).toBe('string');
+      expect(result.origin).toBe('fetcher');
+      expect(typeof result.message).toBe('string');
+      expect(typeof result.kind).toBe('string');
+      expect(typeof result.code).toBe('string');
       if ('status' in result) {
         expect(typeof result.status).toBe('number');
-      }
-      if ('code' in result) {
-        expect(typeof result.code).toBe('string');
       }
     });
   });
@@ -479,6 +551,8 @@ describe('convertFetchFailure', () => {
   describe('Real-world scenarios', () => {
     it('should handle 404 Not Found API error', () => {
       const fetchFailure = makeFetchFailure({
+        kind: 'http',
+        code: 'CLIENT_NOT_FOUND',
         error: 'Prototype not found',
         status: 404,
         details: {
@@ -496,14 +570,29 @@ describe('convertFetchFailure', () => {
       const result = convertFetchFailure(fetchFailure);
 
       expect(result).toStrictEqual({
-        error: 'Prototype not found',
+        ok: false,
+        origin: 'fetcher',
+        kind: 'http',
+        code: 'CLIENT_NOT_FOUND',
+        message: 'Prototype not found',
         status: 404,
-        code: 'RESOURCE_NOT_FOUND',
+        details: {
+          req: {
+            method: 'GET',
+            url: 'https://protopedia.cc/api/prototypes/123',
+          },
+          res: {
+            statusText: 'Not Found',
+            code: 'RESOURCE_NOT_FOUND',
+          },
+        },
       });
     });
 
     it('should handle network timeout error', () => {
       const fetchFailure = makeFetchFailure({
+        kind: 'timeout',
+        code: 'TIMEOUT',
         error: 'Request timeout',
         details: {
           res: {
@@ -515,13 +604,23 @@ describe('convertFetchFailure', () => {
       const result = convertFetchFailure(fetchFailure);
 
       expect(result).toStrictEqual({
-        error: 'Request timeout',
-        code: 'ETIMEDOUT',
+        ok: false,
+        origin: 'fetcher',
+        kind: 'timeout',
+        code: 'TIMEOUT',
+        message: 'Request timeout',
+        details: {
+          res: {
+            code: 'ETIMEDOUT',
+          },
+        },
       });
     });
 
     it('should handle connection refused error', () => {
       const fetchFailure = makeFetchFailure({
+        kind: 'network',
+        code: 'ECONNREFUSED',
         error: 'connect ECONNREFUSED',
         details: {
           res: {
@@ -533,13 +632,23 @@ describe('convertFetchFailure', () => {
       const result = convertFetchFailure(fetchFailure);
 
       expect(result).toStrictEqual({
-        error: 'connect ECONNREFUSED',
+        ok: false,
+        origin: 'fetcher',
+        kind: 'network',
         code: 'ECONNREFUSED',
+        message: 'connect ECONNREFUSED',
+        details: {
+          res: {
+            code: 'ECONNREFUSED',
+          },
+        },
       });
     });
 
     it('should handle 401 Unauthorized error', () => {
       const fetchFailure = makeFetchFailure({
+        kind: 'http',
+        code: 'CLIENT_UNAUTHORIZED',
         error: 'Authentication required',
         status: 401,
         details: {
@@ -557,14 +666,29 @@ describe('convertFetchFailure', () => {
       const result = convertFetchFailure(fetchFailure);
 
       expect(result).toStrictEqual({
-        error: 'Authentication required',
+        ok: false,
+        origin: 'fetcher',
+        kind: 'http',
+        code: 'CLIENT_UNAUTHORIZED',
+        message: 'Authentication required',
         status: 401,
-        code: 'UNAUTHORIZED',
+        details: {
+          req: {
+            method: 'GET',
+            url: 'https://protopedia.cc/api/prototypes',
+          },
+          res: {
+            statusText: 'Unauthorized',
+            code: 'UNAUTHORIZED',
+          },
+        },
       });
     });
 
     it('should handle 500 Internal Server Error', () => {
       const fetchFailure = makeFetchFailure({
+        kind: 'http',
+        code: 'SERVER_INTERNAL_ERROR',
         error: 'Internal server error',
         status: 500,
         details: {
@@ -582,14 +706,29 @@ describe('convertFetchFailure', () => {
       const result = convertFetchFailure(fetchFailure);
 
       expect(result).toStrictEqual({
-        error: 'Internal server error',
+        ok: false,
+        origin: 'fetcher',
+        kind: 'http',
+        code: 'SERVER_INTERNAL_ERROR',
+        message: 'Internal server error',
         status: 500,
-        code: 'INTERNAL_ERROR',
+        details: {
+          req: {
+            method: 'GET',
+            url: 'https://protopedia.cc/api/prototypes',
+          },
+          res: {
+            statusText: 'Internal Server Error',
+            code: 'INTERNAL_ERROR',
+          },
+        },
       });
     });
 
     it('should handle DNS resolution failure', () => {
       const fetchFailure = makeFetchFailure({
+        kind: 'network',
+        code: 'ENOTFOUND',
         error: 'getaddrinfo ENOTFOUND example.com',
         details: {
           res: {
@@ -601,13 +740,23 @@ describe('convertFetchFailure', () => {
       const result = convertFetchFailure(fetchFailure);
 
       expect(result).toStrictEqual({
-        error: 'getaddrinfo ENOTFOUND example.com',
+        ok: false,
+        origin: 'fetcher',
+        kind: 'network',
         code: 'ENOTFOUND',
+        message: 'getaddrinfo ENOTFOUND example.com',
+        details: {
+          res: {
+            code: 'ENOTFOUND',
+          },
+        },
       });
     });
 
-    it('should handle browser-like fetch network errors without structured code', () => {
+    it('should handle browser-like fetch network errors', () => {
       const fetchFailure = makeFetchFailure({
+        kind: 'network',
+        code: 'NETWORK_ERROR',
         error: 'Failed to fetch',
         details: {
           res: {
@@ -619,13 +768,23 @@ describe('convertFetchFailure', () => {
       const result = convertFetchFailure(fetchFailure);
 
       expect(result).toStrictEqual({
-        error: 'Failed to fetch',
+        ok: false,
+        origin: 'fetcher',
+        kind: 'network',
         code: 'NETWORK_ERROR',
+        message: 'Failed to fetch',
+        details: {
+          res: {
+            code: 'NETWORK_ERROR',
+          },
+        },
       });
     });
 
-    it('should handle AbortError without status or code', () => {
+    it('should handle AbortError', () => {
       const fetchFailure = makeFetchFailure({
+        kind: 'abort',
+        code: 'ABORTED',
         error: 'The operation was aborted',
         details: {},
       });
@@ -633,7 +792,32 @@ describe('convertFetchFailure', () => {
       const result = convertFetchFailure(fetchFailure);
 
       expect(result).toStrictEqual({
-        error: 'The operation was aborted',
+        ok: false,
+        origin: 'fetcher',
+        kind: 'abort',
+        code: 'ABORTED',
+        message: 'The operation was aborted',
+        details: {},
+      });
+    });
+
+    it('should handle CORS blocked errors', () => {
+      const fetchFailure = makeFetchFailure({
+        kind: 'cors',
+        code: 'CORS_BLOCKED',
+        error: 'CORS policy blocked',
+        details: {},
+      });
+
+      const result = convertFetchFailure(fetchFailure);
+
+      expect(result).toStrictEqual({
+        ok: false,
+        origin: 'fetcher',
+        kind: 'cors',
+        code: 'CORS_BLOCKED',
+        message: 'CORS policy blocked',
+        details: {},
       });
     });
   });

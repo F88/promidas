@@ -1,38 +1,49 @@
 import type { FetchPrototypesFailure } from '../../fetcher/types/result.types.js';
-import type { SnapshotOperationFailure } from '../types/snapshot-operation.types.js';
+import type { FetcherSnapshotFailure } from '../types/snapshot-operation.types.js';
 
 /**
- * Convert FetchPrototypesFailure to SnapshotOperationFailure.
+ * Convert FetchPrototypesFailure to FetcherSnapshotFailure.
  *
- * Extracts relevant error information (error message, status, code)
- * while omitting the details object that is specific to fetch operations.
+ * Preserves all error information (origin, kind, code, message, status, details)
+ * from the fetcher layer for use in the repository layer.
  *
  * @param failure - Fetch failure result to convert
- * @returns Snapshot operation failure with extracted error information
+ * @returns Fetcher snapshot failure with all error information
  *
  * @example
  * ```typescript
  * const fetchFailure: FetchPrototypesFailure = {
  *   ok: false,
+ *   origin: 'fetcher',
+ *   kind: 'http',
  *   error: 'Not Found',
+ *   code: 'CLIENT_NOT_FOUND',
  *   status: 404,
  *   details: { res: { code: 'RESOURCE_NOT_FOUND' } }
  * };
  *
  * const snapshotFailure = convertFetchFailure(fetchFailure);
- * // { ok: false, error: 'Not Found', status: 404, code: 'RESOURCE_NOT_FOUND' }
+ * // {
+ * //   ok: false,
+ * //   origin: 'fetcher',
+ * //   kind: 'http',
+ * //   code: 'CLIENT_NOT_FOUND',
+ * //   message: 'Not Found',
+ * //   status: 404,
+ * //   details: { res: { code: 'RESOURCE_NOT_FOUND' } }
+ * // }
  * ```
  */
 export function convertFetchFailure(
   failure: FetchPrototypesFailure,
-): SnapshotOperationFailure {
-  const ret = {
+): FetcherSnapshotFailure {
+  return {
     ok: false,
-    error: failure.error,
+    origin: 'fetcher',
+    kind: failure.kind,
+    code: failure.code,
+    message: failure.error,
     ...(failure.status !== undefined && { status: failure.status }),
-    ...(failure.details?.res?.code !== undefined && {
-      code: failure.details.res.code,
-    }),
-  } satisfies SnapshotOperationFailure;
-  return ret;
+    details: failure.details,
+  };
 }
