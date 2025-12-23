@@ -126,6 +126,47 @@ export type FetchProgressCompleteEvent = {
 };
 
 /**
+ * Event fired when an error occurs during stream reading.
+ *
+ * This event is emitted when an error is thrown while reading the
+ * response body stream, such as network errors, timeout errors,
+ * or authentication failures (e.g., 401 Unauthorized).
+ *
+ * @example
+ * ```typescript
+ * if (event.type === 'error') {
+ *   console.error(`Download failed: ${event.error}`);
+ *   console.log(`Received ${event.received} bytes before error`);
+ *   console.log(`Failed after ${event.totalTimeMs}ms`);
+ * }
+ * ```
+ */
+export type FetchProgressErrorEvent = {
+  type: 'error';
+  /**
+   * Error message describing what went wrong.
+   */
+  error: string;
+  /**
+   * Number of bytes successfully received before the error occurred.
+   */
+  received: number;
+  /**
+   * Estimated total size in bytes (from headers or URL parameters).
+   */
+  estimatedTotal: number;
+  /**
+   * Time spent on download attempt before error (milliseconds).
+   */
+  downloadTimeMs: number;
+  /**
+   * Total time from request start to error (milliseconds).
+   * Includes both preparation and download time.
+   */
+  totalTimeMs: number;
+};
+
+/**
  * Discriminated union of all fetch progress events.
  *
  * This type represents all possible events that can occur during
@@ -148,6 +189,9 @@ export type FetchProgressCompleteEvent = {
  *     case 'complete':
  *       console.log(`Complete (${event.totalTimeMs}ms)`);
  *       break;
+ *     case 'error':
+ *       console.error(`Error: ${event.error}`);
+ *       break;
  *   }
  * }
  * ```
@@ -166,4 +210,5 @@ export type FetchProgressEvent =
   | FetchProgressRequestStartEvent
   | FetchProgressResponseReceivedEvent
   | FetchProgressDownloadProgressEvent
-  | FetchProgressCompleteEvent;
+  | FetchProgressCompleteEvent
+  | FetchProgressErrorEvent;

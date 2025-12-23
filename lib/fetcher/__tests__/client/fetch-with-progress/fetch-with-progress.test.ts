@@ -657,6 +657,55 @@ describe('createFetchWithProgress', () => {
       await expect(response.text()).rejects.toThrow('Stream read error');
     });
 
+    it('emits error event when stream reading fails', async () => {
+      const logger = createConsoleLogger();
+      const events: Array<{ type: string }> = [];
+      const onProgressEvent = vi.fn((event) => {
+        events.push(event);
+      });
+
+      const errorStream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(new Uint8Array([1, 2, 3]));
+          controller.error(new Error('Stream read error'));
+        },
+      });
+
+      const mockResponse = new Response(errorStream, {
+        status: 200,
+        headers: new Headers({
+          'content-type': 'application/json',
+          'content-length': '100',
+        }),
+      });
+
+      global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
+      const customFetch = createFetchWithProgress({
+        logger,
+        enableProgressLog: false,
+        onProgressEvent,
+      });
+
+      const response = await customFetch(
+        'https://api.example.com/data?limit=100',
+      );
+
+      await expect(response.text()).rejects.toThrow('Stream read error');
+
+      // Verify error event was emitted
+      const errorEvents = events.filter((e) => e.type === 'error');
+      expect(errorEvents).toHaveLength(1);
+      expect(errorEvents[0]).toMatchObject({
+        type: 'error',
+        error: 'Stream read error',
+      });
+      expect(errorEvents[0]).toHaveProperty('received');
+      expect(errorEvents[0]).toHaveProperty('totalTimeMs');
+      expect(errorEvents[0]).toHaveProperty('downloadTimeMs');
+      expect(errorEvents[0]).toHaveProperty('estimatedTotal', 100);
+    });
+
     it('uses logger.info fallback when process.stderr is not available', async () => {
       const logger = createConsoleLogger();
 
