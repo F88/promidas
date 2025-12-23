@@ -435,6 +435,8 @@ function estimateDownloadSize(limit: number): number {
 4. 'response-received' event fired
    ↓
 5. Response body streaming starts
+   ├─ 'download-progress' events fired for each chunk (optional)
+   └─ (throttled to max once per 500ms)
    ↓
 6. Error thrown during stream reading (e.g., network error, authentication error)
    ↓

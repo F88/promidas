@@ -272,7 +272,7 @@ type FetchProgressEvent =
 **Event Lifecycle**:
 
 - **Success flow**: `request-start` → `response-received` → `download-progress` (multiple) → `complete`
-- **Error flow**: `request-start` → `response-received` → `error` (stream reading fails)
+- **Error flow**: `request-start` → `response-received` → `download-progress` (optional) → `error` (stream reading fails)
 
 ### Controlling stderr Output
 

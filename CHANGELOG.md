@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Progress Event Lifecycle**: Stream reading errors now properly emit error event (#69)
     - Previously, errors during response body streaming would leave progress listeners waiting indefinitely
     - Now emits `error` event with partial download information and timing data
-    - Fixes incomplete event lifecycle: `request-start` → `response-received` → `error`
+    - Fixes incomplete event lifecycle: `request-start` → `response-received` → `download-progress` (optional) → `error`
 
 ### Documentation
 
