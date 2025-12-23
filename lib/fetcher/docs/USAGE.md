@@ -261,12 +261,12 @@ type FetchProgressEvent =
 
 **Event Properties**:
 
-| Event Type          | Properties                                                    |
-| ------------------- | ------------------------------------------------------------- |
-| `request-start`     | `type: 'request-start'`                                       |
-| `response-received` | `type, prepareTimeMs, estimatedTotal, limit`                  |
-| `download-progress` | `type, received, total, percentage`                           |
-| `complete`          | `type, received, estimatedTotal, downloadTimeMs, totalTimeMs` |
+| Event Type          | Properties                                                           |
+| ------------------- | -------------------------------------------------------------------- |
+| `request-start`     | `type: 'request-start'`                                              |
+| `response-received` | `type, prepareTimeMs, estimatedTotal, limit`                         |
+| `download-progress` | `type, received, total, percentage`                                  |
+| `complete`          | `type, received, estimatedTotal, downloadTimeMs, totalTimeMs`        |
 | `error`             | `type, error, received, estimatedTotal, downloadTimeMs, totalTimeMs` |
 
 **Event Lifecycle**:

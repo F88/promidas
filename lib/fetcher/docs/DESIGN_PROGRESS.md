@@ -158,56 +158,56 @@ This caused progress callbacks to wait indefinitely when errors occurred during 
 
 1. **Option 1: Separate error event type** (SELECTED)
 
-   ```typescript
-   type FetchProgressErrorEvent = {
-     type: 'error';
-     error: string;  // Error message
-     received: number;
-     estimatedTotal: number;
-     downloadTimeMs: number;
-     totalTimeMs: number;
-   };
-   ```
+    ```typescript
+    type FetchProgressErrorEvent = {
+        type: 'error';
+        error: string; // Error message
+        received: number;
+        estimatedTotal: number;
+        downloadTimeMs: number;
+        totalTimeMs: number;
+    };
+    ```
 
 2. **Option 2: Reuse complete event with optional error field**
 
-   ```typescript
-   type FetchProgressCompleteEvent = {
-     type: 'complete';
-     error?: string;  // Optional error message
-     received: number;
-     estimatedTotal: number;
-     downloadTimeMs: number;
-     totalTimeMs: number;
-   };
-   ```
+    ```typescript
+    type FetchProgressCompleteEvent = {
+        type: 'complete';
+        error?: string; // Optional error message
+        received: number;
+        estimatedTotal: number;
+        downloadTimeMs: number;
+        totalTimeMs: number;
+    };
+    ```
 
 **Rationale for Option 1**:
 
 - **Type Safety**: Discriminated union enables compile-time guarantees
 
-  ```typescript
-  if (event.type === 'error') {
-    // TypeScript knows event.error exists
-    console.error(event.error);
-  }
-  ```
+    ```typescript
+    if (event.type === 'error') {
+        // TypeScript knows event.error exists
+        console.error(event.error);
+    }
+    ```
 
 - **Semantic Clarity**: `type: 'error'` explicitly signals failure
 - **Future Extensibility**: Can add error-specific fields (statusCode, retryable, etc.) without polluting complete event
 - **Common Pattern**: WebSocket, EventEmitter, and other event systems separate success/failure events
 - **User Experience**: Switch statements make error vs success handling explicit
 
-  ```typescript
-  switch (event.type) {
-    case 'complete':
-      showSuccess();
-      break;
-    case 'error':
-      showError(event.error);
-      break;
-  }
-  ```
+    ```typescript
+    switch (event.type) {
+        case 'complete':
+            showSuccess();
+            break;
+        case 'error':
+            showError(event.error);
+            break;
+    }
+    ```
 
 **Consequences**:
 
@@ -482,7 +482,7 @@ export type FetchProgressEvent =
     | ResponseReceivedEvent
     | DownloadProgressEvent
     | CompleteEvent
-    | ErrorEvent;  // Added in v0.14.0
+    | ErrorEvent; // Added in v0.14.0
 
 export type ProtopediaApiCustomClientConfig = {
     protoPediaApiClientOptions?: ProtoPediaApiClientOptions;
