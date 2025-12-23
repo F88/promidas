@@ -51,8 +51,8 @@ const repository = createPromidasForLocal({
 // 2. データを読み込む
 const result = await repository.setupSnapshot({ limit: 1000 });
 if (!result.ok) {
-    console.error('データ取得失敗:', result.error);
-    throw new Error(result.error.message);
+    console.error('データ取得失敗:', result.message);
+    throw new Error(result.message);
 }
 
 // 3. データを検索
@@ -79,9 +79,9 @@ const result = await repository.setupSnapshot({
 });
 
 if (result.ok) {
-    console.log(`${result.data.count} 件のデータを読み込みました`);
+    console.log(`${result.stats.size} 件のデータを読み込みました`);
 } else {
-    console.error('エラー:', result.error.message);
+    console.error('エラー:', result.message);
 }
 
 // データが読み込まれているか確認
@@ -119,9 +119,9 @@ const result = await repository.refreshSnapshot();
 
 if (result.ok) {
     console.log('データを更新しました');
-    console.log(`更新後の件数: ${result.data.count} 件`);
+    console.log(`更新後の件数: ${result.stats.size} 件`);
 } else {
-    console.error('更新失敗:', result.error.message);
+    console.error('更新失敗:', result.message);
 }
 ```
 
@@ -171,7 +171,9 @@ setInterval(
     async () => {
         const result = await repository.refreshSnapshot();
         if (result.ok) {
-            console.log(`データを更新しました: ${result.data.count} 件`);
+            console.log(`データを更新しました: ${result.stats.size} 件`);
+        } else {
+            console.error('更新失敗:', result.message);
         }
     },
     30 * 60 * 1000,

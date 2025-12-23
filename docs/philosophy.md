@@ -153,9 +153,9 @@ repo.setupSnapshot({ limit: 'abc' }); // ❌ 型エラー
 const result = await repo.setupSnapshot({ limit: 1000 });
 
 if (result.ok) {
-    console.log('Success:', result.data);
+    console.log('Success:', result.stats);
 } else {
-    console.error('Error:', result.error); // 型推論される
+    console.error('Error:', result.message); // 型推論される
 }
 ```
 

@@ -163,7 +163,7 @@ async function main() {
     const result = await repo.setupSnapshot({ limit: 100 });
 
     if (!result.ok) {
-        console.error('Failed to fetch data:', result.error);
+        console.error('Failed to fetch data:', result.message);
         process.exit(1);
     }
 
@@ -203,7 +203,7 @@ async function main() {
     // 以降は同じ
     const result = await repo.setupSnapshot({ limit: 100 });
     if (!result.ok) {
-        console.error('Failed to fetch data:', result.error);
+        console.error('Failed to fetch data:', result.message);
         process.exit(1);
     }
 
@@ -374,7 +374,7 @@ const repo = new PromidasRepositoryBuilder()
 // Snapshotの作成
 const setupResult = await repo.setupSnapshot({ limit: 1000 });
 if (!setupResult.ok) {
-    throw new Error(`Failed to setup snapshot: ${setupResult.error}`);
+    throw new Error(`Failed to setup snapshot: ${setupResult.message}`);
 }
 
 // Snapshotからデータ取得
@@ -424,7 +424,7 @@ Snapshotを更新する方法は3つあります:
 // スクリプト開始時に1回だけ取得
 const setupResult = await repo.setupSnapshot({ limit: 1000 });
 if (!setupResult.ok) {
-    throw new Error(`Failed to setup snapshot: ${setupResult.error}`);
+    throw new Error(`Failed to setup snapshot: ${setupResult.message}`);
 }
 
 // 以降はメモリ内のデータを使用
@@ -449,7 +449,7 @@ const repo = new PromidasRepositoryBuilder()
 // 初回取得
 const setupResult = await repo.setupSnapshot({});
 if (!setupResult.ok) {
-    throw new Error(`Failed to setup snapshot: ${setupResult.error}`);
+    throw new Error(`Failed to setup snapshot: ${setupResult.message}`);
 }
 
 // TTL切れをチェックし、必要なら更新
@@ -457,7 +457,7 @@ const stats = repo.getStats();
 if (stats.isExpired) {
     const refreshResult = await repo.refreshSnapshot();
     if (!refreshResult.ok) {
-        throw new Error(`Failed to refresh snapshot: ${refreshResult.error}`);
+        throw new Error(`Failed to refresh snapshot: ${refreshResult.message}`);
     }
 }
 const data = await repo.getAllFromSnapshot();
@@ -469,7 +469,7 @@ const data = await repo.getAllFromSnapshot();
 // 必要なタイミングで明示的に更新
 const result = await repo.refreshSnapshot();
 if (!result.ok) {
-    throw new Error(`Failed to refresh snapshot: ${result.error}`);
+    throw new Error(`Failed to refresh snapshot: ${result.message}`);
 }
 ```
 

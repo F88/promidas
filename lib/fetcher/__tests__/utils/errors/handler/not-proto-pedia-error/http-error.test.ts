@@ -22,9 +22,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import {
-  handleNotProtoPediaApiError,
-} from '../../../../../utils/errors/handler.js';
+import { handleNotProtoPediaApiError } from '../../../../../utils/errors/handler.js';
 
 describe('handleNotProtoPediaApiError', () => {
   describe('HTTP-like error handling', () => {
