@@ -3,10 +3,13 @@
  *
  * This file is part of a test suite split by error type for better organization.
  * The implementation remains unified in handler.ts (218 lines, single function),
- * while tests are split across 4 files by input error type:
+ * while tests are split into separate directories by input error type:
  *
- * - abort-error.test.ts - AbortError/timeout handling
+ * proto-pedia-error/
  * - api-error.test.ts (this file) - ProtoPediaApiError handling
+ *
+ * not-proto-pedia-error/
+ * - abort-error.test.ts - AbortError/timeout handling
  * - http-error.test.ts - HTTP-like errors with status property
  * - network-error.test.ts - Network errors and edge cases
  *
@@ -15,9 +18,9 @@
 import { ProtoPediaApiError } from 'protopedia-api-v2-client';
 import { describe, expect, it } from 'vitest';
 
-import { handleApiError } from '../../../../utils/errors/handler.js';
+import { handleProtoPediaApiError } from '../../../../../utils/errors/handler.js';
 
-describe('handleApiError - ProtoPediaApiError handling', () => {
+describe('handleProtoPediaApiError', () => {
   describe('4xx client errors', () => {
     it('handles 400 Bad Request', () => {
       const apiError = new ProtoPediaApiError({
@@ -30,7 +33,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Bad Request',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleProtoPediaApiError(apiError);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -50,7 +53,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Bad Request',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleProtoPediaApiError(apiError);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -70,7 +73,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Unauthorized',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleProtoPediaApiError(apiError);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -92,7 +95,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Not Found',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleProtoPediaApiError(apiError);
 
       expect(result).toEqual({
         ok: false,
@@ -121,7 +124,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Not Found',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleProtoPediaApiError(apiError);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -143,7 +146,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Not Found',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleProtoPediaApiError(apiError);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -163,7 +166,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'URI Too Long',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleProtoPediaApiError(apiError);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -183,7 +186,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Too Many Requests',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleProtoPediaApiError(apiError);
 
       expect(result).toEqual({
         ok: false,
@@ -212,7 +215,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Client Closed Request',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleProtoPediaApiError(apiError);
 
       expect(result).toEqual({
         ok: false,
@@ -243,7 +246,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: '',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleProtoPediaApiError(apiError);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -263,7 +266,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Internal Server Error',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleProtoPediaApiError(apiError);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -283,7 +286,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Bad Gateway',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleProtoPediaApiError(apiError);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -306,7 +309,7 @@ describe('handleApiError - ProtoPediaApiError handling', () => {
         statusText: 'Service Unavailable',
       });
 
-      const result = handleApiError(apiError);
+      const result = handleProtoPediaApiError(apiError);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {

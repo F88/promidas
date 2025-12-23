@@ -4,17 +4,16 @@
  * Error handling utilities for ProtoPedia API calls.
  *
  * This module provides the central error handler that transforms various
- * error scenarios (HTTP errors, timeouts, network errors, unexpected
- * exceptions) into a consistent {@link FetchPrototypesResult} failure shape.
+ * error scenarios into a consistent {@link FetchPrototypesResult} failure
+ * shape. HTTP normalization is limited to ProtoPedia API errors; all other
+ * errors are classified as network/timeout/abort/unknown.
  *
  * Key responsibilities:
  * - Mapping `PromidasTimeoutError` (timeout) to a TIMEOUT failure.
  * - Detecting `AbortError` (caller-driven abort) and mapping it to an ABORTED failure.
- * - Extracting metadata (status, statusText, code, url) from
- *   HTTP-like error objects.
- * - Preserving network error codes (ENOTFOUND, ECONNREFUSED, etc.) in
- *   result details.
- * - Logging diagnostic information for debugging and monitoring.
+ * - Normalizing {@link ProtoPediaApiError} into HTTP failures with status/statusText.
+ * - Preserving network error codes (ENOTFOUND, ECONNREFUSED, etc.) when available.
+ * - Classifying opaque fetch failures (TypeError with well-known messages) as CORS_BLOCKED.
  * - Ensuring all API errors are normalized into {@link FetchPrototypesResult}
  *   without throwing exceptions.
  */
@@ -22,7 +21,12 @@ import { ProtoPediaApiError } from 'protopedia-api-v2-client';
 
 import { PromidasTimeoutError } from '../../errors/fetcher-error.js';
 import type { NetworkFailure } from '../../types/prototype-api.types.js';
-import type { FetchPrototypesResult } from '../../types/result.types.js';
+import type {
+  FetchFailureKind,
+  FetchPrototypesFailure,
+  FetchPrototypesResult,
+  FetcherErrorCode,
+} from '../../types/result.types.js';
 
 /**
  * Standard error names used in error detection.
@@ -59,6 +63,20 @@ const KNOWN_FETCH_NETWORK_ERROR_MESSAGES = new Set<string>([
   'NetworkError when attempting to fetch resource.',
 ]);
 
+const STATUS_CODE_MAP: Record<number, FetcherErrorCode> = {
+  400: 'CLIENT_BAD_REQUEST',
+  401: 'CLIENT_UNAUTHORIZED',
+  403: 'CLIENT_FORBIDDEN',
+  404: 'CLIENT_NOT_FOUND',
+  405: 'CLIENT_METHOD_NOT_ALLOWED',
+  408: 'CLIENT_TIMEOUT',
+  429: 'CLIENT_RATE_LIMITED',
+  500: 'SERVER_INTERNAL_ERROR',
+  502: 'SERVER_BAD_GATEWAY',
+  503: 'SERVER_SERVICE_UNAVAILABLE',
+  504: 'SERVER_GATEWAY_TIMEOUT',
+};
+
 /**
  * Type guard to check if an error is an AbortError.
  *
@@ -67,16 +85,6 @@ const KNOWN_FETCH_NETWORK_ERROR_MESSAGES = new Set<string>([
  */
 function isAbortError(error: unknown): error is DOMException {
   return error instanceof DOMException && error.name === ERROR_NAMES.ABORT;
-}
-
-/**
- * Type guard to check if an error object has a status property (may need parsing).
- *
- * @param error - The error to check
- * @returns True if the error has a status property of any type
- */
-function hasStatusProperty(error: unknown): error is { status: unknown } {
-  return error !== null && typeof error === 'object' && 'status' in error;
 }
 
 /**
@@ -103,21 +111,24 @@ function hasErrorCode(error: unknown): error is object {
   return error !== null && typeof error === 'object';
 }
 
+type FetchPrototypesFailureBase = Omit<FetchPrototypesFailure, 'kind' | 'code'>;
+
 /**
- * Create a FetchPrototypesResult failure object.
+ * Create the common portion of a FetchPrototypesFailure.
  *
  * @param error - Error message string
  * @param details - Additional error details (always required, use {} if no metadata)
  * @param status - HTTP status code (undefined for network errors without server response)
- * @returns A FetchPrototypesResult with ok: false
+ * @returns A partial FetchPrototypesFailure without kind/code
  */
 function createFailureResult(
   error: string,
   details: NetworkFailure['details'],
   status?: number,
-): FetchPrototypesResult {
-  const result: FetchPrototypesResult = {
+): FetchPrototypesFailureBase {
+  const result: FetchPrototypesFailureBase = {
     ok: false,
+    origin: 'fetcher',
     error,
     details,
   };
@@ -127,73 +138,78 @@ function createFailureResult(
   return result;
 }
 
+function mapHttpStatusToCode(status: number | undefined): FetcherErrorCode {
+  if (status === undefined) return 'UNKNOWN';
+
+  const mapped = STATUS_CODE_MAP[status];
+  if (mapped !== undefined) {
+    return mapped;
+  }
+
+  if (status >= 500) return 'SERVER_ERROR';
+  if (status >= 400 && status < 500) return 'CLIENT_ERROR';
+  return 'UNKNOWN';
+}
+
+function finalize(
+  base: FetchPrototypesFailureBase,
+  kind: FetchFailureKind,
+  code: FetcherErrorCode,
+): FetchPrototypesResult {
+  return {
+    ...base,
+    kind,
+    code,
+  } satisfies FetchPrototypesResult;
+}
+
 /**
- * Normalize errors thrown during ProtoPedia API calls into a
- * {@link FetchPrototypesResult} failure object.
+ * Normalize a {@link ProtoPediaApiError} into a fetcher HTTP failure result.
  *
- * This is the central error handler for all ProtoPedia API interactions.
- * It ensures that:
- *
- * - `AbortError` (typically from `AbortController` timeout) is treated as a
- *   network error with no `status` (no server response received).
- * - {@link ProtoPediaApiError} from protopedia-api-v2-client is normalized
- *   with HTTP `status` and request/response metadata preserved.
- * - HTTP-like errors with a `status` property are normalized with their
- *   metadata (statusText, code, url) preserved in the `details` field.
- * - Network errors (ENOTFOUND, ECONNREFUSED, etc.) have no `status` but
- *   preserve the error `code` in `details.res.code`.
- * - All cases produce a {@link FetchPrototypesResult} with `ok: false`
- *   and a consistent `details` object.
- * - Never throws exceptions - all errors are converted to Result types.
- * - The complete result object is logged for monitoring and debugging.
- *
- * @param error - The error value thrown by an upstream API call. Can be
- *   a {@link ProtoPediaApiError}, a DOMException, an HTTP-like object
- *   with a `status` property, or any other value.
- * @param logger - Optional logger instance for diagnostic output. Defaults
- *   to console logger with 'info' level if not provided.
- * @returns A {@link FetchPrototypesResult} with `ok: false`, an error
- *   message, a `details` object, and optionally a `status` code (only
- *   present for HTTP errors, not network errors).
- *
- * @example
- * ```ts
- * // AbortError (timeout) - no status
- * const abortError = new DOMException('Aborted', 'AbortError');
- * handleApiError(abortError);
- * // => { ok: false, error: 'Upstream request timed out', details: {} }
- *
- * // ProtoPediaApiError - with status
- * const apiError = new ProtoPediaApiError({
- *   message: 'Prototype not found',
- *   req: { url: 'https://protopedia.cc/api/prototypes', method: 'GET' },
- *   status: 404,
- *   statusText: 'Not Found',
- * });
- * handleApiError(apiError);
- * // => {
- * //   ok: false,
- * //   status: 404,
- * //   error: 'Prototype not found',
- * //   details: {
- * //     req: { url: 'https://protopedia.cc/api/prototypes', method: 'GET' },
- * //     res: { statusText: 'Not Found' }
- * //   }
- * // }
- *
- * // Network error (ECONNREFUSED) - no status, code in details
- * const networkError = Object.assign(new Error('connect ECONNREFUSED'), {
- *   code: 'ECONNREFUSED'
- * });
- * handleApiError(networkError);
- * // => {
- * //   ok: false,
- * //   error: 'connect ECONNREFUSED',
- * //   details: { res: { code: 'ECONNREFUSED' } }
- * // }
- * ```
+ * @param error - ProtoPedia API client error containing status and metadata
+ * @returns Failure result with kind 'http' and mapped FetcherErrorCode
  */
-export function handleApiError(error: unknown): FetchPrototypesResult {
+export function handleProtoPediaApiError(
+  error: ProtoPediaApiError,
+): FetchPrototypesResult {
+  const result = createFailureResult(
+    error.message,
+    {
+      req: {
+        url: error.req.url,
+        method: error.req.method,
+      },
+      res: {
+        statusText: error.statusText,
+      },
+    },
+    error.status,
+  );
+
+  return finalize(result, 'http', mapHttpStatusToCode(error.status));
+}
+
+/**
+ * Normalize non-ProtoPedia errors into fetcher failure results.
+ *
+ * Paths:
+ * - PromidasTimeoutError → timeout/TIMEOUT (no HTTP status)
+ * - AbortError → abort/ABORTED (caller-driven abort, no HTTP status)
+ * - Network-ish errors with code → network/<code>
+ * - Opaque fetch (known TypeError messages) → cors/CORS_BLOCKED
+ * - Fallback → unknown/UNKNOWN
+ *
+ * Notes:
+ * - Do not trust arbitrary error.status; do not treat non-ProtoPedia errors as HTTP.
+ * - If details.res.code exists, classify as network; otherwise choose cors/unknown.
+ */
+export function handleNotProtoPediaApiError(
+  error: unknown,
+): FetchPrototypesResult {
+  /**
+   * Handle explicit timeout errors (distinguishable from AbortError).
+   * These are fetcher-level timeouts, not HTTP 408 responses.
+   */
   // Handle explicit timeout errors (distinguishable from AbortError)
   if (error instanceof PromidasTimeoutError) {
     const result = createFailureResult(ERROR_MESSAGES.TIMEOUT, {
@@ -202,7 +218,7 @@ export function handleApiError(error: unknown): FetchPrototypesResult {
       },
     });
 
-    return result;
+    return finalize(result, 'timeout', 'TIMEOUT');
   }
 
   // Handle AbortError (caller-driven abort) - network error, no status
@@ -213,75 +229,9 @@ export function handleApiError(error: unknown): FetchPrototypesResult {
       },
     });
 
-    return result;
+    return finalize(result, 'abort', 'ABORTED');
   }
 
-  // Handle ProtoPediaApiError specifically - HTTP error with status
-  if (error instanceof ProtoPediaApiError) {
-    const result = createFailureResult(
-      error.message,
-      {
-        req: {
-          url: error.req.url,
-          method: error.req.method,
-        },
-        res: {
-          statusText: error.statusText,
-        },
-      },
-      error.status,
-    );
-
-    return result;
-  }
-
-  // Handle HTTP-like errors with a `status` property
-  if (hasStatusProperty(error)) {
-    const rawStatus = (error as { status?: unknown }).status;
-    const parsedStatus =
-      typeof rawStatus === 'number' ? rawStatus : Number(rawStatus);
-    const status =
-      Number.isFinite(parsedStatus) && rawStatus != null ? parsedStatus : 500;
-    const errorObj = error as {
-      statusText?: string;
-      code?: string;
-      req?: {
-        url?: string;
-        method?: string;
-      };
-    };
-    const { statusText, code, req } = errorObj;
-
-    const message =
-      error instanceof Error ? error.message : 'Failed to fetch prototypes';
-
-    const details: NetworkFailure['details'] = {};
-    if (req?.url !== undefined || req?.method !== undefined) {
-      details.req = {};
-      if (req.url !== undefined) {
-        details.req.url = req.url;
-      }
-      if (req.method !== undefined) {
-        details.req.method = req.method;
-      }
-    }
-    if (statusText !== undefined || code !== undefined) {
-      details.res ??= {};
-      if (statusText !== undefined) {
-        details.res.statusText = statusText;
-      }
-      if (code !== undefined) {
-        details.res.code = code;
-      }
-    }
-
-    const result = createFailureResult(message, details, status);
-
-    return result;
-  }
-
-  // Handle unexpected errors (including network errors from fetch)
-  // Network errors do not have HTTP status codes
   const message =
     error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN;
 
@@ -300,18 +250,47 @@ export function handleApiError(error: unknown): FetchPrototypesResult {
     }
   }
 
-  // If there is no structured code, but this looks like a fetch network error,
-  // attach a stable code for downstream error classification.
-  if (
-    details.res?.code === undefined &&
+  const isOpaqueFetchError =
     error instanceof TypeError &&
-    KNOWN_FETCH_NETWORK_ERROR_MESSAGES.has(message)
-  ) {
+    KNOWN_FETCH_NETWORK_ERROR_MESSAGES.has(message);
+
+  if (details.res?.code === undefined && isOpaqueFetchError) {
+    // Keep diagnostics (use generic network code) but classify as CORS_BLOCKED.
     details.res ??= {};
-    details.res.code ??= DEFAULT_NETWORK_ERROR_CODE;
+    details.res.code = DEFAULT_NETWORK_ERROR_CODE;
+    const result = createFailureResult(message, details);
+    return finalize(result, 'cors', 'CORS_BLOCKED');
+  }
+
+  if (details.res?.code !== undefined) {
+    const result = createFailureResult(message, details);
+    const code = details.res.code as FetcherErrorCode;
+    return finalize(result, 'network', code);
   }
 
   const result = createFailureResult(message, details);
+  return finalize(result, 'unknown', 'UNKNOWN');
+}
 
-  return result;
+/**
+ * Normalize any error thrown during ProtoPedia API calls into a
+ * {@link FetchPrototypesResult} failure object.
+ *
+ * Delegation:
+ * - ProtoPediaApiError → {@link handleProtoPediaApiError} (HTTP, preserves status/statusText)
+ * - Others → {@link handleNotProtoPediaApiError} (timeout/abort/network/cors/unknown)
+ *
+ * Notes:
+ * - Only ProtoPediaApiError is treated as trusted HTTP (status/statusText retained).
+ * - If a network code is available, store it in details.res.code and return kind 'network'.
+ * - Known opaque fetch messages (TypeError) are classified as CORS_BLOCKED.
+ */
+export function handleApiError(error: unknown): FetchPrototypesResult {
+  // Handle ProtoPediaApiError specifically - HTTP error with status
+  if (error instanceof ProtoPediaApiError) {
+    return handleProtoPediaApiError(error);
+  }
+
+  // Handle all non-ProtoPediaApiError cases (network/abort/timeout/unknown)
+  return handleNotProtoPediaApiError(error);
 }

@@ -3,10 +3,13 @@
  *
  * This file is part of a test suite split by error type for better organization.
  * The implementation remains unified in handler.ts (218 lines, single function),
- * while tests are split across 4 files by input error type:
+ * while tests are split into separate directories by input error type:
  *
- * - abort-error.test.ts (this file) - AbortError/timeout handling
+ * proto-pedia-error/
  * - api-error.test.ts - ProtoPediaApiError handling
+ *
+ * not-proto-pedia-error/
+ * - abort-error.test.ts (this file) - AbortError/timeout handling
  * - http-error.test.ts - HTTP-like errors with status property
  * - network-error.test.ts - Network errors and edge cases
  *
@@ -14,15 +17,18 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { handleApiError } from '../../../../utils/errors/handler.js';
+import { handleNotProtoPediaApiError } from '../../../../../utils/errors/handler.js';
 
-describe('handleApiError - AbortError handling', () => {
+describe('handleNotProtoPediaApiError', () => {
   it('maps AbortError to network error without status', () => {
     const abortError = new DOMException('Aborted', 'AbortError');
-    const result = handleApiError(abortError);
+    const result = handleNotProtoPediaApiError(abortError);
 
     expect(result).toEqual({
       ok: false,
+      origin: 'fetcher',
+      kind: 'abort',
+      code: 'ABORTED',
       error: 'Upstream request aborted',
       details: {
         res: {
@@ -34,7 +40,7 @@ describe('handleApiError - AbortError handling', () => {
 
   it('logs diagnostic information for AbortError', () => {
     const abortError = new DOMException('Operation aborted', 'AbortError');
-    const result = handleApiError(abortError);
+    const result = handleNotProtoPediaApiError(abortError);
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -46,8 +52,8 @@ describe('handleApiError - AbortError handling', () => {
     const abortError1 = new DOMException('Timeout 1', 'AbortError');
     const abortError2 = new DOMException('Timeout 2', 'AbortError');
 
-    const result1 = handleApiError(abortError1);
-    const result2 = handleApiError(abortError2);
+    const result1 = handleNotProtoPediaApiError(abortError1);
+    const result2 = handleNotProtoPediaApiError(abortError2);
 
     expect(result1).toEqual(result2);
     expect(result1.ok).toBe(false);
