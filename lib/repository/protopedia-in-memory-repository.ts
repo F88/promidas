@@ -296,19 +296,18 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
         params: mergedParams,
       });
 
-      // TODO Fix later: align unexpected fetcher failures with centralized handler
       return {
         ok: false,
-        origin: 'fetcher', // mark failure as coming from fetcher layer
-        kind: 'unknown', // unexpected path; not classified by handler
-        code: 'UNKNOWN', // generic code until centralized handling is used
+        origin: 'fetcher',
+        kind: 'unknown',
+        code: 'UNKNOWN',
         error: error instanceof Error ? error.message : String(error),
         details: {
           req: {
             method: 'GET',
           },
         },
-      };
+      } satisfies FetchPrototypesResult;
     }
   }
 
