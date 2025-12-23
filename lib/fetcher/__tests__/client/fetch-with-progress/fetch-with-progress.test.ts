@@ -621,7 +621,8 @@ describe('createFetchWithProgress', () => {
         enableProgressLog: true,
       });
 
-      const response = await customFetch('not-a-valid-url://test');
+      // Test with malformed URL that throws in URL constructor
+      const response = await customFetch('http://[invalid');
       const text = await response.text();
 
       expect(text).toBe('test data');
@@ -710,6 +711,73 @@ describe('createFetchWithProgress', () => {
         downloadTimeMs: expect.any(Number),
         totalTimeMs: expect.any(Number),
       });
+    });
+
+    it('uses logger.error fallback when process.stderr is not available and stream reading fails', async () => {
+      const logger = createConsoleLogger();
+      const events: FetchProgressEvent[] = [];
+      const onProgressEvent = vi.fn((event) => {
+        events.push(event);
+      });
+
+      const originalWrite = process.stderr.write;
+      // @ts-expect-error - Simulating browser environment
+      process.stderr.write = undefined;
+
+      const loggerSpy = vi.spyOn(logger, 'error');
+
+      let pullCount = 0;
+      const errorStream = new ReadableStream({
+        pull(controller) {
+          pullCount++;
+          if (pullCount === 1) {
+            controller.enqueue(new Uint8Array([1, 2, 3]));
+          } else {
+            controller.error(new Error('Stream read error'));
+          }
+        },
+      });
+
+      const mockResponse = new Response(errorStream, {
+        status: 200,
+        headers: new Headers({
+          'content-type': 'application/json',
+          'content-length': '100',
+        }),
+      });
+
+      global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
+      const customFetch = createFetchWithProgress({
+        logger,
+        enableProgressLog: true,
+        onProgressEvent,
+      });
+
+      const response = await customFetch(
+        'https://api.example.com/data?limit=100',
+      );
+
+      await expect(response.text()).rejects.toThrow('Stream read error');
+
+      // Verify logger.error was called instead of process.stderr.write
+      expect(loggerSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Download error'),
+      );
+
+      // Verify error event was emitted with correct data
+      const errorEvents = events.filter((e) => e.type === 'error');
+      expect(errorEvents).toHaveLength(1);
+      expect(errorEvents[0]).toMatchObject({
+        type: 'error',
+        error: 'Stream read error',
+        received: 3,
+        estimatedTotal: 100,
+        downloadTimeMs: expect.any(Number),
+        totalTimeMs: expect.any(Number),
+      });
+
+      process.stderr.write = originalWrite;
     });
 
     it('uses logger.info fallback when process.stderr is not available', async () => {
