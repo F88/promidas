@@ -63,7 +63,7 @@ if (!result.ok) {
 
 **Migration Guide**:
 
-1. Replace `result.error` with `result.message` (only when `origin !== 'fetcher'`)
+1. Replace `result.error` with `result.message` for all repository-layer failures
 2. Use `result.origin` to discriminate error types before accessing fields
 3. `result.code` is now always present (type-specific)
 4. `result.status` is only available for `FetcherSnapshotFailure` with HTTP errors
