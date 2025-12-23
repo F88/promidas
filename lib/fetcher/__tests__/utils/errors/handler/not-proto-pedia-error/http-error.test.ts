@@ -23,7 +23,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  handleApiError,
   handleNotProtoPediaApiError,
 } from '../../../../../utils/errors/handler.js';
 
