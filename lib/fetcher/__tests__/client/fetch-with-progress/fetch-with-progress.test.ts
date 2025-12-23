@@ -700,11 +700,11 @@ describe('createFetchWithProgress', () => {
       expect(errorEvents[0]).toMatchObject({
         type: 'error',
         error: 'Stream read error',
+        received: 3,
+        estimatedTotal: 100,
+        downloadTimeMs: expect.any(Number),
+        totalTimeMs: expect.any(Number),
       });
-      expect(errorEvents[0]).toHaveProperty('received');
-      expect(errorEvents[0]).toHaveProperty('totalTimeMs');
-      expect(errorEvents[0]).toHaveProperty('downloadTimeMs');
-      expect(errorEvents[0]).toHaveProperty('estimatedTotal', 100);
     });
 
     it('uses logger.info fallback when process.stderr is not available', async () => {
