@@ -93,9 +93,6 @@ export type StoreSnapshotFailure = SnapshotOperationFailureBase & {
   cause?: unknown;
 };
 
-// export type ERR_CODE = StoreErrorCode | FetcherErrorCode;
-// export type ERR_KIND = StoreFailureKind | FetchFailureKind;
-
 /**
  * Failed response from setupSnapshot or refreshSnapshot operations.
  *
@@ -127,22 +124,6 @@ export type SnapshotOperationFailure =
   | FetcherSnapshotFailure
   | StoreSnapshotFailure
   | UnknownSnapshotFailure;
-
-// Legacy type kept for backward compatibility during migration
-// TODO: Remove once all code is updated to use discriminated union
-/**
- * @deprecated Use SnapshotOperationFailure discriminated union instead
- */
-type LegacySnapshotOperationFailure = {
-  /** Indicates failed operation. */
-  ok: false;
-  /** Human-readable error message. */
-  error: string;
-  /** HTTP status code if the error came from an HTTP response. */
-  status?: number | undefined;
-  /** Error code from the upstream API response (e.g., 'NOT_FOUND', 'UNAUTHORIZED'). */
-  code?: string | undefined;
-};
 
 /**
  * Result type for setupSnapshot and refreshSnapshot operations.
