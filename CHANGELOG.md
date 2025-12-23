@@ -60,7 +60,7 @@ if (!result.ok) {
     }
 }
 ```
-
+1. Replace `result.error` with `result.message`
 **Migration Guide**:
 
 1. Replace `result.error` with `result.message` for all repository-layer failures
