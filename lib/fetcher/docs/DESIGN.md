@@ -185,11 +185,20 @@ export type FetchPrototypesResult =
 
 type FetchPrototypesFailure = {
     ok: false;
+    origin: 'fetcher';
+    kind: FetchFailureKind; // http | cors | network | timeout | abort | unknown
     error: string;
-} & Omit<NetworkFailure, 'error'>;
+    status?: number;
+    code: FetcherErrorCode; // canonical code; details.res.code keeps upstream/raw
+    details: NetworkFailure['details'];
+};
 
 // This includes: status?: number, details: { req?: {...}, res?: {...} }
 ```
+
+The fetcher always sets `origin: 'fetcher'`, a coarse `kind`, and a canonical
+`code` (with fallback `UNKNOWN`) so consumers can branch without parsing
+messages. Upstream or socket codes remain in `details.res.code` for diagnostics.
 
 **Benefits**:
 

@@ -22,4 +22,6 @@ export type {
   FetchPrototypesResult,
   FetchPrototypesSuccess,
   FetchPrototypesFailure,
+  FetchFailureKind,
+  FetcherErrorCode,
 } from './result.types.js';

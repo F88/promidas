@@ -77,7 +77,11 @@ export type { FetchProgressEvent } from './types/progress-event.types.js';
 export { PromidasTimeoutError } from './errors/fetcher-error.js';
 
 // Result Types
-export type { FetchPrototypesResult } from './types/result.types.js';
+export type {
+  FetchPrototypesResult,
+  FetchFailureKind,
+  FetcherErrorCode,
+} from './types/result.types.js';
 export type { UpstreamPrototype } from './types/prototype-api.types.js';
 
 export { normalizePrototype } from './utils/normalize-prototype.js';
