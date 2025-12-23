@@ -11,6 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Nothing yet.
+
+### Fixed
+
+- Nothing yet.
+
+### Documentation
+
+- Nothing yet.
+
+## [0.15.0] - 2025-12-23
+
+### Added
+
 - **Error Event for Stream Reading Failures**: New `error` event type in progress tracking system (#69)
     - Emitted when stream reading fails after response is received (e.g., 401, network timeout)
     - `FetchProgressErrorEvent` type with error message, received bytes, and timing information
