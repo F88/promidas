@@ -217,7 +217,7 @@ This caused progress callbacks to wait indefinitely when errors occurred during 
 - ⚠️ One additional event type (5 instead of 4)
 - ⚠️ Existing code needs to add error case (non-breaking for switch with default)
 
-**Implementation**: See [fetch-with-progress.ts catch block](../../client/fetch-with-progress.ts)
+**Implementation**: See [fetch-with-progress.ts catch block](../../client/fetch-with-progress.ts#L378-L406)
 
 **References**: Issue #69
 
