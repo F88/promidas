@@ -99,6 +99,9 @@ describe('handleProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'http',
+        code: 'CLIENT_NOT_FOUND',
         status: 404,
         error: 'Prototype not found',
         details: {
@@ -190,6 +193,9 @@ describe('handleProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'http',
+        code: 'CLIENT_RATE_LIMITED',
         status: 429,
         error: 'Rate limit exceeded',
         details: {
@@ -219,6 +225,9 @@ describe('handleProtoPediaApiError', () => {
 
       expect(result).toEqual({
         ok: false,
+        origin: 'fetcher',
+        kind: 'http',
+        code: 'CLIENT_ERROR',
         status: 499,
         error: 'Client closed request',
         details: {
