@@ -35,7 +35,7 @@ const result = await repository.setupSnapshot({
 });
 
 if (!result.ok) {
-    console.error('Failed to setup snapshot:', result.error);
+    console.error('Failed to setup snapshot:', result.message);
 }
 ```
 

@@ -114,7 +114,7 @@ async function main() {
     const result = await repo.setupSnapshot({ limit: 100 }); // 100件取得
 
     if (!result.ok) {
-        console.error('❌ 失敗しました:', result.error);
+        console.error('❌ 失敗しました:', result.message);
         return;
     }
 
