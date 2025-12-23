@@ -77,9 +77,10 @@ export type FetchPrototypesFailure = {
   origin: 'fetcher';
   /** Coarse-grained classification of the failure cause. */
   kind: FetchFailureKind;
-  error: string;
   /** Canonicalized error code (in addition to details.res.code). */
   code: FetcherErrorCode;
+  /** Human-readable error message. */
+  error: string;
 } & Omit<NetworkFailure, 'error'>;
 
 /**
