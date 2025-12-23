@@ -41,7 +41,7 @@ export type StoreFailure = {
    */
   kind: StoreFailureKind;
   /**
-   *
+   * Canonical error code identifying the specific store failure type.
    */
   code: StoreErrorCode;
   error:
