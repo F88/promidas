@@ -5,6 +5,7 @@ import {
   createConsoleLogger,
 } from '../../../../logger/index.js';
 import { createFetchWithProgress } from '../../../client/fetch-with-progress.js';
+import type { FetchProgressEvent } from '../../../types/progress-event.types.js';
 
 describe('createFetchWithProgress', () => {
   beforeEach(() => {
@@ -659,7 +660,7 @@ describe('createFetchWithProgress', () => {
 
     it('emits error event when stream reading fails', async () => {
       const logger = createConsoleLogger();
-      const events: Array<{ type: string }> = [];
+      const events: FetchProgressEvent[] = [];
       const onProgressEvent = vi.fn((event) => {
         events.push(event);
       });
