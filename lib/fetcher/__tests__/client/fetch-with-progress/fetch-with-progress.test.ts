@@ -665,10 +665,15 @@ describe('createFetchWithProgress', () => {
         events.push(event);
       });
 
+      let pullCount = 0;
       const errorStream = new ReadableStream({
-        start(controller) {
-          controller.enqueue(new Uint8Array([1, 2, 3]));
-          controller.error(new Error('Stream read error'));
+        pull(controller) {
+          pullCount++;
+          if (pullCount === 1) {
+            controller.enqueue(new Uint8Array([1, 2, 3]));
+          } else {
+            controller.error(new Error('Stream read error'));
+          }
         },
       });
 

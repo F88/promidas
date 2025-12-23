@@ -173,6 +173,23 @@ export type FetchProgressErrorEvent = {
  * a fetch request lifecycle. TypeScript's discriminated union feature
  * enables type-safe event handling based on the `type` property.
  *
+ * ## Event Lifecycle
+ *
+ * **Success flow:**
+ * 1. `request-start` → Request initiated
+ * 2. `response-received` → Headers received
+ * 3. `download-progress` (multiple, throttled) → Body streaming
+ * 4. `complete` → Download finished successfully
+ *
+ * **Error flow (stream reading failure):**
+ * 1. `request-start` → Request initiated
+ * 2. `response-received` → Headers received
+ * 3. `download-progress` (optional) → Partial data received
+ * 4. `error` → Stream reading failed (e.g., network error, auth failure)
+ *
+ * Note: `download-progress` events may occur before `error` if some chunks
+ * were successfully read before the failure.
+ *
  * @example Basic usage
  * ```typescript
  * function handleProgressEvent(event: FetchProgressEvent) {
