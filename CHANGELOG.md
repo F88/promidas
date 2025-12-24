@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+- **Module Design Principles**: Added comprehensive design philosophy to DOCUMENTATION.md
+    - Documents standalone, independently usable module architecture
+    - Explains how modules can function without full repository layer
+    - Includes practical examples of subpath exports usage
+- **Store USAGE.md**: Completed Result pattern example with comprehensive error handling
+    - Added `SizeEstimationError` handling for serialization failures
+    - Added fallback for unexpected errors to ensure type safety
+    - Included `cause` field in all error cases for better debugging
+    - Consolidated imports at section start for better organization
+
 ## [0.16.0] - 2025-12-24
 
 ### Breaking Changes
