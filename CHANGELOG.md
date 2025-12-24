@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Subpath Exports for Type Modules**: Added `/types` subpath exports for better type definition access (#75)
+    - Added `@f88/promidas/fetcher/types` subpath export
+    - Added `@f88/promidas/store/types` subpath export
+    - Added `@f88/promidas/repository/types` subpath export
+    - Enables direct import of type definitions without going through main module indices
+    - Example: `import type { FetcherSnapshotFailure } from '@f88/promidas/repository/types'`
+
 ## [0.17.0] - 2025-12-24
 
 ### Added

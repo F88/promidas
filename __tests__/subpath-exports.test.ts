@@ -190,6 +190,28 @@ describe('subpath exports', () => {
     });
   });
 
+  describe('type-only subpath exports', () => {
+    const typeOnlySubpaths = [
+      '@f88/promidas/fetcher/types',
+      '@f88/promidas/store/types',
+      '@f88/promidas/repository/types',
+    ];
+
+    it.each(typeOnlySubpaths)(
+      'should export type definitions for %s (type-only module)',
+      async (subpath) => {
+        const types = await import(subpath);
+
+        // This test verifies the module can be imported without errors
+        expect(types).toBeDefined();
+
+        // Since all exports are type-only, the module should be empty at runtime
+        const runtimeKeys = Object.keys(types);
+        expect(runtimeKeys.length).toBe(0);
+      },
+    );
+  });
+
   describe('integration: root vs subpath exports', () => {
     it('should provide Builder from root', async () => {
       const root = await import('@f88/promidas');
