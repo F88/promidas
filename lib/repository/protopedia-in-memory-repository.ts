@@ -330,7 +330,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    *
    * This private method handles:
    * - Storing data via the memory store
-   * - Converting store errors to {@link StoreOperationFailure}
+   * - Converting store errors to {@link SetFailure}
    * - Logging detailed operation information with sanitized data
    *
    * @param data - Array of normalized prototypes to store
@@ -338,9 +338,9 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    *
    * @remarks
    * **Error Handling**:
-   * - {@link DataSizeExceededError} → {@link StoreOperationFailure} with kind='storage_limit'
-   * - {@link SizeEstimationError} → {@link StoreOperationFailure} with kind='serialization'
-   * - Unexpected errors → {@link StoreOperationFailure} with kind='unknown'
+   * - {@link DataSizeExceededError} → {@link SetFailure} with kind='storage_limit'
+   * - {@link SizeEstimationError} → {@link SetFailure} with kind='serialization'
+   * - Unexpected errors → {@link SetFailure} with kind='unknown'
    *
    * All store errors include `dataState` to indicate whether existing data was preserved.
    *
