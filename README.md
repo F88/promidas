@@ -29,7 +29,7 @@ export PROTOPEDIA_API_V2_TOKEN="your-token-here"
 npx tsx scripts/try-protopedia-repository.ts
 ```
 
-**デモサイト:** [PROMIDAS Demo](https://f88.github.io/PROMIDAS-demo/) (開発中)
+**デモサイト:** 🛝 [PROMIDAS Demo](https://f88.github.io/PROMIDAS-demo/)
 
 ---
 
