@@ -17,4 +17,16 @@ export type {
   SnapshotOperationResult,
   SnapshotOperationSuccess,
   SnapshotOperationFailure,
+  FetcherSnapshotFailure,
+  StoreSnapshotFailure,
+  UnknownSnapshotFailure,
 } from './snapshot-operation.types.js';
+
+export type {
+  StoreOperationResult,
+  StoreOperationSuccess,
+  StoreOperationFailure,
+  StoreErrorCode,
+  StoreFailureKind,
+  StoreDataState,
+} from './store-operation-result.types.js';
