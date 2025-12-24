@@ -16,6 +16,8 @@ A toolset library for ProtoPedia providing independent store and fetcher compone
 
 **[📖 ドキュメントサイト](https://f88.github.io/promidas/)** - 使い方とサンプルコード
 
+**[🛝 PROMIDAS Playground](https://f88.github.io/PROMIDAS-demo/)** - デモ
+
 **初めての方へ:**
 
 1. [スタートガイド](https://f88.github.io/promidas/getting-started.html) - インストールと最初の一歩
@@ -28,8 +30,6 @@ npm install github:F88/promidas protopedia-api-v2-client
 export PROTOPEDIA_API_V2_TOKEN="your-token-here"
 npx tsx scripts/try-protopedia-repository.ts
 ```
-
-**デモサイト:** 🛝 [PROMIDAS Demo](https://f88.github.io/PROMIDAS-demo/)
 
 ---
 
