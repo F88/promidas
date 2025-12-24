@@ -195,7 +195,7 @@ describe('convertFetchFailure', () => {
     });
 
     it('should handle various error codes', () => {
-      const testCases = [
+      const testCases: Array<FetchPrototypesFailure['code']> = [
         'CLIENT_UNAUTHORIZED',
         'CLIENT_FORBIDDEN',
         'CLIENT_NOT_FOUND',

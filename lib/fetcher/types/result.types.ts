@@ -32,9 +32,6 @@ export type FetchFailureKind =
  * Control: TIMEOUT (fetcher timeout), ABORTED (AbortController)
  * CORS: CORS_BLOCKED (opaque response; status/code not observable)
  * Fallback: UNKNOWN
- *
- * `string` is kept as a final fallback for backward compatibility so that
- * existing custom codes are not broken during migration.
  */
 export type FetcherErrorCode =
   | 'CLIENT_UNAUTHORIZED'
@@ -57,8 +54,7 @@ export type FetcherErrorCode =
   | 'TIMEOUT'
   | 'ABORTED'
   | 'CORS_BLOCKED'
-  | 'UNKNOWN'
-  | string;
+  | 'UNKNOWN';
 
 /**
  * Successful response from fetchPrototypes containing an array of prototypes.
