@@ -1,10 +1,4 @@
-import type {
-  ConfigurationError,
-  DataSizeExceededError,
-  SizeEstimationError,
-  StoreDataState,
-  StoreError,
-} from '../../store/index.js';
+import type { StoreDataState } from '../../store/index.js';
 
 /**
  * Failure kinds specific to store operations.
@@ -31,22 +25,3 @@ export type StoreErrorCode =
  * Re-export StoreDataState from store module for convenience.
  */
 export type { StoreDataState };
-
-export type StoreFailure = {
-  ok: false;
-  /** Always 'store' to indicate the failure originated from the store */
-  origin: 'store';
-  /**
-   * Coarse-grained classification of the failure cause.
-   */
-  kind: StoreFailureKind;
-  /**
-   * Canonical error code identifying the specific store failure type.
-   */
-  code: StoreErrorCode;
-  error:
-    | StoreError
-    | SizeEstimationError
-    | DataSizeExceededError
-    | ConfigurationError;
-};
