@@ -287,7 +287,19 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
     };
 
     try {
-      return await this.#apiClient.fetchPrototypes(mergedParams);
+      const result = await this.#apiClient.fetchPrototypes(mergedParams);
+
+      // Log fetch failures for visibility
+      if (!result.ok) {
+        this.#logger.error('Prototype fetch failed', {
+          origin: result.origin,
+          kind: result.kind,
+          code: result.code,
+          status: result.status,
+        });
+      }
+
+      return result;
     } catch (error) {
       // This should never happen as the API client catches all errors,
       // but we handle it defensively in case of unexpected exceptions.
