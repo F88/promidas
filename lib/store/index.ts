@@ -16,7 +16,7 @@
  *
  * - {@link SetResult} — Discriminated union result type for `setAll` operations.
  * - {@link StoreErrorCode} — Error codes for precise error classification.
- * - {@link StoreFailureKind} — Failure kinds: `'storage_limit'` or `'serialization'`.
+ * - {@link StoreFailureKind} — Failure kinds: `'storage_limit'`, `'serialization'`, or `'unknown'`.
  *
  * ### Error Handling
  *
