@@ -102,13 +102,25 @@
       "types": "./dist/fetcher/index.d.ts",
       "import": "./dist/fetcher/index.js"
     },
+    "./fetcher/types": {
+      "types": "./dist/fetcher/types/index.d.ts",
+      "import": "./dist/fetcher/types/index.js"
+    },
     "./store": {
       "types": "./dist/store/index.d.ts",
       "import": "./dist/store/index.js"
     },
+    "./store/types": {
+      "types": "./dist/store/types/index.d.ts",
+      "import": "./dist/store/types/index.js"
+    },
     "./repository": {
       "types": "./dist/repository/index.d.ts",
       "import": "./dist/repository/index.js"
+    },
+    "./repository/types": {
+      "types": "./dist/repository/types/index.d.ts",
+      "import": "./dist/repository/types/index.js"
     }
   },
   "publishConfig": {
