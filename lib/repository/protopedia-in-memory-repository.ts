@@ -478,11 +478,14 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
         fetchResult.data,
       );
 
+      // Return early on store failure
+      if (!storeResult.ok) {
+        return storeResult;
+      }
+
       // Update lastFetchParams only on successful storage if requested
       if (updateLastFetchParams) {
-        if (storeResult.ok) {
-          this.#lastFetchParams = { ...DEFAULT_FETCH_PARAMS, ...params };
-        }
+        this.#lastFetchParams = { ...DEFAULT_FETCH_PARAMS, ...params };
       }
 
       return storeResult;
