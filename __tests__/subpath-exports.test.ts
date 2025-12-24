@@ -157,21 +157,6 @@ describe('subpath exports', () => {
     });
   });
 
-  describe('@f88/promidas/fetcher/types', () => {
-    it('should export type definitions (type-only module)', async () => {
-      const types = await import('@f88/promidas/fetcher/types');
-
-      // Note: All exports are type-only
-      // This test verifies the module can be imported without errors
-      // The actual type checking happens at compile time, not runtime
-      expect(types).toBeDefined();
-
-      // Since all exports are type-only, the module should be essentially empty at runtime
-      const runtimeKeys = Object.keys(types);
-      expect(runtimeKeys.length).toBe(0);
-    });
-  });
-
   describe('@f88/promidas/store', () => {
     it('should export Store class and re-exported types', async () => {
       const store = await import('@f88/promidas/store');
@@ -191,21 +176,6 @@ describe('subpath exports', () => {
     });
   });
 
-  describe('@f88/promidas/store/types', () => {
-    it('should export type definitions (type-only module)', async () => {
-      const types = await import('@f88/promidas/store/types');
-
-      // Note: All exports are type-only
-      // This test verifies the module can be imported without errors
-      // The actual type checking happens at compile time, not runtime
-      expect(types).toBeDefined();
-
-      // Since all exports are type-only, the module should be essentially empty at runtime
-      const runtimeKeys = Object.keys(types);
-      expect(runtimeKeys.length).toBe(0);
-    });
-  });
-
   describe('@f88/promidas/repository', () => {
     it('should export repository types', async () => {
       const repository = await import('@f88/promidas/repository');
@@ -220,19 +190,26 @@ describe('subpath exports', () => {
     });
   });
 
-  describe('@f88/promidas/repository/types', () => {
-    it('should export type definitions (type-only module)', async () => {
-      const types = await import('@f88/promidas/repository/types');
+  describe('type-only subpath exports', () => {
+    const typeOnlySubpaths = [
+      '@f88/promidas/fetcher/types',
+      '@f88/promidas/store/types',
+      '@f88/promidas/repository/types',
+    ];
 
-      // Note: All exports are type-only
-      // This test verifies the module can be imported without errors
-      // The actual type checking happens at compile time, not runtime
-      expect(types).toBeDefined();
+    it.each(typeOnlySubpaths)(
+      'should export type definitions for %s (type-only module)',
+      async (subpath) => {
+        const types = await import(subpath);
 
-      // Since all exports are type-only, the module should be essentially empty at runtime
-      const runtimeKeys = Object.keys(types);
-      expect(runtimeKeys.length).toBe(0);
-    });
+        // This test verifies the module can be imported without errors
+        expect(types).toBeDefined();
+
+        // Since all exports are type-only, the module should be empty at runtime
+        const runtimeKeys = Object.keys(types);
+        expect(runtimeKeys.length).toBe(0);
+      },
+    );
   });
 
   describe('integration: root vs subpath exports', () => {
