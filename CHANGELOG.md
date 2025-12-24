@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.17.0] - 2025-12-24
+
+### Added
+
+- **Store Result Type Exports**: Added comprehensive Result type exports for store operations (#74)
+    - New `lib/store/types/result.types.ts` module with `SetResult`, `SetSuccess`, `SetFailure` types
+    - Exported `SetResult`, `StoreErrorCode`, `StoreFailureKind` from `@f88/promidas/store`
+    - Enables type-safe Result pattern for consumers who prefer explicit error handling
+    - Complements existing exception-based error handling
+
 ### Documentation
 
 - **Module Design Principles**: Added comprehensive design philosophy to DOCUMENTATION.md
