@@ -107,7 +107,7 @@ PROTOPEDIA_API_V2_TOKEN=your-token-here
 
 ### 3. 最小限のスクリプト
 
-**方法1: Factory関数 (推奨 - 最もシンプル)**
+#### 方法1: Factory関数 (推奨 - 最もシンプル)\*\*
 
 ```typescript
 import { createPromidasForLocal } from '@f88/promidas';
@@ -133,7 +133,7 @@ const completed = allData.filter((p) => p.status === 3); // 3 = '完成'
 console.log(`Completed: ${completed.length}`);
 ```
 
-**方法2: Builder (高度な設定が必要な場合)**
+#### 方法2: Builder (高度な設定が必要な場合)
 
 ```typescript
 import { PromidasRepositoryBuilder } from '@f88/promidas';

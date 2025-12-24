@@ -120,20 +120,20 @@ export PROTOPEDIA_API_V2_TOKEN="your-token-here"
 npm install dotenv
 ```
 
-2. プロジェクトルートに`.env`ファイルを作成:
+1. プロジェクトルートに`.env`ファイルを作成:
 
 ```properties
 PROTOPEDIA_API_V2_TOKEN=your-token-here
 ```
 
-3. **重要**: `.gitignore`に`.env`を追加:
+1. **重要**: `.gitignore`に`.env`を追加:
 
 ```docker
 # .gitignore
 .env
 ```
 
-4. コードの冒頭で読み込み:
+1. コードの冒頭で読み込み:
 
 ```typescript
 import 'dotenv/config';
@@ -145,7 +145,7 @@ import 'dotenv/config';
 
 以下は、ProtoPediaデータを取得して表示する最もシンプルな例です:
 
-**方法1: Factory関数 (推奨 - 初心者向け)**
+#### 方法1: Factory関数 (推奨 - 初心者向け)
 
 ```typescript
 import 'dotenv/config';
@@ -184,7 +184,7 @@ async function main() {
 main().catch(console.error);
 ```
 
-**方法2: Builder (高度な設定が必要な場合)**
+#### 方法2: Builder (高度な設定が必要な場合)
 
 ```typescript
 import 'dotenv/config';
