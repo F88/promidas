@@ -497,6 +497,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
       }
 
       // Type guard: convertedFetchResult is FetchPrototypesSuccess here
+      /* istanbul ignore next */
       if (!('data' in convertedFetchResult)) {
         // This should never happen, but TypeScript needs the check
         throw new Error('Unexpected: success result missing data field');
