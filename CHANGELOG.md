@@ -61,14 +61,13 @@ if (!result.ok) {
 }
 ```
 
-1. Replace `result.error` with `result.message`
-   **Migration Guide**:
+**Migration Guide**:
 
 1. Replace `result.error` with `result.message` for all repository-layer failures
-1. Use `result.origin` to discriminate error types before accessing fields
-1. `result.code` is now always present (type-specific)
-1. `result.status` is only available for `FetcherSnapshotFailure` with HTTP errors
-1. Store errors now include `dataState` instead of embedding it in the message
+2. Use `result.origin` to discriminate error types before accessing fields
+3. `result.code` is now always present (type-specific)
+4. `result.status` is only available for `FetcherSnapshotFailure` with HTTP errors
+5. Store errors now include `dataState` instead of embedding it in the message
 
 ### Added
 
@@ -80,12 +79,39 @@ if (!result.ok) {
     - `UnknownSnapshotFailure`: Fallback for unexpected errors
     - Enables deterministic error handling without message parsing
 
+- **Fetcher Error Code Standardization**: Comprehensive error codes for all fetcher failure scenarios (#71)
+    - HTTP errors: `CLIENT_UNAUTHORIZED`, `CLIENT_FORBIDDEN`, `CLIENT_NOT_FOUND`, `CLIENT_UNPROCESSABLE_ENTITY`, `CLIENT_TOO_MANY_REQUESTS`, `CLIENT_ERROR`, `SERVER_ERROR`
+    - Network errors: `NETWORK_ERROR`, `CORS_ERROR`
+    - Request errors: `TIMEOUT_ERROR`, `ABORT_ERROR`, `UNKNOWN`
+    - All fetcher errors include structured `details` with request/response metadata
+
+- **Store Operation Result Types**: Introduced `StoreOperationResult` for store layer (#72)
+    - `StoreOperationSuccess`: Includes snapshot size and data size in bytes
+    - `StoreOperationFailure`: Discriminated by `origin: 'store'` and `kind` field with `dataState` metadata
+    - `convertStoreResult` utility to convert store results to snapshot results
+
+- **Type Exports**: Snapshot operation types now available via `@f88/promidas/repository` subpath export
+    - `SnapshotOperationResult`, `FetcherSnapshotFailure`, `StoreSnapshotFailure`, `UnknownSnapshotFailure`
+    - Store operation types: `StoreOperationResult`, `StoreErrorCode`, `StoreFailureKind`, `StoreDataState`
+
 ### Changed
 
 - **Repository Error Structure**: Standardized error field names
     - Repository layer uses `message` field (consistent with discriminated union pattern)
     - Fetcher layer maintains `error` field for backward compatibility
     - All error types now include structured metadata for programmatic handling
+
+- **Store Operation Return Type**: `storeSnapshot` now returns `StoreOperationResult` instead of `SnapshotOperationResult`
+    - Establishes clear separation between store and snapshot layers
+    - Store layer no longer depends on snapshot layer types
+    - Repository layer uses `convertStoreResult` to map store results to snapshot results
+
+- **Logging Improvements**: Enhanced diagnostic logging throughout repository layer
+    - Success operations now log at `debug` level with detailed metrics
+    - `fetchAndNormalize`: Logs prototype count and fetch parameters on success
+    - `storeSnapshot`: Logs snapshot size and data size in bytes on success
+    - Removed duplicate failure logs (API client layer already logs failures)
+    - Error-level logging reserved for unexpected exceptions
 
 ### Removed
 
@@ -102,7 +128,8 @@ if (!result.ok) {
 
 ### Documentation
 
-- Nothing yet.
+- Updated TSDoc for error handling and logging behavior in `fetchAndNormalize` and `storeSnapshot`
+- Clarified type export pattern: main export for common types, `@f88/promidas/repository` for detailed error types
 
 ## [0.15.0] - 2025-12-23
 
