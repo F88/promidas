@@ -73,6 +73,7 @@ import { sanitizeDataForLogging } from '../utils/index.js';
 import { ValidationError } from './errors/validation-error.js';
 import { prototypeIdSchema, sampleSizeSchema } from './schemas/validation.js';
 import type {
+  FetcherSnapshotFailure,
   ProtopediaInMemoryRepositoryConfig,
   PrototypeAnalysisResult,
   RepositoryEvents,
@@ -446,9 +447,11 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    * @remarks
    * **Operation Flow**:
    * 1. Fetch and normalize prototypes via {@link fetchAndNormalize}
-   * 2. Convert fetch failures to {@link SnapshotOperationFailure} via {@link convertFetchFailure}
-   * 3. Store the data in memory via {@link storeSnapshot}
-   * 4. Update {@link #lastFetchParams} only if `updateLastFetchParams` is `true` AND storage succeeds
+   * 2. Convert fetch result (both success and failure) via {@link convertFetchResult}
+   * 3. Return early if fetch failed
+   * 4. Store the fetched data in memory via {@link storeSnapshot}
+   * 5. Convert store result via {@link convertStoreResult}
+   * 6. Update {@link #lastFetchParams} only if `updateLastFetchParams` is `true` AND storage succeeds
    *
    * **Parameter Handling**:
    * - Input `params` are merged with {@link DEFAULT_FETCH_PARAMS} by {@link fetchAndNormalize}
@@ -485,14 +488,23 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
       const fetchResult: FetchPrototypesResult =
         await this.fetchAndNormalize(params);
 
-      // Return early on fetch failure, converting to SnapshotOperationFailure
-      if (!fetchResult.ok) {
-        return convertFetchResult(fetchResult);
+      // Convert fetch result (handles both success and failure)
+      const convertedFetchResult = convertFetchResult(fetchResult);
+
+      // Return early on fetch failure
+      if (!convertedFetchResult.ok) {
+        return convertedFetchResult;
+      }
+
+      // Type guard: convertedFetchResult is FetchPrototypesSuccess here
+      if (!('data' in convertedFetchResult)) {
+        // This should never happen, but TypeScript needs the check
+        throw new Error('Unexpected: success result missing data field');
       }
 
       // Store the fetched data
       const storeResult: StoreOperationResult = this.storeSnapshot(
-        fetchResult.data,
+        convertedFetchResult.data,
       );
 
       // Return early on store failure, converting to SnapshotOperationFailure

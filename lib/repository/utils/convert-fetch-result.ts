@@ -51,12 +51,10 @@ import type {
  */
 export function convertFetchResult(
   result: FetchPrototypesResult,
-): SnapshotOperationResult {
+): SnapshotOperationResult | FetchPrototypesSuccess {
   if (result.ok) {
-    // Success case: FetchPrototypesSuccess is not a SnapshotOperationResult,
-    // but the caller (fetchAndStore) will handle the data by calling storeSnapshot.
-    // For type safety, we cast to any here as this is an internal implementation detail.
-    return result as any as SnapshotOperationResult;
+    // Success case: pass through as-is for caller to access data field
+    return result;
   }
 
   const failure: FetcherSnapshotFailure = {
