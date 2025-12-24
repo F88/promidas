@@ -1,7 +1,5 @@
-import type {
-  PrototypeInMemoryStats,
-  StoreDataState,
-} from '../../store/index.js';
+import type { StoreDataState } from '../errors/store-error.js';
+import type { PrototypeInMemoryStats } from '../store.js';
 
 /**
  * Failure kinds specific to store operations.
@@ -23,11 +21,6 @@ export type StoreErrorCode =
   | 'STORE_CAPACITY_EXCEEDED'
   | 'STORE_SERIALIZATION_FAILED'
   | 'STORE_UNKNOWN';
-
-/**
- * Re-export StoreDataState from store module for convenience.
- */
-export type { StoreDataState };
 
 /**
  * Successful result from storeSnapshot operation.
