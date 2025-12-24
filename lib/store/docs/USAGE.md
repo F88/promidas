@@ -281,6 +281,78 @@ try {
 }
 ```
 
+## Result Types
+
+The store module provides Result types for representing `setAll` operation outcomes in a type-safe manner:
+
+```typescript
+import type {
+    SetResult,
+    SetSuccess,
+    SetFailure,
+    StoreErrorCode,
+    StoreFailureKind,
+} from '@f88/promidas/store';
+```
+
+**Note**: `PrototypeInMemoryStore` methods throw exceptions directly. These Result types are provided for consumers who prefer the Result pattern over exception-based error handling.
+
+### Type Definitions
+
+```typescript
+// Success result
+type SetSuccess = {
+    ok: true;
+    stats: PrototypeInMemoryStats;
+};
+
+// Failure result
+type SetFailure = {
+    ok: false;
+    origin: 'store';
+    kind: StoreFailureKind; // 'storage_limit' | 'serialization' | 'unknown'
+    code: StoreErrorCode; // 'STORE_CAPACITY_EXCEEDED' | 'STORE_SERIALIZATION_FAILED' | 'STORE_UNKNOWN'
+    message: string;
+    dataState: StoreDataState; // 'UNCHANGED' | 'CLEARED' | 'UNKNOWN'
+    cause?: unknown;
+};
+
+// Combined result
+type SetResult = SetSuccess | SetFailure;
+```
+
+### Usage Example
+
+```typescript
+import { PrototypeInMemoryStore } from '@f88/promidas/store';
+import type { SetResult } from '@f88/promidas/store';
+
+function wrapSetAll(
+    store: PrototypeInMemoryStore,
+    data: NormalizedPrototype[],
+): SetResult {
+    try {
+        const result = store.setAll(data);
+        return {
+            ok: true,
+            stats: store.getStats(),
+        };
+    } catch (error) {
+        if (error instanceof DataSizeExceededError) {
+            return {
+                ok: false,
+                origin: 'store',
+                kind: 'storage_limit',
+                code: 'STORE_CAPACITY_EXCEEDED',
+                message: error.message,
+                dataState: error.dataState,
+            };
+        }
+        // ... handle other error types
+    }
+}
+```
+
 ## Notes
 
 - The default TTL is 30 minutes.

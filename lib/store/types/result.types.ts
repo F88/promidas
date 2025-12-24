@@ -23,9 +23,9 @@ export type StoreErrorCode =
   | 'STORE_UNKNOWN';
 
 /**
- * Successful result from storeSnapshot operation.
+ * Successful result from setAll operation.
  */
-export type StoreOperationSuccess = {
+export type SetSuccess = {
   /** Indicates successful operation. */
   ok: true;
   /** Statistics about the current snapshot after storing. */
@@ -33,11 +33,11 @@ export type StoreOperationSuccess = {
 };
 
 /**
- * Failed result from storeSnapshot operation.
+ * Failed result from setAll operation.
  *
  * Contains store-specific error information.
  */
-export type StoreOperationFailure = {
+export type SetFailure = {
   /** Indicates failed operation. */
   ok: false;
   /** Always store-originated. */
@@ -55,7 +55,7 @@ export type StoreOperationFailure = {
 };
 
 /**
- * Result from storeSnapshot operation.
+ * Result from setAll operation.
  *
  * Returns either success with stats or failure with store-specific error details.
  * This type maintains symmetry with FetchPrototypesResult at the operation boundary,
@@ -71,6 +71,4 @@ export type StoreOperationFailure = {
  * }
  * ```
  */
-export type StoreOperationResult =
-  | StoreOperationSuccess
-  | StoreOperationFailure;
+export type SetResult = SetSuccess | SetFailure;

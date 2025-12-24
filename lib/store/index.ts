@@ -34,6 +34,14 @@ export {
   type StoreDataState,
 } from './errors/store-error.js';
 
+export type {
+  SetSuccess,
+  SetFailure,
+  SetResult,
+  StoreErrorCode,
+  StoreFailureKind,
+} from './types/index.js';
+
 export type { NormalizedPrototype } from '../types/index.js';
 
 export type { Logger, LogLevel } from '../logger/index.js';
