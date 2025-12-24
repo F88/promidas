@@ -60,6 +60,7 @@ import type { DeepReadonly } from 'ts-essentials';
 import { ProtopediaApiCustomClient } from '../fetcher/index.js';
 import type { FetchPrototypesResult } from '../fetcher/types/result.types.js';
 import { ConsoleLogger, type Logger, type LogLevel } from '../logger/index.js';
+import type { SetResult } from '../store/index.js';
 import {
   DataSizeExceededError,
   PrototypeInMemoryStore,
@@ -80,7 +81,6 @@ import type {
   SnapshotOperationFailure,
   SnapshotOperationResult,
 } from './types/index.js';
-import type { StoreOperationResult } from './types/store-operation-result.types.js';
 import { emitRepositoryEventSafely } from './utils/emit-repository-event-safely.js';
 import { convertFetchResult, convertStoreResult } from './utils/index.js';
 
@@ -330,17 +330,17 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    *
    * This private method handles:
    * - Storing data via the memory store
-   * - Converting store errors to {@link StoreOperationFailure}
+   * - Converting store errors to {@link SetFailure}
    * - Logging detailed operation information with sanitized data
    *
    * @param data - Array of normalized prototypes to store
-   * @returns {@link StoreOperationResult} - Success with stats or failure details
+   * @returns {@link SetResult} - Success with stats or failure details
    *
    * @remarks
    * **Error Handling**:
-   * - {@link DataSizeExceededError} → {@link StoreOperationFailure} with kind='storage_limit'
-   * - {@link SizeEstimationError} → {@link StoreOperationFailure} with kind='serialization'
-   * - Unexpected errors → {@link StoreOperationFailure} with kind='unknown'
+   * - {@link DataSizeExceededError} → {@link SetFailure} with kind='storage_limit'
+   * - {@link SizeEstimationError} → {@link SetFailure} with kind='serialization'
+   * - Unexpected errors → {@link SetFailure} with kind='unknown'
    *
    * All store errors include `dataState` to indicate whether existing data was preserved.
    *
@@ -352,7 +352,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    *
    * @internal
    */
-  private storeSnapshot(data: NormalizedPrototype[]): StoreOperationResult {
+  private storeSnapshot(data: NormalizedPrototype[]): SetResult {
     try {
       this.#store.setAll(data);
 
@@ -504,7 +504,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
       }
 
       // Store the fetched data
-      const storeResult: StoreOperationResult = this.storeSnapshot(
+      const storeResult: SetResult = this.storeSnapshot(
         convertedFetchResult.data,
       );
 

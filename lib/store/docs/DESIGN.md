@@ -256,3 +256,37 @@ throw new SizeEstimationError('UNKNOWN', cause);
 - Know store update hasn't occurred yet
 
 This layered approach keeps pure functions context-free while allowing call sites to provide accurate state information.
+
+## Result Types
+
+The store module provides `SetResult` types for representing `setAll` operation outcomes:
+
+```typescript
+type SetSuccess = {
+    ok: true;
+    stats: PrototypeInMemoryStats;
+};
+
+type SetFailure = {
+    ok: false;
+    origin: 'store';
+    kind: StoreFailureKind;
+    code: StoreErrorCode;
+    message: string;
+    dataState: StoreDataState;
+    cause?: unknown;
+};
+
+type SetResult = SetSuccess | SetFailure;
+```
+
+**Design Decision**: The store implementation itself uses exception-based error handling (`throw`). Result types are provided as an alternative representation for consumers who prefer the Result pattern.
+
+**Rationale**:
+
+- **Separation of Concerns**: The store's internal implementation remains simple with exception-based flow control
+- **Consumer Choice**: Callers can choose between catching exceptions or wrapping operations to return Result types
+- **Type Safety**: Result types provide discriminated unions for type-safe error handling
+- **Compatibility**: Aligns with the Fetcher module's Result pattern (`FetchPrototypesResult`)
+
+See [USAGE.md](USAGE.md#result-types) for usage examples.

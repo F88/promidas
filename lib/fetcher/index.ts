@@ -62,8 +62,10 @@
  * @see {@link ../repository/index.js} for high-level repository integration
  */
 
-// Core Types
+// Core Types (re-exported for convenience)
 export type { NormalizedPrototype } from '../types/index.js';
+
+// Logging
 export type { Logger, LogLevel } from '../logger/index.js';
 
 // API Client
@@ -82,6 +84,9 @@ export type {
   FetchFailureKind,
   FetcherErrorCode,
 } from './types/result.types.js';
+
+// Data Types
 export type { UpstreamPrototype } from './types/prototype-api.types.js';
 
+// Utilities
 export { normalizePrototype } from './utils/normalize-prototype.js';

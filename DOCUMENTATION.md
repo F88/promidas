@@ -22,6 +22,35 @@ This document defines the documentation structure and standards for this project
 
 Each module in this project follows a consistent three-document structure to serve different audiences and purposes. This standardization ensures that documentation is accessible, maintainable, and useful for all stakeholders.
 
+## Module Design Principles
+
+All modules under `lib/` are designed as **standalone, independently usable components**. Each module should:
+
+- **Function independently**: Be usable without requiring the full repository layer or other high-level modules
+- **Provide clear public API**: Export well-defined interfaces through `index.ts`
+- **Include comprehensive documentation**: Enable developers to use the module in isolation
+- **Support subpath exports**: Be importable via package subpath (e.g., `@f88/promidas/store`, `@f88/promidas/fetcher`)
+- **Minimize dependencies**: Depend only on foundational modules (types, logger, utils) when necessary
+
+This design principle allows developers to:
+
+- Use only the specific functionality they need
+- Build custom solutions without adopting the entire framework
+- Integrate modules into different architectures and runtime environments
+
+**Example:**
+
+```typescript
+// Use only the store module
+import { PrototypeInMemoryStore } from '@f88/promidas/store';
+
+// Use only the fetcher module
+import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+
+// Or use the full repository layer
+import { PromidasRepositoryBuilder } from '@f88/promidas';
+```
+
 ## Documentation Structure
 
 Every module under `lib/` should have the following core documentation files:

@@ -1,15 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import type {
-  StoreOperationFailure,
-  StoreOperationResult,
-  StoreOperationSuccess,
-} from '../../types/store-operation-result.types.js';
+import type { SetResult } from '../../../store/index.js';
+import type { SetFailure, SetSuccess } from '../../../store/types/index.js';
 import { convertStoreResult } from '../convert-store-result.js';
 
-const makeStoreSuccess = (
-  overrides?: Partial<StoreOperationSuccess>,
-): StoreOperationSuccess => ({
+const makeStoreSuccess = (overrides?: Partial<SetSuccess>): SetSuccess => ({
   ok: true,
   stats: {
     size: 100,
@@ -22,9 +17,7 @@ const makeStoreSuccess = (
   ...overrides,
 });
 
-const makeStoreFailure = (
-  overrides?: Partial<StoreOperationFailure>,
-): StoreOperationFailure => ({
+const makeStoreFailure = (overrides?: Partial<SetFailure>): SetFailure => ({
   ok: false,
   origin: 'store',
   kind: 'unknown',
@@ -145,8 +138,8 @@ describe('convertStoreResult', () => {
 
   describe('Type discrimination', () => {
     it('should correctly discriminate success vs failure', () => {
-      const successResult: StoreOperationResult = makeStoreSuccess();
-      const failureResult: StoreOperationResult = makeStoreFailure();
+      const successResult: SetResult = makeStoreSuccess();
+      const failureResult: SetResult = makeStoreFailure();
 
       const convertedSuccess = convertStoreResult(successResult);
       const convertedFailure = convertStoreResult(failureResult);

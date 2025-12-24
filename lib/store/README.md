@@ -32,7 +32,12 @@ import {
     PrototypeInMemoryStore,
     type NormalizedPrototype,
 } from '@f88/promidas/store';
+
+// Result型も提供しています
+import type { SetResult, SetSuccess, SetFailure } from '@f88/promidas/store';
 ```
+
+**注意**: `PrototypeInMemoryStore`のメソッド(`setAll`など)は例外をthrowします。`SetResult`型は、Store操作の結果をResult型パターンで扱いたい場合に使用できます。
 
 ## 🚀 簡単な使い方
 

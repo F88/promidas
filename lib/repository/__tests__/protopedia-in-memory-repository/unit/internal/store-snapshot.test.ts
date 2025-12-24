@@ -243,7 +243,7 @@ describe('ProtopediaInMemoryRepositoryImpl - storeSnapshot', () => {
   });
 
   describe('unexpected error handling', () => {
-    it('should return StoreOperationFailure with unknown kind for unexpected Error instances', () => {
+    it('should return SetFailure with unknown kind for unexpected Error instances', () => {
       const error = new Error('Unexpected storage error');
 
       vi.mocked(mockStoreInstance.setAll).mockImplementation(() => {
@@ -267,7 +267,7 @@ describe('ProtopediaInMemoryRepositoryImpl - storeSnapshot', () => {
       expect(result.cause).toBeDefined();
     });
 
-    it('should return StoreOperationFailure with unknown kind for non-Error thrown values', () => {
+    it('should return SetFailure with unknown kind for non-Error thrown values', () => {
       vi.mocked(mockStoreInstance.setAll).mockImplementation(() => {
         throw 'String error message';
       });

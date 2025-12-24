@@ -1,10 +1,10 @@
+import type { SetResult } from '../../store/types/result.types.js';
 import type { SnapshotOperationResult } from '../types/snapshot-operation.types.js';
-import type { StoreOperationResult } from '../types/store-operation-result.types.js';
 
 /**
- * Convert StoreOperationResult to SnapshotOperationResult.
+ * Convert SetResult to SnapshotOperationResult.
  *
- * StoreOperationResult and SnapshotOperationResult are type-compatible,
+ * SetResult and SnapshotOperationResult are type-compatible,
  * so this function simply returns the input result without transformation.
  *
  * @param result - Store operation result to convert
@@ -13,7 +13,7 @@ import type { StoreOperationResult } from '../types/store-operation-result.types
  * @example
  * ```typescript
  * // Success case
- * const storeSuccess: StoreOperationResult = {
+ * const storeSuccess: SetResult = {
  *   ok: true,
  *   stats: { size: 100, cachedAt: new Date(), ... }
  * };
@@ -21,7 +21,7 @@ import type { StoreOperationResult } from '../types/store-operation-result.types
  * // { ok: true, stats: { size: 100, cachedAt: ..., ... } } - same object
  *
  * // Failure case
- * const storeFailure: StoreOperationResult = {
+ * const storeFailure: SetResult = {
  *   ok: false,
  *   origin: 'store',
  *   kind: 'storage_limit',
@@ -33,8 +33,6 @@ import type { StoreOperationResult } from '../types/store-operation-result.types
  * // { ok: false, origin: 'store', kind: 'storage_limit', ... } - same object
  * ```
  */
-export function convertStoreResult(
-  result: StoreOperationResult,
-): SnapshotOperationResult {
+export function convertStoreResult(result: SetResult): SnapshotOperationResult {
   return result;
 }

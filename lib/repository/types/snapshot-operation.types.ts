@@ -4,13 +4,7 @@ import type {
   FetchPrototypesFailure,
 } from '../../fetcher/types/index.js';
 import type { PrototypeInMemoryStats } from '../../store/index.js';
-
-import type {
-  StoreDataState,
-  StoreErrorCode,
-  StoreFailureKind,
-  StoreOperationFailure,
-} from './store-operation-result.types.js';
+import type { SetFailure } from '../../store/types/index.js';
 
 /**
  * Successful response from setupSnapshot or refreshSnapshot operations.
@@ -78,11 +72,11 @@ export type FetcherSnapshotFailure = SnapshotOperationFailureBase & {
 /**
  * Failure from the store layer during snapshot operations.
  *
- * Type alias for StoreOperationFailure when used in snapshot operation context.
+ * Type alias for SetFailure when used in snapshot operation context.
  * Occurs when snapshot data cannot be stored in memory due to size limits
  * or serialization issues.
  */
-export type StoreSnapshotFailure = StoreOperationFailure;
+export type StoreSnapshotFailure = SetFailure;
 
 /**
  * Failed response from setupSnapshot or refreshSnapshot operations.

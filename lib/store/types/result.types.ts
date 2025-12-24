@@ -1,7 +1,5 @@
-import type {
-  PrototypeInMemoryStats,
-  StoreDataState,
-} from '../../store/index.js';
+import type { StoreDataState } from '../errors/store-error.js';
+import type { PrototypeInMemoryStats } from '../store.js';
 
 /**
  * Failure kinds specific to store operations.
@@ -25,14 +23,9 @@ export type StoreErrorCode =
   | 'STORE_UNKNOWN';
 
 /**
- * Re-export StoreDataState from store module for convenience.
+ * Successful result from setAll operation.
  */
-export type { StoreDataState };
-
-/**
- * Successful result from storeSnapshot operation.
- */
-export type StoreOperationSuccess = {
+export type SetSuccess = {
   /** Indicates successful operation. */
   ok: true;
   /** Statistics about the current snapshot after storing. */
@@ -40,11 +33,11 @@ export type StoreOperationSuccess = {
 };
 
 /**
- * Failed result from storeSnapshot operation.
+ * Failed result from setAll operation.
  *
  * Contains store-specific error information.
  */
-export type StoreOperationFailure = {
+export type SetFailure = {
   /** Indicates failed operation. */
   ok: false;
   /** Always store-originated. */
@@ -62,7 +55,7 @@ export type StoreOperationFailure = {
 };
 
 /**
- * Result from storeSnapshot operation.
+ * Result from setAll operation.
  *
  * Returns either success with stats or failure with store-specific error details.
  * This type maintains symmetry with FetchPrototypesResult at the operation boundary,
@@ -78,6 +71,4 @@ export type StoreOperationFailure = {
  * }
  * ```
  */
-export type StoreOperationResult =
-  | StoreOperationSuccess
-  | StoreOperationFailure;
+export type SetResult = SetSuccess | SetFailure;
