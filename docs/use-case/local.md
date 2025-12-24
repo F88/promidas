@@ -107,7 +107,7 @@ PROTOPEDIA_API_V2_TOKEN=your-token-here
 
 ### 3. 最小限のスクリプト
 
-#### 方法1: Factory関数 (推奨 - 最もシンプル)\*\*
+#### 方法1: Factory関数 (推奨 - 最もシンプル)
 
 ```typescript
 import { createPromidasForLocal } from '@f88/promidas';
