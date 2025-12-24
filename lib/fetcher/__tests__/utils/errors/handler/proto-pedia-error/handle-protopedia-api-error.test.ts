@@ -330,4 +330,166 @@ describe('handleProtoPediaApiError', () => {
       }
     });
   });
+
+  describe('non-standard status codes', () => {
+    it('handles 1xx informational status (103 Early Hints) as UNKNOWN', () => {
+      const apiError = new ProtoPediaApiError({
+        message: 'Early hints received',
+        req: {
+          url: 'https://protopedia.cc/api/prototypes',
+          method: 'GET',
+        },
+        status: 103,
+        statusText: 'Early Hints',
+      });
+
+      const result = handleProtoPediaApiError(apiError);
+
+      expect(result).toEqual({
+        ok: false,
+        origin: 'fetcher',
+        kind: 'http',
+        code: 'UNKNOWN',
+        status: 103,
+        error: 'Early hints received',
+        details: {
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+            method: 'GET',
+          },
+          res: {
+            statusText: 'Early Hints',
+          },
+        },
+      });
+    });
+
+    it('handles 2xx success status (201 Created) as UNKNOWN', () => {
+      const apiError = new ProtoPediaApiError({
+        message: 'Created but treated as error',
+        req: {
+          url: 'https://protopedia.cc/api/prototypes',
+          method: 'POST',
+        },
+        status: 201,
+        statusText: 'Created',
+      });
+
+      const result = handleProtoPediaApiError(apiError);
+
+      expect(result).toEqual({
+        ok: false,
+        origin: 'fetcher',
+        kind: 'http',
+        code: 'UNKNOWN',
+        status: 201,
+        error: 'Created but treated as error',
+        details: {
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+            method: 'POST',
+          },
+          res: {
+            statusText: 'Created',
+          },
+        },
+      });
+    });
+
+    it('handles 3xx redirect status (301 Moved Permanently) as UNKNOWN', () => {
+      const apiError = new ProtoPediaApiError({
+        message: 'Unexpected redirect',
+        req: {
+          url: 'https://protopedia.cc/api/prototypes',
+          method: 'GET',
+        },
+        status: 301,
+        statusText: 'Moved Permanently',
+      });
+
+      const result = handleProtoPediaApiError(apiError);
+
+      expect(result).toEqual({
+        ok: false,
+        origin: 'fetcher',
+        kind: 'http',
+        code: 'UNKNOWN',
+        status: 301,
+        error: 'Unexpected redirect',
+        details: {
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+            method: 'GET',
+          },
+          res: {
+            statusText: 'Moved Permanently',
+          },
+        },
+      });
+    });
+
+    it('handles 6xx non-standard status (600) as UNKNOWN', () => {
+      const apiError = new ProtoPediaApiError({
+        message: 'Non-standard status code',
+        req: {
+          url: 'https://protopedia.cc/api/prototypes',
+          method: 'GET',
+        },
+        status: 600,
+        statusText: 'Non-standard',
+      });
+
+      const result = handleProtoPediaApiError(apiError);
+
+      expect(result).toEqual({
+        ok: false,
+        origin: 'fetcher',
+        kind: 'http',
+        code: 'UNKNOWN',
+        status: 600,
+        error: 'Non-standard status code',
+        details: {
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+            method: 'GET',
+          },
+          res: {
+            statusText: 'Non-standard',
+          },
+        },
+      });
+    });
+
+    it('handles 999 status code as UNKNOWN', () => {
+      const apiError = new ProtoPediaApiError({
+        message: 'Very high status code',
+        req: {
+          url: 'https://protopedia.cc/api/prototypes',
+          method: 'GET',
+        },
+        status: 999,
+        statusText: 'Unknown',
+      });
+
+      const result = handleProtoPediaApiError(apiError);
+
+      expect(result).toEqual({
+        ok: false,
+        origin: 'fetcher',
+        kind: 'http',
+        code: 'UNKNOWN',
+        status: 999,
+        error: 'Very high status code',
+        details: {
+          req: {
+            url: 'https://protopedia.cc/api/prototypes',
+            method: 'GET',
+          },
+          res: {
+            statusText: 'Unknown',
+          },
+        },
+      });
+    });
+  });
 });

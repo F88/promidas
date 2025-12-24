@@ -146,7 +146,7 @@ function mapHttpStatusToCode(status: number | undefined): FetcherErrorCode {
     return mapped;
   }
 
-  if (status >= 500) return 'SERVER_ERROR';
+  if (status >= 500 && status < 600) return 'SERVER_ERROR';
   if (status >= 400 && status < 500) return 'CLIENT_ERROR';
   return 'UNKNOWN';
 }
