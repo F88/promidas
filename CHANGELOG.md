@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.0] - 2025-12-24
+
 ### Added
 
 - **Subpath Exports for Type Modules**: Added `/types` subpath exports for better type definition access (#75)
