@@ -29,5 +29,6 @@ tools/prompts/*
 
 # Temporary ignore files
 # lib/fetcher/__tests__/api-client-factory.test.ts
+# lib/fetcher/__tests__/client/fetch-with-progress/fetch-with-progress.test.ts
 # lib/repository/__tests__/protopedia-in-memory-repository/
-lib/fetcher/__tests__/client/fetch-with-progress/fetch-with-progress.test.ts
+# lib/repository/protopedia-in-memory-repository.ts
