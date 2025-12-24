@@ -286,12 +286,11 @@ try {
 The store module provides Result types for representing `setAll` operation outcomes in a type-safe manner:
 
 ```typescript
-import type {
-    SetResult,
-    SetSuccess,
-    SetFailure,
-    StoreErrorCode,
-    StoreFailureKind,
+import {
+    PrototypeInMemoryStore,
+    DataSizeExceededError,
+    SizeEstimationError,
+    type SetResult,
 } from '@f88/promidas/store';
 ```
 
@@ -324,15 +323,12 @@ type SetResult = SetSuccess | SetFailure;
 ### Usage Example
 
 ```typescript
-import { PrototypeInMemoryStore } from '@f88/promidas/store';
-import type { SetResult } from '@f88/promidas/store';
-
 function wrapSetAll(
     store: PrototypeInMemoryStore,
     data: NormalizedPrototype[],
 ): SetResult {
     try {
-        const result = store.setAll(data);
+        store.setAll(data);
         return {
             ok: true,
             stats: store.getStats(),
@@ -346,9 +342,30 @@ function wrapSetAll(
                 code: 'STORE_CAPACITY_EXCEEDED',
                 message: error.message,
                 dataState: error.dataState,
+                cause: error,
             };
         }
-        // ... handle other error types
+        if (error instanceof SizeEstimationError) {
+            return {
+                ok: false,
+                origin: 'store',
+                kind: 'serialization',
+                code: 'STORE_SERIALIZATION_FAILED',
+                message: error.message,
+                dataState: error.dataState,
+                cause: error,
+            };
+        }
+        // Fallback for unexpected errors
+        return {
+            ok: false,
+            origin: 'store',
+            kind: 'unknown',
+            code: 'STORE_UNKNOWN',
+            message: error instanceof Error ? error.message : String(error),
+            dataState: 'UNKNOWN',
+            cause: error,
+        };
     }
 }
 ```
