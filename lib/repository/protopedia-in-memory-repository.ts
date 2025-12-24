@@ -81,7 +81,7 @@ import type {
 } from './types/index.js';
 import type { StoreOperationResult } from './types/store-operation-result.types.js';
 import { emitRepositoryEventSafely } from './utils/emit-repository-event-safely.js';
-import { convertFetchFailure, convertStoreResult } from './utils/index.js';
+import { convertFetchResult, convertStoreResult } from './utils/index.js';
 
 import type { ProtopediaInMemoryRepository } from './index.js';
 
@@ -487,7 +487,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
 
       // Return early on fetch failure, converting to SnapshotOperationFailure
       if (!fetchResult.ok) {
-        return convertFetchFailure(fetchResult);
+        return convertFetchResult(fetchResult);
       }
 
       // Store the fetched data

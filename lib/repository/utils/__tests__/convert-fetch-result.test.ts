@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import type { FetchPrototypesFailure } from '../../../fetcher/types/result.types.js';
-import { convertFetchFailure } from '../convert-fetch-failure.js';
+import type {
+  FetchPrototypesFailure,
+  FetchPrototypesSuccess,
+} from '../../../fetcher/types/result.types.js';
+import { convertFetchResult } from '../convert-fetch-result.js';
 
 const baseFailureFields: Pick<
   FetchPrototypesFailure,
@@ -21,16 +24,65 @@ const makeFetchFailure = (
   ...overrides,
 });
 
-describe('convertFetchFailure', () => {
-  describe('Basic conversion', () => {
+describe('convertFetchResult', () => {
+  describe('Success case', () => {
+    it('should pass through success result without modification', () => {
+      const fetchSuccess: FetchPrototypesSuccess = {
+        ok: true,
+        data: [
+          {
+            id: 1,
+            prototypeNm: 'Test',
+            mainUrl: 'http://test.com',
+            createDate: '2025-01-01T00:00:00.000Z',
+            releaseFlg: 1,
+            status: 1,
+            summary: '',
+            freeComment: '',
+            systemDescription: '',
+            users: [],
+            teamNm: '',
+            tags: [],
+            materials: [],
+            events: [],
+            awards: [],
+            viewCount: 0,
+            goodCount: 0,
+            commentCount: 0,
+          },
+        ],
+      };
+
+      const result = convertFetchResult(fetchSuccess);
+
+      expect(result).toBe(fetchSuccess); // Same object reference
+      expect(result).toStrictEqual(fetchSuccess);
+    });
+
+    it('should preserve ok: true property', () => {
+      const fetchSuccess: FetchPrototypesSuccess = {
+        ok: true,
+        data: [],
+      };
+
+      const result = convertFetchResult(fetchSuccess);
+
+      expect(result.ok).toBe(true);
+    });
+  });
+
+  describe('Failure case - Basic conversion', () => {
     it('should convert error with only error message', () => {
       const fetchFailure = makeFetchFailure({
         error: 'Network error',
         details: {},
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
+      if (result.ok || result.origin !== 'fetcher') {
+        expect.fail('Expected failure result');
+      }
       expect(result).toStrictEqual({
         ok: false,
         origin: 'fetcher',
@@ -47,7 +99,7 @@ describe('convertFetchFailure', () => {
         details: {},
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
       expect(result.ok).toBe(false);
     });
@@ -71,7 +123,7 @@ describe('convertFetchFailure', () => {
         JSON.stringify(fetchFailure),
       ) as FetchPrototypesFailure;
 
-      convertFetchFailure(fetchFailure);
+      convertFetchResult(fetchFailure);
 
       expect(fetchFailure).toStrictEqual(original);
     });
@@ -86,7 +138,7 @@ describe('convertFetchFailure', () => {
         },
       });
 
-      convertFetchFailure(fetchFailure);
+      convertFetchResult(fetchFailure);
 
       expect(fetchFailure.details).toStrictEqual({
         res: {
@@ -104,8 +156,11 @@ describe('convertFetchFailure', () => {
         details: {},
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
+      if (result.ok || result.origin !== 'fetcher') {
+        expect.fail('Expected failure result');
+      }
       expect(result).toStrictEqual({
         ok: false,
         origin: 'fetcher',
@@ -133,8 +188,11 @@ describe('convertFetchFailure', () => {
           details: {},
         });
 
-        const result = convertFetchFailure(fetchFailure);
+        const result = convertFetchResult(fetchFailure);
 
+        if (result.ok || result.origin !== 'fetcher') {
+          expect.fail('Expected failure result');
+        }
         expect(result.status).toBe(testCase.status);
       }
     });
@@ -145,7 +203,7 @@ describe('convertFetchFailure', () => {
         details: {},
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
       expect(result).not.toHaveProperty('status');
     });
@@ -165,8 +223,11 @@ describe('convertFetchFailure', () => {
         },
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
+      if (result.ok || result.origin !== 'fetcher') {
+        expect.fail('Expected failure result');
+      }
       expect(result.kind).toBe('http');
       expect(result.code).toBe('CLIENT_NOT_FOUND');
     });
@@ -188,8 +249,11 @@ describe('convertFetchFailure', () => {
           details: {},
         });
 
-        const result = convertFetchFailure(fetchFailure);
+        const result = convertFetchResult(fetchFailure);
 
+        if (result.ok || result.origin !== 'fetcher') {
+          expect.fail('Expected failure result');
+        }
         expect(result.kind).toBe(kind);
       }
     });
@@ -226,8 +290,11 @@ describe('convertFetchFailure', () => {
           details: {},
         });
 
-        const result = convertFetchFailure(fetchFailure);
+        const result = convertFetchResult(fetchFailure);
 
+        if (result.ok || result.origin !== 'fetcher') {
+          expect.fail('Expected failure result');
+        }
         expect(result.code).toBe(code);
       }
     });
@@ -248,7 +315,7 @@ describe('convertFetchFailure', () => {
         },
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
       expect(result).toStrictEqual({
         ok: false,
@@ -284,7 +351,7 @@ describe('convertFetchFailure', () => {
         },
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
       expect(result).toStrictEqual({
         ok: false,
@@ -324,8 +391,11 @@ describe('convertFetchFailure', () => {
         },
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
+      if (result.ok || result.origin !== 'fetcher') {
+        expect.fail('Expected failure result');
+      }
       expect(result.details).toStrictEqual({
         req: {
           method: 'POST',
@@ -344,7 +414,7 @@ describe('convertFetchFailure', () => {
         details: {},
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
       expect(result).toStrictEqual({
         ok: false,
@@ -367,8 +437,11 @@ describe('convertFetchFailure', () => {
         },
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
+      if (result.ok || result.origin !== 'fetcher') {
+        expect.fail('Expected failure result');
+      }
       expect(result.details).toStrictEqual({
         req: {
           method: 'GET',
@@ -389,7 +462,7 @@ describe('convertFetchFailure', () => {
         },
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
       expect(result).toStrictEqual({
         ok: false,
@@ -416,8 +489,11 @@ describe('convertFetchFailure', () => {
         details: {},
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
+      if (result.ok || result.origin !== 'fetcher') {
+        expect.fail('Expected failure result');
+      }
       expect(result.status).toBe(0);
     });
 
@@ -427,8 +503,11 @@ describe('convertFetchFailure', () => {
         details: {},
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
+      if (result.ok || result.origin !== 'fetcher') {
+        expect.fail('Expected failure result');
+      }
       expect(result.message).toBe('');
     });
 
@@ -442,8 +521,11 @@ describe('convertFetchFailure', () => {
         },
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
+      if (result.ok || result.origin !== 'fetcher') {
+        expect.fail('Expected failure result');
+      }
       expect(result.details).toStrictEqual({
         res: {
           code: '',
@@ -458,8 +540,11 @@ describe('convertFetchFailure', () => {
         details: {},
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
+      if (result.ok || result.origin !== 'fetcher') {
+        expect.fail('Expected failure result');
+      }
       expect(result.message).toBe(longError);
       expect(result.message.length).toBe(1000);
     });
@@ -471,8 +556,11 @@ describe('convertFetchFailure', () => {
         details: {},
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
+      if (result.ok || result.origin !== 'fetcher') {
+        expect.fail('Expected failure result');
+      }
       expect(result.message).toBe(
         'Error: Connection failed\nCause: ECONNREFUSED\t(127.0.0.1:8080)',
       );
@@ -484,8 +572,11 @@ describe('convertFetchFailure', () => {
         details: {},
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
+      if (result.ok || result.origin !== 'fetcher') {
+        expect.fail('Expected failure result');
+      }
       expect(result.message).toBe('エラーが発生しました: 接続失敗 🚫');
     });
 
@@ -496,8 +587,11 @@ describe('convertFetchFailure', () => {
         details: {},
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
+      if (result.ok || result.origin !== 'fetcher') {
+        expect.fail('Expected failure result');
+      }
       expect(result.status).toBe(-1);
     });
 
@@ -508,8 +602,11 @@ describe('convertFetchFailure', () => {
         details: {},
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
+      if (result.ok || result.origin !== 'fetcher') {
+        expect.fail('Expected failure result');
+      }
       expect(result.status).toBe(999);
     });
   });
@@ -528,9 +625,12 @@ describe('convertFetchFailure', () => {
         },
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
       // Type assertions to verify the return type matches FetcherSnapshotFailure
+      if (result.ok || result.origin !== 'fetcher') {
+        expect.fail('Expected fetcher failure result');
+      }
       expect(result).toHaveProperty('ok');
       expect(result).toHaveProperty('message');
       expect(result).toHaveProperty('origin');
@@ -567,7 +667,7 @@ describe('convertFetchFailure', () => {
         },
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
       expect(result).toStrictEqual({
         ok: false,
@@ -601,7 +701,7 @@ describe('convertFetchFailure', () => {
         },
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
       expect(result).toStrictEqual({
         ok: false,
@@ -629,7 +729,7 @@ describe('convertFetchFailure', () => {
         },
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
       expect(result).toStrictEqual({
         ok: false,
@@ -663,7 +763,7 @@ describe('convertFetchFailure', () => {
         },
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
       expect(result).toStrictEqual({
         ok: false,
@@ -703,7 +803,7 @@ describe('convertFetchFailure', () => {
         },
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
       expect(result).toStrictEqual({
         ok: false,
@@ -737,7 +837,7 @@ describe('convertFetchFailure', () => {
         },
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
       expect(result).toStrictEqual({
         ok: false,
@@ -765,7 +865,7 @@ describe('convertFetchFailure', () => {
         },
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
       expect(result).toStrictEqual({
         ok: false,
@@ -789,7 +889,7 @@ describe('convertFetchFailure', () => {
         details: {},
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
       expect(result).toStrictEqual({
         ok: false,
@@ -809,7 +909,7 @@ describe('convertFetchFailure', () => {
         details: {},
       });
 
-      const result = convertFetchFailure(fetchFailure);
+      const result = convertFetchResult(fetchFailure);
 
       expect(result).toStrictEqual({
         ok: false,

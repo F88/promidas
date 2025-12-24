@@ -1,18 +1,14 @@
-import type {
-  SnapshotOperationResult,
-  SnapshotOperationSuccess,
-  StoreSnapshotFailure,
-} from '../types/snapshot-operation.types.js';
+import type { SnapshotOperationResult } from '../types/snapshot-operation.types.js';
 import type { StoreOperationResult } from '../types/store-operation-result.types.js';
 
 /**
  * Convert StoreOperationResult to SnapshotOperationResult.
  *
- * Maps store operation results to snapshot operation results, preserving
- * all success stats or error information for use in the repository layer.
+ * StoreOperationResult and SnapshotOperationResult are type-compatible,
+ * so this function simply returns the input result without transformation.
  *
  * @param result - Store operation result to convert
- * @returns Snapshot operation result with success stats or error information
+ * @returns Snapshot operation result (same as input)
  *
  * @example
  * ```typescript
@@ -22,7 +18,7 @@ import type { StoreOperationResult } from '../types/store-operation-result.types
  *   stats: { size: 100, cachedAt: new Date(), ... }
  * };
  * const snapshotResult = convertStoreResult(storeSuccess);
- * // { ok: true, stats: { size: 100, cachedAt: ..., ... } }
+ * // { ok: true, stats: { size: 100, cachedAt: ..., ... } } - same object
  *
  * // Failure case
  * const storeFailure: StoreOperationResult = {
@@ -34,28 +30,11 @@ import type { StoreOperationResult } from '../types/store-operation-result.types
  *   dataState: 'UNCHANGED'
  * };
  * const snapshotFailure = convertStoreResult(storeFailure);
- * // { ok: false, origin: 'store', kind: 'storage_limit', ... }
+ * // { ok: false, origin: 'store', kind: 'storage_limit', ... } - same object
  * ```
  */
 export function convertStoreResult(
   result: StoreOperationResult,
 ): SnapshotOperationResult {
-  if (result.ok) {
-    const success: SnapshotOperationSuccess = {
-      ok: true,
-      stats: result.stats,
-    };
-    return success;
-  }
-
-  const failure: StoreSnapshotFailure = {
-    ok: false,
-    origin: 'store',
-    kind: result.kind,
-    code: result.code,
-    message: result.message,
-    dataState: result.dataState,
-    ...(result.cause !== undefined && { cause: result.cause }),
-  };
-  return failure;
+  return result;
 }

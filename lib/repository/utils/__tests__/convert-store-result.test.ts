@@ -35,23 +35,14 @@ const makeStoreFailure = (
 });
 
 describe('convertStoreResult', () => {
-  describe('Success conversion', () => {
-    it('should convert success result with stats', () => {
+  describe('Success case', () => {
+    it('should pass through success result without modification', () => {
       const storeSuccess = makeStoreSuccess();
 
       const result = convertStoreResult(storeSuccess);
 
-      expect(result).toStrictEqual({
-        ok: true,
-        stats: {
-          size: 100,
-          cachedAt: new Date('2025-12-24T00:00:00.000Z'),
-          isExpired: false,
-          remainingTtlMs: 3600000,
-          dataSizeBytes: 1024,
-          refreshInFlight: false,
-        },
-      });
+      expect(result).toBe(storeSuccess); // Same object reference
+      expect(result).toStrictEqual(storeSuccess);
     });
 
     it('should preserve ok: true property', () => {
@@ -76,6 +67,7 @@ describe('convertStoreResult', () => {
 
       const result = convertStoreResult(storeSuccess);
 
+      expect(result).toBe(storeSuccess);
       expect(result).toMatchObject({
         ok: true,
         stats: {
@@ -88,31 +80,10 @@ describe('convertStoreResult', () => {
         },
       });
     });
-
-    it('should not mutate the input object', () => {
-      const storeSuccess = makeStoreSuccess();
-      const original = JSON.parse(
-        JSON.stringify(storeSuccess, (_, value) => {
-          if (value instanceof Date) return value.toISOString();
-          return value;
-        }),
-      );
-
-      convertStoreResult(storeSuccess);
-
-      expect(
-        JSON.parse(
-          JSON.stringify(storeSuccess, (_, value) => {
-            if (value instanceof Date) return value.toISOString();
-            return value;
-          }),
-        ),
-      ).toStrictEqual(original);
-    });
   });
 
-  describe('Failure conversion', () => {
-    it('should convert failure with all required fields', () => {
+  describe('Failure case', () => {
+    it('should pass through failure result without modification', () => {
       const storeFailure = makeStoreFailure({
         kind: 'storage_limit',
         code: 'STORE_CAPACITY_EXCEEDED',
@@ -122,14 +93,8 @@ describe('convertStoreResult', () => {
 
       const result = convertStoreResult(storeFailure);
 
-      expect(result).toStrictEqual({
-        ok: false,
-        origin: 'store',
-        kind: 'storage_limit',
-        code: 'STORE_CAPACITY_EXCEEDED',
-        message: 'Data size 15000 bytes exceeds maximum 10000 bytes',
-        dataState: 'UNCHANGED',
-      });
+      expect(result).toBe(storeFailure); // Same object reference
+      expect(result).toStrictEqual(storeFailure);
     });
 
     it('should preserve ok: false property', () => {
@@ -140,7 +105,7 @@ describe('convertStoreResult', () => {
       expect(result.ok).toBe(false);
     });
 
-    it('should include cause when present', () => {
+    it('should preserve cause when present', () => {
       const cause = new Error('Serialization error');
       const storeFailure = makeStoreFailure({
         kind: 'serialization',
@@ -152,18 +117,11 @@ describe('convertStoreResult', () => {
 
       const result = convertStoreResult(storeFailure);
 
-      expect(result).toStrictEqual({
-        ok: false,
-        origin: 'store',
-        kind: 'serialization',
-        code: 'STORE_SERIALIZATION_FAILED',
-        message: 'Failed to estimate data size during serialization',
-        dataState: 'UNCHANGED',
-        cause,
-      });
+      expect(result).toBe(storeFailure);
+      expect(result).toStrictEqual(storeFailure);
     });
 
-    it('should omit cause when undefined', () => {
+    it('should preserve all failure fields', () => {
       const storeFailure = makeStoreFailure({
         kind: 'storage_limit',
         code: 'STORE_CAPACITY_EXCEEDED',
@@ -173,107 +131,14 @@ describe('convertStoreResult', () => {
 
       const result = convertStoreResult(storeFailure);
 
-      expect(result).not.toHaveProperty('cause');
-    });
-
-    it('should not mutate the input object', () => {
-      const storeFailure = makeStoreFailure({
+      expect(result).toBe(storeFailure);
+      expect(result).toMatchObject({
+        ok: false,
+        origin: 'store',
         kind: 'storage_limit',
         code: 'STORE_CAPACITY_EXCEEDED',
         message: 'Capacity exceeded',
         dataState: 'UNCHANGED',
-      });
-      const original = JSON.parse(
-        JSON.stringify(storeFailure),
-      ) as StoreOperationFailure;
-
-      convertStoreResult(storeFailure);
-
-      expect(storeFailure).toStrictEqual(original);
-    });
-  });
-
-  describe('Different failure kinds', () => {
-    it('should handle storage_limit failure', () => {
-      const storeFailure = makeStoreFailure({
-        kind: 'storage_limit',
-        code: 'STORE_CAPACITY_EXCEEDED',
-        message: 'Data size exceeds limit',
-        dataState: 'UNCHANGED',
-      });
-
-      const result = convertStoreResult(storeFailure);
-
-      expect(result).toMatchObject({
-        ok: false,
-        origin: 'store',
-        kind: 'storage_limit',
-        code: 'STORE_CAPACITY_EXCEEDED',
-      });
-    });
-
-    it('should handle serialization failure', () => {
-      const storeFailure = makeStoreFailure({
-        kind: 'serialization',
-        code: 'STORE_SERIALIZATION_FAILED',
-        message: 'Serialization failed',
-        dataState: 'UNCHANGED',
-        cause: { type: 'TypeError' },
-      });
-
-      const result = convertStoreResult(storeFailure);
-
-      expect(result).toMatchObject({
-        ok: false,
-        origin: 'store',
-        kind: 'serialization',
-        code: 'STORE_SERIALIZATION_FAILED',
-        cause: { type: 'TypeError' },
-      });
-    });
-
-    it('should handle unknown failure', () => {
-      const storeFailure = makeStoreFailure({
-        kind: 'unknown',
-        code: 'STORE_UNKNOWN',
-        message: 'Unexpected error',
-        dataState: 'UNKNOWN',
-      });
-
-      const result = convertStoreResult(storeFailure);
-
-      expect(result).toMatchObject({
-        ok: false,
-        origin: 'store',
-        kind: 'unknown',
-        code: 'STORE_UNKNOWN',
-        dataState: 'UNKNOWN',
-      });
-    });
-  });
-
-  describe('Data state handling', () => {
-    it('should preserve UNCHANGED data state', () => {
-      const storeFailure = makeStoreFailure({
-        dataState: 'UNCHANGED',
-      });
-
-      const result = convertStoreResult(storeFailure);
-
-      expect(result).toMatchObject({
-        dataState: 'UNCHANGED',
-      });
-    });
-
-    it('should preserve UNKNOWN data state', () => {
-      const storeFailure = makeStoreFailure({
-        dataState: 'UNKNOWN',
-      });
-
-      const result = convertStoreResult(storeFailure);
-
-      expect(result).toMatchObject({
-        dataState: 'UNKNOWN',
       });
     });
   });
