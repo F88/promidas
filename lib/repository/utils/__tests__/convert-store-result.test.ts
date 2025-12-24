@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type {
-  SetFailure,
-  SetResult,
-  SetSuccess,
-} from '../../../store/index.js';
+import type { SetResult } from '../../../store/index.js';
+import type { SetFailure, SetSuccess } from '../../../store/types/index.js';
 import { convertStoreResult } from '../convert-store-result.js';
 
 const makeStoreSuccess = (overrides?: Partial<SetSuccess>): SetSuccess => ({

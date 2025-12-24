@@ -3,13 +3,8 @@ import type {
   FetchFailureKind,
   FetchPrototypesFailure,
 } from '../../fetcher/types/index.js';
-import type {
-  PrototypeInMemoryStats,
-  SetFailure,
-  StoreDataState,
-  StoreErrorCode,
-  StoreFailureKind,
-} from '../../store/index.js';
+import type { PrototypeInMemoryStats } from '../../store/index.js';
+import type { SetFailure } from '../../store/types/index.js';
 
 /**
  * Successful response from setupSnapshot or refreshSnapshot operations.
