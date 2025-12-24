@@ -4,7 +4,7 @@ import type {
   SetFailure,
   SetResult,
   SetSuccess,
-} from '../../../store/types/result.types.js';
+} from '../../../store/index.js';
 import { convertStoreResult } from '../convert-store-result.js';
 
 const makeStoreSuccess = (overrides?: Partial<SetSuccess>): SetSuccess => ({

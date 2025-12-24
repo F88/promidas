@@ -60,6 +60,7 @@ import type { DeepReadonly } from 'ts-essentials';
 import { ProtopediaApiCustomClient } from '../fetcher/index.js';
 import type { FetchPrototypesResult } from '../fetcher/types/result.types.js';
 import { ConsoleLogger, type Logger, type LogLevel } from '../logger/index.js';
+import type { SetResult } from '../store/index.js';
 import {
   DataSizeExceededError,
   PrototypeInMemoryStore,
@@ -80,7 +81,6 @@ import type {
   SnapshotOperationFailure,
   SnapshotOperationResult,
 } from './types/index.js';
-import type { StoreOperationResult } from './types/store-operation-result.types.js';
 import { emitRepositoryEventSafely } from './utils/emit-repository-event-safely.js';
 import { convertFetchResult, convertStoreResult } from './utils/index.js';
 
@@ -334,7 +334,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    * - Logging detailed operation information with sanitized data
    *
    * @param data - Array of normalized prototypes to store
-   * @returns {@link StoreOperationResult} - Success with stats or failure details
+   * @returns {@link SetResult} - Success with stats or failure details
    *
    * @remarks
    * **Error Handling**:
@@ -352,7 +352,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    *
    * @internal
    */
-  private storeSnapshot(data: NormalizedPrototype[]): StoreOperationResult {
+  private storeSnapshot(data: NormalizedPrototype[]): SetResult {
     try {
       this.#store.setAll(data);
 
@@ -504,7 +504,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
       }
 
       // Store the fetched data
-      const storeResult: StoreOperationResult = this.storeSnapshot(
+      const storeResult: SetResult = this.storeSnapshot(
         convertedFetchResult.data,
       );
 
