@@ -243,7 +243,7 @@ describe('ProtopediaInMemoryRepositoryImpl - storeSnapshot', () => {
   });
 
   describe('unexpected error handling', () => {
-    it('should return UnknownSnapshotFailure for unexpected Error instances', () => {
+    it('should return StoreOperationFailure with unknown kind for unexpected Error instances', () => {
       const error = new Error('Unexpected storage error');
 
       vi.mocked(mockStoreInstance.setAll).mockImplementation(() => {
@@ -258,14 +258,16 @@ describe('ProtopediaInMemoryRepositoryImpl - storeSnapshot', () => {
       const testData = [makeNormalizedPrototype({ id: 1 })];
       const result = (repo as any).storeSnapshot(testData);
 
-      expect(result).toEqual({
-        ok: false,
-        origin: 'unknown',
-        message: 'Unexpected storage error',
-      });
+      expect(result.ok).toBe(false);
+      expect(result.origin).toBe('store');
+      expect(result.kind).toBe('unknown');
+      expect(result.code).toBe('STORE_UNKNOWN');
+      expect(result.message).toBe('Unexpected storage error');
+      expect(result.dataState).toBe('UNKNOWN');
+      expect(result.cause).toBeDefined();
     });
 
-    it('should return UnknownSnapshotFailure for non-Error thrown values', () => {
+    it('should return StoreOperationFailure with unknown kind for non-Error thrown values', () => {
       vi.mocked(mockStoreInstance.setAll).mockImplementation(() => {
         throw 'String error message';
       });
@@ -278,11 +280,13 @@ describe('ProtopediaInMemoryRepositoryImpl - storeSnapshot', () => {
       const testData = [makeNormalizedPrototype({ id: 1 })];
       const result = (repo as any).storeSnapshot(testData);
 
-      expect(result).toEqual({
-        ok: false,
-        origin: 'unknown',
-        message: 'String error message',
-      });
+      expect(result.ok).toBe(false);
+      expect(result.origin).toBe('store');
+      expect(result.kind).toBe('unknown');
+      expect(result.code).toBe('STORE_UNKNOWN');
+      expect(result.message).toBe('String error message');
+      expect(result.dataState).toBe('UNKNOWN');
+      expect(result.cause).toBe('String error message');
     });
 
     it('should handle null/undefined thrown values', () => {
@@ -298,11 +302,13 @@ describe('ProtopediaInMemoryRepositoryImpl - storeSnapshot', () => {
       const testData = [makeNormalizedPrototype({ id: 1 })];
       const result = (repo as any).storeSnapshot(testData);
 
-      expect(result).toEqual({
-        ok: false,
-        origin: 'unknown',
-        message: 'null',
-      });
+      expect(result.ok).toBe(false);
+      expect(result.origin).toBe('store');
+      expect(result.kind).toBe('unknown');
+      expect(result.code).toBe('STORE_UNKNOWN');
+      expect(result.message).toBe('null');
+      expect(result.dataState).toBe('UNKNOWN');
+      expect(result.cause).toBe(null);
     });
   });
 });

@@ -255,7 +255,9 @@ describe('ProtopediaInMemoryRepositoryImpl - fetchAndStore', () => {
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.origin).toBe('unknown');
+        expect(result.origin).toBe('store');
+        expect(result.kind).toBe('unknown');
+        expect(result.code).toBe('STORE_UNKNOWN');
         expect(result.message).toBe('Store threw');
       }
     });

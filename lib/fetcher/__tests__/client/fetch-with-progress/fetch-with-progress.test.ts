@@ -455,7 +455,9 @@ describe('createFetchWithProgress', () => {
         enableProgressLog: true,
       });
 
-      const response = await customFetch('https://api.example.com/data?limit=2');
+      const response = await customFetch(
+        'https://api.example.com/data?limit=2',
+      );
       expect(response.status).toBe(204);
 
       expect(stderrSpy).toHaveBeenCalledWith(

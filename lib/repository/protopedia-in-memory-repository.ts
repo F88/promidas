@@ -54,10 +54,7 @@
  */
 import { EventEmitter } from 'events';
 
-import type {
-  ListPrototypesParams,
-  ProtoPediaApiClientOptions,
-} from 'protopedia-api-v2-client';
+import type { ListPrototypesParams } from 'protopedia-api-v2-client';
 import type { DeepReadonly } from 'ts-essentials';
 
 import { ProtopediaApiCustomClient } from '../fetcher/index.js';
@@ -82,8 +79,9 @@ import type {
   SnapshotOperationFailure,
   SnapshotOperationResult,
 } from './types/index.js';
+import type { StoreOperationResult } from './types/store-operation-result.types.js';
 import { emitRepositoryEventSafely } from './utils/emit-repository-event-safely.js';
-import { convertFetchFailure } from './utils/index.js';
+import { convertFetchFailure, convertStoreResult } from './utils/index.js';
 
 import type { ProtopediaInMemoryRepository } from './index.js';
 
@@ -275,6 +273,11 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    * - The try-catch block is defensive programming for unexpected cases
    * - All expected errors are returned as part of {@link FetchPrototypesResult}
    *
+   * **Logging**:
+   * - Success: `debug` level with fetch count and parameters
+   * - Failure: No logging (API client layer already logs failures)
+   * - Unexpected exceptions: `error` level (defensive fallback)
+   *
    * @see {@link ProtopediaApiCustomClient.fetchPrototypes} for API client implementation
    * @internal
    */
@@ -289,13 +292,11 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
     try {
       const result = await this.#apiClient.fetchPrototypes(mergedParams);
 
-      // Log fetch failures for visibility
-      if (!result.ok) {
-        this.#logger.error('Prototype fetch failed', {
-          origin: result.origin,
-          kind: result.kind,
-          code: result.code,
-          status: result.status,
+      // Log success for diagnostics
+      if (result.ok) {
+        this.#logger.debug('Fetch operation completed', {
+          count: result.data.length,
+          params: mergedParams,
         });
       }
 
@@ -328,29 +329,41 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    *
    * This private method handles:
    * - Storing data via the memory store
-   * - Converting store errors to {@link StoreSnapshotFailure}
-   * - Logging detailed error information with sanitized data
+   * - Converting store errors to {@link StoreOperationFailure}
+   * - Logging detailed operation information with sanitized data
    *
    * @param data - Array of normalized prototypes to store
-   * @returns {@link SnapshotOperationResult} - Success with stats or failure details
+   * @returns {@link StoreOperationResult} - Success with stats or failure details
    *
    * @remarks
    * **Error Handling**:
-   * - {@link DataSizeExceededError} → {@link StoreSnapshotFailure} with kind='storage_limit'
-   * - {@link SizeEstimationError} → {@link StoreSnapshotFailure} with kind='serialization'
-   * - Unexpected errors → {@link UnknownSnapshotFailure}
+   * - {@link DataSizeExceededError} → {@link StoreOperationFailure} with kind='storage_limit'
+   * - {@link SizeEstimationError} → {@link StoreOperationFailure} with kind='serialization'
+   * - Unexpected errors → {@link StoreOperationFailure} with kind='unknown'
    *
    * All store errors include `dataState` to indicate whether existing data was preserved.
    *
+   * **Logging**:
+   * - Success: `debug` level with store size and data size
+   * - DataSizeExceededError: `warn` level (configuration issue)
+   * - SizeEstimationError: `error` level (serialization failure)
+   * - Unexpected errors: `error` level (unknown failures)
+   *
    * @internal
    */
-  private storeSnapshot(data: NormalizedPrototype[]): SnapshotOperationResult {
+  private storeSnapshot(data: NormalizedPrototype[]): StoreOperationResult {
     try {
       this.#store.setAll(data);
 
+      const stats = this.#store.getStats();
+      this.#logger.debug('Store operation completed', {
+        size: stats.size,
+        dataSizeBytes: stats.dataSizeBytes,
+      });
+
       return {
         ok: true,
-        stats: this.#store.getStats(),
+        stats,
       };
     } catch (error) {
       // Log detailed Store error information
@@ -371,8 +384,8 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
         };
       } else if (error instanceof SizeEstimationError) {
         this.#logger.error('Snapshot storage failed: size estimation error', {
-          cause: sanitizeDataForLogging(error.cause),
           dataState: error.dataState,
+          cause: sanitizeDataForLogging(error.cause),
         });
 
         return {
@@ -385,15 +398,19 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
           cause: sanitizeDataForLogging(error.cause),
         };
       } else {
-        // Unexpected store error
+        // Unexpected store error - map to unknown store error
         this.#logger.error('Snapshot storage failed: unexpected error', {
           error: sanitizeDataForLogging(error),
         });
 
         return {
           ok: false,
-          origin: 'unknown' as const,
+          origin: 'store' as const,
+          kind: 'unknown' as const,
+          code: 'STORE_UNKNOWN' as const,
           message: error instanceof Error ? error.message : String(error),
+          dataState: 'UNKNOWN' as const,
+          cause: sanitizeDataForLogging(error),
         };
       }
     }
@@ -474,13 +491,13 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
       }
 
       // Store the fetched data
-      const storeResult: SnapshotOperationResult = this.storeSnapshot(
+      const storeResult: StoreOperationResult = this.storeSnapshot(
         fetchResult.data,
       );
 
-      // Return early on store failure
+      // Return early on store failure, converting to SnapshotOperationFailure
       if (!storeResult.ok) {
-        return storeResult;
+        return convertStoreResult(storeResult);
       }
 
       // Update lastFetchParams only on successful storage if requested
@@ -488,7 +505,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
         this.#lastFetchParams = { ...DEFAULT_FETCH_PARAMS, ...params };
       }
 
-      return storeResult;
+      return convertStoreResult(storeResult);
     });
   }
 
