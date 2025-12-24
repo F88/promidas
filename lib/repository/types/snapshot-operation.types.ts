@@ -9,7 +9,8 @@ import type {
   StoreDataState,
   StoreErrorCode,
   StoreFailureKind,
-} from './store-failure.types.js';
+  StoreOperationFailure,
+} from './store-operation-result.types.js';
 
 /**
  * Successful response from setupSnapshot or refreshSnapshot operations.
@@ -77,21 +78,11 @@ export type FetcherSnapshotFailure = SnapshotOperationFailureBase & {
 /**
  * Failure from the store layer during snapshot operations.
  *
+ * Type alias for StoreOperationFailure when used in snapshot operation context.
  * Occurs when snapshot data cannot be stored in memory due to size limits
  * or serialization issues.
  */
-export type StoreSnapshotFailure = SnapshotOperationFailureBase & {
-  /** Indicates failure originated from store layer. */
-  origin: 'store';
-  /** Coarse-grained classification of the failure cause. */
-  kind: StoreFailureKind;
-  /** Canonical error code from the store. */
-  code: StoreErrorCode;
-  /** State of the store's data when the error occurred. */
-  dataState: StoreDataState;
-  /** Underlying cause of the error (for serialization failures). */
-  cause?: unknown;
-};
+export type StoreSnapshotFailure = StoreOperationFailure;
 
 /**
  * Failed response from setupSnapshot or refreshSnapshot operations.
