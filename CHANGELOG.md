@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2025-12-24
+
+### Stable Release
+
+PROMIDAS v1.0.0 is the first stable major release, providing a production-ready API with comprehensive documentation.
+
+#### API Stability Commitment
+
+- All public APIs are declared stable
+- Strict adherence to Semantic Versioning
+- No breaking changes will be introduced until v2.0.0
+- Continuous compatibility maintenance for v1.x series
+
+#### Migration from v0.x
+
+- **From v0.16.0 or later**: No changes required
+- **From v0.15.x or earlier**: Please refer to [v0.16.0 Breaking Changes](#0160---2025-12-24)
+
+### No Breaking Changes Since v0.16.0
+
+No breaking changes have been introduced since v0.16.0.
+Versions v0.17.0 and v0.18.0 included only feature additions and documentation improvements.
+
 ## [0.18.0] - 2025-12-24
 
 ### Added
