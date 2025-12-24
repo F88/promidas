@@ -29,7 +29,7 @@ const repo = createPromidasForLocal({
 // 例: 最初にスナップショットをセットアップ (必要に応じてオプションを調整)
 // const setupResult = await repo.setupSnapshot({ limit: 10000 });
 // if (!setupResult.ok) {
-//     console.error('Failed to setup snapshot:', setupResult.error);
+//     console.error('Failed to setup snapshot:', setupResult.message);
 //     process.exit(1);
 // }
 ```
@@ -434,7 +434,7 @@ const result = await client.fetchPrototypes({ limit: 10000 });
 if (result.ok) {
     console.log(`${result.data.length} 件のプロトタイプを取得しました`);
 } else {
-    console.error('取得失敗:', result.error);
+    console.error('取得失敗:', result.message);
 }
 ```
 

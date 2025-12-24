@@ -5,7 +5,7 @@ title-en: Logger Design
 title-ja: Logger設計
 related:
     - ../../../README.md "Project Overview"
-    - LOGGER.md "Logger Usage"
+    - USAGE.md "Logger Usage"
 instructions-for-ais:
     - This document should be written in English for AI readability.
     - Content within code fences may be written in languages other than English.

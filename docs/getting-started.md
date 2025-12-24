@@ -120,20 +120,20 @@ export PROTOPEDIA_API_V2_TOKEN="your-token-here"
 npm install dotenv
 ```
 
-2. プロジェクトルートに`.env`ファイルを作成:
+1. プロジェクトルートに`.env`ファイルを作成:
 
 ```properties
 PROTOPEDIA_API_V2_TOKEN=your-token-here
 ```
 
-3. **重要**: `.gitignore`に`.env`を追加:
+1. **重要**: `.gitignore`に`.env`を追加:
 
 ```docker
 # .gitignore
 .env
 ```
 
-4. コードの冒頭で読み込み:
+1. コードの冒頭で読み込み:
 
 ```typescript
 import 'dotenv/config';
@@ -145,7 +145,7 @@ import 'dotenv/config';
 
 以下は、ProtoPediaデータを取得して表示する最もシンプルな例です:
 
-**方法1: Factory関数 (推奨 - 初心者向け)**
+#### 方法1: Factory関数 (推奨 - 初心者向け)
 
 ```typescript
 import 'dotenv/config';
@@ -163,7 +163,7 @@ async function main() {
     const result = await repo.setupSnapshot({ limit: 100 });
 
     if (!result.ok) {
-        console.error('Failed to fetch data:', result.error);
+        console.error('Failed to fetch data:', result.message);
         process.exit(1);
     }
 
@@ -184,7 +184,7 @@ async function main() {
 main().catch(console.error);
 ```
 
-**方法2: Builder (高度な設定が必要な場合)**
+#### 方法2: Builder (高度な設定が必要な場合)
 
 ```typescript
 import 'dotenv/config';
@@ -203,7 +203,7 @@ async function main() {
     // 以降は同じ
     const result = await repo.setupSnapshot({ limit: 100 });
     if (!result.ok) {
-        console.error('Failed to fetch data:', result.error);
+        console.error('Failed to fetch data:', result.message);
         process.exit(1);
     }
 
@@ -374,7 +374,7 @@ const repo = new PromidasRepositoryBuilder()
 // Snapshotの作成
 const setupResult = await repo.setupSnapshot({ limit: 1000 });
 if (!setupResult.ok) {
-    throw new Error(`Failed to setup snapshot: ${setupResult.error}`);
+    throw new Error(`Failed to setup snapshot: ${setupResult.message}`);
 }
 
 // Snapshotからデータ取得
@@ -424,7 +424,7 @@ Snapshotを更新する方法は3つあります:
 // スクリプト開始時に1回だけ取得
 const setupResult = await repo.setupSnapshot({ limit: 1000 });
 if (!setupResult.ok) {
-    throw new Error(`Failed to setup snapshot: ${setupResult.error}`);
+    throw new Error(`Failed to setup snapshot: ${setupResult.message}`);
 }
 
 // 以降はメモリ内のデータを使用
@@ -449,7 +449,7 @@ const repo = new PromidasRepositoryBuilder()
 // 初回取得
 const setupResult = await repo.setupSnapshot({});
 if (!setupResult.ok) {
-    throw new Error(`Failed to setup snapshot: ${setupResult.error}`);
+    throw new Error(`Failed to setup snapshot: ${setupResult.message}`);
 }
 
 // TTL切れをチェックし、必要なら更新
@@ -457,7 +457,7 @@ const stats = repo.getStats();
 if (stats.isExpired) {
     const refreshResult = await repo.refreshSnapshot();
     if (!refreshResult.ok) {
-        throw new Error(`Failed to refresh snapshot: ${refreshResult.error}`);
+        throw new Error(`Failed to refresh snapshot: ${refreshResult.message}`);
     }
 }
 const data = await repo.getAllFromSnapshot();
@@ -469,7 +469,7 @@ const data = await repo.getAllFromSnapshot();
 // 必要なタイミングで明示的に更新
 const result = await repo.refreshSnapshot();
 if (!result.ok) {
-    throw new Error(`Failed to refresh snapshot: ${result.error}`);
+    throw new Error(`Failed to refresh snapshot: ${result.message}`);
 }
 ```
 

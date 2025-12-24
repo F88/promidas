@@ -1,4 +1,16 @@
+import type {
+  FetcherErrorCode,
+  FetchFailureKind,
+  FetchPrototypesFailure,
+} from '../../fetcher/types/index.js';
 import type { PrototypeInMemoryStats } from '../../store/index.js';
+
+import type {
+  StoreDataState,
+  StoreErrorCode,
+  StoreFailureKind,
+  StoreOperationFailure,
+} from './store-operation-result.types.js';
 
 /**
  * Successful response from setupSnapshot or refreshSnapshot operations.
@@ -22,32 +34,87 @@ export type SnapshotOperationSuccess = {
 };
 
 /**
+ * Base type for all snapshot operation failures.
+ *
+ * Contains common fields shared by all failure types in the discriminated union.
+ */
+export type SnapshotOperationFailureBase = {
+  /** Indicates failed operation. */
+  ok: false;
+  /** Origin layer where the failure occurred. */
+  origin: 'fetcher' | 'store' | 'unknown';
+  /** Human-readable error message. */
+  message: string;
+};
+
+/**
+ * Unknown/unexpected failure during snapshot operations.
+ *
+ * Fallback for errors that cannot be classified into fetcher or store failures.
+ */
+export type UnknownSnapshotFailure = SnapshotOperationFailureBase & {
+  /** Indicates failure with unknown origin. */
+  origin: 'unknown';
+};
+
+/**
+ * Failure from the fetcher layer during snapshot operations.
+ *
+ * Includes detailed error information from network/HTTP operations.
+ */
+export type FetcherSnapshotFailure = SnapshotOperationFailureBase & {
+  /** Indicates failure originated from fetcher layer. */
+  origin: 'fetcher';
+  /** Coarse-grained classification of the failure cause. */
+  kind: FetchFailureKind;
+  /** Canonical error code from the fetcher. */
+  code: FetcherErrorCode;
+  /** HTTP status code if applicable. */
+  status?: number;
+  /** Additional error details from request and response. */
+  details: FetchPrototypesFailure['details'];
+};
+
+/**
+ * Failure from the store layer during snapshot operations.
+ *
+ * Type alias for StoreOperationFailure when used in snapshot operation context.
+ * Occurs when snapshot data cannot be stored in memory due to size limits
+ * or serialization issues.
+ */
+export type StoreSnapshotFailure = StoreOperationFailure;
+
+/**
  * Failed response from setupSnapshot or refreshSnapshot operations.
  *
- * Contains error details including optional HTTP status code and error code
- * from the upstream API.
+ * Discriminated union of all possible snapshot failure types.
+ * Use the 'origin' field to determine which specific failure type it is.
  *
  * @example
  * ```typescript
  * const result = await repo.setupSnapshot({ limit: 100 });
  * if (!result.ok) {
- *   console.error('Setup failed:', result.error);
- *   if (result.status === 401) {
- *     console.error('Authentication error');
+ *   switch (result.origin) {
+ *     case 'fetcher':
+ *       console.error('Fetch failed:', result.kind, result.code);
+ *       if (result.status === 401) {
+ *         console.error('Authentication error');
+ *       }
+ *       break;
+ *     case 'store':
+ *       console.error('Store failed:', result.kind, result.code);
+ *       break;
+ *     case 'unknown':
+ *       console.error('Unknown error:', result.message);
+ *       break;
  *   }
  * }
  * ```
  */
-export type SnapshotOperationFailure = {
-  /** Indicates failed operation. */
-  ok: false;
-  /** Human-readable error message. */
-  error: string;
-  /** HTTP status code if the error came from an HTTP response. */
-  status?: number | undefined;
-  /** Error code from the upstream API response (e.g., 'NOT_FOUND', 'UNAUTHORIZED'). */
-  code?: string | undefined;
-};
+export type SnapshotOperationFailure =
+  | FetcherSnapshotFailure
+  | StoreSnapshotFailure
+  | UnknownSnapshotFailure;
 
 /**
  * Result type for setupSnapshot and refreshSnapshot operations.

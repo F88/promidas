@@ -54,10 +54,7 @@
  */
 import { EventEmitter } from 'events';
 
-import type {
-  ListPrototypesParams,
-  ProtoPediaApiClientOptions,
-} from 'protopedia-api-v2-client';
+import type { ListPrototypesParams } from 'protopedia-api-v2-client';
 import type { DeepReadonly } from 'ts-essentials';
 
 import { ProtopediaApiCustomClient } from '../fetcher/index.js';
@@ -76,14 +73,16 @@ import { sanitizeDataForLogging } from '../utils/index.js';
 import { ValidationError } from './errors/validation-error.js';
 import { prototypeIdSchema, sampleSizeSchema } from './schemas/validation.js';
 import type {
+  FetcherSnapshotFailure,
   ProtopediaInMemoryRepositoryConfig,
   PrototypeAnalysisResult,
   RepositoryEvents,
   SnapshotOperationFailure,
   SnapshotOperationResult,
 } from './types/index.js';
+import type { StoreOperationResult } from './types/store-operation-result.types.js';
 import { emitRepositoryEventSafely } from './utils/emit-repository-event-safely.js';
-import { convertFetchFailure } from './utils/index.js';
+import { convertFetchResult, convertStoreResult } from './utils/index.js';
 
 import type { ProtopediaInMemoryRepository } from './index.js';
 
@@ -267,17 +266,23 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    *
    * **Responsibility Separation**:
    * - This method only fetches and normalizes data
-   * - The caller is responsible for storing the data via {@link #storeSnapshot}
-   * - The caller must update {@link #lastFetchParams} on successful storage
+   * - The caller is responsible for storing the data via {@link storeSnapshot}
+   * - The caller must update lastFetchParams on successful storage
    *
    * **Error Handling**:
    * - The API client never throws exceptions under normal operation
    * - The try-catch block is defensive programming for unexpected cases
    * - All expected errors are returned as part of {@link FetchPrototypesResult}
    *
+   * **Logging**:
+   * - Success: `debug` level with fetch count and parameters
+   * - Failure: No logging (API client layer already logs failures)
+   * - Unexpected exceptions: `error` level (defensive fallback)
+   *
    * @see {@link ProtopediaApiCustomClient.fetchPrototypes} for API client implementation
+   * @internal
    */
-  async #fetchAndNormalize(
+  private async fetchAndNormalize(
     params: ListPrototypesParams,
   ): Promise<FetchPrototypesResult> {
     const mergedParams: ListPrototypesParams = {
@@ -286,7 +291,17 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
     };
 
     try {
-      return await this.#apiClient.fetchPrototypes(mergedParams);
+      const result = await this.#apiClient.fetchPrototypes(mergedParams);
+
+      // Log success for diagnostics
+      if (result.ok) {
+        this.#logger.debug('Fetch operation completed', {
+          count: result.data.length,
+          params: mergedParams,
+        });
+      }
+
+      return result;
     } catch (error) {
       // This should never happen as the API client catches all errors,
       // but we handle it defensively in case of unexpected exceptions.
@@ -297,32 +312,59 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
 
       return {
         ok: false,
+        origin: 'fetcher',
+        kind: 'unknown',
+        code: 'UNKNOWN',
         error: error instanceof Error ? error.message : String(error),
         details: {
           req: {
             method: 'GET',
           },
         },
-      };
+      } satisfies FetchPrototypesResult;
     }
   }
 
   /**
-   * Store normalized prototypes in the snapshot.
+   * Store normalized prototypes in the in-memory snapshot.
    *
-   * Handles Store-specific errors (DataSizeExceededError, SizeEstimationError)
-   * and logs detailed information for debugging.
+   * This private method handles:
+   * - Storing data via the memory store
+   * - Converting store errors to {@link StoreOperationFailure}
+   * - Logging detailed operation information with sanitized data
    *
-   * @param data - Normalized prototypes to store
-   * @returns Result indicating success or failure
+   * @param data - Array of normalized prototypes to store
+   * @returns {@link StoreOperationResult} - Success with stats or failure details
+   *
+   * @remarks
+   * **Error Handling**:
+   * - {@link DataSizeExceededError} → {@link StoreOperationFailure} with kind='storage_limit'
+   * - {@link SizeEstimationError} → {@link StoreOperationFailure} with kind='serialization'
+   * - Unexpected errors → {@link StoreOperationFailure} with kind='unknown'
+   *
+   * All store errors include `dataState` to indicate whether existing data was preserved.
+   *
+   * **Logging**:
+   * - Success: `debug` level with store size and data size
+   * - DataSizeExceededError: `warn` level (configuration issue)
+   * - SizeEstimationError: `error` level (serialization failure)
+   * - Unexpected errors: `error` level (unknown failures)
+   *
+   * @internal
    */
-  #storeSnapshot(data: NormalizedPrototype[]): SnapshotOperationResult {
+  private storeSnapshot(data: NormalizedPrototype[]): StoreOperationResult {
     try {
       this.#store.setAll(data);
 
+      const stats = this.#store.getStats();
+      this.#logger.debug('Store operation completed', {
+        size: stats.size,
+        dataSizeBytes: stats.dataSizeBytes,
+      });
+
       return {
         ok: true,
-        stats: this.#store.getStats(),
+        stats,
       };
     } catch (error) {
       // Log detailed Store error information
@@ -332,22 +374,46 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
           maxDataSizeBytes: error.maxDataSizeBytes,
           dataState: error.dataState,
         });
+
+        return {
+          ok: false,
+          origin: 'store' as const,
+          kind: 'storage_limit' as const,
+          code: 'STORE_CAPACITY_EXCEEDED' as const,
+          message: `Data size ${error.dataSizeBytes} bytes exceeds maximum ${error.maxDataSizeBytes} bytes`,
+          dataState: error.dataState,
+        };
       } else if (error instanceof SizeEstimationError) {
         this.#logger.error('Snapshot storage failed: size estimation error', {
-          cause: sanitizeDataForLogging(error.cause),
           dataState: error.dataState,
+          cause: sanitizeDataForLogging(error.cause),
         });
+
+        return {
+          ok: false,
+          origin: 'store' as const,
+          kind: 'serialization' as const,
+          code: 'STORE_SERIALIZATION_FAILED' as const,
+          message: 'Failed to estimate data size during serialization',
+          dataState: error.dataState,
+          cause: sanitizeDataForLogging(error.cause),
+        };
       } else {
-        // Unexpected store error
+        // Unexpected store error - map to unknown store error
         this.#logger.error('Snapshot storage failed: unexpected error', {
           error: sanitizeDataForLogging(error),
         });
-      }
 
-      return {
-        ok: false,
-        error: error instanceof Error ? error.message : String(error),
-      };
+        return {
+          ok: false,
+          origin: 'store' as const,
+          kind: 'unknown' as const,
+          code: 'STORE_UNKNOWN' as const,
+          message: error instanceof Error ? error.message : String(error),
+          dataState: 'UNKNOWN' as const,
+          cause: sanitizeDataForLogging(error),
+        };
+      }
     }
   }
 
@@ -380,13 +446,15 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    *
    * @remarks
    * **Operation Flow**:
-   * 1. Fetch and normalize prototypes via {@link #fetchAndNormalize}
-   * 2. Convert fetch failures to {@link SnapshotOperationFailure} via {@link convertFetchFailure}
-   * 3. Store the data in memory via {@link #storeSnapshot}
-   * 4. Update {@link #lastFetchParams} only if `updateLastFetchParams` is `true` AND storage succeeds
+   * 1. Fetch and normalize prototypes via {@link fetchAndNormalize}
+   * 2. Convert fetch result (both success and failure) via {@link convertFetchResult}
+   * 3. Return early if fetch failed
+   * 4. Store the fetched data in memory via {@link storeSnapshot}
+   * 5. Convert store result via {@link convertStoreResult}
+   * 6. Update {@link #lastFetchParams} only if `updateLastFetchParams` is `true` AND storage succeeds
    *
    * **Parameter Handling**:
-   * - Input `params` are merged with {@link DEFAULT_FETCH_PARAMS} by {@link #fetchAndNormalize}
+   * - Input `params` are merged with {@link DEFAULT_FETCH_PARAMS} by {@link fetchAndNormalize}
    * - Merged parameters are cached in {@link #lastFetchParams} only when:
    *   - `updateLastFetchParams` is `true` (typically {@link setupSnapshot})
    *   - Storage operation succeeds
@@ -418,26 +486,39 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
     return this.#executeWithCoalescing(async () => {
       // Fetch and normalize prototypes
       const fetchResult: FetchPrototypesResult =
-        await this.#fetchAndNormalize(params);
+        await this.fetchAndNormalize(params);
 
-      // Return early on fetch failure, converting to SnapshotOperationFailure
-      if (!fetchResult.ok) {
-        return convertFetchFailure(fetchResult);
+      // Convert fetch result (handles both success and failure)
+      const convertedFetchResult = convertFetchResult(fetchResult);
+
+      // Return early on fetch failure
+      if (!convertedFetchResult.ok) {
+        return convertedFetchResult;
+      }
+
+      // Type guard: convertedFetchResult is FetchPrototypesSuccess here
+      /* istanbul ignore next */
+      if (!('data' in convertedFetchResult)) {
+        // This should never happen, but TypeScript needs the check
+        throw new Error('Unexpected: success result missing data field');
       }
 
       // Store the fetched data
-      const storeResult: SnapshotOperationResult = this.#storeSnapshot(
-        fetchResult.data,
+      const storeResult: StoreOperationResult = this.storeSnapshot(
+        convertedFetchResult.data,
       );
+
+      // Return early on store failure, converting to SnapshotOperationFailure
+      if (!storeResult.ok) {
+        return convertStoreResult(storeResult);
+      }
 
       // Update lastFetchParams only on successful storage if requested
       if (updateLastFetchParams) {
-        if (storeResult.ok) {
-          this.#lastFetchParams = { ...DEFAULT_FETCH_PARAMS, ...params };
-        }
+        this.#lastFetchParams = { ...DEFAULT_FETCH_PARAMS, ...params };
       }
 
-      return storeResult;
+      return convertStoreResult(storeResult);
     });
   }
 

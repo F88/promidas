@@ -95,8 +95,16 @@ describe('ProtopediaInMemoryRepositoryImpl - snapshot operations', () => {
 
       const mockResult = {
         ok: false,
-        error: 'test error',
+        origin: 'fetcher',
+        kind: 'http',
+        code: 'FETCH_HTTP_ERROR_500',
+        message: 'test error',
         status: 500,
+        details: {
+          url: 'https://protopedia.example.com/api/prototypes',
+          method: 'GET',
+          requestHeaders: {},
+        },
       } as const;
 
       vi.spyOn(repo as any, 'fetchAndStore').mockResolvedValue(mockResult);
@@ -147,7 +155,8 @@ describe('ProtopediaInMemoryRepositoryImpl - snapshot operations', () => {
 
       const mockResult = {
         ok: false,
-        error: 'refresh failed',
+        origin: 'unknown',
+        message: 'refresh failed',
       } as const;
 
       vi.spyOn(repo as any, 'fetchAndStore').mockResolvedValue(mockResult);

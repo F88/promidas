@@ -116,7 +116,10 @@ const result = await repo.setupSnapshot({ offset: 0, limit: 10 });
 if (result.ok) {
     console.log('Setup successful, cached:', result.stats.size);
 } else {
-    console.error('Setup failed:', result.error, result.status);
+    console.error('Setup failed:', result.message);
+    if (result.origin === 'fetcher' && result.status) {
+        console.error('HTTP status:', result.status);
+    }
     // Handle error appropriately
 }
 ```
@@ -149,7 +152,7 @@ async function ensureFreshSnapshot(
     if (stats.cachedAt === null) {
         const result = await repo.setupSnapshot({ offset: 0, limit: 100 });
         if (!result.ok) {
-            throw new Error(`Setup failed: ${result.error}`);
+            throw new Error(`Setup failed: ${result.message}`);
         }
         return;
     }
@@ -158,7 +161,7 @@ async function ensureFreshSnapshot(
     if (stats.isExpired) {
         const result = await repo.refreshSnapshot();
         if (!result.ok) {
-            console.warn(`Refresh failed: ${result.error}, using stale data`);
+            console.warn(`Refresh failed: ${result.message}, using stale data`);
             // Decide whether to throw or use stale data
         }
     }
@@ -302,7 +305,7 @@ Methods like `setupSnapshot` and `refreshSnapshot` return a `Result` type for ne
 ```ts
 const result = await repo.setupSnapshot({ limit: 100 });
 if (!result.ok) {
-    console.error('Failed to setup snapshot:', result.error);
+    console.error('Failed to setup snapshot:', result.message);
     // Handle network/HTTP errors gracefully
 }
 ```

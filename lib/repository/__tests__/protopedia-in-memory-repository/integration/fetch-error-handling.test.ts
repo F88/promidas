@@ -87,10 +87,14 @@ describe('ProtopediaInMemoryRepositoryImpl - fetch error handling', () => {
     it('returns failure result with 404 status code details', async () => {
       fetchPrototypesMock.mockResolvedValueOnce({
         ok: false,
-        status: 404,
+        kind: 'http',
+        code: 'FETCH_HTTP_ERROR_404',
         error: 'Not found',
+        status: 404,
         details: {
-          res: { code: 'NOT_FOUND' },
+          url: 'https://protopedia.example.com/api/prototypes',
+          method: 'GET',
+          requestHeaders: {},
         },
       });
 
@@ -99,20 +103,24 @@ describe('ProtopediaInMemoryRepositoryImpl - fetch error handling', () => {
       const result = await repo.setupSnapshot({});
 
       expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error).toBe('Not found');
+      if (!result.ok && result.origin === 'fetcher') {
+        expect(result.message).toBe('Not found');
         expect(result.status).toBe(404);
-        expect(result.code).toBe('NOT_FOUND');
+        expect(result.code).toBe('FETCH_HTTP_ERROR_404');
       }
     });
 
     it('returns failure result with 401 status code details', async () => {
       fetchPrototypesMock.mockResolvedValueOnce({
         ok: false,
-        status: 401,
+        kind: 'http',
+        code: 'FETCH_HTTP_ERROR_401',
         error: 'Unauthorized',
+        status: 401,
         details: {
-          res: { code: 'UNAUTHORIZED' },
+          url: 'https://protopedia.example.com/api/prototypes',
+          method: 'GET',
+          requestHeaders: {},
         },
       });
 
@@ -121,10 +129,10 @@ describe('ProtopediaInMemoryRepositoryImpl - fetch error handling', () => {
       const result = await repo.setupSnapshot({});
 
       expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error).toBe('Unauthorized');
+      if (!result.ok && result.origin === 'fetcher') {
+        expect(result.message).toBe('Unauthorized');
         expect(result.status).toBe(401);
-        expect(result.code).toBe('UNAUTHORIZED');
+        expect(result.code).toBe('FETCH_HTTP_ERROR_401');
       }
     });
 
@@ -139,7 +147,7 @@ describe('ProtopediaInMemoryRepositoryImpl - fetch error handling', () => {
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.error).toBe('ECONNREFUSED: Connection refused');
+        expect(result.message).toBe('ECONNREFUSED: Connection refused');
       }
     });
 
@@ -156,7 +164,7 @@ describe('ProtopediaInMemoryRepositoryImpl - fetch error handling', () => {
       const failResult = await repo.setupSnapshot({});
       expect(failResult.ok).toBe(false);
       if (!failResult.ok) {
-        expect(failResult.error).toBe('First attempt failed');
+        expect(failResult.message).toBe('First attempt failed');
       }
 
       let stats = repo.getStats();
@@ -190,7 +198,7 @@ describe('ProtopediaInMemoryRepositoryImpl - fetch error handling', () => {
       const failResult = await repo.refreshSnapshot();
       expect(failResult.ok).toBe(false);
       if (!failResult.ok) {
-        expect(failResult.error).toBe('Temporary network issue');
+        expect(failResult.message).toBe('Temporary network issue');
       }
 
       const oldProto = await repo.getPrototypeFromSnapshotByPrototypeId(1);

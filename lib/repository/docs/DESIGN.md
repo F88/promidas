@@ -145,15 +145,77 @@ export const createPromidasForLocal = (options?: {
 ```typescript
 type SnapshotOperationResult =
     | { ok: true; stats: PrototypeInMemoryStats }
-    | { ok: false; error: string; status?: number; code?: string };
+    | SnapshotOperationFailure;
+
+type SnapshotOperationFailure =
+    | FetcherSnapshotFailure
+    | StoreSnapshotFailure
+    | UnknownSnapshotFailure;
+
+type FetcherSnapshotFailure = {
+    ok: false;
+    origin: 'fetcher';
+    kind: 'FetchPrototypesFailure';
+    code: string;
+    message: string;
+    status?: number;
+    details?: unknown;
+};
+
+type StoreSnapshotFailure = {
+    ok: false;
+    origin: 'store';
+    kind: 'WriteFailure' | 'ReadFailure';
+    code: string;
+    message: string;
+    dataState: 'corrupted' | 'lost' | 'unknown';
+    cause?: Error;
+};
+
+type UnknownSnapshotFailure = {
+    ok: false;
+    origin: 'unknown';
+    message: string;
+};
 ```
 
 **Benefits**:
 
-- Type-safe error handling
+- Type-safe error handling with discriminated unions
 - Forces error consideration at call site
 - No unexpected exceptions for network errors
-- Rich error context (status codes, error codes)
+- Rich error context (origin, kind, code, status)
+- Precise error type narrowing based on `origin` field
+
+**Usage Example**:
+
+```typescript
+const result = await repository.setupSnapshot({ limit: 1000 });
+
+if (!result.ok) {
+    switch (result.origin) {
+        case 'fetcher':
+            // FetcherSnapshotFailure: has status, details
+            console.error(`Fetch error [${result.code}]:`, result.message);
+            if (result.status === 401) {
+                // Handle authentication error
+            }
+            break;
+        case 'store':
+            // StoreSnapshotFailure: has dataState, cause
+            console.error(`Store error [${result.code}]:`, result.message);
+            if (result.dataState === 'corrupted') {
+                // Handle data corruption
+            }
+            break;
+        case 'unknown':
+            // UnknownSnapshotFailure: minimal info
+            console.error('Unknown error:', result.message);
+            break;
+    }
+    return;
+}
+```
 
 **Comparison with exceptions**:
 

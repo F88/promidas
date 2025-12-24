@@ -5,6 +5,8 @@ title-en: Types Module
 title-ja: 型定義モジュール
 related:
     - ../../README.md "Project Overview"
+    - docs/USAGE.md "Types Usage"
+    - docs/DESIGN.md "Types Design"
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.
@@ -159,6 +161,11 @@ function getVideoUrl(prototype: NormalizedPrototype): string | undefined {
 ```
 
 変換処理の詳細は、[Fetcherモジュール](../fetcher/README.md)の`normalizePrototype`関数を参照してください。
+
+## 📚 詳しく知りたい方へ
+
+- **[使い方ガイド (USAGE.md)](./docs/USAGE.md)**: 型の利用方法やコード例
+- **[設計ドキュメント (DESIGN.md)](./docs/DESIGN.md)**: 正規化方針やコードユニオンの設計意図
 
 ### コード型
 

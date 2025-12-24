@@ -33,7 +33,7 @@ PROMIDASは、すべてのユースケースをカバーする単一の巨大な
 
 ### コアモジュール
 
-```
+```plaintext
 types     → 型定義(全モジュールで共有)
 utils     → ユーティリティ関数(単独で使える)
 logger    → ロギングインターフェース(カスタマイズ可能)
@@ -153,9 +153,9 @@ repo.setupSnapshot({ limit: 'abc' }); // ❌ 型エラー
 const result = await repo.setupSnapshot({ limit: 1000 });
 
 if (result.ok) {
-    console.log('Success:', result.data);
+    console.log('Success:', result.stats);
 } else {
-    console.error('Error:', result.error); // 型推論される
+    console.error('Error:', result.message); // 型推論される
 }
 ```
 

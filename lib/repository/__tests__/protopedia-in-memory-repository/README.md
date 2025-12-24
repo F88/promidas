@@ -16,10 +16,12 @@ This directory contains comprehensive tests for the `ProtopediaInMemoryRepositor
 
 ### Unit Tests (Internal Logic)
 
-| File                                      | Purpose                                                 | Mock Strategy | Lines |
-| ----------------------------------------- | ------------------------------------------------------- | ------------- | ----- |
-| **unit/internal/snapshot-update.test.ts** | setupSnapshot/refreshSnapshot delegation (internal spy) | Manual mocks  | 161   |
-| **unit/internal/fetch-and-store.test.ts** | Direct tests of internal `fetchAndStore` logic          | Manual mocks  | 341   |
+| File                                          | Purpose                                                 | Mock Strategy | Lines |
+| --------------------------------------------- | ------------------------------------------------------- | ------------- | ----- |
+| **unit/internal/snapshot-update.test.ts**     | setupSnapshot/refreshSnapshot delegation (internal spy) | Manual mocks  | 161   |
+| **unit/internal/fetch-and-store.test.ts**     | Direct tests of internal `fetchAndStore` logic          | Manual mocks  | 468   |
+| **unit/internal/fetch-and-normalize.test.ts** | Direct tests of internal `fetchAndNormalize` logic      | Manual mocks  | 323   |
+| **unit/internal/store-snapshot.test.ts**      | Direct tests of internal `storeSnapshot` logic          | Manual mocks  | 315   |
 
 ### Integration & Special Tests
 
@@ -42,7 +44,7 @@ This test suite uses **two different mocking approaches** depending on the test 
 
 ### 1. Manual Mocks (Unit Tests)
 
-**Files:** unit/public/constructor.test.ts, unit/public/config-and-stats.test.ts, unit/public/snapshot-data-access.test.ts, unit/public/analyze.test.ts, unit/public/repository-events.test.ts, unit/internal/snapshot-update.test.ts, unit/internal/fetch-and-store.test.ts
+**Files:** unit/public/constructor.test.ts, unit/public/config-and-stats.test.ts, unit/public/snapshot-data-access.test.ts, unit/public/analyze.test.ts, unit/public/repository-events.test.ts, unit/internal/snapshot-update.test.ts, unit/internal/fetch-and-store.test.ts, unit/internal/fetch-and-normalize.test.ts, unit/internal/store-snapshot.test.ts
 
 **Use when:**
 
@@ -174,11 +176,11 @@ describe('Integration tests', () => {
 
 ## Test Statistics
 
-- **Total Test Files:** 11
-- **Unit Test Files:** 7 (using manual mocks)
+- **Total Test Files:** 13
+- **Unit Test Files:** 9 (using manual mocks)
 - **Integration/Perf Test Files:** 4 (using createMockStore)
-- **Approximate Total Tests:** 140+ (105 active + 34 skipped)
-- **Test Execution Time:** ~200ms
+- **Approximate Total Tests:** 155+ (120+ active + 34 skipped)
+- **Test Execution Time:** ~250ms
 - **Code Coverage:** High (repository logic fully covered)
 
 ## Running Tests
@@ -190,6 +192,8 @@ npm test -- lib/repository/__tests__/protopedia-in-memory-repository
 # Run specific test file
 npm test -- lib/repository/__tests__/protopedia-in-memory-repository/unit/public/constructor.test.ts
 npm test -- lib/repository/__tests__/protopedia-in-memory-repository/unit/internal/snapshot-update.test.ts
+npm test -- lib/repository/__tests__/protopedia-in-memory-repository/unit/internal/fetch-and-normalize.test.ts
+npm test -- lib/repository/__tests__/protopedia-in-memory-repository/unit/internal/store-snapshot.test.ts
 npm test -- lib/repository/__tests__/protopedia-in-memory-repository/integration/scenarios.test.ts
 
 # Run with coverage

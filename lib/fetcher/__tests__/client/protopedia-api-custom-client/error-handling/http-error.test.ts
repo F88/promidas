@@ -45,9 +45,13 @@ describe('ProtopediaApiCustomClient - Error Handling - HTTP Errors', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.status).toBe(503);
+      // Non-ProtoPediaApiError are treated as unknown, not HTTP
+      expect(result.origin).toBe('fetcher');
+      expect(result.kind).toBe('unknown');
+      expect(result.code).toBe('UNKNOWN');
+      expect(result.status).toBeUndefined();
       expect(result.error).toBe('Service Unavailable');
-      expect(result.details.res?.statusText).toBe('Service Unavailable');
+      expect(result.details).toEqual({}); // statusText is not preserved
     }
   });
 
@@ -66,7 +70,11 @@ describe('ProtopediaApiCustomClient - Error Handling - HTTP Errors', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.status).toBe(502);
+      // Non-ProtoPediaApiError are treated as unknown, status is ignored
+      expect(result.origin).toBe('fetcher');
+      expect(result.kind).toBe('unknown');
+      expect(result.code).toBe('UNKNOWN');
+      expect(result.status).toBeUndefined();
     }
   });
 
@@ -85,7 +93,11 @@ describe('ProtopediaApiCustomClient - Error Handling - HTTP Errors', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.status).toBe(500);
+      // Non-ProtoPediaApiError are treated as unknown, status is ignored
+      expect(result.origin).toBe('fetcher');
+      expect(result.kind).toBe('unknown');
+      expect(result.code).toBe('UNKNOWN');
+      expect(result.status).toBeUndefined();
     }
   });
 
@@ -108,10 +120,11 @@ describe('ProtopediaApiCustomClient - Error Handling - HTTP Errors', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.details.req).toEqual({
-        url: 'https://api.example.com/prototypes',
-        method: 'GET',
-      });
+      // Non-ProtoPediaApiError does not preserve req metadata
+      expect(result.origin).toBe('fetcher');
+      expect(result.kind).toBe('unknown');
+      expect(result.code).toBe('UNKNOWN');
+      expect(result.details).toEqual({}); // req is not preserved
     }
   });
 
@@ -131,6 +144,10 @@ describe('ProtopediaApiCustomClient - Error Handling - HTTP Errors', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
+      // code is extracted as network error
+      expect(result.origin).toBe('fetcher');
+      expect(result.kind).toBe('network');
+      expect(result.code).toBe('INVALID_PARAMETER');
       expect(result.details.res?.code).toBe('INVALID_PARAMETER');
     }
   });

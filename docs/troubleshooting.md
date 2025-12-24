@@ -48,7 +48,7 @@ PROMIDASは通常「作品一覧取得」しか行わないため、このエラ
 
 - **`setupSnapshot()` が失敗している:**
     - `setupSnapshot()` の戻り値 `result.ok` を確認してください。
-    - `result.error` にエラー詳細が入っているはずです。
+    - `result.message` にエラー詳細が入っているはずです。
 
 ## 🛠️ 環境・実行エラー
 
