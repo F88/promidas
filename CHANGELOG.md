@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Documentation Improvements**: Enhanced CONTRIBUTING.md and DEVELOPMENT.md with comprehensive guides
+    - Added contributor onboarding guide with step-by-step instructions
+    - Added Git workflow section (fork, branch, commit, PR process)
+    - Added Pull Request process and code review guidelines
+    - Added security issue reporting section
+    - Added project structure overview with module dependencies
+    - Added debugging section with VSCode configuration examples
+    - Expanded troubleshooting with 15+ common development errors and solutions
+    - Added "First Steps" guide for new developers
+- **Code Examples Modernization**: Updated all code examples to use top-level await
+    - Replaced `.catch()` pattern with try-catch + top-level await in documentation
+    - Updated getting-started.md examples (both Factory and Builder patterns)
+    - Updated quickstart-beginners.md example
+    - Updated scripts/try-protopedia-repository.ts
+
 ## [1.0.0] - 2025-12-24
 
 ### Stable Release
