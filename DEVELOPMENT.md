@@ -333,7 +333,7 @@ npm run test:ui
 
 ```typescript
 test.only('should handle this specific case', () => {
-  // This test runs alone
+    // This test runs alone
 });
 ```
 

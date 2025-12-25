@@ -197,7 +197,7 @@ async function main(repo) {
 const repo = createRepository();
 
 // メイン処理を実行
-main(repo).catch(console.error);
+await main(repo);
 ```
 
 #### 方法2: Builder (高度な設定が必要な場合)
@@ -235,7 +235,7 @@ async function main(repo) {
 const repo = createRepository();
 
 // メイン処理を実行
-main().catch(console.error);
+await main(repo);
 ```
 
 ### 実行方法

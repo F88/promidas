@@ -183,7 +183,9 @@ async function main() {
   console.log('✓ All tests completed successfully');
 }
 
-main().catch((error) => {
+try {
+  await main();
+} catch (error) {
   console.error('Error while running try-protopedia-repository:', error);
   process.exit(1);
-});
+}

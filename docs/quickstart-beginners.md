@@ -136,7 +136,7 @@ async function main() {
 }
 
 // プログラム実行
-main();
+await main();
 ```
 
 ## ステップ 6: 実行する
