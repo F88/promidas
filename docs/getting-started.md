@@ -221,7 +221,6 @@ function createRepository() {
 }
 
 async function main(repo) {
-
     // 以降は同じ
     const result = await repo.setupSnapshot({ limit: 100 });
     if (!result.ok) {
