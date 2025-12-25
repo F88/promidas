@@ -155,13 +155,21 @@ import 'dotenv/config';
 import 'dotenv/config';
 import { createPromidasForLocal } from '@f88/promidas';
 
-async function main() {
-    // Repositoryの作成 (ローカル/開発環境向け設定)
-    const repo = createPromidasForLocal({
+/**
+ * Factory関数を使ってリポジトリインスタンスを作成する
+ */
+function createRepository() {
+    // ローカル/開発環境向けのFarctory関数を使用
+    return createPromidasForLocal({
         protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
-        logLevel: 'info', // optional
+        logLevel: 'info', // オプション
     });
+}
 
+/**
+ * メイン処理
+ */
+async function main(repo) {
     // データ取得
     console.log('Fetching data from ProtoPedia API...');
     const result = await repo.setupSnapshot({ limit: 100 });
@@ -185,7 +193,11 @@ async function main() {
     }
 }
 
-main().catch(console.error);
+// リポジトリを作成
+const repo = createRepository();
+
+// メイン処理を実行
+main(repo).catch(console.error);
 ```
 
 #### 方法2: Builder (高度な設定が必要な場合)
@@ -194,15 +206,21 @@ main().catch(console.error);
 import 'dotenv/config';
 import { PromidasRepositoryBuilder } from '@f88/promidas';
 
-async function main() {
+/**
+ * Builderを使ってリポジトリインスタンスを作成する
+ */
+function createRepository() {
     // Builderを使った段階的な設定
-    const repo = new PromidasRepositoryBuilder()
+    return new PromidasRepositoryBuilder()
         .setApiClientConfig({
             protoPediaApiClientOptions: {
                 token: process.env.PROTOPEDIA_API_V2_TOKEN,
             },
         })
         .build();
+}
+
+async function main(repo) {
 
     // 以降は同じ
     const result = await repo.setupSnapshot({ limit: 100 });
@@ -214,6 +232,10 @@ async function main() {
     // ...
 }
 
+// リポジトリを作成
+const repo = createRepository();
+
+// メイン処理を実行
 main().catch(console.error);
 ```
 
