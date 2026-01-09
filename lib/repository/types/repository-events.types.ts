@@ -45,24 +45,28 @@ export interface RepositoryEvents {
   /**
    * Emitted when a snapshot operation starts.
    *
-   * This event is fired at the beginning of `setupSnapshot` or `refreshSnapshot`
-   * operations, before any network requests are made.
+   * This event is fired at the beginning of `setupSnapshot`, `refreshSnapshot`,
+   * or `setupSnapshotFromSerializedData` operations, before any processing begins.
    *
-   * @param operation - Type of operation ('setup' or 'refresh')
+   * @param operation - Type of operation ('setup', 'refresh', or 'setupFromSerializedData')
    *
    * @example
    * ```typescript
    * repo.events?.on('snapshotStarted', (operation) => {
    *   if (operation === 'setup') {
    *     console.log('Initial setup started');
-   *   } else {
+   *   } else if (operation === 'refresh') {
    *     console.log('Refreshing snapshot');
+   *   } else if (operation === 'setupFromSerializedData') {
+   *     console.log('Setting up snapshot from serialized data');
    *   }
    *   setLoading(true);
    * });
    * ```
    */
-  snapshotStarted: (operation: 'setup' | 'refresh') => void;
+  snapshotStarted: (
+    operation: 'setup' | 'refresh' | 'setupFromSerializedData',
+  ) => void;
 
   /**
    * Emitted when a snapshot operation completes successfully.

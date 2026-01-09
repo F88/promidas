@@ -17,6 +17,7 @@ import type { NormalizedPrototype } from '../../types/index.js';
 
 import type { PrototypeAnalysisResult } from './analysis.types.js';
 import type { RepositoryEvents } from './repository-events.types.js';
+import type { SerializableSnapshot } from './serialization.types.js';
 import type { SnapshotOperationResult } from './snapshot-operation.types.js';
 
 /**
@@ -247,6 +248,77 @@ export interface ProtopediaInMemoryRepository {
   getRandomSampleFromSnapshot(
     size: number,
   ): Promise<readonly DeepReadonly<NormalizedPrototype>[]>;
+
+  /**
+   * Get current snapshot as a serializable object.
+   *
+   * Returns a plain JavaScript object containing all prototypes from the current
+   * snapshot along with metadata. The returned object can be passed to
+   * JSON.stringify() for persistence.
+   *
+   * This method does NOT perform file I/O or JSON.stringify().
+   * The caller is responsible for serialization and storage.
+   *
+   * This method does NOT perform HTTP calls.
+   * It only reflects the current in-memory state of the snapshot.
+   *
+   * @returns Serializable snapshot object with version, timestamp, and prototypes
+   *
+   * @example
+   * ```typescript
+   * // Export to file
+   * const snapshot = repo.getSerializableSnapshot();
+   * const json = JSON.stringify(snapshot, null, 2);
+   * await fs.writeFile('snapshot.json', json, 'utf-8');
+   *
+   * // Check content
+   * console.log(`Version: ${snapshot.version}`);
+   * console.log(`Serialized: ${snapshot.serializedAt}`);
+   * console.log(`Count: ${snapshot.prototypes.length}`);
+   * ```
+   *
+   * @see {@link setupSnapshotFromSerializedData} for importing serialized snapshots
+   * @see {@link SerializableSnapshot} for the data structure
+   */
+  getSerializableSnapshot(): SerializableSnapshot;
+
+  /**
+   * Setup snapshot from previously serialized data.
+   *
+   * Alternative to setupSnapshot(params) for offline/cached initialization.
+   * Validates the data structure and populates the in-memory store.
+   *
+   * This method does NOT perform file I/O or JSON.parse().
+   * The caller is responsible for loading and parsing the data.
+   *
+   * Returns a Result type indicating success with stats or failure with error details.
+   * Validation errors are returned as VALIDATION_ERROR type.
+   *
+   * @param data - Serializable snapshot object (previously exported)
+   * @returns SnapshotOperationResult with ok: true and stats on success,
+   *          or ok: false with error details on validation/import failure
+   *
+   * @example
+   * ```typescript
+   * // Import from file
+   * const json = await fs.readFile('snapshot.json', 'utf-8');
+   * const data = JSON.parse(json);
+   * const result = repo.setupSnapshotFromSerializedData(data);
+   *
+   * if (result.ok) {
+   *   console.log(`Loaded ${result.stats.size} prototypes`);
+   * } else {
+   *   console.error(`Import failed: ${result.errorType}`);
+   * }
+   * ```
+   *
+   * @see {@link getSerializableSnapshot} for exporting snapshots
+   * @see {@link setupSnapshot} for API-based initialization
+   * @see {@link SerializableSnapshot} for the expected data structure
+   */
+  setupSnapshotFromSerializedData(
+    data: SerializableSnapshot,
+  ): SnapshotOperationResult;
 
   /**
    * Clean up event listeners and release resources.

@@ -72,14 +72,21 @@ import type { NormalizedPrototype } from '../types/index.js';
 import { sanitizeDataForLogging } from '../utils/index.js';
 
 import { ValidationError } from './errors/validation-error.js';
-import { prototypeIdSchema, sampleSizeSchema } from './schemas/validation.js';
+import {
+  prototypeIdSchema,
+  sampleSizeSchema,
+  serializableSnapshotSchema,
+} from './schemas/validation.js';
 import type {
   FetcherSnapshotFailure,
   ProtopediaInMemoryRepositoryConfig,
   PrototypeAnalysisResult,
   RepositoryEvents,
+  RepositorySnapshotFailure,
+  SerializableSnapshot,
   SnapshotOperationFailure,
   SnapshotOperationResult,
+  UnknownSnapshotFailure,
 } from './types/index.js';
 import { emitRepositoryEventSafely } from './utils/emit-repository-event-safely.js';
 import { convertFetchResult, convertStoreResult } from './utils/index.js';
@@ -466,6 +473,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    * - All callers receive the same result
    * - The first caller's operation (fetch + store) is executed
    * - Subsequent concurrent callers wait for the same result
+   * - This is necessary because async operations can run concurrently (await allows other calls to start)
    *
    * **Error Handling**:
    * - Returns error result if API fetch fails (network, timeout, API errors)
@@ -580,6 +588,194 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
     );
 
     return this.fetchAndStore(this.#lastFetchParams, false);
+  }
+
+  /**
+   * Load and validate snapshot data, then store it in memory.
+   *
+   * This is the core implementation for {@link setupSnapshotFromSerializedData}.
+   * It encapsulates the complete validation-and-store workflow with proper error handling.
+   *
+   * @param data - Serializable snapshot object to validate and store
+   * @returns {@link SnapshotOperationResult} indicating success or failure
+   *
+   * @remarks
+   * **Operation Flow**:
+   * 1. Validate data structure via {@link serializableSnapshotSchema}
+   * 2. Return early if validation failed (origin: 'repository')
+   * 3. Store the validated prototypes via {@link storeSnapshot}
+   * 4. Return success or store failure result
+   *
+   * **Concurrency Control**:
+   * Unlike {@link fetchAndStore}, this method does NOT use concurrency control because:
+   * - This is a synchronous method (no await points)
+   * - JavaScript's single-threaded nature prevents concurrent execution
+   * - Multiple calls will execute sequentially, not simultaneously
+   * - Each call will update the store in order
+   *
+   * **Error Handling**:
+   * - Returns {@link RepositorySnapshotFailure} if validation fails
+   * - Returns {@link StoreSnapshotFailure} if storage fails (e.g., {@link DataSizeExceededError})
+   * - Previous snapshot remains intact on failure
+   * - Never throws exceptions - all errors are returned as {@link SnapshotOperationResult}
+   *
+   * **Logging**:
+   * - Validation failure: `warn` level with error details
+   * - Validation success: `info` level with metadata
+   * - Storage success: Handled by {@link storeSnapshot} at `debug` level
+   * - Storage failure: Handled by {@link storeSnapshot}
+   *
+   * @internal This method is private and used only by {@link setupSnapshotFromData}.
+   *
+   * @see {@link setupSnapshotFromData} for the public API
+   * @see {@link storeSnapshot} for storage implementation
+   * @see {@link fetchAndStore} for async equivalent with concurrency control
+   */
+  private loadAndStore(data: SerializableSnapshot): SnapshotOperationResult {
+    // Validate data structure
+    const validationResult = serializableSnapshotSchema.safeParse(data);
+
+    if (!validationResult.success) {
+      this.#logger.warn('Snapshot data validation failed', {
+        errors: validationResult.error.issues,
+      });
+
+      return {
+        ok: false,
+        origin: 'repository',
+        kind: 'validation',
+        code: 'REPOSITORY_VALIDATION_ERROR',
+        message: validationResult.error.issues
+          .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+          .join('; '),
+      };
+    }
+
+    this.#logger.info('Snapshot data validated successfully', {
+      version: data.version,
+      serializedAt: data.serializedAt,
+      prototypeCount: data.prototypes.length,
+    });
+
+    // Store the validated data
+    const storeResult: SetResult = this.storeSnapshot(data.prototypes);
+
+    // Return early on store failure, converting to SnapshotOperationFailure
+    if (!storeResult.ok) {
+      return convertStoreResult(storeResult);
+    }
+
+    return convertStoreResult(storeResult);
+  }
+
+  /**
+   * Setup snapshot from previously serialized data.
+   *
+   * Alternative to setupSnapshot(params) for offline/cached initialization.
+   * Validates the data structure and populates the in-memory store.
+   *
+   * This method does NOT perform file I/O or JSON.parse().
+   * The caller is responsible for loading and parsing the data.
+   *
+   * @param data - Serializable snapshot object (previously exported)
+   * @returns SnapshotOperationResult with ok: true and stats on success,
+   *          or ok: false with error details on validation/import failure
+   *
+   * @remarks
+   * Delegates to {@link loadAndStore} for validation and storage.
+   * Emits `snapshotStarted('setupFromSerializedData')` event before operation (if events enabled).
+   *
+   * See {@link loadAndStore} for operation flow and error handling details.
+   *
+   * @example
+   * ```typescript
+   * // Import from file
+   * const json = await fs.readFile('snapshot.json', 'utf-8');
+   * const data = JSON.parse(json);
+   * const result = repo.setupSnapshotFromSerializedData(data);
+   *
+   * if (result.ok) {
+   *   console.log(`Loaded ${result.stats.size} prototypes`);
+   * } else {
+   *   console.error(`Import failed: ${result.message}`);
+   * }
+   * ```
+   *
+   * @see {@link loadAndStore} for the core implementation
+   * @see {@link getSerializableSnapshot} for exporting snapshots
+   * @see {@link setupSnapshot} for API-based initialization
+   */
+  setupSnapshotFromSerializedData(
+    data: SerializableSnapshot,
+  ): SnapshotOperationResult {
+    emitRepositoryEventSafely(
+      this.events,
+      this.#logger,
+      'snapshotStarted',
+      'setupFromSerializedData',
+    );
+
+    const result = this.loadAndStore(data);
+
+    // Emit events based on result
+    if (result.ok) {
+      emitRepositoryEventSafely(
+        this.events,
+        this.#logger,
+        'snapshotCompleted',
+        result.stats,
+      );
+    } else {
+      emitRepositoryEventSafely(
+        this.events,
+        this.#logger,
+        'snapshotFailed',
+        result,
+      );
+    }
+
+    return result;
+  }
+
+  /**
+   * Get current snapshot as a serializable object.
+   *
+   * Returns a plain JavaScript object containing all prototypes from the current
+   * snapshot along with metadata. The returned object can be passed to
+   * JSON.stringify() for persistence.
+   *
+   * This method does NOT perform file I/O or JSON.stringify().
+   * The caller is responsible for serialization and storage.
+   *
+   * @returns Serializable snapshot object with version, timestamp, and prototypes
+   *
+   * @example
+   * ```typescript
+   * // Export to file
+   * const snapshot = repo.getSerializableSnapshot();
+   * const json = JSON.stringify(snapshot, null, 2);
+   * await fs.writeFile('snapshot.json', json, 'utf-8');
+   * ```
+   */
+  getSerializableSnapshot(): SerializableSnapshot {
+    const prototypes = this.#store.getAll();
+
+    // Create deep mutable copies for serialization
+    // This removes readonly constraints while preserving all data
+    const serializablePrototypes = prototypes.map((p) => ({
+      ...p,
+      users: [...p.users],
+      tags: [...p.tags],
+      materials: [...p.materials],
+      events: [...p.events],
+      awards: [...p.awards],
+    }));
+
+    return {
+      version: '1.0.0',
+      serializedAt: new Date().toISOString(),
+      prototypes: serializablePrototypes,
+    };
   }
 
   /**

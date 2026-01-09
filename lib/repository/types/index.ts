@@ -13,11 +13,22 @@ export type {
   ProtopediaInMemoryRepositoryConfig,
 } from './repository.types.js';
 
+export type { SerializableSnapshot } from './serialization.types.js';
+
+export type {
+  RepositoryFailureKind,
+  RepositoryErrorCode,
+  RepositorySuccess,
+  RepositoryFailure,
+  RepositoryResult,
+} from './result.types.js';
+
 export type {
   SnapshotOperationResult,
   SnapshotOperationSuccess,
   SnapshotOperationFailure,
   FetcherSnapshotFailure,
   StoreSnapshotFailure,
+  RepositorySnapshotFailure,
   UnknownSnapshotFailure,
 } from './snapshot-operation.types.js';
