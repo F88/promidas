@@ -99,6 +99,12 @@ const DEFAULT_FETCH_PARAMS: ListPrototypesParams = {
 };
 
 /**
+ * Version identifier for snapshot serialization format.
+ * Increment when making incompatible changes to SerializableSnapshot schema.
+ */
+const SNAPSHOT_SERIALIZATION_VERSION = '1.0.0';
+
+/**
  * Threshold ratio for choosing sampling strategy in getRandomSampleFromSnapshot.
  *
  * When requested sample size exceeds this ratio of total items,
@@ -627,7 +633,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    *
    * @internal This method is private and used only by {@link setupSnapshotFromData}.
    *
-   * @see {@link setupSnapshotFromData} for the public API
+   * @see {@link setupSnapshotFromSerializedData} for the public API
    * @see {@link storeSnapshot} for storage implementation
    * @see {@link fetchAndStore} for async equivalent with concurrency control
    */
@@ -772,7 +778,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
     }));
 
     return {
-      version: '1.0.0',
+      version: SNAPSHOT_SERIALIZATION_VERSION,
       serializedAt: new Date().toISOString(),
       prototypes: serializablePrototypes,
     };
