@@ -308,7 +308,7 @@ export interface ProtopediaInMemoryRepository {
    * if (result.ok) {
    *   console.log(`Loaded ${result.stats.size} prototypes`);
    * } else {
-   *   console.error(`Import failed: ${result.errorType}`);
+   *   console.error(`Import failed: ${result.message}`);
    * }
    * ```
    *
