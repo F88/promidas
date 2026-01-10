@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Repository Snapshot Serialization**: Added snapshot export/import functionality to `ProtopediaInMemoryRepository`
+    - `getSerializableSnapshot()` method: Returns current snapshot as JSON-serializable object with metadata (version, timestamp)
+    - `setupSnapshotFromSerializedData()` method: Loads snapshot from previously serialized data with Zod validation
+    - New repository error types: `RepositoryFailureKind` and `RepositoryErrorCode` following Fetcher/Store patterns
+    - New type definitions: `SerializableSnapshot`, repository-specific result types
+    - Enables offline usage, faster startup times, and test fixtures support
+    - 35 new tests added for serialization functionality
+
 ### Changed
 
 - **Documentation Improvements**: Enhanced CONTRIBUTING.md and DEVELOPMENT.md with comprehensive guides
