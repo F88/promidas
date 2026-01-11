@@ -29,6 +29,12 @@
  *
  * @module
  */
+import type {
+  StatusCode,
+  ReleaseFlagCode,
+  LicenseTypeCode,
+  ThanksFlagCode,
+} from './codes.js';
 
 /**
  * Normalized prototype data structure.
@@ -63,10 +69,10 @@ export type NormalizedPrototype = {
   releaseDate?: undefined | string;
   createId?: undefined | number;
   updateId?: undefined | number;
-  releaseFlg: number;
+  releaseFlg: ReleaseFlagCode;
 
   /* Basic information */
-  status: number;
+  status: StatusCode;
   prototypeNm: string;
   summary: string;
   freeComment: string;
@@ -104,7 +110,7 @@ export type NormalizedPrototype = {
   uuid?: undefined | string;
   nid?: undefined | string;
   revision?: undefined | number;
-  licenseType?: undefined | number;
-  thanksFlg?: undefined | number;
+  licenseType?: undefined | LicenseTypeCode;
+  thanksFlg?: undefined | ThanksFlagCode;
   slideMode?: undefined | number;
 };
