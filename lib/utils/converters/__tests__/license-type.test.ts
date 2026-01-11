@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import type { LicenseTypeCode } from '../../../types/codes.js';
 import { getPrototypeLicenseTypeLabel } from '../license-type.js';
 
 describe('getPrototypeLicenseTypeLabel', () => {
@@ -12,8 +13,8 @@ describe('getPrototypeLicenseTypeLabel', () => {
   });
 
   it('should return numeric string for unknown licenseType', () => {
-    expect(getPrototypeLicenseTypeLabel(99)).toBe('99');
-    expect(getPrototypeLicenseTypeLabel(-1)).toBe('-1');
+    expect(getPrototypeLicenseTypeLabel(99 as LicenseTypeCode)).toBe('99');
+    expect(getPrototypeLicenseTypeLabel(-1 as LicenseTypeCode)).toBe('-1');
   });
 
   it('should handle typical API response (licenseType=1)', () => {

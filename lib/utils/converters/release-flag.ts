@@ -38,8 +38,8 @@ const RELEASE_FLAG_LABELS: Record<ReleaseFlagCode, string> = {
  * getPrototypeReleaseFlagLabel(0); // => '0'
  * ```
  */
-export const getPrototypeReleaseFlagLabel = (releaseFlag: number): string => {
-  return (
-    RELEASE_FLAG_LABELS[releaseFlag as ReleaseFlagCode] ?? `${releaseFlag}`
-  );
+export const getPrototypeReleaseFlagLabel = (
+  releaseFlag: ReleaseFlagCode,
+): string => {
+  return RELEASE_FLAG_LABELS[releaseFlag] ?? `${releaseFlag}`;
 };

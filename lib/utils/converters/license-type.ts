@@ -36,8 +36,8 @@ const LICENSE_TYPE_LABELS: Record<LicenseTypeCode, string> = {
  * getPrototypeLicenseTypeLabel(99); // => '99'
  * ```
  */
-export const getPrototypeLicenseTypeLabel = (licenseType: number): string => {
-  return (
-    LICENSE_TYPE_LABELS[licenseType as LicenseTypeCode] ?? `${licenseType}`
-  );
+export const getPrototypeLicenseTypeLabel = (
+  licenseType: LicenseTypeCode,
+): string => {
+  return LICENSE_TYPE_LABELS[licenseType] ?? `${licenseType}`;
 };
