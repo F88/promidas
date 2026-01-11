@@ -53,7 +53,7 @@ describe('PrototypeInMemoryStore - Edge Cases', () => {
           goodCount: 0,
           commentCount: 0,
           createDate: '2023-01-01T00:00:00Z',
-          releaseFlg: 0,
+          releaseFlg: 2,
           status: 1,
         },
       ]);
@@ -98,7 +98,7 @@ describe('PrototypeInMemoryStore - Edge Cases', () => {
           goodCount: 0,
           commentCount: 0,
           createDate: '2023-01-01T00:00:00Z',
-          releaseFlg: 0,
+          releaseFlg: 2,
           status: 1,
         },
       ]);
@@ -144,7 +144,7 @@ describe('PrototypeInMemoryStore - Edge Cases', () => {
           goodCount: 0,
           commentCount: 0,
           createDate: '2023-01-01T00:00:00Z',
-          releaseFlg: 0,
+          releaseFlg: 2,
           status: 1,
         },
       ]);
