@@ -123,6 +123,20 @@ API通信部分のカスタマイズ(リトライ制御、モックなど)を行
 
 - [README](https://github.com/F88/promidas/blob/main/lib/utils/README.md) / [Usage](https://github.com/F88/promidas/blob/main/lib/utils/docs/USAGE.md) / [Design](https://github.com/F88/promidas/blob/main/lib/utils/docs/DESIGN.md)
 
+#### 基盤モジュール (Core Modules)
+
+#### Types (型定義)
+
+TypeScript型定義によるコンパイル時の型安全性を提供します。
+
+- [README](https://github.com/F88/promidas/blob/main/lib/types/README.md) / [Usage](https://github.com/F88/promidas/blob/main/lib/types/docs/USAGE.md) / [Design](https://github.com/F88/promidas/blob/main/lib/types/docs/DESIGN.md)
+
+#### Schemas (実行時検証)
+
+Zodスキーマによる実行時のバリデーションを提供します。
+
+- [README](https://github.com/F88/promidas/blob/main/lib/schemas/README.md) / [Usage](https://github.com/F88/promidas/blob/main/lib/schemas/docs/USAGE.md) / [Design](https://github.com/F88/promidas/blob/main/lib/schemas/docs/DESIGN.md)
+
 ---
 
 ## 🛠️ プロジェクト情報
