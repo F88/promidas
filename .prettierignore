@@ -33,3 +33,4 @@ tools/prompts/*
 # lib/repository/__tests__/protopedia-in-memory-repository/
 # lib/repository/protopedia-in-memory-repository.ts
 # __tests__/subpath-exports.test.ts
+# lib/repository/__tests__/protopedia-in-memory-repository/unit/public/snapshot-serialization.test.ts
