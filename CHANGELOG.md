@@ -11,13 +11,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Repository Snapshot Serialization**: Added snapshot export/import functionality to `ProtopediaInMemoryRepository`
+- **New Core Modules**: Created three new modules for validation and type safety
+    - **`lib/schemas/`**: Runtime validation schemas (Zod-based, tree-shakeable)
+        - `lib/schemas/normalized-prototype.ts`: Strict Zod schema with literal unions for code values
+        - Validates status codes (1|2|3|4), release flags (1|2|3), and other enumerated values
+        - Complete documentation (README.md, DESIGN.md, USAGE.md)
+    - **`lib/utils/validation/`**: Shared validation utilities across all modules
+        - `lib/utils/validation/normalized-prototype.ts`: `validateNormalizedPrototype()`, `validateNormalizedPrototypeArray()`
+        - Returns Result type for consistent error handling
+        - 49 tests with 100% coverage
+    - **`lib/repository/validation/`**: Repository-specific validation and parameter checking
+        - `lib/repository/validation/serializable-snapshot.ts`: `validateSerializableSnapshot()` with deep object validation
+        - `lib/repository/validation/params-validators.ts`: `RepositoryParamsValidator` static class for parameter validation
+        - `lib/repository/validation/schemas.ts`: Zod schemas for prototypeId, sampleSize, version, serializedAt
+        - 91 tests with 100% coverage
+
+- **Repository Snapshot Serialization**: Added snapshot export/import functionality to `ProtopediaInMemoryRepository` (#78)
     - `getSerializableSnapshot()` method: Returns current snapshot as JSON-serializable object with metadata (version, timestamp)
-    - `setupSnapshotFromSerializedData()` method: Loads snapshot from previously serialized data with Zod validation
+    - `setupSnapshotFromSerializedData()` method: Loads snapshot from previously serialized data with comprehensive validation
+    - **Three-Layer Validation Architecture**: Ensures data integrity across compilation, runtime, and business logic
+        - **Compile-time validation** (`lib/types`): TypeScript type definitions for zero runtime cost
+        - **Runtime validation** (`lib/schemas`): Zod schemas for strict data validation with literal unions for code values
+        - **Validation utilities** (`lib/utils/validation`, `lib/repository/validation`): Shared and repository-specific validators with Result pattern
     - New repository error types: `RepositoryFailureKind` and `RepositoryErrorCode` following Fetcher/Store patterns
-    - New type definitions: `SerializableSnapshot`, repository-specific result types
+    - New type definitions: `SerializableSnapshot`, `RepositoryResult`, `SnapshotSuccess`, `SnapshotFailure`
     - Enables offline usage, faster startup times, and test fixtures support
-    - 35 new tests added for serialization functionality
+    - **100% test coverage** with 17 tests for snapshot serialization (1,308 total tests in project)
 
 ### Changed
 
@@ -35,6 +54,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Updated getting-started.md examples (both Factory and Builder patterns)
     - Updated quickstart-beginners.md example
     - Updated scripts/try-protopedia-repository.ts
+
+### Internal
+
+- **Validation Module Refactoring**: Extracted shared validation logic into reusable modules
+    - Created `lib/schemas/` module for centralized Zod schema definitions
+    - Created `lib/utils/validation/` module for shared validation utilities
+    - Created `lib/repository/validation/` module for repository-specific validation
+    - Improved code organization and eliminated duplication
+    - All validation modules have 100% test coverage
 
 ## [1.0.0] - 2025-12-24
 
