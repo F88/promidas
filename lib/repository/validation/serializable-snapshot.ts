@@ -15,9 +15,10 @@ import type { SerializableSnapshot } from '../types/index.js';
 import { serializedAtSchema, versionSchema } from './schemas.js';
 
 /**
- * Repository validation error code.
+ * Serializable snapshot validation error code.
  */
-type RepositoryValidationErrorCode = 'REPOSITORY_VALIDATION_ERROR';
+type SerializableSnapshotValidationErrorCode =
+  'SERIALIZABLE_SNAPSHOT_VALIDATION_ERROR';
 
 /**
  * Check if value is a plain object.
@@ -57,7 +58,10 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 export function validateSerializableSnapshot(
   data: unknown,
   logger?: Logger,
-): ValidationResult<SerializableSnapshot, RepositoryValidationErrorCode> {
+): ValidationResult<
+  SerializableSnapshot,
+  SerializableSnapshotValidationErrorCode
+> {
   // Step 1: Check data is a plain object
   if (!isPlainObject(data)) {
     logger?.warn('Snapshot data validation failed', {
@@ -67,7 +71,7 @@ export function validateSerializableSnapshot(
 
     return {
       ok: false,
-      code: 'REPOSITORY_VALIDATION_ERROR',
+      code: 'SERIALIZABLE_SNAPSHOT_VALIDATION_ERROR',
       message: 'Invalid input: expected object, received ' + typeof data,
     };
   }
@@ -82,7 +86,7 @@ export function validateSerializableSnapshot(
 
     return {
       ok: false,
-      code: 'REPOSITORY_VALIDATION_ERROR',
+      code: 'SERIALIZABLE_SNAPSHOT_VALIDATION_ERROR',
       message:
         data.version === undefined
           ? 'version: Invalid input: expected string, received undefined'
@@ -102,7 +106,7 @@ export function validateSerializableSnapshot(
 
     return {
       ok: false,
-      code: 'REPOSITORY_VALIDATION_ERROR',
+      code: 'SERIALIZABLE_SNAPSHOT_VALIDATION_ERROR',
       message:
         data.serializedAt === undefined
           ? 'serializedAt: Invalid input: expected string, received undefined'
@@ -120,7 +124,7 @@ export function validateSerializableSnapshot(
     // Logger already called by validateNormalizedPrototypeArray
     return {
       ok: false,
-      code: 'REPOSITORY_VALIDATION_ERROR',
+      code: 'SERIALIZABLE_SNAPSHOT_VALIDATION_ERROR',
       message: 'prototypes: ' + prototypesValidation.message,
     };
   }

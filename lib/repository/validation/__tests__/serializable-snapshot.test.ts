@@ -101,7 +101,7 @@ describe('validateSerializableSnapshot', () => {
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.code).toBe('REPOSITORY_VALIDATION_ERROR');
+        expect(result.code).toBe('SERIALIZABLE_SNAPSHOT_VALIDATION_ERROR');
         expect(result.message).toContain('version');
         expect(result.message).toContain('semver');
       }

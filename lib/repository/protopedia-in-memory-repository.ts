@@ -150,7 +150,6 @@ const SAMPLE_SIZE_THRESHOLD_RATIO = 0.5;
  * All public methods validate their parameters using {@link RepositoryParamsValidator}:
  * - {@link RepositoryParamsValidator.validatePrototypeId} - Ensures valid prototype IDs
  * - {@link RepositoryParamsValidator.validateSampleSize} - Ensures valid sample sizes
- * - {@link validateSerializableSnapshot} - Ensures valid snapshot structure
  *
  * ### Error Handling
  * Network operations return {@link SnapshotOperationResult}:
@@ -597,72 +596,6 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
   }
 
   /**
-   * Validate serializable snapshot data structure.
-   *
-   * Validates that the provided data conforms to the {@link SerializableSnapshot} schema.
-   * This is a pure validation method that does not modify any state or store data.
-   *
-   * @param data - Snapshot data to validate
-   * @returns Validation result with ok: true and validated data on success,
-   *          or ok: false with error details on validation failure
-   *
-   * @remarks
-   * **Use Cases**:
-   * - Pre-validate snapshot data before calling {@link setupSnapshotFromSerializedData}
-   * - Validate data loaded from external sources (files, network, etc.)
-   * - Check snapshot format compatibility without modifying repository state
-   *
-   * **Validation Rules**:
-   * - `version`: Must be semver format (e.g., "1.0.0")
-   * - `serializedAt`: Must be valid ISO-8601 UTC timestamp
-   * - `prototypes`: Must be array of valid {@link NormalizedPrototype} objects
-   * - Each prototype must have valid structure and field types
-   *
-   * **Logging**:
-   * - Validation failure: `warn` level with error details
-   * - Validation success: `info` level with metadata
-   *
-   * @example
-   * ```typescript
-   * const json = await fs.readFile('snapshot.json', 'utf-8');
-   * const data = JSON.parse(json);
-   *
-   * const validation = repo.validateSerializableSnapshot(data);
-   * if (validation.ok) {
-   *   console.log(`Valid snapshot with ${validation.data.prototypes.length} prototypes`);
-   *   const result = repo.setupSnapshotFromSerializedData(validation.data);
-   * } else {
-   *   console.error(`Invalid snapshot: ${validation.message}`);
-   * }
-   * ```
-   *
-   * @see {@link setupSnapshotFromSerializedData} for loading validated snapshots
-   */
-  validateSerializableSnapshot(data: unknown):
-    | { ok: true; data: SerializableSnapshot }
-    | {
-        ok: false;
-        origin: 'repository';
-        kind: 'validation';
-        code: 'REPOSITORY_VALIDATION_ERROR';
-        message: string;
-      } {
-    const validationResult = validateSerializableSnapshot(data, this.#logger);
-
-    if (!validationResult.ok) {
-      return {
-        ok: false,
-        origin: 'repository',
-        kind: 'validation',
-        code: validationResult.code,
-        message: validationResult.message,
-      };
-    }
-
-    return validationResult;
-  }
-
-  /**
    * Load and validate snapshot data, then store it in memory.
    *
    * This is the core implementation for {@link setupSnapshotFromSerializedData}.
@@ -713,7 +646,8 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
         ok: false,
         origin: 'repository',
         kind: 'validation',
-        code: validationResult.code,
+        // validationResult.code -> "REPOSITORY_VALIDATION_ERROR"
+        code: 'REPOSITORY_VALIDATION_ERROR',
         message: validationResult.message,
       };
     }
