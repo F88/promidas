@@ -4,8 +4,8 @@
  * This module provides validation utilities for common data structures
  * used across multiple modules (fetcher, repository, store).
  *
- * These validators are for data validation (returning Result types).
- * For parameter validation (throwing errors), use inline validation with ValidationError.
+ * These validators return Result types (ValidationResult) instead of throwing errors.
+ * For parameter validation at API boundaries, modules should throw appropriate errors.
  */
 import type { Logger } from '../../logger/logger.types.js';
 import { normalizedPrototypeSchema } from '../../schemas/index.js';
