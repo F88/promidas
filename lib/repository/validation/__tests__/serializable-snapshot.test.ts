@@ -275,6 +275,27 @@ describe('validateSerializableSnapshot', () => {
   });
 
   describe('Logger integration', () => {
+    it('should call logger.warn when data is not a plain object', () => {
+      const mockLogger: Logger = {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+      };
+
+      validateSerializableSnapshot('not-an-object', mockLogger);
+
+      expect(mockLogger.warn).toHaveBeenCalledOnce();
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        'Snapshot data validation failed',
+        expect.objectContaining({
+          reason: 'not a plain object',
+          type: 'string',
+        }),
+      );
+      expect(mockLogger.info).not.toHaveBeenCalled();
+    });
+
     it('should call logger.warn on validation failure', () => {
       const mockLogger: Logger = {
         info: vi.fn(),
