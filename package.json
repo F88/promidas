@@ -98,6 +98,10 @@
       "types": "./dist/logger/index.d.ts",
       "import": "./dist/logger/index.js"
     },
+    "./schemas": {
+      "types": "./dist/schemas/index.d.ts",
+      "import": "./dist/schemas/index.js"
+    },
     "./fetcher": {
       "types": "./dist/fetcher/index.d.ts",
       "import": "./dist/fetcher/index.js"
