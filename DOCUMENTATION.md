@@ -493,5 +493,3 @@ See existing modules for reference:
 - [DEVELOPMENT.md](DEVELOPMENT.md) - Development environment and workflow
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
 - [README.md](README.md) - Project overview
-
-```
