@@ -10,10 +10,12 @@ instructions-for-ais:
     - Prohibit updating title line (1st line) in this document.
 ---
 
+<!-- markdownlint-disable MD033 -->
 <p style="display: flex; gap: 8px; flex-wrap: wrap;">
   <a href="https://deepwiki.com/F88/promidas"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
   <a href="https://codewiki.google/github.com/f88/promidas"><img src="https://www.gstatic.com/_/boq-sdlc-agents-ui/_/r/YUi5dj2UWvE.svg" alt="View Code Wiki"></a>
 </p>
+<!-- markdownlint-enable MD033 -->
 
 # PROMIDAS
 
@@ -65,8 +67,6 @@ APIから取得したデータをメモリ上に保存(キャッシュ)するこ
 2. **[モジュール別リファレンス](#-モジュール別リファレンス-高度な内容)**
     - 各コンポーネントの詳細設計書へのリンクです。
 
----
-
 ## 📚 ドキュメント一覧
 
 ### 入門・ガイド
@@ -88,10 +88,18 @@ PROMIDASの主要な機能についての解説です。
 - **[Repository (リポジトリ)](./features/repository.md)** - データ管理の中核
 - **[Factory (ファクトリ)](./features/factory.md)** - 簡単な初期化
 - **[Builder (ビルダー)](./features/builder.md)** - 高度な設定
+    <!-- - **[Types (型定義)](./features/types.md)** - コンパイル時型安全性 -->
+    <!-- - **[Schemas (実行時検証)](./features/schemas.md)** - ランタイムバリデーション -->
 
 ### 🔧 モジュール別リファレンス (高度な内容)
 
 PROMIDASの内部構造や高度なカスタマイズを行いたい開発者向けの詳細資料です。各ディレクトリ内のドキュメントへリンクしています。
+
+#### Types (型定義)
+
+TypeScript型定義によるコンパイル時の型安全性を提供します。
+
+- [README](https://github.com/F88/promidas/blob/main/lib/types/README.md) / [Usage](https://github.com/F88/promidas/blob/main/lib/types/docs/USAGE.md) / [Design](https://github.com/F88/promidas/blob/main/lib/types/docs/DESIGN.md)
 
 #### Repository (統合モジュール)
 
@@ -123,21 +131,11 @@ API通信部分のカスタマイズ(リトライ制御、モックなど)を行
 
 - [README](https://github.com/F88/promidas/blob/main/lib/utils/README.md) / [Usage](https://github.com/F88/promidas/blob/main/lib/utils/docs/USAGE.md) / [Design](https://github.com/F88/promidas/blob/main/lib/utils/docs/DESIGN.md)
 
-#### 基盤モジュール (Core Modules)
-
-#### Types (型定義)
-
-TypeScript型定義によるコンパイル時の型安全性を提供します。
-
-- [README](https://github.com/F88/promidas/blob/main/lib/types/README.md) / [Usage](https://github.com/F88/promidas/blob/main/lib/types/docs/USAGE.md) / [Design](https://github.com/F88/promidas/blob/main/lib/types/docs/DESIGN.md)
-
 #### Schemas (実行時検証)
 
 Zodスキーマによる実行時のバリデーションを提供します。
 
 - [README](https://github.com/F88/promidas/blob/main/lib/schemas/README.md) / [Usage](https://github.com/F88/promidas/blob/main/lib/schemas/docs/USAGE.md) / [Design](https://github.com/F88/promidas/blob/main/lib/schemas/docs/DESIGN.md)
-
----
 
 ## 🛠️ プロジェクト情報
 
