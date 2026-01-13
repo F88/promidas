@@ -23,13 +23,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Repository Snapshot Refresh Validation**: Enhanced `refreshSnapshot()` to prevent unintended API calls after loading serialized data (#78)
-    - `lastFetchParams` now optional (`undefined` after loading serialized data)
-    - Added `REPOSITORY_INVALID_STATE` error code for invalid refresh attempts
-    - New `invalid_state` failure kind in `RepositoryFailureKind`
-
 - **Documentation Improvements**: Enhanced CONTRIBUTING.md and DEVELOPMENT.md with comprehensive guides
 - **Code Examples Modernization**: Updated all code examples to use top-level await
+
+### Fixed
+
+- **Repository Snapshot Refresh Validation**: Fixed `refreshSnapshot()` to enforce its intended prerequisite (#78)
+    - `refreshSnapshot()` now correctly requires `setupSnapshot()` to have been called successfully at least once
+    - Returns `REPOSITORY_INVALID_STATE` error when called before `setupSnapshot()` (previously used default params unintentionally)
+    - This aligns behavior with documented intent: refresh uses parameters from previous setup
+    - `setupSnapshotFromSerializedData()` resets `lastFetchParams` to `undefined` for consistency
+    - Validation executes before coalescing for deterministic concurrent call behavior
+    - Added comprehensive documentation in DESIGN.md (Validation Before Coalescing section)
 
 ### Internal
 
