@@ -96,7 +96,7 @@ To use the API, you need an Access Token (Bearer Token).
 Please refer to the API documentation for details:
 [ProtoPedia API Ver 2.0 · Apiary](https://protopediav2.docs.apiary.io/)
 
-## Full Supported API Client
+## Fully Supported API Client
 
 This library fully supports [protopedia-api-v2-client](https://www.npmjs.com/package/protopedia-api-v2-client) v3.0.0 and later.
 
@@ -158,6 +158,7 @@ import {
 
 - [DEVELOPMENT.md](DEVELOPMENT.md) - Setup development environment and workflows
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
+- [DOCUMENTATION.md](DOCUMENTATION.md) - Documentation standards and guidelines
 - [RELEASE.md](RELEASE.md) - Release process and versioning
 
 **Project History:**
