@@ -41,10 +41,12 @@ npx tsx scripts/try-protopedia-repository.ts
 
 This repository provides a modular toolset for managing ProtoPedia data, consisting of independent components and a high-level repository:
 
-1. **`NormalizedPrototype`** - Standardized data model (`NormalizedPrototype`)
-    - Type-safe, normalized representation of ProtoPedia prototypes
-    - Consistent handling of dates, arrays, and optional fields
-    - Shared across all layers of the library
+1. **`lib/types`** - Compile-time Type Definitions (`NormalizedPrototype`, `StatusCode`, etc.)
+    - Type-safe TypeScript definitions for ProtoPedia data structures
+    - Normalized representation with consistent handling of dates, arrays, and optional fields
+    - Shared across all layers: fetcher, store, repository, and validation utilities
+    - Foundation for compile-time type safety (complements runtime validation in lib/schemas)
+    - [📘 README](lib/types/README.md) | [Usage Guide](lib/types/docs/USAGE.md) | [Design Document](lib/types/docs/DESIGN.md)
 
 2. **`lib/schemas`** - Runtime Validation Schemas (`normalizedPrototypeSchema`)
     - Zod-based runtime validation for external data (API responses, snapshots, files)
