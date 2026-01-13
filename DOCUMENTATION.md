@@ -291,11 +291,11 @@ For practical examples, see [USAGE.md](USAGE.md#common-patterns).
 
 **Key Distinction:**
 
-| Aspect | DESIGN.md | USAGE.md |
-|--------|-----------|----------|
-| **Purpose** | Design decisions & internal implementation | Practical usage for end-users |
+| Aspect            | DESIGN.md                                                      | USAGE.md                               |
+| ----------------- | -------------------------------------------------------------- | -------------------------------------- |
+| **Purpose**       | Design decisions & internal implementation                     | Practical usage for end-users          |
 | **Code Examples** | Internal implementation patterns, type definitions, algorithms | Public API usage, integration patterns |
-| **Audience** | Maintainers, contributors | Library users, developers |
+| **Audience**      | Maintainers, contributors                                      | Library users, developers              |
 
 **Example 1 - Design Rationale (BAD - duplicated):**
 
@@ -317,7 +317,7 @@ This module throws exceptions instead of returning null because...
 [same explanation repeated]
 
 try {
-  // example code
+// example code
 }
 ```
 
@@ -342,10 +342,10 @@ _USAGE.md:_
 For error handling design rationale, see [DESIGN.md](DESIGN.md#error-handling-design).
 
 try {
-  // practical usage example only
-  const result = api.fetch();
+// practical usage example only
+const result = api.fetch();
 } catch (error) {
-  // handle error
+// handle error
 }
 ```
 
@@ -353,21 +353,17 @@ try {
 
 _DESIGN.md:_
 
-```markdown
+````markdown
 ## Result Type Pattern
 
 **Internal Type Definition**:
 
 ```typescript
 // Internal discriminated union type
-type Result<T, E> =
-  | { ok: true; value: T }
-  | { ok: false; error: E };
+type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
 ```
 
 **Rationale**: Type-safe error handling without exceptions...
-
-```
 
 _USAGE.md:_
 
@@ -385,7 +381,7 @@ if (result.ok) {
 } else {
   console.error('Error:', result.error);
 }
-```
+````
 
 ```yaml
 ---
