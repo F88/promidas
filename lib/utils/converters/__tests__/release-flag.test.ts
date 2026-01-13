@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import type { ReleaseFlagCode } from '../../../types/codes.js';
 import { getPrototypeReleaseFlagLabel } from '../release-flag.js';
 
 describe('getPrototypeReleaseFlagLabel', () => {
@@ -16,8 +17,8 @@ describe('getPrototypeReleaseFlagLabel', () => {
   });
 
   it('should return numeric string for unknown releaseFlg', () => {
-    expect(getPrototypeReleaseFlagLabel(0)).toBe('0');
-    expect(getPrototypeReleaseFlagLabel(99)).toBe('99');
+    expect(getPrototypeReleaseFlagLabel(0 as ReleaseFlagCode)).toBe('0');
+    expect(getPrototypeReleaseFlagLabel(99 as ReleaseFlagCode)).toBe('99');
   });
 
   it('should handle typical API response (releaseFlg=2)', () => {

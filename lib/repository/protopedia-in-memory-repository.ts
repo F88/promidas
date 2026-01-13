@@ -72,17 +72,23 @@ import type { NormalizedPrototype } from '../types/index.js';
 import { sanitizeDataForLogging } from '../utils/index.js';
 
 import { ValidationError } from './errors/validation-error.js';
-import { prototypeIdSchema, sampleSizeSchema } from './schemas/validation.js';
 import type {
   FetcherSnapshotFailure,
   ProtopediaInMemoryRepositoryConfig,
   PrototypeAnalysisResult,
   RepositoryEvents,
+  RepositorySnapshotFailure,
+  SerializableSnapshot,
   SnapshotOperationFailure,
   SnapshotOperationResult,
+  UnknownSnapshotFailure,
 } from './types/index.js';
 import { emitRepositoryEventSafely } from './utils/emit-repository-event-safely.js';
 import { convertFetchResult, convertStoreResult } from './utils/index.js';
+import {
+  RepositoryParamsValidator,
+  validateSerializableSnapshot,
+} from './validation/index.js';
 
 import type { ProtopediaInMemoryRepository } from './index.js';
 
@@ -90,6 +96,12 @@ const DEFAULT_FETCH_PARAMS: ListPrototypesParams = {
   offset: 0,
   limit: 10,
 };
+
+/**
+ * Version identifier for snapshot serialization format.
+ * Increment when making incompatible changes to SerializableSnapshot schema.
+ */
+const SNAPSHOT_SERIALIZATION_VERSION = '1.0.0';
 
 /**
  * Threshold ratio for choosing sampling strategy in getRandomSampleFromSnapshot.
@@ -135,9 +147,9 @@ const SAMPLE_SIZE_THRESHOLD_RATIO = 0.5;
  * ## Implementation Details
  *
  * ### Validation
- * All public methods validate their parameters using Zod schemas:
- * - {@link prototypeIdSchema} - Ensures valid prototype IDs
- * - {@link sampleSizeSchema} - Ensures valid sample sizes
+ * All public methods validate their parameters using {@link RepositoryParamsValidator}:
+ * - {@link RepositoryParamsValidator.validatePrototypeId} - Ensures valid prototype IDs
+ * - {@link RepositoryParamsValidator.validateSampleSize} - Ensures valid sample sizes
  *
  * ### Error Handling
  * Network operations return {@link SnapshotOperationResult}:
@@ -197,8 +209,11 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
 
   /**
    * Cache of the last successful fetch parameters.
+   *
+   * - `undefined`: No API fetch has been performed, or reset after loading serialized data
+   * - `ListPrototypesParams`: Parameters from the last successful setupSnapshot() call
    */
-  #lastFetchParams: ListPrototypesParams = { ...DEFAULT_FETCH_PARAMS };
+  #lastFetchParams: ListPrototypesParams | undefined = undefined;
 
   /**
    * Ongoing fetch promise for concurrency control.
@@ -466,6 +481,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    * - All callers receive the same result
    * - The first caller's operation (fetch + store) is executed
    * - Subsequent concurrent callers wait for the same result
+   * - This is necessary because async operations can run concurrently (await allows other calls to start)
    *
    * **Error Handling**:
    * - Returns error result if API fetch fails (network, timeout, API errors)
@@ -559,19 +575,90 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    * Typically called periodically to refresh expired data. Uses parameters
    * cached by the last successful {@link setupSnapshot} call.
    *
-   * @returns {@link SnapshotOperationResult} indicating success or failure
+   * **Prerequisite**: {@link setupSnapshot} must have been called successfully at least once.
+   * If called before {@link setupSnapshot}, returns an error with code `REPOSITORY_INVALID_STATE`.
+   *
+   * @returns Promise resolving to {@link SnapshotOperationResult}:
+   * - **Success** (`ok: true`): Contains {@link PrototypeInMemoryStats} with snapshot metadata
+   * - **Failure** (`ok: false`): One of:
+   *   - {@link RepositorySnapshotFailure} - Invalid state (setupSnapshot not called)
+   *   - {@link FetcherSnapshotFailure} - Network/HTTP errors from API
+   *   - {@link StoreSnapshotFailure} - Storage errors (size limits, serialization)
+   *   - {@link UnknownSnapshotFailure} - Unexpected errors
    *
    * @remarks
-   * Delegates to {@link fetchAndStore} with `updateLastFetchParams: false`.
-   * Emits `snapshotStarted('refresh')` event before operation (if events enabled).
+   * **Operation Flow**:
+   * 1. Validate that {@link setupSnapshot} has been called (check `#lastFetchParams`)
+   * 2. Return error immediately if validation fails (before coalescing)
+   * 3. Emit `snapshotStarted('refresh')` event (if events enabled)
+   * 4. Delegate to {@link fetchAndStore} with `updateLastFetchParams: false`
+   * 5. Preserve existing snapshot on failure (atomic operation)
    *
-   * Falls back to {@link DEFAULT_FETCH_PARAMS} if {@link setupSnapshot} has never been called.
-   * See {@link fetchAndStore} for operation flow, concurrency control, and error handling details.
+   * **Concurrency Control**:
+   * - Multiple concurrent calls are coalesced into a single API request
+   * - All callers receive the same result
+   * - Validation check executes before coalescing, ensuring deterministic failure
    *
-   * @see {@link fetchAndStore}
-   * @see {@link setupSnapshot}
+   * **Error Handling**:
+   * - Never throws exceptions
+   * - All errors returned as Result type with `ok: false`
+   * - Use `result.origin` to discriminate error types
+   *
+   * @example
+   * ```typescript
+   * // Typical usage: periodic refresh
+   * const result = await repo.refreshSnapshot();
+   * if (result.ok) {
+   *   console.log(`Refreshed ${result.stats.size} prototypes`);
+   * } else {
+   *   console.error(`Refresh failed: ${result.message}`);
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Error handling by origin
+   * const result = await repo.refreshSnapshot();
+   * if (!result.ok) {
+   *   if (result.origin === 'repository') {
+   *     console.error('Call setupSnapshot first');
+   *   } else if (result.origin === 'fetcher') {
+   *     console.error(`HTTP ${result.status}: ${result.message}`);
+   *   }
+   * }
+   * ```
+   *
+   * @see {@link fetchAndStore} - Core implementation
+   * @see {@link setupSnapshot} - Initial snapshot setup
+   * @see {@link SnapshotOperationResult} - Return type details
    */
   async refreshSnapshot(): Promise<SnapshotOperationResult> {
+    // Check lastFetchParams before coalescing to ensure refresh is not called
+    // before setupSnapshot has established parameters, even during concurrent calls
+    if (this.#lastFetchParams === undefined) {
+      const error: RepositorySnapshotFailure = {
+        ok: false,
+        origin: 'repository',
+        kind: 'invalid_state',
+        code: 'REPOSITORY_INVALID_STATE',
+        message:
+          'Cannot refresh snapshot: No previous API fetch parameters available. ' +
+          'Call setupSnapshot() first to establish fetch parameters.',
+      };
+
+      emitRepositoryEventSafely(
+        this.events,
+        this.#logger,
+        'snapshotFailed',
+        error,
+      );
+      return error;
+    }
+
+    // Capture lastFetchParams before entering fetchAndStore to prevent race conditions
+    // where setupSnapshot might update it during concurrent execution
+    const paramsToUse = this.#lastFetchParams;
+
     emitRepositoryEventSafely(
       this.events,
       this.#logger,
@@ -579,7 +666,207 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
       'refresh',
     );
 
-    return this.fetchAndStore(this.#lastFetchParams, false);
+    return this.fetchAndStore(paramsToUse, false);
+  }
+
+  /**
+   * Load and validate snapshot data, then store it in memory.
+   *
+   * This is the core implementation for {@link setupSnapshotFromSerializedData}.
+   * It encapsulates the complete validation-and-store workflow with proper error handling.
+   *
+   * @param data - Serializable snapshot object to validate and store
+   * @returns {@link SnapshotOperationResult} indicating success or failure
+   *
+   * @remarks
+   * **Operation Flow**:
+   * 1. Validate data structure via {@link validateSerializableSnapshot}
+   * 2. Return early if validation failed (origin: 'repository')
+   * 3. Store the validated prototypes via {@link storeSnapshot}
+   * 4. Return success or store failure result
+   *
+   * **Concurrency Control**:
+   * Unlike {@link fetchAndStore}, this method does NOT use concurrency control because:
+   * - This is a synchronous method (no await points)
+   * - JavaScript's single-threaded nature prevents concurrent execution
+   * - Multiple calls will execute sequentially, not simultaneously
+   * - Each call will update the store in order
+   *
+   * **Error Handling**:
+   * - Returns {@link RepositorySnapshotFailure} if validation fails
+   * - Returns {@link StoreSnapshotFailure} if storage fails (e.g., {@link DataSizeExceededError})
+   * - Previous snapshot remains intact on failure
+   * - Never throws exceptions - all errors are returned as {@link SnapshotOperationResult}
+   *
+   * **Logging**:
+   * - Validation: Handled by {@link validateSerializableSnapshot}
+   * - Storage success: Handled by {@link storeSnapshot} at `debug` level
+   * - Storage failure: Handled by {@link storeSnapshot}
+   *
+   * @internal
+   * This method is private and used only by {@link setupSnapshotFromSerializedData}.
+   *
+   * @see {@link setupSnapshotFromSerializedData} - Public API
+   * @see {@link validateSerializableSnapshot} - Validation logic
+   * @see {@link storeSnapshot} - Storage implementation
+   * @see {@link fetchAndStore} - Async equivalent with concurrency control
+   */
+  private loadAndStore(data: SerializableSnapshot): SnapshotOperationResult {
+    // Validate data structure
+    const validationResult = validateSerializableSnapshot(data, this.#logger);
+
+    if (!validationResult.ok) {
+      return {
+        ok: false,
+        origin: 'repository',
+        kind: 'validation',
+        // validationResult.code -> "REPOSITORY_VALIDATION_ERROR"
+        code: 'REPOSITORY_VALIDATION_ERROR',
+        message: validationResult.message,
+      };
+    }
+
+    // Store the validated data
+    const storeResult: SetResult = this.storeSnapshot(data.prototypes);
+
+    // Return early on store failure, converting to SnapshotOperationFailure
+    if (!storeResult.ok) {
+      return convertStoreResult(storeResult);
+    }
+
+    return convertStoreResult(storeResult);
+  }
+
+  /**
+   * Setup snapshot from previously serialized data.
+   *
+   * Alternative to {@link setupSnapshot} for offline/cached initialization.
+   * Validates the data structure and populates the in-memory store.
+   *
+   * **Important**: This method resets `#lastFetchParams` to `undefined`, preventing
+   * {@link refreshSnapshot} from working until {@link setupSnapshot} is called.
+   * This ensures that API parameters don't become mismatched with serialized data.
+   *
+   * @param data - Serializable snapshot object (previously exported via {@link getSerializableSnapshot})
+   * @returns {@link SnapshotOperationResult} indicating success or failure
+   *
+   * @remarks
+   * **Caller Responsibilities**:
+   * - Load snapshot file (e.g., `fs.readFile()`)
+   * - Parse JSON to JavaScript object (e.g., `JSON.parse()`)
+   * - Pass the parsed object to this method
+   *
+   * **Operation Flow**:
+   * 1. Reset `#lastFetchParams` to `undefined`
+   * 2. Emit `snapshotStarted('setupFromSerializedData')` event (if enabled)
+   * 3. Validate data structure via {@link loadAndStore}
+   * 4. Store validated prototypes if validation succeeds
+   * 5. Return operation result
+   *
+   * **Side Effects**:
+   * - Resets cached API fetch parameters
+   * - Subsequent {@link refreshSnapshot} calls will fail with `REPOSITORY_INVALID_STATE`
+   * - Use {@link setupSnapshot} after this method to re-enable {@link refreshSnapshot}
+   *
+   * **This method does NOT**:
+   * - Perform file I/O operations
+   * - Parse JSON strings
+   * - Make network requests
+   *
+   * @example
+   * ```typescript
+   * // Import from file
+   * const json = await fs.readFile('snapshot.json', 'utf-8');
+   * const data = JSON.parse(json);
+   * const result = repo.setupSnapshotFromSerializedData(data);
+   *
+   * if (result.ok) {
+   *   console.log(`Loaded ${result.stats.size} prototypes`);
+   * } else {
+   *   console.error(`Import failed: ${result.message}`);
+   * }
+   * ```
+   *
+   * @see {@link loadAndStore} for the core implementation
+   * @see {@link getSerializableSnapshot} for exporting snapshots
+   * @see {@link setupSnapshot} for API-based initialization
+   */
+  setupSnapshotFromSerializedData(
+    data: SerializableSnapshot,
+  ): SnapshotOperationResult {
+    // Reset fetch parameters immediately when attempting to load from serialized data.
+    // This ensures that any subsequent refreshSnapshot() calls will fail explicitly,
+    // rather than using potentially mismatched API parameters from a previous setupSnapshot().
+    this.#lastFetchParams = undefined;
+
+    emitRepositoryEventSafely(
+      this.events,
+      this.#logger,
+      'snapshotStarted',
+      'setupFromSerializedData',
+    );
+
+    const result = this.loadAndStore(data);
+
+    // Emit events based on result
+    if (result.ok) {
+      emitRepositoryEventSafely(
+        this.events,
+        this.#logger,
+        'snapshotCompleted',
+        result.stats,
+      );
+    } else {
+      emitRepositoryEventSafely(
+        this.events,
+        this.#logger,
+        'snapshotFailed',
+        result,
+      );
+    }
+
+    return result;
+  }
+
+  /**
+   * Get current snapshot as a serializable object.
+   *
+   * Returns a plain JavaScript object containing all prototypes from the current
+   * snapshot along with metadata. The returned object can be passed to
+   * JSON.stringify() for persistence.
+   *
+   * This method does NOT perform file I/O or JSON.stringify().
+   * The caller is responsible for serialization and storage.
+   *
+   * @returns Serializable snapshot object with version, timestamp, and prototypes
+   *
+   * @example
+   * ```typescript
+   * // Export to file
+   * const snapshot = repo.getSerializableSnapshot();
+   * const json = JSON.stringify(snapshot, null, 2);
+   * await fs.writeFile('snapshot.json', json, 'utf-8');
+   * ```
+   */
+  getSerializableSnapshot(): SerializableSnapshot {
+    const prototypes = this.#store.getAll();
+
+    // Create deep mutable copies for serialization
+    // This removes readonly constraints while preserving all data
+    const serializablePrototypes = prototypes.map((p) => ({
+      ...p,
+      users: [...p.users],
+      tags: [...p.tags],
+      materials: [...p.materials],
+      events: [...p.events],
+      awards: [...p.awards],
+    }));
+
+    return {
+      version: SNAPSHOT_SERIALIZATION_VERSION,
+      serializedAt: new Date().toISOString(),
+      prototypes: serializablePrototypes,
+    };
   }
 
   /**
@@ -641,14 +928,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
   async getPrototypeFromSnapshotByPrototypeId(
     prototypeId: number,
   ): Promise<DeepReadonly<NormalizedPrototype> | null> {
-    const validation = prototypeIdSchema.safeParse(prototypeId);
-    if (!validation.success) {
-      throw new ValidationError(
-        'Invalid prototype ID: must be a positive integer',
-        'prototypeId',
-        { cause: validation.error },
-      );
-    }
+    RepositoryParamsValidator.validatePrototypeId(prototypeId);
     return this.#store.getByPrototypeId(prototypeId);
   }
 
@@ -705,14 +985,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
   async getRandomSampleFromSnapshot(
     size: number,
   ): Promise<readonly DeepReadonly<NormalizedPrototype>[]> {
-    const validation = sampleSizeSchema.safeParse(size);
-    if (!validation.success) {
-      throw new ValidationError(
-        'Invalid sample size: must be an integer',
-        'size',
-        { cause: validation.error },
-      );
-    }
+    RepositoryParamsValidator.validateSampleSize(size);
 
     if (size <= 0 || this.#store.size === 0) {
       return [];

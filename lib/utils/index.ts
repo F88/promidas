@@ -93,3 +93,13 @@ export { deepMerge, isPlainObject } from './deep-merge.js';
 
 // Logging Utilities
 export { sanitizeDataForLogging } from './logger-utils.js';
+
+// Validation Utilities
+export {
+  validateNormalizedPrototype,
+  validateNormalizedPrototypeArray,
+  type ValidationErrorCode,
+  type ValidationResult,
+  type ValidationSuccess,
+  type ValidationFailure,
+} from './validation/index.js';

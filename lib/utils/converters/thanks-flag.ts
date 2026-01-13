@@ -37,7 +37,7 @@ const THANKS_FLAG_LABELS: Record<number, string> = {
  * ```
  */
 export const getPrototypeThanksFlagLabel = (
-  thanksFlag: number | undefined,
+  thanksFlag: ThanksFlagCode,
 ): string => {
   if (thanksFlag === undefined) {
     return '不明';

@@ -38,6 +38,6 @@ const STATUS_LABELS: Record<StatusCode, string> = {
  * getPrototypeStatusLabel(99); // => '99'
  * ```
  */
-export const getPrototypeStatusLabel = (status: number): string => {
-  return STATUS_LABELS[status as StatusCode] ?? `${status}`;
+export const getPrototypeStatusLabel = (status: StatusCode): string => {
+  return STATUS_LABELS[status] ?? `${status}`;
 };

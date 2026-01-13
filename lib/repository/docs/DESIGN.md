@@ -187,42 +187,43 @@ type UnknownSnapshotFailure = {
 - Rich error context (origin, kind, code, status)
 - Precise error type narrowing based on `origin` field
 
-**Usage Example**:
-
-```typescript
-const result = await repository.setupSnapshot({ limit: 1000 });
-
-if (!result.ok) {
-    switch (result.origin) {
-        case 'fetcher':
-            // FetcherSnapshotFailure: has status, details
-            console.error(`Fetch error [${result.code}]:`, result.message);
-            if (result.status === 401) {
-                // Handle authentication error
-            }
-            break;
-        case 'store':
-            // StoreSnapshotFailure: has dataState, cause
-            console.error(`Store error [${result.code}]:`, result.message);
-            if (result.dataState === 'corrupted') {
-                // Handle data corruption
-            }
-            break;
-        case 'unknown':
-            // UnknownSnapshotFailure: minimal info
-            console.error('Unknown error:', result.message);
-            break;
-    }
-    return;
-}
-```
-
 **Comparison with exceptions**:
 
 | Approach  | Type Safety | Explicit | Performance | Context    |
 | --------- | ----------- | -------- | ----------- | ---------- |
 | Result    | ✅ Strong   | ✅ Yes   | ✅ Fast     | ✅ Rich    |
 | Exception | ⚠️ Weak     | ❌ No    | ⚠️ Slower   | ⚠️ Limited |
+
+**Type Narrowing with Discriminated Unions**:
+
+The `origin` field enables precise type narrowing:
+
+```typescript
+const result = await repo.setupSnapshot({ limit: 100 });
+
+if (!result.ok) {
+    // Type: SnapshotOperationFailure
+
+    if (result.origin === 'repository') {
+        // Type narrowed to: RepositorySnapshotFailure
+        console.error(result.kind); // ✅ 'invalid_state' | 'validation_failed'
+        console.error(result.code); // ✅ RepositoryErrorCode
+    }
+
+    if (result.origin === 'fetcher') {
+        // Type narrowed to: FetcherSnapshotFailure
+        console.error(result.status); // ✅ number | undefined
+        console.error(result.details); // ✅ FetchPrototypesFailure['details']
+    }
+
+    if (result.origin === 'store') {
+        // Type narrowed to: StoreSnapshotFailure
+        console.error(result.dataState); // ✅ 'corrupted' | 'lost' | 'unknown'
+    }
+}
+```
+
+See [USAGE.md](USAGE.md#error-handling) for usage examples.
 
 ### 4. Snapshot Isolation
 
@@ -413,7 +414,7 @@ async setupSnapshot() {
 **Schemas**:
 
 ```typescript
-// lib/repository/schemas/validation.ts
+// lib/repository/schemas/params.ts
 export const prototypeIdSchema = z.number().int().positive();
 export const sampleSizeSchema = z.number().int();
 ```
@@ -488,6 +489,42 @@ async #executeWithCoalescing(
 - Subsequent concurrent callers wait for the same Promise
 - After completion, new calls start fresh requests
 
+### Validation Before Coalescing
+
+**Design Decision**: Validation checks execute before coalescing logic
+
+**Implication**: `refreshSnapshot()` requires prior successful `setupSnapshot()`
+
+**Behavior**:
+
+```typescript
+class ProtopediaInMemoryRepositoryImpl {
+  async refreshSnapshot(): Promise<SnapshotOperationResult> {
+    // Validation happens FIRST (before coalescing)
+    if (this.#lastFetchParams === undefined) {
+      return {
+        ok: false,
+        origin: 'repository',
+        kind: 'invalid_state',
+        code: 'REPOSITORY_INVALID_STATE',
+        message: 'Cannot refresh: no previous snapshot exists'
+      };
+    }
+    // Coalescing happens AFTER validation passes
+    return this.#executeWithCoalescing(() => this.fetchAndStore(...));
+  }
+}
+```
+
+**Concurrent Call Implications**:
+
+- Concurrent `setupSnapshot` calls → All succeed (coalesced into 1 request)
+- Concurrent `refreshSnapshot` calls → All succeed (coalesced into 1 request)
+- `refreshSnapshot` called before `setupSnapshot` completes → Fails immediately with `REPOSITORY_INVALID_STATE`
+- `refreshSnapshot` + `setupSnapshot` concurrent → `refreshSnapshot` fails, `setupSnapshot` succeeds
+
+**Rationale**: Validation failure is deterministic and instant, no need to wait for coalescing.
+
 ## Event System
 
 The repository provides an optional event notification system for real-time state change notifications during snapshot operations. This feature is designed primarily for interactive WebApp/SPA scenarios where UI needs to respond to repository state changes.
@@ -532,6 +569,13 @@ repo.events?.on('snapshotFailed', (error) => {
 - **Zero Cost**: CLI/script users (primary use case) don't pay EventEmitter instantiation cost
 - **Explicit Intent**: WebApp developers consciously opt-in
 - **Resource Efficiency**: Memory used only when actually needed
+
+### Design Characteristics
+
+- **Opt-in**: Events are disabled by default (zero overhead for CLI/script users)
+- **Rich Payloads**: Events include complete information (stats, error details)
+- **Concurrent Calls**: Multiple concurrent calls result in one event (matches API behavior)
+- **Browser Compatible**: Uses `events` package (Node.js EventEmitter polyfill)
 
 ### Cleanup
 

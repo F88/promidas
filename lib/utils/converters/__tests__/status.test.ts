@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import type { StatusCode } from '../../../types/codes.js';
 import { getPrototypeStatusLabel } from '../status.js';
 
 describe('getPrototypeStatusLabel', () => {
@@ -20,8 +21,8 @@ describe('getPrototypeStatusLabel', () => {
   });
 
   it('should return numeric string for unknown status', () => {
-    expect(getPrototypeStatusLabel(99)).toBe('99');
-    expect(getPrototypeStatusLabel(0)).toBe('0');
-    expect(getPrototypeStatusLabel(-1)).toBe('-1');
+    expect(getPrototypeStatusLabel(99 as StatusCode)).toBe('99');
+    expect(getPrototypeStatusLabel(0 as StatusCode)).toBe('0');
+    expect(getPrototypeStatusLabel(-1 as StatusCode)).toBe('-1');
   });
 });

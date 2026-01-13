@@ -116,4 +116,18 @@ describe('ProtopediaInMemoryRepositoryImpl - constructor', () => {
 
     expect(mockLogger.level).toBe('debug');
   });
+
+  it('initializes successfully with all dependencies', () => {
+    const { mockStoreInstance, mockApiClientInstance } = createTestContext({});
+
+    const repo = new ProtopediaInMemoryRepositoryImpl({
+      store: mockStoreInstance,
+      apiClient: mockApiClientInstance,
+      repositoryConfig: {},
+    });
+
+    expect(repo).toBeInstanceOf(ProtopediaInMemoryRepositoryImpl);
+    expect(repo.getConfig()).toBeDefined();
+    expect(repo.getStats()).toBeDefined();
+  });
 });

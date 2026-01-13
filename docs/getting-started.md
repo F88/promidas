@@ -416,7 +416,7 @@ const random = await repo.getRandomPrototypeFromSnapshot();
 
 ### TTL (Time To Live)
 
-**TTL**は、Snapshotの有効期限です。TTLが切れた後、`getAllFromSnapshot()` などのメソッドを呼ぶと、データが期限切れであることを検知できます(`isExpired: true`)。明示的に `refreshSnapshot()` を呼ぶことで最新データを取得します。
+**TTL**は、Snapshotの有効期限です。TTLが切れた後、`getAllFromSnapshot()` などのメソッドを呼ぶと、データが期限切れであることを検知できます(`isExpired: true`)。一度 `setupSnapshot()` でデータを取得した後、`refreshSnapshot()` を呼ぶことで最新データに更新できます。
 
 ```typescript
 import { PromidasRepositoryBuilder } from '@f88/promidas';

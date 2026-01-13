@@ -133,11 +133,14 @@ Japanese documentation improves accessibility for Japanese developers, especiall
 
 **Guidelines:**
 
-- Focus on WHY, not just WHAT
+- Focus on WHY (design rationale and decisions), not just WHAT
+- **Include internal implementation examples and code snippets** that demonstrate design patterns
 - Document design decisions and alternatives considered
-- Include performance characteristics where relevant
 - Explain trade-offs and constraints
+- Include performance characteristics where relevant
 - Reference relevant research or standards
+- **Distinguish from USAGE.md**: DESIGN.md shows HOW it's implemented internally (architecture, algorithms, type definitions), not HOW users should use it
+- Link to USAGE.md for end-user practical examples
 - Use clear headings for easy navigation
 
 **Example Structure:**
@@ -191,12 +194,13 @@ Japanese documentation improves accessibility for Japanese developers, especiall
 
 **Guidelines:**
 
-- Focus on HOW to use the module
-- Include runnable code examples
-- Cover common use cases
+- Focus on HOW to use the module (end-user perspective)
+- **Include practical usage examples only** (not internal implementation details)
+- Include runnable code examples for common use cases
 - Document error handling patterns
+- Show integration patterns and best practices
 - **IMPORTANT:** Do NOT duplicate content from DESIGN.md
-- When referring to design decisions, link to DESIGN.md instead of repeating the explanation
+- When referring to design decisions or internal implementation, link to DESIGN.md instead of repeating the explanation
 - Keep examples practical and concise
 
 **Example Structure:**
@@ -281,11 +285,19 @@ For practical examples, see [USAGE.md](USAGE.md#common-patterns).
 
 **Solution:**
 
-- DESIGN.md: Focus on WHY and architectural decisions
-- USAGE.md: Focus on HOW and practical examples
+- **DESIGN.md**: Focus on WHY (design rationale) and HOW it's implemented internally (architecture, algorithms, internal patterns)
+- **USAGE.md**: Focus on HOW to use it (end-user perspective, practical examples)
 - Use links instead of repeating explanations
 
-**Example - BAD (duplicated content):**
+**Key Distinction:**
+
+| Aspect            | DESIGN.md                                                      | USAGE.md                               |
+| ----------------- | -------------------------------------------------------------- | -------------------------------------- |
+| **Purpose**       | Design decisions & internal implementation                     | Practical usage for end-users          |
+| **Code Examples** | Internal implementation patterns, type definitions, algorithms | Public API usage, integration patterns |
+| **Audience**      | Maintainers, contributors                                      | Library users, developers              |
+
+**Example 1 - Design Rationale (BAD - duplicated):**
 
 _DESIGN.md:_
 
@@ -309,14 +321,16 @@ try {
 }
 ```
 
-**Example - GOOD (linked content):**
+**Example 1 - Design Rationale (GOOD - linked):**
 
 _DESIGN.md:_
 
 ```markdown
 ## Error Handling Design
 
-We throw exceptions instead of returning null because...
+**Decision**: Throw exceptions instead of returning null
+
+**Rationale**: ...
 [detailed explanation]
 ```
 
@@ -328,30 +342,103 @@ _USAGE.md:_
 For error handling design rationale, see [DESIGN.md](DESIGN.md#error-handling-design).
 
 try {
-// practical example only
+// practical usage example only
+const result = api.fetch();
+} catch (error) {
+// handle error
 }
 ```
 
-## Front Matter
+**Example 2 - Implementation Code (GOOD - properly separated):**
 
-All markdown files should include front matter for metadata and AI instructions:
+_DESIGN.md:_
 
-```yaml
----
-lang: en # or 'ja' for Japanese
-title: Document Title
-title-en: English Title
-title-ja: 日本語タイトル
-related:
-    - ../../../README.md "Project Overview"
-    - DESIGN.md "Design Specifications"
-instructions-for-ais:
-    - This document should be written in English for AI readability.
-    - Content within code fences may be written in languages other than English.
-    - Prohibit updating this front-matter.
-    - Prohibit updating title line (1st line) in this document.
----
+````markdown
+## Result Type Pattern
+
+**Internal Type Definition**:
+
+```typescript
+// Internal discriminated union type
+type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
 ```
+````
+
+**Rationale**: Type-safe error handling without exceptions...
+
+_USAGE.md:_
+
+````markdown
+## Error Handling with Result Type
+
+For Result type design rationale, see [DESIGN.md](DESIGN.md#result-type-pattern).
+
+```typescript
+// Practical usage example
+const result = await repository.setupSnapshot();
+
+if (result.ok) {
+    console.log('Success:', result.value);
+} else {
+    console.error('Error:', result.error);
+}
+```
+````
+
+## Documentation Review Process
+
+### When to Review
+
+Documentation should be reviewed during:
+
+- **Pull Request Review**: All documentation changes must be reviewed before merge
+- **Feature Development**: Documentation created/updated alongside code changes
+- **Breaking Changes**: Ensure DESIGN.md explains rationale and USAGE.md shows migration path
+- **Release Preparation**: Verify all new features are documented
+- **Quarterly Audit**: Periodic review for outdated or missing documentation
+
+### Review Criteria
+
+When reviewing documentation changes, verify:
+
+**1. Correct Document Placement**:
+
+- Design rationale and architectural decisions → DESIGN.md
+- Internal implementation examples (types, algorithms, patterns) → DESIGN.md
+- End-user practical examples → USAGE.md
+- Beginner-friendly overview → README.md
+
+**2. No Content Duplication**:
+
+- Check for repeated explanations between DESIGN.md and USAGE.md
+- Ensure proper cross-references instead of duplication
+- Verify implementation examples are in DESIGN.md, not USAGE.md
+- Verify usage examples are in USAGE.md, not duplicated in DESIGN.md
+
+**3. Clear WHY vs HOW Separation**:
+
+- DESIGN.md: WHY (rationale) + HOW it's implemented (internal architecture)
+- USAGE.md: HOW to use it (end-user perspective)
+- No design rationale explanations in USAGE.md (link to DESIGN.md instead)
+
+**4. Language Consistency**:
+
+- README.md in Japanese (beginner-friendly)
+- DESIGN.md in English (technical specifications)
+- USAGE.md in English (practical examples)
+
+**5. Code Example Quality**:
+
+- DESIGN.md: Internal implementation patterns, type definitions, algorithms
+- USAGE.md: Runnable, practical examples for end-users
+- Both: Include error handling where appropriate
+
+### Review Process
+
+1. **Self-Review**: Author reviews their own changes using the checklist
+2. **Peer Review**: At least one reviewer checks documentation in PR
+3. **Integration Check**: Verify cross-references work correctly
+4. **Build Verification**: Ensure documentation builds without errors
 
 ## Tools and Validation
 
@@ -371,18 +458,21 @@ Use this checklist when reviewing or creating module documentation:
 
 - [ ] Written in English
 - [ ] Documents WHY (rationale and decisions)
-- [ ] Explains architecture and patterns
-- [ ] Describes trade-offs
+- [ ] Includes internal implementation examples (types, algorithms, patterns)
+- [ ] Explains architecture and design patterns
+- [ ] Describes trade-offs and alternatives considered
+- [ ] Links to USAGE.md for end-user examples (does NOT duplicate them)
 - [ ] References relevant resources
 
 **USAGE.md:**
 
 - [ ] Written in English
-- [ ] Documents HOW (practical usage)
-- [ ] Includes runnable examples
-- [ ] Covers common patterns
-- [ ] Links to DESIGN.md (does NOT duplicate content)
-- [ ] Documents error handling
+- [ ] Documents HOW to use (end-user perspective)
+- [ ] Includes runnable, practical examples only
+- [ ] Covers common usage patterns and integration examples
+- [ ] Does NOT include internal implementation details
+- [ ] Links to DESIGN.md for design rationale (does NOT duplicate content)
+- [ ] Documents error handling with practical examples
 
 ## Examples
 

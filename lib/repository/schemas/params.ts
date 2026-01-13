@@ -1,8 +1,8 @@
 /**
- * Validation schemas for repository method parameters.
+ * Validation schemas for repository operations.
  *
- * This module provides Zod schemas for validating input parameters
- * to ensure type safety and data integrity at runtime.
+ * This module provides Zod schemas for validating both method parameters
+ * and data structures at runtime.
  */
 import { z } from 'zod';
 
@@ -10,9 +10,14 @@ import { z } from 'zod';
  * Validation schema for prototype ID.
  * Must be a positive integer (1, 2, 3, ...).
  *
+ * @remarks
+ * ID 0 is not valid for ProtoPedia prototypes. All valid prototype IDs
+ * are positive integers starting from 1.
+ *
  * @example
  * ```ts
  * prototypeIdSchema.parse(123); // ✅ Valid
+ * prototypeIdSchema.parse(1);   // ✅ Valid
  * prototypeIdSchema.parse(0);   // ❌ ZodError: too_small
  * prototypeIdSchema.parse(-1);  // ❌ ZodError: too_small
  * prototypeIdSchema.parse(1.5); // ❌ ZodError: invalid_type

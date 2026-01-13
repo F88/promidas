@@ -105,56 +105,6 @@ describe('ProtopediaInMemoryRepositoryImpl - event system', () => {
       expect(typeof repo.events?.emit).toBe('function');
       expect(typeof repo.events?.removeAllListeners).toBe('function');
     });
-  });
-
-  describe('snapshotStarted event', () => {
-    it('emits snapshotStarted with "setup" when setupSnapshot is called', async () => {
-      vi.mocked(mockApiClientInstance.fetchPrototypes).mockResolvedValue({
-        ok: true,
-        data: [makeNormalizedPrototype({ id: 1 })],
-      });
-
-      const repo = new ProtopediaInMemoryRepositoryImpl({
-        store: mockStoreInstance,
-        apiClient: mockApiClientInstance,
-        repositoryConfig: {
-          enableEvents: true,
-        },
-      });
-
-      const snapshotStartedMock = vi.fn();
-      repo.events?.on('snapshotStarted', snapshotStartedMock);
-
-      await repo.setupSnapshot({});
-
-      expect(snapshotStartedMock).toHaveBeenCalledTimes(1);
-      expect(snapshotStartedMock).toHaveBeenCalledWith('setup');
-    });
-
-    it('emits snapshotStarted with "refresh" when refreshSnapshot is called', async () => {
-      vi.mocked(mockApiClientInstance.fetchPrototypes).mockResolvedValue({
-        ok: true,
-        data: [makeNormalizedPrototype({ id: 1 })],
-      });
-
-      const repo = new ProtopediaInMemoryRepositoryImpl({
-        store: mockStoreInstance,
-        apiClient: mockApiClientInstance,
-        repositoryConfig: {
-          enableEvents: true,
-        },
-      });
-
-      await repo.setupSnapshot({});
-
-      const snapshotStartedMock = vi.fn();
-      repo.events?.on('snapshotStarted', snapshotStartedMock);
-
-      await repo.refreshSnapshot();
-
-      expect(snapshotStartedMock).toHaveBeenCalledTimes(1);
-      expect(snapshotStartedMock).toHaveBeenCalledWith('refresh');
-    });
 
     it('does not emit when events are disabled', async () => {
       vi.mocked(mockApiClientInstance.fetchPrototypes).mockResolvedValue({
@@ -181,8 +131,31 @@ describe('ProtopediaInMemoryRepositoryImpl - event system', () => {
     });
   });
 
-  describe('snapshotCompleted event', () => {
-    it('emits snapshotCompleted with stats on successful setupSnapshot', async () => {
+  describe('setupSnapshot events', () => {
+    it('emits snapshotStarted with "setup"', async () => {
+      vi.mocked(mockApiClientInstance.fetchPrototypes).mockResolvedValue({
+        ok: true,
+        data: [makeNormalizedPrototype({ id: 1 })],
+      });
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {
+          enableEvents: true,
+        },
+      });
+
+      const snapshotStartedMock = vi.fn();
+      repo.events?.on('snapshotStarted', snapshotStartedMock);
+
+      await repo.setupSnapshot({});
+
+      expect(snapshotStartedMock).toHaveBeenCalledTimes(1);
+      expect(snapshotStartedMock).toHaveBeenCalledWith('setup');
+    });
+
+    it('emits snapshotCompleted with stats on success', async () => {
       vi.mocked(mockApiClientInstance.fetchPrototypes).mockResolvedValue({
         ok: true,
         data: [
@@ -211,11 +184,11 @@ describe('ProtopediaInMemoryRepositoryImpl - event system', () => {
       }
     });
 
-    it('emits snapshotCompleted with stats on successful refreshSnapshot', async () => {
-      vi.mocked(mockApiClientInstance.fetchPrototypes).mockResolvedValue({
-        ok: true,
-        data: [makeNormalizedPrototype({ id: 1 })],
-      });
+    it('emits snapshotFailed on API error', async () => {
+      const testError = new Error('API error during setup');
+      vi.mocked(mockApiClientInstance.fetchPrototypes).mockRejectedValue(
+        testError,
+      );
 
       const repo = new ProtopediaInMemoryRepositoryImpl({
         store: mockStoreInstance,
@@ -225,21 +198,19 @@ describe('ProtopediaInMemoryRepositoryImpl - event system', () => {
         },
       });
 
-      await repo.setupSnapshot({});
+      const snapshotFailedMock = vi.fn();
+      repo.events?.on('snapshotFailed', snapshotFailedMock);
 
-      const snapshotCompletedMock = vi.fn();
-      repo.events?.on('snapshotCompleted', snapshotCompletedMock);
+      const result = await repo.setupSnapshot({});
 
-      const result = await repo.refreshSnapshot();
-
-      expect(result.ok).toBe(true);
-      expect(snapshotCompletedMock).toHaveBeenCalledTimes(1);
-      if (result.ok) {
-        expect(snapshotCompletedMock).toHaveBeenCalledWith(result.stats);
+      expect(result.ok).toBe(false);
+      expect(snapshotFailedMock).toHaveBeenCalledTimes(1);
+      if (!result.ok) {
+        expect(snapshotFailedMock).toHaveBeenCalledWith(result);
       }
     });
 
-    it('does not reject when snapshotCompleted listener throws (logs error)', async () => {
+    it('does not reject when listener throws (logs error)', async () => {
       vi.mocked(mockApiClientInstance.fetchPrototypes).mockResolvedValue({
         ok: true,
         data: [makeNormalizedPrototype({ id: 1 })],
@@ -280,12 +251,12 @@ describe('ProtopediaInMemoryRepositoryImpl - event system', () => {
     });
   });
 
-  describe('snapshotFailed event', () => {
-    it('emits snapshotFailed on setupSnapshot error', async () => {
-      const testError = new Error('API error during setup');
-      vi.mocked(mockApiClientInstance.fetchPrototypes).mockRejectedValue(
-        testError,
-      );
+  describe('refreshSnapshot events', () => {
+    it('emits snapshotStarted with "refresh"', async () => {
+      vi.mocked(mockApiClientInstance.fetchPrototypes).mockResolvedValue({
+        ok: true,
+        data: [makeNormalizedPrototype({ id: 1 })],
+      });
 
       const repo = new ProtopediaInMemoryRepositoryImpl({
         store: mockStoreInstance,
@@ -295,19 +266,46 @@ describe('ProtopediaInMemoryRepositoryImpl - event system', () => {
         },
       });
 
-      const snapshotFailedMock = vi.fn();
-      repo.events?.on('snapshotFailed', snapshotFailedMock);
+      await repo.setupSnapshot({});
 
-      const result = await repo.setupSnapshot({});
+      const snapshotStartedMock = vi.fn();
+      repo.events?.on('snapshotStarted', snapshotStartedMock);
 
-      expect(result.ok).toBe(false);
-      expect(snapshotFailedMock).toHaveBeenCalledTimes(1);
-      if (!result.ok) {
-        expect(snapshotFailedMock).toHaveBeenCalledWith(result);
+      await repo.refreshSnapshot();
+
+      expect(snapshotStartedMock).toHaveBeenCalledTimes(1);
+      expect(snapshotStartedMock).toHaveBeenCalledWith('refresh');
+    });
+
+    it('emits snapshotCompleted with stats on success', async () => {
+      vi.mocked(mockApiClientInstance.fetchPrototypes).mockResolvedValue({
+        ok: true,
+        data: [makeNormalizedPrototype({ id: 1 })],
+      });
+
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {
+          enableEvents: true,
+        },
+      });
+
+      await repo.setupSnapshot({});
+
+      const snapshotCompletedMock = vi.fn();
+      repo.events?.on('snapshotCompleted', snapshotCompletedMock);
+
+      const result = await repo.refreshSnapshot();
+
+      expect(result.ok).toBe(true);
+      expect(snapshotCompletedMock).toHaveBeenCalledTimes(1);
+      if (result.ok) {
+        expect(snapshotCompletedMock).toHaveBeenCalledWith(result.stats);
       }
     });
 
-    it('emits snapshotFailed on refreshSnapshot error', async () => {
+    it('emits snapshotFailed on API error', async () => {
       // First setup succeeds
       vi.mocked(mockApiClientInstance.fetchPrototypes).mockResolvedValueOnce({
         ok: true,
@@ -334,6 +332,120 @@ describe('ProtopediaInMemoryRepositoryImpl - event system', () => {
       repo.events?.on('snapshotFailed', snapshotFailedMock);
 
       const result = await repo.refreshSnapshot();
+
+      expect(result.ok).toBe(false);
+      expect(snapshotFailedMock).toHaveBeenCalledTimes(1);
+      if (!result.ok) {
+        expect(snapshotFailedMock).toHaveBeenCalledWith(result);
+      }
+    });
+
+    it('emits snapshotFailed when called without prior setup', async () => {
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {
+          enableEvents: true,
+        },
+      });
+
+      const snapshotFailedMock = vi.fn();
+      repo.events?.on('snapshotFailed', snapshotFailedMock);
+
+      const result = await repo.refreshSnapshot();
+
+      expect(result.ok).toBe(false);
+      expect(snapshotFailedMock).toHaveBeenCalledTimes(1);
+      if (!result.ok && 'kind' in result) {
+        expect(result.kind).toBe('invalid_state');
+        expect(result.code).toBe('REPOSITORY_INVALID_STATE');
+        expect(snapshotFailedMock).toHaveBeenCalledWith(result);
+      }
+    });
+  });
+
+  describe('setupSnapshotFromSerializedData events', () => {
+    it('emits snapshotStarted with "setupFromSerializedData"', () => {
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {
+          enableEvents: true,
+        },
+      });
+
+      const snapshotStartedMock = vi.fn();
+      repo.events?.on('snapshotStarted', snapshotStartedMock);
+
+      const serializedData = {
+        version: '1.0.0',
+        serializedAt: new Date().toISOString(),
+        prototypes: [makeNormalizedPrototype({ id: 1 })],
+      };
+
+      repo.setupSnapshotFromSerializedData(serializedData);
+
+      expect(snapshotStartedMock).toHaveBeenCalledTimes(1);
+      expect(snapshotStartedMock).toHaveBeenCalledWith(
+        'setupFromSerializedData',
+      );
+    });
+
+    it('emits snapshotCompleted with stats on success', () => {
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {
+          enableEvents: true,
+        },
+      });
+
+      const snapshotCompletedMock = vi.fn();
+      repo.events?.on('snapshotCompleted', snapshotCompletedMock);
+
+      const serializedData = {
+        version: '1.0.0',
+        serializedAt: new Date().toISOString(),
+        prototypes: [
+          makeNormalizedPrototype({ id: 1 }),
+          makeNormalizedPrototype({ id: 2 }),
+        ],
+      };
+
+      const result = repo.setupSnapshotFromSerializedData(serializedData);
+
+      expect(result.ok).toBe(true);
+      expect(snapshotCompletedMock).toHaveBeenCalledTimes(1);
+      if (result.ok) {
+        expect(snapshotCompletedMock).toHaveBeenCalledWith(result.stats);
+      }
+    });
+
+    it('emits snapshotFailed on validation error', () => {
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: mockStoreInstance,
+        apiClient: mockApiClientInstance,
+        repositoryConfig: {
+          enableEvents: true,
+        },
+      });
+
+      const snapshotFailedMock = vi.fn();
+      repo.events?.on('snapshotFailed', snapshotFailedMock);
+
+      // Invalid data - missing required fields
+      const invalidData = {
+        version: '1.0.0',
+        serializedAt: new Date().toISOString(),
+        prototypes: [
+          {
+            // Missing required fields to trigger validation error
+            id: 1,
+          } as any,
+        ],
+      };
+
+      const result = repo.setupSnapshotFromSerializedData(invalidData);
 
       expect(result.ok).toBe(false);
       expect(snapshotFailedMock).toHaveBeenCalledTimes(1);

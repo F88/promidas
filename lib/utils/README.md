@@ -24,6 +24,7 @@ ProtoPedia API から取得したデータを扱いやすくするための便�
 
 - **Converters**: 数値コードを日本語ラベルに変換 (例: ステータスコード `1` → `'アイデア'`)
 - **Time Utilities**: 日時を扱う関数 (例: JST の日時を UTC に変換)
+- **Validation**: データの妥当性検証 (例: 外部データの構造チェック)
 - **Types**: TypeScript の型定義
 
 ## 📥 インストールと使い方
@@ -34,6 +35,7 @@ ProtoPedia API から取得したデータを扱いやすくするための便�
 import {
     parseProtoPediaTimestamp,
     getPrototypeStatusLabel,
+    validateNormalizedPrototype,
 } from '@f88/promidas/utils';
 ```
 
@@ -63,6 +65,23 @@ import { parseProtoPediaTimestamp } from '@f88/promidas/utils';
 // ProtoPedia の日時 (JST) を世界標準時 (UTC) に変換
 const timestamp = parseProtoPediaTimestamp('2025-12-12 10:00:00.0');
 console.log(timestamp); // '2025-12-12T01:00:00.000Z'
+```
+
+### データ検証の例
+
+```typescript
+import { validateNormalizedPrototype } from '@f88/promidas/utils';
+
+// 外部データを安全に検証
+const result = validateNormalizedPrototype(untrustedData);
+
+if (result.ok) {
+    // 検証成功: result.value が使える
+    console.log(result.value.prototypeId);
+} else {
+    // 検証失敗: result.error にエラー情報
+    console.error(result.error.message);
+}
 ```
 
 ## 📚 詳しく知りたい方へ
@@ -96,6 +115,15 @@ import {
     parseProtoPediaTimestamp, // ProtoPedia 形式をパース
     parseW3cDtfTimestamp, // 標準的な ISO 形式をパース
     JST_OFFSET_MS, // 日本時間のオフセット (9時間)
+} from '@f88/promidas/utils';
+```
+
+### 検証関数
+
+```typescript
+import {
+    validateNormalizedPrototype, // 単一データの検証
+    validateNormalizedPrototypeArray, // 配列データの検証
 } from '@f88/promidas/utils';
 ```
 

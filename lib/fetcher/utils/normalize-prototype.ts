@@ -3,7 +3,13 @@
  *
  * @module fetcher/utils/normalize-prototype
  */
-import type { NormalizedPrototype } from '../../types/index.js';
+import type {
+  LicenseTypeCode,
+  NormalizedPrototype,
+  ReleaseFlagCode,
+  StatusCode,
+  ThanksFlagCode,
+} from '../../types/index.js';
 import type { UpstreamPrototype } from '../types/prototype-api.types.js';
 
 import { normalizeProtoPediaTimestamp } from './normalize-protopedia-timestamp.js';
@@ -86,10 +92,11 @@ export function normalizePrototype(p: UpstreamPrototype): NormalizedPrototype {
     releaseDate: adjustedReleaseDate,
     createId: p.createId,
     updateId: p.updateId,
-    releaseFlg: p.releaseFlg ?? 2 /* Default to 'Released' */,
+    releaseFlg: (p.releaseFlg ??
+      2) as ReleaseFlagCode /* Default to 'Released' */,
 
     /* Basic information */
-    status: p.status,
+    status: p.status as StatusCode,
     prototypeNm: p.prototypeNm,
     summary: p.summary ?? '' /* Default to empty string */,
     freeComment: p.freeComment ?? '' /* Default to empty string */,
@@ -124,8 +131,10 @@ export function normalizePrototype(p: UpstreamPrototype): NormalizedPrototype {
     uuid: p.uuid,
     nid: p.nid,
     revision: p.revision ?? 0 /* Default to 0 */,
-    licenseType: p.licenseType ?? 1 /* Default to 1(表示(CC:BY)) */,
-    thanksFlg: p.thanksFlg ?? 0 /* Default to 0(Message not yet shown) */,
+    licenseType: (p.licenseType ??
+      1) as LicenseTypeCode /* Default to 1(表示(CC:BY)) */,
+    thanksFlg: (p.thanksFlg ??
+      0) as ThanksFlagCode /* Default to 0(Message not yet shown) */,
     slideMode: p.slideMode,
   } satisfies NormalizedPrototype;
   return normalized;

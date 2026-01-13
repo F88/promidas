@@ -1010,6 +1010,24 @@ describe('ProtopediaInMemoryRepositoryImpl - data retrieval', () => {
           }),
         });
       });
+
+      it('throws ValidationError when prototypeId is Infinity', async () => {
+        const repo = new ProtopediaInMemoryRepositoryImpl({
+          store: mockStoreInstance,
+          apiClient: mockApiClientInstance,
+          repositoryConfig: {},
+        });
+        await expect(
+          repo.getPrototypeFromSnapshotByPrototypeId(Infinity),
+        ).rejects.toMatchObject({
+          name: 'ValidationError',
+          message: 'Invalid prototype ID: must be a positive integer',
+          field: 'prototypeId',
+          cause: expect.objectContaining({
+            name: 'ZodError',
+          }),
+        });
+      });
     });
   });
 });

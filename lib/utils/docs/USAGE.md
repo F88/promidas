@@ -22,6 +22,7 @@ This document provides practical examples for using the utility functions in the
 - [Quick Start](#quick-start)
 - [Label Converters](#label-converters)
 - [Time Utilities](#time-utilities)
+- [Validation Utilities](#validation-utilities)
 - [Type Definitions](#type-definitions)
 - [Integration Examples](#integration-examples)
 - [Best Practices](#best-practices)
@@ -42,6 +43,10 @@ import {
     parseProtoPediaTimestamp,
     parseW3cDtfTimestamp,
     JST_OFFSET_MS,
+
+    // Validation utilities
+    validateNormalizedPrototype,
+    validateNormalizedPrototypeArray,
 
     // Types
     StatusCode,
@@ -272,6 +277,145 @@ parseW3cDtfTimestamp('2025-12-12T10:00:00+0900'); // undefined
 parseW3cDtfTimestamp('2025-12-12 10:00:00.0'); // undefined
 ```
 
+## Validation Utilities
+
+Validation utilities provide type-safe validation of external data using the Result pattern. These utilities are shared across fetcher, repository, and application code.
+
+### Validate Single Prototype
+
+Validate a single NormalizedPrototype object.
+
+```typescript
+import { validateNormalizedPrototype } from '@f88/promidas/utils';
+
+// Validate untrusted external data
+const untrustedData = JSON.parse(externalJson);
+const result = validateNormalizedPrototype(untrustedData);
+
+if (result.ok) {
+    // TypeScript knows result.value is NormalizedPrototype
+    console.log(`Valid prototype: ${result.value.prototypeNm}`);
+    console.log(`ID: ${result.value.prototypeId}`);
+} else {
+    // TypeScript knows result.error is ValidationError
+    console.error('Validation failed:', result.error.message);
+    console.error('Details:', result.error.details);
+}
+```
+
+**Validation Features:**
+
+- Validates all required fields are present
+- Checks field types match schema
+- Validates code values are within allowed ranges (e.g., status: 1|2|3|4)
+- Rejects extra fields not in schema
+- Provides detailed error messages with field paths
+
+### Validate Prototype Array
+
+Validate an array of NormalizedPrototype objects.
+
+```typescript
+import { validateNormalizedPrototypeArray } from '@f88/promidas/utils';
+
+const arrayData = JSON.parse(externalJson);
+const result = validateNormalizedPrototypeArray(arrayData);
+
+if (result.ok) {
+    console.log(`Validated ${result.value.length} prototypes`);
+    result.value.forEach((prototype) => {
+        console.log(`- ${prototype.prototypeNm}`);
+    });
+} else {
+    console.error('Array validation failed:', result.error.message);
+}
+```
+
+**Array Validation Behavior:**
+
+- Validates the input is an array
+- Validates each element in the array
+- Returns detailed error for the first invalid element found
+- Provides element index in error message
+
+### Result Type Pattern
+
+Validation functions return a Result type (discriminated union) instead of throwing exceptions.
+
+```typescript
+import { validateNormalizedPrototype } from '@f88/promidas/utils';
+
+const result = validateNormalizedPrototype(untrustedData);
+
+// Use the 'ok' field to discriminate
+if (result.ok) {
+    // result.value is available (type: NormalizedPrototype)
+    processPrototype(result.value);
+} else {
+    // result.error is available (type: ValidationError)
+    logError(result.error);
+}
+```
+
+For Result pattern design rationale, see [DESIGN.md](DESIGN.md#result-pattern).
+
+### Error Details
+
+Validation errors include detailed information about what failed.
+
+```typescript
+import { validateNormalizedPrototype } from '@f88/promidas/utils';
+
+const invalidData = {
+    prototypeId: 'not-a-number', // Should be number
+    status: 99, // Should be 1|2|3|4
+    // ... missing required fields
+};
+
+const result = validateNormalizedPrototype(invalidData);
+
+if (!result.ok) {
+    console.error('Message:', result.error.message);
+    // "Failed to validate NormalizedPrototype"
+
+    console.error('Details:', result.error.details);
+    // Array of Zod validation errors with field paths:
+    // [
+    //   { path: ['prototypeId'], message: 'Expected number, received string' },
+    //   { path: ['status'], message: 'Invalid literal value, expected 1|2|3|4' },
+    //   ...
+    // ]
+}
+```
+
+### Integration with Shared Schema
+
+Validation utilities use the shared Zod schema from `lib/schemas/normalized-prototype.ts`.
+
+```typescript
+// Same schema used by:
+// - lib/utils/validation/normalized-prototype.ts (this module)
+// - lib/fetcher (API response validation)
+// - lib/repository (snapshot data validation)
+
+import { normalizedPrototypeSchema } from '@f88/promidas/schemas';
+import { validateNormalizedPrototype } from '@f88/promidas/utils';
+
+// Direct schema usage (advanced)
+const directResult = normalizedPrototypeSchema.safeParse(data);
+
+// Or use the Result-based wrapper (recommended)
+const wrapperResult = validateNormalizedPrototype(data);
+```
+
+**Why Shared Schema?**
+
+- Single source of truth for validation rules
+- Consistent validation across all modules
+- Easier maintenance and updates
+
+For architecture details, see [DESIGN.md](DESIGN.md#three-layer-architecture).
+
 ## Type Definitions
 
 All utility types are exported for use in your application.
@@ -409,6 +553,70 @@ function createSummary(prototypes: NormalizedPrototype[]): void {
         console.log(`\nMost recently updated: ${latest.prototypeNm}`);
         console.log(`Date: ${new Date(date).toLocaleDateString('ja-JP')}`);
     }
+}
+```
+
+### Validate External Data
+
+Safely validate data from external sources before use.
+
+```typescript
+import { validateNormalizedPrototypeArray } from '@f88/promidas/utils';
+import type { NormalizedPrototype } from '@f88/promidas/types';
+
+// Load data from file or API
+async function loadPrototypes(url: string): Promise<NormalizedPrototype[]> {
+    const response = await fetch(url);
+    const data = await response.json();
+
+    // Validate before trusting the data
+    const result = validateNormalizedPrototypeArray(data);
+
+    if (!result.ok) {
+        throw new Error(`Invalid data from ${url}: ${result.error.message}`);
+    }
+
+    return result.value;
+}
+
+// Use with error handling
+loadPrototypes('https://example.com/data.json')
+    .then((prototypes) => {
+        console.log(`Loaded ${prototypes.length} valid prototypes`);
+    })
+    .catch((error) => {
+        console.error('Failed to load:', error.message);
+    });
+```
+
+### Combine Validation and Conversion
+
+Use validation utilities with label converters for complete data processing.
+
+```typescript
+import {
+    validateNormalizedPrototype,
+    getPrototypeStatusLabel,
+} from '@f88/promidas/utils';
+
+function processExternalData(rawData: unknown): void {
+    // Step 1: Validate structure
+    const validation = validateNormalizedPrototype(rawData);
+
+    if (!validation.ok) {
+        console.error('Invalid data:', validation.error.message);
+        return;
+    }
+
+    // Step 2: Use validated data
+    const prototype = validation.value;
+
+    // Step 3: Convert codes to labels for display
+    console.log(`Name: ${prototype.prototypeNm}`);
+    console.log(`Status: ${getPrototypeStatusLabel(prototype.status)}`);
+    console.log(
+        `Created: ${new Date(prototype.createDate).toLocaleDateString('ja-JP')}`,
+    );
 }
 ```
 

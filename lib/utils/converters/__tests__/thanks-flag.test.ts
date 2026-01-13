@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import type { ThanksFlagCode } from '../../../types/codes.js';
 import { getPrototypeThanksFlagLabel } from '../thanks-flag.js';
 
 describe('getPrototypeThanksFlagLabel', () => {
@@ -12,8 +13,8 @@ describe('getPrototypeThanksFlagLabel', () => {
   });
 
   it('should return numeric string for unknown thanksFlg', () => {
-    expect(getPrototypeThanksFlagLabel(99)).toBe('99');
-    expect(getPrototypeThanksFlagLabel(-1)).toBe('-1');
+    expect(getPrototypeThanksFlagLabel(99 as ThanksFlagCode)).toBe('99');
+    expect(getPrototypeThanksFlagLabel(-1 as ThanksFlagCode)).toBe('-1');
   });
 
   it('should return "不明" for undefined thanksFlg (historical data)', () => {

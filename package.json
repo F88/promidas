@@ -49,17 +49,17 @@
   },
   "dependencies": {
     "events": "^3.3.0",
-    "zod": "^4.2.1"
+    "zod": "^4.3.5"
   },
   "peerDependencies": {
     "protopedia-api-v2-client": "^3.0.0"
   },
   "devDependencies": {
-    "@faker-js/faker": "^10.1.0",
+    "@faker-js/faker": "^10.2.0",
     "@types/eslint": "^9.6.1",
     "@types/node": "^24.10.2",
-    "@typescript-eslint/eslint-plugin": "^8.50.1",
-    "@typescript-eslint/parser": "^8.50.1",
+    "@typescript-eslint/eslint-plugin": "^8.52.0",
+    "@typescript-eslint/parser": "^8.52.0",
     "@vitest/coverage-v8": "^4.0.16",
     "@vitest/ui": "^4.0.16",
     "eslint": "^9.39.2",
@@ -97,6 +97,10 @@
     "./logger": {
       "types": "./dist/logger/index.d.ts",
       "import": "./dist/logger/index.js"
+    },
+    "./schemas": {
+      "types": "./dist/schemas/index.d.ts",
+      "import": "./dist/schemas/index.js"
     },
     "./fetcher": {
       "types": "./dist/fetcher/index.d.ts",

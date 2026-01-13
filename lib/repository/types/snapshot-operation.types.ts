@@ -6,6 +6,11 @@ import type {
 import type { PrototypeInMemoryStats } from '../../store/index.js';
 import type { SetFailure } from '../../store/types/index.js';
 
+import type {
+  RepositoryErrorCode,
+  RepositoryFailureKind,
+} from './result.types.js';
+
 /**
  * Successful response from setupSnapshot or refreshSnapshot operations.
  *
@@ -36,7 +41,7 @@ export type SnapshotOperationFailureBase = {
   /** Indicates failed operation. */
   ok: false;
   /** Origin layer where the failure occurred. */
-  origin: 'fetcher' | 'store' | 'unknown';
+  origin: 'fetcher' | 'store' | 'repository' | 'unknown';
   /** Human-readable error message. */
   message: string;
 };
@@ -79,6 +84,24 @@ export type FetcherSnapshotFailure = SnapshotOperationFailureBase & {
 export type StoreSnapshotFailure = SetFailure;
 
 /**
+ * Failure from the repository layer during snapshot operations.
+ *
+ * Occurs when input data validation fails during setupSnapshotFromSerializedData
+ * or when size estimation fails for snapshots.
+ * This indicates that the provided snapshot data does not conform to the
+ * expected schema (e.g., invalid version format, missing fields, incorrect types)
+ * or that size calculation encountered an error.
+ */
+export type RepositorySnapshotFailure = SnapshotOperationFailureBase & {
+  /** Indicates failure originated from repository layer. */
+  origin: 'repository';
+  /** Coarse-grained classification of the failure cause. */
+  kind: RepositoryFailureKind;
+  /** Canonical error code from the repository. */
+  code: RepositoryErrorCode;
+};
+
+/**
  * Failed response from setupSnapshot or refreshSnapshot operations.
  *
  * Discriminated union of all possible snapshot failure types.
@@ -98,6 +121,9 @@ export type StoreSnapshotFailure = SetFailure;
  *     case 'store':
  *       console.error('Store failed:', result.kind, result.code);
  *       break;
+ *     case 'repository':
+ *       console.error('Validation failed:', result.message);
+ *       break;
  *     case 'unknown':
  *       console.error('Unknown error:', result.message);
  *       break;
@@ -108,6 +134,7 @@ export type StoreSnapshotFailure = SetFailure;
 export type SnapshotOperationFailure =
   | FetcherSnapshotFailure
   | StoreSnapshotFailure
+  | RepositorySnapshotFailure
   | UnknownSnapshotFailure;
 
 /**

@@ -1,8 +1,12 @@
 /**
  * @file Tests for concurrency control in ProtopediaInMemoryRepository.
  *
- * Verifies that concurrent calls to setupSnapshot and refreshSnapshot are
- * properly coalesced to prevent duplicate API requests and race conditions.
+ * Tests are organized by abstraction level:
+ * - setupSnapshot level: Public API tests for setup operations
+ * - refreshSnapshot level: Public API tests for refresh operations (requires prior setup)
+ * - Mixed scenarios: Edge cases testing validation logic interaction with coalescing
+ *
+ * Core coalescing mechanism is tested through these public APIs.
  */
 import type { ProtoPediaApiClientOptions } from 'protopedia-api-v2-client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -51,7 +55,7 @@ const createDeferred = <T>(): Deferred<T> => {
   return { promise, resolve, reject };
 };
 
-describe('ProtopediaInMemoryRepositoryImpl - concurrency (coalescing)', () => {
+describe('ProtopediaInMemoryRepositoryImpl - concurrency control', () => {
   const createRepo = (fetchPrototypes: (params: any) => any) => {
     const store = createMockStore({ ttlMs: 30_000 });
     const apiClient = { fetchPrototypes };
@@ -70,7 +74,7 @@ describe('ProtopediaInMemoryRepositoryImpl - concurrency (coalescing)', () => {
     });
   };
 
-  describe('basic coalescing behavior', () => {
+  describe('setupSnapshot level (coalescing)', () => {
     it('coalesces concurrent setupSnapshot calls into 1 request', async () => {
       const deferred = createDeferred<any>();
       const fetchPrototypesMock = vi
@@ -108,62 +112,6 @@ describe('ProtopediaInMemoryRepositoryImpl - concurrency (coalescing)', () => {
       const pending = Promise.all([
         repo.setupSnapshot({ offset: 0, limit: 10 } as any),
         repo.setupSnapshot({ offset: 0, limit: 100 } as any),
-      ]);
-
-      await Promise.resolve();
-      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
-
-      deferred.resolve({
-        ok: true,
-        data: [makePrototype({ id: 1, prototypeNm: 'p1' })],
-      });
-
-      const [r1, r2] = await pending;
-      expect(r1).toEqual(r2);
-    });
-
-    it('coalesces concurrent refreshSnapshot calls into 1 request', async () => {
-      const fetchPrototypesMock = vi.fn().mockResolvedValueOnce({
-        ok: true,
-        data: [makePrototype({ id: 1, prototypeNm: 'initial' })],
-      });
-
-      const repo = createRepo(fetchPrototypesMock);
-      await repo.setupSnapshot({ offset: 0, limit: 10 } as any);
-      fetchPrototypesMock.mockClear();
-
-      const deferred = createDeferred<any>();
-      fetchPrototypesMock.mockImplementation(() => deferred.promise);
-
-      const pending = Promise.all([
-        repo.refreshSnapshot(),
-        repo.refreshSnapshot(),
-        repo.refreshSnapshot(),
-      ]);
-
-      await Promise.resolve();
-      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
-
-      deferred.resolve({
-        ok: true,
-        data: [makePrototype({ id: 2, prototypeNm: 'refreshed' })],
-      });
-
-      const [r1, r2, r3] = await pending;
-      expect(r1).toEqual(r2);
-      expect(r2).toEqual(r3);
-    });
-
-    it('coalesces setupSnapshot and refreshSnapshot when overlapping', async () => {
-      const deferred = createDeferred<any>();
-      const fetchPrototypesMock = vi
-        .fn()
-        .mockImplementation(() => deferred.promise);
-      const repo = createRepo(fetchPrototypesMock);
-
-      const pending = Promise.all([
-        repo.setupSnapshot({ offset: 0, limit: 10 } as any),
-        repo.refreshSnapshot(),
       ]);
 
       await Promise.resolve();
@@ -242,6 +190,115 @@ describe('ProtopediaInMemoryRepositoryImpl - concurrency (coalescing)', () => {
       const [r1, r2] = await pending;
       expect(r1).toBe(r2);
       expect(r1.ok).toBe(true);
+    });
+  });
+
+  describe('refreshSnapshot level (coalescing)', () => {
+    it('coalesces concurrent refreshSnapshot calls into 1 request', async () => {
+      const fetchPrototypesMock = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        data: [makePrototype({ id: 1, prototypeNm: 'initial' })],
+      });
+
+      const repo = createRepo(fetchPrototypesMock);
+      await repo.setupSnapshot({ offset: 0, limit: 10 } as any);
+      fetchPrototypesMock.mockClear();
+
+      const deferred = createDeferred<any>();
+      fetchPrototypesMock.mockImplementation(() => deferred.promise);
+
+      const pending = Promise.all([
+        repo.refreshSnapshot(),
+        repo.refreshSnapshot(),
+        repo.refreshSnapshot(),
+      ]);
+
+      await Promise.resolve();
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
+
+      deferred.resolve({
+        ok: true,
+        data: [makePrototype({ id: 2, prototypeNm: 'refreshed' })],
+      });
+
+      const [r1, r2, r3] = await pending;
+      expect(r1).toEqual(r2);
+      expect(r2).toEqual(r3);
+    });
+  });
+
+  describe('mixed scenarios (validation logic)', () => {
+    it('refreshSnapshot fails immediately when called before setupSnapshot completes', async () => {
+      const deferred = createDeferred<any>();
+      const fetchPrototypesMock = vi
+        .fn()
+        .mockImplementation(() => deferred.promise);
+      const repo = createRepo(fetchPrototypesMock);
+
+      const setupPromise = repo.setupSnapshot({ offset: 0, limit: 10 } as any);
+      const refreshPromise = repo.refreshSnapshot();
+
+      // refreshSnapshot should fail immediately because #lastFetchParams is undefined
+      const refreshResult = await refreshPromise;
+      expect(refreshResult.ok).toBe(false);
+      if (!refreshResult.ok && refreshResult.origin === 'repository') {
+        expect(refreshResult.kind).toBe('invalid_state');
+        expect(refreshResult.code).toBe('REPOSITORY_INVALID_STATE');
+      }
+
+      // setupSnapshot should still make API call and succeed
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
+
+      deferred.resolve({
+        ok: true,
+        data: [makePrototype({ id: 1, prototypeNm: 'p1' })],
+      });
+
+      const setupResult = await setupPromise;
+      expect(setupResult.ok).toBe(true);
+    });
+
+    it('handles multiple refreshSnapshot calls failing before setupSnapshot completes', async () => {
+      const deferred = createDeferred<any>();
+      const fetchPrototypesMock = vi
+        .fn()
+        .mockImplementation(() => deferred.promise);
+      const repo = createRepo(fetchPrototypesMock);
+
+      const setup1 = repo.setupSnapshot({} as any);
+      const setup2 = repo.setupSnapshot({} as any);
+
+      const refresh1 = repo.refreshSnapshot();
+      const refresh2 = repo.refreshSnapshot();
+
+      await Promise.resolve();
+
+      // Only one API call should be made (by setupSnapshot)
+      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
+
+      // refreshSnapshot calls should fail immediately
+      const refreshResult1 = await refresh1;
+      const refreshResult2 = await refresh2;
+      expect(refreshResult1.ok).toBe(false);
+      expect(refreshResult2.ok).toBe(false);
+      if (!refreshResult1.ok && refreshResult1.origin === 'repository') {
+        expect(refreshResult1.code).toBe('REPOSITORY_INVALID_STATE');
+      }
+      if (!refreshResult2.ok && refreshResult2.origin === 'repository') {
+        expect(refreshResult2.code).toBe('REPOSITORY_INVALID_STATE');
+      }
+
+      deferred.resolve({
+        ok: true,
+        data: [makePrototype({ id: 5, prototypeNm: 'mixed' })],
+      });
+
+      // setupSnapshot calls should succeed and be coalesced
+      const setupResult1 = await setup1;
+      const setupResult2 = await setup2;
+      expect(setupResult1.ok).toBe(true);
+      expect(setupResult2.ok).toBe(true);
+      expect(setupResult1).toBe(setupResult2); // Same promise reference
     });
   });
 
@@ -748,34 +805,6 @@ describe('ProtopediaInMemoryRepositoryImpl - concurrency (coalescing)', () => {
       const [result1, result2, result3] = await Promise.all([r1, r2, r3]);
       expect(result1).toBe(result2);
       expect(result2).toBe(result3);
-    });
-
-    it('handles setupSnapshot followed by immediate refreshSnapshot before completion', async () => {
-      const deferred = createDeferred<any>();
-      const fetchPrototypesMock = vi
-        .fn()
-        .mockImplementation(() => deferred.promise);
-      const repo = createRepo(fetchPrototypesMock);
-
-      const setup1 = repo.setupSnapshot({} as any);
-      const setup2 = repo.setupSnapshot({} as any);
-
-      const refresh1 = repo.refreshSnapshot();
-      const refresh2 = repo.refreshSnapshot();
-
-      await Promise.resolve();
-
-      expect(fetchPrototypesMock).toHaveBeenCalledTimes(1);
-
-      deferred.resolve({
-        ok: true,
-        data: [makePrototype({ id: 5, prototypeNm: 'mixed' })],
-      });
-
-      const results = await Promise.all([setup1, setup2, refresh1, refresh2]);
-      expect(results[0]).toBe(results[1]);
-      expect(results[1]).toBe(results[2]);
-      expect(results[2]).toBe(results[3]);
     });
 
     it('handles interleaved setupSnapshot and refreshSnapshot calls', async () => {
