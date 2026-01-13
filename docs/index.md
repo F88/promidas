@@ -88,8 +88,9 @@ PROMIDASの主要な機能についての解説です。
 - **[Repository (リポジトリ)](./features/repository.md)** - データ管理の中核
 - **[Factory (ファクトリ)](./features/factory.md)** - 簡単な初期化
 - **[Builder (ビルダー)](./features/builder.md)** - 高度な設定
-    <!-- - **[Types (型定義)](./features/types.md)** - コンパイル時型安全性 -->
-    <!-- - **[Schemas (実行時検証)](./features/schemas.md)** - ランタイムバリデーション -->
+
+<!-- - **[Types (型定義)](./features/types.md)** - コンパイル時型安全性 -->
+<!-- - **[Schemas (実行時検証)](./features/schemas.md)** - ランタイムバリデーション -->
 
 ### 🔧 モジュール別リファレンス (高度な内容)
 
