@@ -23,6 +23,7 @@ This document describes the architecture and design decisions of the utility fun
 - [Module Structure](#module-structure)
 - [Design Patterns](#design-patterns)
 - [Type Safety](#type-safety)
+- [Validation](#validation)
 - [Extensibility](#extensibility)
 
 ## Architecture Overview
@@ -46,6 +47,7 @@ The utils module provides reusable, standalone utilities for data transformation
 │  Utils Layer                                            │
 │  ├── converters/   (Code to Label converters)           │
 │  ├── time/         (Timestamp parsing & normalization)  │
+│  ├── validation/   (Result-based validators)            │
 │  └── types/        (Type definitions re-export)         │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -73,20 +75,53 @@ converters/
 - Unknown values: Return the numeric value as string (not an error)
 - Use `Record<CodeType, string>` for label mappings
 
-**Example**:
+**Rationale**:
 
-```typescript
-const STATUS_LABELS: Record<StatusCode, string> = {
-    1: 'アイデア',
-    2: '開発中',
-    3: '完成',
-    4: '供養',
-};
+- Returning stringified numbers for unknown codes prevents errors
+- Allows graceful degradation with new API code values
+- Simple O(1) lookup using Record type
 
-export const getPrototypeStatusLabel = (status: number): string => {
-    return STATUS_LABELS[status as StatusCode] ?? `${status}`;
-};
+For implementation examples, see [USAGE.md](USAGE.md#label-converters).
+
+### Validation
+
+Purpose: Shared validation utilities using Result pattern for type-safe error handling.
+
+```plaintext
+validation/
+├── index.ts                        # Re-exports all validators
+├── normalized-prototype.ts         # NormalizedPrototype validators
+└── __tests__/
+    └── normalized-prototype.test.ts  # 49 validation tests
 ```
+
+**Design Pattern**: Result-based validation (never throw exceptions)
+
+- Input: `unknown` (untrusted external data)
+- Output: `Ok<T>` or `Err<ValidationError>` (discriminated union)
+- Shared across modules: Used by fetcher, repository, and application code
+- Schema integration: Uses `lib/schemas/normalized-prototype.ts` for runtime validation
+
+**Design Decision**:
+
+- Never throw exceptions for validation failures
+- Use discriminated union (Result type) for type-safe error handling
+- Provide detailed error messages with field paths
+
+**Rationale**:
+
+- Validation failures are expected when processing external data
+- Type system enforces proper error handling
+- Easier error propagation with Result pattern
+- Consistent with other library modules (fetcher, repository)
+
+**Integration with Three-Layer Architecture**:
+
+1. **Compile-time**: TypeScript types (`lib/types/normalized-prototype.ts`)
+2. **Runtime**: Zod schemas (`lib/schemas/normalized-prototype.ts`) ← Used here
+3. **Validation utilities**: Result-based APIs (this module)
+
+For implementation examples, see [USAGE.md](USAGE.md#validation-utilities).
 
 ### Time Utilities
 
@@ -111,18 +146,19 @@ time/
 - Strict format validation via regex
 - Never throw exceptions
 
-**Key Implementation Details**:
+**Design Decisions**:
 
-1. **ProtoPedia Timestamp** (`YYYY-MM-DD HH:MM:SS.f`)
-    - Space separator (not `T`)
-    - JST-based without explicit timezone
-    - Fractional seconds required (`.0` or more digits)
-    - Subtract `JST_OFFSET_MS` to convert to UTC
+1. **ProtoPedia Timestamp Format**
+    - Decision: Parse space-separated format, not ISO 8601
+    - Rationale: Matches actual API response format
+    - Timezone: Treat as JST (UTC+9) without explicit indicator
 
-2. **W3C-DTF Timestamp** (ISO 8601 subset with mandatory TZD)
-    - Levels 4-6 supported (datetime with timezone)
-    - Timezone required: `Z`, `z`, or `±HH:MM`
-    - Delegate to `Date` constructor for parsing
+2. **W3C-DTF Timestamp Format**
+    - Decision: Support only datetime with timezone (Level 4-6)
+    - Rationale: Date-only formats don't provide time information
+    - Requirement: Timezone is mandatory for unambiguous time representation
+
+For format details and usage examples, see [USAGE.md](USAGE.md#time-utilities).
 
 ### Types
 
@@ -143,117 +179,188 @@ types/
 
 ### Defensive Programming
 
-All utilities return safe values instead of throwing errors:
+All utilities return safe values instead of throwing errors.
 
-```typescript
-// ✅ Safe: Returns undefined for invalid input
-parseProtoPediaTimestamp('invalid'); // => undefined
+**Decision**: Use safe defaults rather than exceptions
 
-// ✅ Safe: Returns stringified number for unknown code
-getPrototypeStatusLabel(999); // => '999'
+**Rationale**:
 
-// ✅ Safe: Handles undefined input
-getPrototypeThanksFlagLabel(undefined); // => '不明'
-```
+- Invalid input is often expected in data processing
+- Throwing exceptions disrupts control flow
+- Consumers can decide how to handle invalid data
+
+**Behavior**:
+
+- Timestamp parsers: Return `undefined` for invalid formats
+- Label converters: Return stringified number for unknown codes
+- Validation utilities: Return Result type with detailed errors
+
+For usage examples, see [USAGE.md](USAGE.md).
 
 ### Immutability
 
-All functions are pure and side-effect free:
+All functions are pure and side-effect free.
 
-```typescript
-const timestamp = '2025-12-12 10:00:00.0';
-const parsed = parseProtoPediaTimestamp(timestamp);
+**Decision**: Pure functions only
 
-// Original value unchanged
-console.log(timestamp); // '2025-12-12 10:00:00.0'
-console.log(parsed); // '2025-12-12T01:00:00.000Z'
-```
+**Rationale**:
+
+- Predictable behavior
+- Easy to test
+- Safe for concurrent use
+- No hidden state changes
 
 ### Type Narrowing
 
-Code types enable TypeScript's type narrowing:
+Code types enable TypeScript's type narrowing for exhaustive checking.
 
-```typescript
-import type { StatusCode } from '@f88/promidas/utils';
+**Decision**: Use literal union types for codes
 
-function describeStatus(code: StatusCode): string {
-    // TypeScript knows code is 1 | 2 | 3 | 4
-    switch (code) {
-        case 1:
-            return 'Idea';
-        case 2:
-            return 'In Development';
-        case 3:
-            return 'Completed';
-        case 4:
-            return 'Retired';
-    }
-}
-```
+**Rationale**:
+
+- Compiler enforces handling all cases
+- Better IDE autocomplete
+- Type-safe switch statements
+- Prevents runtime errors from missing cases
 
 ## Type Safety
 
 ### Strict Typing
 
-All types use TypeScript's strict mode features:
+All types use TypeScript's strict mode features.
 
-```typescript
-// exactOptionalPropertyTypes: true
-export type ThanksFlagCode = 0 | 1 | undefined;
+**Configuration**:
 
-// noUncheckedIndexedAccess: true
-const label = STATUS_LABELS[code]; // string | undefined
-```
+- `exactOptionalPropertyTypes: true` - Distinguishes `undefined` from missing properties
+- `noUncheckedIndexedAccess: true` - Record access returns `T | undefined`
+
+**Design Decision**: Enable strictest TypeScript checks
+
+**Rationale**: Catch more errors at compile time, prevent runtime type issues
 
 ### Runtime Safety
 
-Type guards are implicit in return values:
+Type guards are implicit in return values.
 
-```typescript
-const parsed = parseProtoPediaTimestamp(raw);
+**Design Pattern**: Optional return types signal validation need
 
-if (parsed !== undefined) {
-    // TypeScript knows parsed is string here
-    const date = new Date(parsed);
-}
-```
+- Parsers return `string | undefined`
+- Converters always return `string` (fallback to stringified number)
+- Validators return `Result<T, E>` (discriminated union)
+
+**Rationale**: TypeScript's narrowing enforces null checks before use
+
+## Validation
+
+### Result Pattern
+
+Validation utilities use the Result pattern instead of throwing exceptions.
+
+**Why Result Pattern?**
+
+- Validation failures are expected, not exceptional
+- Type system enforces error handling
+- Better developer experience than try/catch
+
+**Design**:
+
+- Input: `unknown` (untrusted external data)
+- Output: `Ok<T>` or `Err<ValidationError>` (discriminated union)
+- Never throws exceptions for validation failures
+- Type-safe error handling enforced by TypeScript
+
+For practical usage examples, see [USAGE.md](USAGE.md#validation-utilities).
+
+### Three-Layer Architecture
+
+Validation utilities are part of a comprehensive three-layer validation strategy:
+
+**Layer 1: Compile-Time (Type System)**
+
+- Location: `lib/types/normalized-prototype.ts`
+- Purpose: Static type checking, IDE support
+- Cost: Zero runtime overhead
+
+**Layer 2: Runtime (Zod Schemas)**
+
+- Location: `lib/schemas/normalized-prototype.ts`
+- Purpose: Validate external data structure at runtime
+- Features: Strict literal unions, comprehensive field validation
+
+**Layer 3: Validation Utilities (Result Pattern)**
+
+- Location: `lib/utils/validation/normalized-prototype.ts` (shared)
+- Location: `lib/repository/validation/` (repository-specific)
+- Purpose: Never-throw APIs with type-safe error handling
+- Benefits: Explicit error handling, no try/catch required
+
+### Why Result Pattern?
+
+**Problem**: Exception-based validation hides control flow
+
+**Solution**: Result type makes success/failure explicit
+
+**Benefits**:
+
+- Type system enforces error handling (no forgotten try/catch)
+- Easy error propagation (return early pattern)
+- Better developer experience (explicit contracts)
+- Works well with TypeScript's discriminated unions
+
+**Trade-off**: More verbose code vs. type safety and explicit error handling
+
+### Shared Validation Logic
+
+**Design Decision**: Single validation implementation shared across modules
+
+**Rationale**:
+
+- DRY principle (Don't Repeat Yourself)
+- Consistent error messages across fetcher, repository, application
+- Single source of truth for validation rules
+- Easier maintenance and testing
+
+**Modules using shared validation**:
+
+- `lib/fetcher`: Validates API responses
+- `lib/repository`: Validates snapshot data
+- Application code: Validates external data sources
+
+For integration examples, see [USAGE.md](USAGE.md#validation-utilities).
+
+### Testing
+
+- **49 comprehensive tests** covering all validation scenarios
+- **100% coverage** for validation module
+- Tests include: invalid types, missing fields, extra fields, invalid code values
 
 ## Extensibility
 
 ### Adding New Label Converters
 
-To add a new label converter:
+**Pattern**:
 
-1. Create `lib/utils/converters/new-converter.ts`
+1. Create converter module in `lib/utils/converters/`
 2. Define label mapping using `Record<CodeType, string>`
 3. Export converter function
-4. Export from `lib/utils/converters/index.ts`
-5. Add tests in `lib/utils/converters/__tests__/`
+4. Re-export from `index.ts`
+5. Add comprehensive tests
 
-**Template**:
+**Guidelines**:
 
-```typescript
-// lib/utils/converters/new-converter.ts
-import type { NewCode } from '../types/index.js';
-
-const NEW_LABELS: Record<NewCode, string> = {
-    1: 'ラベル1',
-    2: 'ラベル2',
-};
-
-export const getNewLabel = (code: number): string => {
-    return NEW_LABELS[code as NewCode] ?? `${code}`;
-};
-```
+- Follow existing converter pattern (same signature)
+- Return stringified number for unknown codes
+- Use descriptive Japanese labels
+- Include JSDoc comments
 
 ### Adding New Time Parsers
 
-To add support for new timestamp formats:
+**Pattern**:
 
 1. Add parser function to `lib/utils/time/parser.ts`
 2. Export from `lib/utils/time/index.ts`
-3. Add comprehensive tests in `lib/utils/time/__tests__/`
-4. Document format support in JSDoc
+3. Add comprehensive tests
+4. Document format in JSDoc
 
 **Guidelines**:
 
@@ -261,75 +368,58 @@ To add support for new timestamp formats:
 - Never throw exceptions
 - Validate format with regex before parsing
 - Document timezone handling clearly
+- Handle edge cases (leap seconds, DST transitions)
 
 ## Integration Points
 
-### Fetcher Integration
+### Module Dependencies
 
-The fetcher module uses time utilities for normalization:
+**Utils module dependencies**:
 
-```typescript
-import { parseProtoPediaTimestamp } from '../../utils/time/index.js';
+- Zero external dependencies
+- Depends only on project's own modules:
+    - `lib/types` (type definitions)
+    - `lib/schemas` (Zod schemas for validation)
 
-// Normalize ProtoPedia timestamps to UTC
-const normalized = {
-    ...prototype,
-    createDate:
-        parseProtoPediaTimestamp(prototype.createDate) ?? prototype.createDate,
-    updateDate: prototype.updateDate
-        ? parseProtoPediaTimestamp(prototype.updateDate)
-        : undefined,
-};
-```
+**Consumers of utils**:
 
-### Repository/Store Integration
+- `lib/fetcher`: Uses time parsers and validation utilities
+- `lib/repository`: Uses validation utilities
+- Application code: Uses converters, parsers, validators
 
-Label converters are typically used in application code for display:
+### Design Principles for Integration
 
-```typescript
-import { getPrototypeStatusLabel } from '@f88/promidas/utils';
-import type { NormalizedPrototype } from '@f88/promidas/types';
+**Independence**: Utils can be used without other modules (fetcher, repository, store)
 
-function displayPrototype(prototype: NormalizedPrototype): void {
-    console.log(`Status: ${getPrototypeStatusLabel(prototype.status)}`);
-}
-```
+**Shared Validation**: Validation utilities provide consistent validation across all modules
 
-### Type Reusability
+**Type Reusability**: Code types re-exported for convenience (`@f88/promidas/utils` or `@f88/promidas/types`)
 
-Code types from `lib/types` are re-exported for convenience:
-
-```typescript
-// Both imports work
-import type { StatusCode } from '@f88/promidas/types';
-import type { StatusCode } from '@f88/promidas/utils';
-```
+For integration code examples, see [USAGE.md](USAGE.md#integration-examples).
 
 ## Performance Considerations
 
 ### Constant-Time Lookups
 
-Label lookups use `Record` for O(1) access:
+Label converters use `Record` for O(1) access.
 
-```typescript
-const label = STATUS_LABELS[code as StatusCode]; // O(1)
-```
+**Design**: Hash table lookup instead of switch/if-else
+
+**Benefit**: Consistent performance regardless of code value
 
 ### Minimal Allocations
 
-Parsers create minimal intermediate objects:
+Parsers minimize object creation during parsing.
 
-```typescript
-// Single regex match, direct UTC calculation
-const match = value.match(
-    /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})\.(\d+)$/,
-);
-const utcMs =
-    Date.UTC(year, month - 1, day, hour, minute, second, milli) - JST_OFFSET_MS;
-return new Date(utcMs).toISOString();
-```
+**Design**:
 
-### No Dependencies
+- Single regex match per parse operation
+- Direct UTC calculation without intermediate Date objects
+- Reuse of constant values (JST_OFFSET_MS)
+
+**Benefit**: Lower memory pressure, faster parsing
+
+### Zero Runtime Dependencies
 
 Utils has zero runtime dependencies:
 
