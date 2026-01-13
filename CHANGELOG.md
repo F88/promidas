@@ -12,64 +12,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **New Core Module: `lib/schemas/`**: Runtime validation schemas for type-safe data validation (#78)
-    - Zod-based runtime validation schemas (tree-shakeable)
-    - `lib/schemas/normalized-prototype.ts`: Strict Zod schema with literal unions for code values
-    - Validates status codes (1|2|3|4), release flags (1|2|3), and other enumerated values
-    - Enables runtime type safety complementing TypeScript's compile-time checks
-    - Complete documentation (README.md, DESIGN.md, USAGE.md)
+    - Zod-based runtime validation with literal unions for code values
     - Exported from `@f88/promidas/schemas` subpath export
 
 - **Repository Snapshot Serialization**: Added snapshot export/import functionality to `ProtopediaInMemoryRepository` (#78)
-    - `getSerializableSnapshot()` method: Returns current snapshot as JSON-serializable object with metadata (version, timestamp)
-    - `setupSnapshotFromSerializedData()` method: Loads snapshot from previously serialized data with comprehensive validation
-    - **Three-Layer Validation Architecture**: Ensures data integrity across compilation, runtime, and business logic
-        - **Compile-time validation** (`lib/types`): TypeScript type definitions for zero runtime cost
-        - **Runtime validation** (`lib/schemas`): Zod schemas for strict data validation with literal unions for code values
-        - **Validation utilities** (`lib/utils/validation`, `lib/repository/validation`): Shared and repository-specific validators with Result pattern
-    - New type definitions: `SerializableSnapshot`, `RepositoryResult`, `SnapshotSuccess`, `SnapshotFailure`
+    - `getSerializableSnapshot()`: Returns JSON-serializable snapshot with metadata (version, timestamp)
+    - `setupSnapshotFromSerializedData()`: Loads snapshot from serialized data with comprehensive validation
+    - Three-layer validation architecture (compile-time, runtime, business logic)
     - Enables offline usage, faster startup times, and test fixtures support
-    - **100% test coverage** with 17 tests for snapshot serialization (1,308 total tests in project)
 
 ### Changed
 
 - **Repository Snapshot Refresh Validation**: Enhanced `refreshSnapshot()` to prevent unintended API calls after loading serialized data (#78)
-    - Changed `lastFetchParams` from `ListPrototypesParams` to `ListPrototypesParams | undefined`
-    - `undefined` indicates no API fetch performed or reset after loading serialized data via `setupSnapshotFromSerializedData()`
-    - `refreshSnapshot()` now fails explicitly when `lastFetchParams` is `undefined` with `REPOSITORY_INVALID_STATE` error
-    - New repository error types: `RepositoryFailureKind` (added `invalid_state`) and `RepositoryErrorCode` (added `REPOSITORY_INVALID_STATE`)
-    - Prevents mismatched API calls that would use stale parameters after snapshot restoration
+    - `lastFetchParams` now optional (`undefined` after loading serialized data)
+    - Added `REPOSITORY_INVALID_STATE` error code for invalid refresh attempts
+    - New `invalid_state` failure kind in `RepositoryFailureKind`
 
 - **Documentation Improvements**: Enhanced CONTRIBUTING.md and DEVELOPMENT.md with comprehensive guides
-    - Added contributor onboarding guide with step-by-step instructions
-    - Added Git workflow section (fork, branch, commit, PR process)
-    - Added Pull Request process and code review guidelines
-    - Added security issue reporting section
-    - Added project structure overview with module dependencies
-    - Added debugging section with VSCode configuration examples
-    - Expanded troubleshooting with 15+ common development errors and solutions
-    - Added "First Steps" guide for new developers
-
 - **Code Examples Modernization**: Updated all code examples to use top-level await
-    - Replaced `.catch()` pattern with try-catch + top-level await in documentation
-    - Updated getting-started.md examples (both Factory and Builder patterns)
-    - Updated quickstart-beginners.md example
-    - Updated scripts/try-protopedia-repository.ts
 
 ### Internal
 
 - **Validation Module Refactoring**: Extracted shared validation logic into reusable modules (#78)
-    - **`lib/utils/validation/`**: Shared validation utilities across all modules
-        - `lib/utils/validation/normalized-prototype.ts`: `validateNormalizedPrototype()`, `validateNormalizedPrototypeArray()`
-        - Returns Result type for consistent error handling
-        - 49 tests with 100% coverage
-    - **`lib/repository/validation/`**: Repository-specific validation and parameter checking
-        - `lib/repository/validation/serializable-snapshot.ts`: `validateSerializableSnapshot()` with deep object validation
-        - `lib/repository/validation/params-validators.ts`: `RepositoryParamsValidator` static class for parameter validation
-        - 91 tests with 100% coverage
-    - **`lib/repository/schemas/`**: Repository-specific Zod schemas
-        - `lib/repository/schemas/params.ts`: Zod schemas for prototypeId and sampleSize
-        - `lib/repository/schemas/serializable-snapshot.ts`: Zod schemas for version and serializedAt
-    - Improved code organization and eliminated duplication
+    - Created `lib/utils/validation/` for shared validation utilities
+    - Created `lib/repository/validation/` for repository-specific validation
+    - Created `lib/repository/schemas/` for repository-specific Zod schemas
     - All validation modules have 100% test coverage
 
 ## [1.0.0] - 2025-12-24
