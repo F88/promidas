@@ -11,20 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **New Core Modules**: Created three new modules for validation and type safety
-    - **`lib/schemas/`**: Runtime validation schemas (Zod-based, tree-shakeable)
-        - `lib/schemas/normalized-prototype.ts`: Strict Zod schema with literal unions for code values
-        - Validates status codes (1|2|3|4), release flags (1|2|3), and other enumerated values
-        - Complete documentation (README.md, DESIGN.md, USAGE.md)
-    - **`lib/utils/validation/`**: Shared validation utilities across all modules
-        - `lib/utils/validation/normalized-prototype.ts`: `validateNormalizedPrototype()`, `validateNormalizedPrototypeArray()`
-        - Returns Result type for consistent error handling
-        - 49 tests with 100% coverage
-    - **`lib/repository/validation/`**: Repository-specific validation and parameter checking
-        - `lib/repository/validation/serializable-snapshot.ts`: `validateSerializableSnapshot()` with deep object validation
-        - `lib/repository/validation/params-validators.ts`: `RepositoryParamsValidator` static class for parameter validation
-        - `lib/repository/validation/schemas.ts`: Zod schemas for prototypeId, sampleSize, version, serializedAt
-        - 91 tests with 100% coverage
+- **New Core Module: `lib/schemas/`**: Runtime validation schemas for type-safe data validation (#78)
+    - Zod-based runtime validation schemas (tree-shakeable)
+    - `lib/schemas/normalized-prototype.ts`: Strict Zod schema with literal unions for code values
+    - Validates status codes (1|2|3|4), release flags (1|2|3), and other enumerated values
+    - Enables runtime type safety complementing TypeScript's compile-time checks
+    - Complete documentation (README.md, DESIGN.md, USAGE.md)
+    - Exported from `@f88/promidas/schemas` subpath export
 
 - **Repository Snapshot Serialization**: Added snapshot export/import functionality to `ProtopediaInMemoryRepository` (#78)
     - `getSerializableSnapshot()` method: Returns current snapshot as JSON-serializable object with metadata (version, timestamp)
@@ -33,12 +26,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         - **Compile-time validation** (`lib/types`): TypeScript type definitions for zero runtime cost
         - **Runtime validation** (`lib/schemas`): Zod schemas for strict data validation with literal unions for code values
         - **Validation utilities** (`lib/utils/validation`, `lib/repository/validation`): Shared and repository-specific validators with Result pattern
-    - New repository error types: `RepositoryFailureKind` and `RepositoryErrorCode` following Fetcher/Store patterns
     - New type definitions: `SerializableSnapshot`, `RepositoryResult`, `SnapshotSuccess`, `SnapshotFailure`
     - Enables offline usage, faster startup times, and test fixtures support
     - **100% test coverage** with 17 tests for snapshot serialization (1,308 total tests in project)
 
 ### Changed
+
+- **Repository Snapshot Refresh Validation**: Enhanced `refreshSnapshot()` to prevent unintended API calls after loading serialized data (#78)
+    - Changed `lastFetchParams` from `ListPrototypesParams` to `ListPrototypesParams | undefined`
+    - `undefined` indicates no API fetch performed or reset after loading serialized data via `setupSnapshotFromSerializedData()`
+    - `refreshSnapshot()` now fails explicitly when `lastFetchParams` is `undefined` with `REPOSITORY_INVALID_STATE` error
+    - New repository error types: `RepositoryFailureKind` (added `invalid_state`) and `RepositoryErrorCode` (added `REPOSITORY_INVALID_STATE`)
+    - Prevents mismatched API calls that would use stale parameters after snapshot restoration
 
 - **Documentation Improvements**: Enhanced CONTRIBUTING.md and DEVELOPMENT.md with comprehensive guides
     - Added contributor onboarding guide with step-by-step instructions
@@ -49,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Added debugging section with VSCode configuration examples
     - Expanded troubleshooting with 15+ common development errors and solutions
     - Added "First Steps" guide for new developers
+
 - **Code Examples Modernization**: Updated all code examples to use top-level await
     - Replaced `.catch()` pattern with try-catch + top-level await in documentation
     - Updated getting-started.md examples (both Factory and Builder patterns)
@@ -57,10 +57,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 
-- **Validation Module Refactoring**: Extracted shared validation logic into reusable modules
-    - Created `lib/schemas/` module for centralized Zod schema definitions
-    - Created `lib/utils/validation/` module for shared validation utilities
-    - Created `lib/repository/validation/` module for repository-specific validation
+- **Validation Module Refactoring**: Extracted shared validation logic into reusable modules (#78)
+    - **`lib/utils/validation/`**: Shared validation utilities across all modules
+        - `lib/utils/validation/normalized-prototype.ts`: `validateNormalizedPrototype()`, `validateNormalizedPrototypeArray()`
+        - Returns Result type for consistent error handling
+        - 49 tests with 100% coverage
+    - **`lib/repository/validation/`**: Repository-specific validation and parameter checking
+        - `lib/repository/validation/serializable-snapshot.ts`: `validateSerializableSnapshot()` with deep object validation
+        - `lib/repository/validation/params-validators.ts`: `RepositoryParamsValidator` static class for parameter validation
+        - 91 tests with 100% coverage
+    - **`lib/repository/schemas/`**: Repository-specific Zod schemas
+        - `lib/repository/schemas/params.ts`: Zod schemas for prototypeId and sampleSize
+        - `lib/repository/schemas/serializable-snapshot.ts`: Zod schemas for version and serializedAt
     - Improved code organization and eliminated duplication
     - All validation modules have 100% test coverage
 
@@ -72,10 +80,21 @@ PROMIDAS v1.0.0 is the first stable major release, providing a production-ready 
 
 #### API Stability Commitment
 
-- All public APIs are declared stable
-- Strict adherence to Semantic Versioning
-- No breaking changes will be introduced until v2.0.0
-- Continuous compatibility maintenance for v1.x series
+- All public APIs are declared stable (#78)
+    - **`lib/schemas/`**: Runtime validation schemas (Zod-based, tree-shakeable)
+        - `lib/schemas/normalized-prototype.ts`: Strict Zod schema with literal unions for code values
+        - Validates status codes (1|2|3|4), release flags (1|2|3), and other enumerated values
+        - Complete documentation (README.md, DESIGN.md, USAGE.md)
+    - **`lib/utils/validation/`**: Shared validation utilities across all modules
+        - `lib/utils/validation/normalized-prototype.ts`: `validateNormalizedPrototype()`, `validateNormalizedPrototypeArray()`
+        - Returns Result type for consistent error handling
+        - 49 tests with 100% coverage
+    - **`lib/repository/validation/`**: Repository-specific validation and parameter checking
+        - `lib/repository/validation/serializable-snapshot.ts`: `validateSerializableSnapshot()` with deep object validation
+        - `lib/repository/validation/params-validators.ts`: `RepositoryParamsValidator` static class for parameter validation
+    - **`lib/repository/schemas/`**: Repository-specific Zod schemas
+        - `lib/repository/schemas/params.ts`: Zod schemas for prototypeId and sampleSize
+        - `lib/repository/schemas/serializable-snapshot.ts`: Zod schemas for version and serializedAt
 
 #### Migration from v0.x
 
