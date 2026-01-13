@@ -413,7 +413,7 @@ async setupSnapshot() {
 **Schemas**:
 
 ```typescript
-// lib/repository/schemas/index.ts
+// lib/repository/validation/schemas.ts
 export const prototypeIdSchema = z.number().int().positive();
 export const sampleSizeSchema = z.number().int();
 ```
