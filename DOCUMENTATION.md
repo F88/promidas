@@ -362,6 +362,7 @@ _DESIGN.md:_
 // Internal discriminated union type
 type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
 ```
+````
 
 **Rationale**: Type-safe error handling without exceptions...
 
@@ -382,7 +383,6 @@ if (result.ok) {
     console.error('Error:', result.error);
 }
 ```
-````
 ````
 
 ## Documentation Review Process
@@ -493,3 +493,5 @@ See existing modules for reference:
 - [DEVELOPMENT.md](DEVELOPMENT.md) - Development environment and workflow
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
 - [README.md](README.md) - Project overview
+
+```
