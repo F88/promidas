@@ -209,8 +209,11 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
 
   /**
    * Cache of the last successful fetch parameters.
+   *
+   * - `undefined`: No API fetch has been performed, or reset after loading serialized data
+   * - `ListPrototypesParams`: Parameters from the last successful setupSnapshot() call
    */
-  #lastFetchParams: ListPrototypesParams = { ...DEFAULT_FETCH_PARAMS };
+  #lastFetchParams: ListPrototypesParams | undefined = undefined;
 
   /**
    * Ongoing fetch promise for concurrency control.
@@ -572,19 +575,90 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    * Typically called periodically to refresh expired data. Uses parameters
    * cached by the last successful {@link setupSnapshot} call.
    *
-   * @returns {@link SnapshotOperationResult} indicating success or failure
+   * **Prerequisite**: {@link setupSnapshot} must have been called successfully at least once.
+   * If called before {@link setupSnapshot}, returns an error with code `REPOSITORY_INVALID_STATE`.
+   *
+   * @returns Promise resolving to {@link SnapshotOperationResult}:
+   * - **Success** (`ok: true`): Contains {@link PrototypeInMemoryStats} with snapshot metadata
+   * - **Failure** (`ok: false`): One of:
+   *   - {@link RepositorySnapshotFailure} - Invalid state (setupSnapshot not called)
+   *   - {@link FetcherSnapshotFailure} - Network/HTTP errors from API
+   *   - {@link StoreSnapshotFailure} - Storage errors (size limits, serialization)
+   *   - {@link UnknownSnapshotFailure} - Unexpected errors
    *
    * @remarks
-   * Delegates to {@link fetchAndStore} with `updateLastFetchParams: false`.
-   * Emits `snapshotStarted('refresh')` event before operation (if events enabled).
+   * **Operation Flow**:
+   * 1. Validate that {@link setupSnapshot} has been called (check `#lastFetchParams`)
+   * 2. Return error immediately if validation fails (before coalescing)
+   * 3. Emit `snapshotStarted('refresh')` event (if events enabled)
+   * 4. Delegate to {@link fetchAndStore} with `updateLastFetchParams: false`
+   * 5. Preserve existing snapshot on failure (atomic operation)
    *
-   * Falls back to {@link DEFAULT_FETCH_PARAMS} if {@link setupSnapshot} has never been called.
-   * See {@link fetchAndStore} for operation flow, concurrency control, and error handling details.
+   * **Concurrency Control**:
+   * - Multiple concurrent calls are coalesced into a single API request
+   * - All callers receive the same result
+   * - Validation check executes before coalescing, ensuring deterministic failure
    *
-   * @see {@link fetchAndStore}
-   * @see {@link setupSnapshot}
+   * **Error Handling**:
+   * - Never throws exceptions
+   * - All errors returned as Result type with `ok: false`
+   * - Use `result.origin` to discriminate error types
+   *
+   * @example
+   * ```typescript
+   * // Typical usage: periodic refresh
+   * const result = await repo.refreshSnapshot();
+   * if (result.ok) {
+   *   console.log(`Refreshed ${result.stats.size} prototypes`);
+   * } else {
+   *   console.error(`Refresh failed: ${result.message}`);
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Error handling by origin
+   * const result = await repo.refreshSnapshot();
+   * if (!result.ok) {
+   *   if (result.origin === 'repository') {
+   *     console.error('Call setupSnapshot first');
+   *   } else if (result.origin === 'fetcher') {
+   *     console.error(`HTTP ${result.status}: ${result.message}`);
+   *   }
+   * }
+   * ```
+   *
+   * @see {@link fetchAndStore} - Core implementation
+   * @see {@link setupSnapshot} - Initial snapshot setup
+   * @see {@link SnapshotOperationResult} - Return type details
    */
   async refreshSnapshot(): Promise<SnapshotOperationResult> {
+    // Check lastFetchParams before coalescing to ensure refresh is not called
+    // before setupSnapshot has established parameters, even during concurrent calls
+    if (this.#lastFetchParams === undefined) {
+      const error: RepositorySnapshotFailure = {
+        ok: false,
+        origin: 'repository',
+        kind: 'invalid_state',
+        code: 'REPOSITORY_INVALID_STATE',
+        message:
+          'Cannot refresh snapshot: No previous API fetch parameters available. ' +
+          'Call setupSnapshot() first to establish fetch parameters.',
+      };
+
+      emitRepositoryEventSafely(
+        this.events,
+        this.#logger,
+        'snapshotFailed',
+        error,
+      );
+      return error;
+    }
+
+    // Capture lastFetchParams before entering fetchAndStore to prevent race conditions
+    // where setupSnapshot might update it during concurrent execution
+    const paramsToUse = this.#lastFetchParams;
+
     emitRepositoryEventSafely(
       this.events,
       this.#logger,
@@ -592,7 +666,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
       'refresh',
     );
 
-    return this.fetchAndStore(this.#lastFetchParams, false);
+    return this.fetchAndStore(paramsToUse, false);
   }
 
   /**
@@ -669,6 +743,10 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    * Alternative to {@link setupSnapshot} for offline/cached initialization.
    * Validates the data structure and populates the in-memory store.
    *
+   * **Important**: This method resets `#lastFetchParams` to `undefined`, preventing
+   * {@link refreshSnapshot} from working until {@link setupSnapshot} is called.
+   * This ensures that API parameters don't become mismatched with serialized data.
+   *
    * @param data - Serializable snapshot object (previously exported via {@link getSerializableSnapshot})
    * @returns {@link SnapshotOperationResult} indicating success or failure
    *
@@ -679,10 +757,16 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    * - Pass the parsed object to this method
    *
    * **Operation Flow**:
-   * 1. Emit `snapshotStarted('setupFromSerializedData')` event (if enabled)
-   * 2. Validate data structure via {@link loadAndStore}
-   * 3. Store validated prototypes if validation succeeds
-   * 4. Return operation result
+   * 1. Reset `#lastFetchParams` to `undefined`
+   * 2. Emit `snapshotStarted('setupFromSerializedData')` event (if enabled)
+   * 3. Validate data structure via {@link loadAndStore}
+   * 4. Store validated prototypes if validation succeeds
+   * 5. Return operation result
+   *
+   * **Side Effects**:
+   * - Resets cached API fetch parameters
+   * - Subsequent {@link refreshSnapshot} calls will fail with `REPOSITORY_INVALID_STATE`
+   * - Use {@link setupSnapshot} after this method to re-enable {@link refreshSnapshot}
    *
    * **This method does NOT**:
    * - Perform file I/O operations
@@ -710,6 +794,11 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
   setupSnapshotFromSerializedData(
     data: SerializableSnapshot,
   ): SnapshotOperationResult {
+    // Reset fetch parameters immediately when attempting to load from serialized data.
+    // This ensures that any subsequent refreshSnapshot() calls will fail explicitly,
+    // rather than using potentially mismatched API parameters from a previous setupSnapshot().
+    this.#lastFetchParams = undefined;
+
     emitRepositoryEventSafely(
       this.events,
       this.#logger,

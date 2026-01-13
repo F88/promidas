@@ -1,8 +1,13 @@
 /**
- * Tests for ProtopediaInMemoryRepositoryImpl setupSnapshot and refreshSnapshot.
+ * Tests for ProtopediaInMemoryRepositoryImpl snapshot operations.
  *
- * Covers high-level behavior of snapshot operations.
+ * Covers internal delegation behavior of:
+ * - setupSnapshot -> fetchAndStore
+ * - refreshSnapshot -> fetchAndStore (with lastFetchParams validation)
+ * - setupSnapshotFromSerializedData -> loadAndStore
+ *
  * Detailed fetch-and-store logic is tested in fetch-and-store.test.ts.
+ * Detailed load-and-store logic is tested in load-and-store.test.ts.
  * Constructor tests are in constructor.test.ts.
  *
  * @module
@@ -66,13 +71,14 @@ describe('ProtopediaInMemoryRepositoryImpl - snapshot operations', () => {
         repositoryConfig: {},
       });
 
+      const fixedDate = new Date('2026-01-13T12:00:00Z');
       const fetchAndStoreSpy = vi
         .spyOn(repo as any, 'fetchAndStore')
         .mockResolvedValue({
           ok: true,
           stats: {
             size: 1,
-            cachedAt: new Date(),
+            cachedAt: fixedDate,
             isExpired: false,
             remainingTtlMs: 50000,
             dataSizeBytes: 1000,
@@ -116,52 +122,126 @@ describe('ProtopediaInMemoryRepositoryImpl - snapshot operations', () => {
   });
 
   describe('refreshSnapshot', () => {
-    it('calls fetchAndStore with lastFetchParams and updateLastFetchParams=false', async () => {
+    it('returns error when lastFetchParams is undefined (no prior setup)', async () => {
       const repo = new ProtopediaInMemoryRepositoryImpl({
         store: mockStoreInstance,
         apiClient: mockApiClientInstance,
         repositoryConfig: {},
       });
 
-      const fetchAndStoreSpy = vi
-        .spyOn(repo as any, 'fetchAndStore')
-        .mockResolvedValue({
-          ok: true,
-          stats: {
-            size: 1,
-            cachedAt: new Date(),
-            isExpired: false,
-            remainingTtlMs: 50000,
-            dataSizeBytes: 1000,
-            refreshInFlight: false,
-          },
-        });
+      const result = await repo.refreshSnapshot();
 
-      await repo.refreshSnapshot();
+      expect(result).toEqual({
+        ok: false,
+        origin: 'repository',
+        kind: 'invalid_state',
+        code: 'REPOSITORY_INVALID_STATE',
+        message:
+          'Cannot refresh snapshot: No previous API fetch parameters available. ' +
+          'Call setupSnapshot() first to establish fetch parameters.',
+      });
+    });
+  });
 
-      // Should call with DEFAULT_FETCH_PARAMS (initial value of lastFetchParams)
-      expect(fetchAndStoreSpy).toHaveBeenCalledWith(
-        { offset: 0, limit: 10 },
-        false,
-      );
+  describe('setupSnapshotFromSerializedData', () => {
+    it('calls loadAndStore with provided data', () => {
+      const testContext = createTestContext({});
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: testContext.mockStoreInstance,
+        apiClient: testContext.mockApiClientInstance,
+      });
+
+      const fixedDate = new Date('2026-01-13T12:00:00Z');
+      const mockResult = {
+        ok: true,
+        stats: {
+          size: 2,
+          cachedAt: fixedDate,
+          isExpired: false,
+          remainingTtlMs: 60000,
+          dataSizeBytes: 2000,
+          refreshInFlight: false,
+        },
+      } as const;
+
+      const loadAndStoreSpy = vi
+        .spyOn(repo as any, 'loadAndStore')
+        .mockReturnValue(mockResult);
+
+      const serializedData = {
+        version: '1.0.0',
+        serializedAt: fixedDate.toISOString(),
+        prototypes: [
+          makeNormalizedPrototype({ id: 1 }),
+          makeNormalizedPrototype({ id: 2 }),
+        ],
+      };
+
+      const result = repo.setupSnapshotFromSerializedData(serializedData);
+
+      expect(loadAndStoreSpy).toHaveBeenCalledTimes(1);
+      expect(loadAndStoreSpy).toHaveBeenCalledWith(serializedData);
+      expect(result).toEqual(mockResult);
     });
 
-    it('returns the result from fetchAndStore', async () => {
+    it('returns the result from loadAndStore when successful', () => {
+      const testContext = createTestContext({});
       const repo = new ProtopediaInMemoryRepositoryImpl({
-        store: mockStoreInstance,
-        apiClient: mockApiClientInstance,
-        repositoryConfig: {},
+        store: testContext.mockStoreInstance,
+        apiClient: testContext.mockApiClientInstance,
+      });
+
+      const fixedDate = new Date('2026-01-13T12:00:00Z');
+      const mockResult = {
+        ok: true,
+        stats: {
+          size: 1,
+          cachedAt: fixedDate,
+          isExpired: false,
+          remainingTtlMs: 60000,
+          dataSizeBytes: 1000,
+          refreshInFlight: false,
+        },
+      } as const;
+
+      vi.spyOn(repo as any, 'loadAndStore').mockReturnValue(mockResult);
+
+      const serializedData = {
+        version: '1.0.0',
+        serializedAt: fixedDate.toISOString(),
+        prototypes: [makeNormalizedPrototype({ id: 1 })],
+      };
+
+      const result = repo.setupSnapshotFromSerializedData(serializedData);
+
+      expect(result).toEqual(mockResult);
+    });
+
+    it('returns the result from loadAndStore when validation fails', () => {
+      const testContext = createTestContext({});
+      const repo = new ProtopediaInMemoryRepositoryImpl({
+        store: testContext.mockStoreInstance,
+        apiClient: testContext.mockApiClientInstance,
       });
 
       const mockResult = {
         ok: false,
-        origin: 'unknown',
-        message: 'refresh failed',
-      } as const;
+        origin: 'repository' as const,
+        kind: 'validation' as const,
+        code: 'REPOSITORY_VALIDATION_ERROR' as const,
+        message: 'validation failed',
+      };
 
-      vi.spyOn(repo as any, 'fetchAndStore').mockResolvedValue(mockResult);
+      vi.spyOn(repo as any, 'loadAndStore').mockReturnValue(mockResult);
 
-      const result = await repo.refreshSnapshot();
+      const fixedDate = new Date('2026-01-13T12:00:00Z');
+      const invalidData = {
+        version: '1.0.0',
+        serializedAt: fixedDate.toISOString(),
+        prototypes: [{ id: 1 } as any],
+      };
+
+      const result = repo.setupSnapshotFromSerializedData(invalidData);
 
       expect(result).toEqual(mockResult);
     });

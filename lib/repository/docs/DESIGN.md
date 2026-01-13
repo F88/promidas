@@ -194,6 +194,35 @@ type UnknownSnapshotFailure = {
 | Result    | ✅ Strong   | ✅ Yes   | ✅ Fast     | ✅ Rich    |
 | Exception | ⚠️ Weak     | ❌ No    | ⚠️ Slower   | ⚠️ Limited |
 
+**Type Narrowing with Discriminated Unions**:
+
+The `origin` field enables precise type narrowing:
+
+```typescript
+const result = await repo.setupSnapshot({ limit: 100 });
+
+if (!result.ok) {
+    // Type: SnapshotOperationFailure
+
+    if (result.origin === 'repository') {
+        // Type narrowed to: RepositorySnapshotFailure
+        console.error(result.kind); // ✅ 'invalid_state' | 'validation_failed'
+        console.error(result.code); // ✅ RepositoryErrorCode
+    }
+
+    if (result.origin === 'fetcher') {
+        // Type narrowed to: FetcherSnapshotFailure
+        console.error(result.status); // ✅ number | undefined
+        console.error(result.details); // ✅ FetchPrototypesFailure['details']
+    }
+
+    if (result.origin === 'store') {
+        // Type narrowed to: StoreSnapshotFailure
+        console.error(result.dataState); // ✅ 'corrupted' | 'lost' | 'unknown'
+    }
+}
+```
+
 See [USAGE.md](USAGE.md#error-handling) for usage examples.
 
 ### 4. Snapshot Isolation
@@ -459,6 +488,42 @@ async #executeWithCoalescing(
 - First caller's parameters are used
 - Subsequent concurrent callers wait for the same Promise
 - After completion, new calls start fresh requests
+
+### Validation Before Coalescing
+
+**Design Decision**: Validation checks execute before coalescing logic
+
+**Implication**: `refreshSnapshot()` requires prior successful `setupSnapshot()`
+
+**Behavior**:
+
+```typescript
+class ProtopediaInMemoryRepositoryImpl {
+  async refreshSnapshot(): Promise<SnapshotOperationResult> {
+    // Validation happens FIRST (before coalescing)
+    if (this.#lastFetchParams === undefined) {
+      return {
+        ok: false,
+        origin: 'repository',
+        kind: 'invalid_state',
+        code: 'REPOSITORY_INVALID_STATE',
+        message: 'Cannot refresh: no previous snapshot exists'
+      };
+    }
+    // Coalescing happens AFTER validation passes
+    return this.#executeWithCoalescing(() => this.fetchAndStore(...));
+  }
+}
+```
+
+**Concurrent Call Implications**:
+
+- Concurrent `setupSnapshot` calls → All succeed (coalesced into 1 request)
+- Concurrent `refreshSnapshot` calls → All succeed (coalesced into 1 request)
+- `refreshSnapshot` called before `setupSnapshot` completes → Fails immediately with `REPOSITORY_INVALID_STATE`
+- `refreshSnapshot` + `setupSnapshot` concurrent → `refreshSnapshot` fails, `setupSnapshot` succeeds
+
+**Rationale**: Validation failure is deterministic and instant, no need to wait for coalescing.
 
 ## Event System
 

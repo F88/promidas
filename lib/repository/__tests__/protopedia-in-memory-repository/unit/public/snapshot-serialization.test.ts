@@ -1124,5 +1124,96 @@ describe('ProtopediaInMemoryRepositoryImpl - snapshot serialization', () => {
         expect(mockStoreInstance.setAll).toHaveBeenCalledWith(largePrototypes);
       });
     });
+
+    describe('lastFetchParams reset behavior', () => {
+      it('resets lastFetchParams to undefined after successful setupSnapshotFromSerializedData', async () => {
+        const snapshot = {
+          version: '1.0.0',
+          serializedAt: new Date().toISOString(),
+          prototypes: [makeNormalizedPrototype({ id: 1 })],
+        };
+
+        const repo = new ProtopediaInMemoryRepositoryImpl({
+          store: mockStoreInstance,
+          apiClient: mockApiClientInstance,
+        });
+
+        // First setup via API to establish lastFetchParams
+        vi.spyOn(repo as any, 'fetchAndStore').mockResolvedValueOnce({
+          ok: true,
+          stats: {
+            size: 1,
+            cachedAt: new Date(),
+            isExpired: false,
+            remainingTtlMs: 60000,
+            dataSizeBytes: 1000,
+            refreshInFlight: false,
+          },
+        });
+        await repo.setupSnapshot({ offset: 10, limit: 50 });
+
+        // Load from serialized data (should reset lastFetchParams)
+        const loadResult = repo.setupSnapshotFromSerializedData(snapshot);
+        expect(loadResult.ok).toBe(true);
+
+        // Attempt to refresh should fail because lastFetchParams is undefined
+        const refreshResult = await repo.refreshSnapshot();
+        expect(refreshResult).toEqual({
+          ok: false,
+          origin: 'repository',
+          kind: 'invalid_state',
+          code: 'REPOSITORY_INVALID_STATE',
+          message:
+            'Cannot refresh snapshot: No previous API fetch parameters available. ' +
+            'Call setupSnapshot() first to establish fetch parameters.',
+        });
+      });
+
+      it('resets lastFetchParams even when setupSnapshotFromSerializedData fails', async () => {
+        const invalidSnapshot = {
+          version: '1.0.0',
+          serializedAt: new Date().toISOString(),
+          prototypes: 'not-an-array' as any,
+        };
+
+        const repo = new ProtopediaInMemoryRepositoryImpl({
+          store: mockStoreInstance,
+          apiClient: mockApiClientInstance,
+        });
+
+        // Setup via API first
+        vi.spyOn(repo as any, 'fetchAndStore').mockResolvedValueOnce({
+          ok: true,
+          stats: {
+            size: 1,
+            cachedAt: new Date(),
+            isExpired: false,
+            remainingTtlMs: 60000,
+            dataSizeBytes: 1000,
+            refreshInFlight: false,
+          },
+        });
+
+        // Establish lastFetchParams
+        await repo.setupSnapshot({ offset: 20, limit: 100 });
+
+        // Attempt to load invalid data (should reset lastFetchParams even on failure)
+        const loadResult =
+          repo.setupSnapshotFromSerializedData(invalidSnapshot);
+        expect(loadResult.ok).toBe(false);
+
+        // refreshSnapshot should fail because lastFetchParams was reset
+        const refreshResult = await repo.refreshSnapshot();
+        expect(refreshResult).toEqual({
+          ok: false,
+          origin: 'repository',
+          kind: 'invalid_state',
+          code: 'REPOSITORY_INVALID_STATE',
+          message:
+            'Cannot refresh snapshot: No previous API fetch parameters available. ' +
+            'Call setupSnapshot() first to establish fetch parameters.',
+        });
+      });
+    });
   });
 });

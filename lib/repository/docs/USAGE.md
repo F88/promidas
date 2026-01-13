@@ -63,9 +63,11 @@ export interface ProtopediaInMemoryRepository {
     ): Promise<SnapshotOperationResult>;
 
     /**
-     * Refresh the snapshot using the same strategy as the last
-     * `setupSnapshot` call, or a reasonable default when it has not
-     * been called yet.
+     * Refresh the snapshot using the same parameters as the last
+     * successful `setupSnapshot` call.
+     *
+     * **Prerequisite**: `setupSnapshot()` must have been called successfully at least once.
+     * If called before `setupSnapshot()`, returns an error with code `REPOSITORY_INVALID_STATE`.
      *
      * Returns a Result type indicating success with stats or failure with error details.
      * In case of failure, the current in-memory snapshot is preserved.
@@ -331,6 +333,16 @@ if (!result.ok) {
             if (result.dataState === 'corrupted') {
                 // Handle data corruption
                 console.error('Data corruption detected. Clearing cache.');
+            }
+            break;
+        case 'repository':
+            // RepositorySnapshotFailure: validation/state errors
+            console.error(`Repository error [${result.code}]:`, result.message);
+            if (result.code === 'REPOSITORY_INVALID_STATE') {
+                // Handle invalid state (e.g., refreshSnapshot before setupSnapshot)
+                console.error(
+                    'Invalid repository state. Call setupSnapshot first.',
+                );
             }
             break;
         case 'unknown':
