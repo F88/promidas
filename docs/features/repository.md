@@ -56,6 +56,8 @@ const completed = all.filter((p) => p.status === 3);
 
 データが古くなった場合、API から最新情報を取得してメモリ内のデータを更新します。
 
+**注意**: `refreshSnapshot()` を呼ぶ前に、必ず `setupSnapshot()` を一度実行しておく必要があります。
+
 ```typescript
 const result = await repository.refreshSnapshot();
 

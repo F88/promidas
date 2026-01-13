@@ -263,7 +263,58 @@ console.log('License distribution:', licenseDistribution);
 
 ## 🔌 エクスポート・連携
 
-### JSONファイルとして保存する
+### スナップショットをJSONファイルに保存する (推奨)
+
+スナップショット全体をメタデータ付きでJSONファイルに保存します。後で `setupSnapshotFromSerializedData()` で読み込むことができます。
+
+```typescript
+import { writeFileSync } from 'fs';
+// 事前に repo.setupSnapshot() が実行され、データがメモリにロードされている必要があります。
+
+// スナップショット全体を取得 (バージョン情報、タイムスタンプ付き)
+const snapshot = repo.getSerializableSnapshot();
+
+// JSON形式で保存
+writeFileSync('snapshot.json', JSON.stringify(snapshot, null, 2));
+console.log(`Saved snapshot with ${snapshot.prototypes.length} prototypes`);
+console.log(
+    `Version: ${snapshot.version}, Serialized at: ${snapshot.serializedAt}`,
+);
+```
+
+### 保存したスナップショットを読み込む
+
+オフライン環境や起動高速化のため、保存したスナップショットから直接データを読み込みます。
+
+**重要**: この方法で読み込んだ後、`refreshSnapshot()` は使えません。API から最新データを取得したい場合は `setupSnapshot()` を実行してください。
+
+```typescript
+import { readFileSync } from 'fs';
+import { createPromidasForLocal } from '@f88/promidas';
+
+const repo = createPromidasForLocal({
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+});
+
+// JSONファイルからスナップショットを読み込む
+const json = readFileSync('snapshot.json', 'utf-8');
+const snapshot = JSON.parse(json);
+
+// スナップショットを復元
+const result = repo.setupSnapshotFromSerializedData(snapshot);
+
+if (result.ok) {
+    console.log(`Loaded ${result.stats.size} prototypes from snapshot`);
+} else {
+    console.error(`Failed to load snapshot: ${result.message}`);
+    process.exit(1);
+}
+
+// この後 refreshSnapshot() を呼ぶと REPOSITORY_INVALID_STATE エラーになります
+// APIから最新データを取得したい場合は setupSnapshot() を実行してください
+```
+
+### JSONファイルとして保存する (データのみ)
 
 取得した全データをそのままJSONファイルに保存します。バックアップや他のツールでの再利用に便利です。
 
