@@ -367,7 +367,7 @@ type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
 
 _USAGE.md:_
 
-```markdown
+````markdown
 ## Error Handling with Result Type
 
 For Result type design rationale, see [DESIGN.md](DESIGN.md#result-type-pattern).
@@ -377,28 +377,13 @@ For Result type design rationale, see [DESIGN.md](DESIGN.md#result-type-pattern)
 const result = await repository.setupSnapshot();
 
 if (result.ok) {
-  console.log('Success:', result.value);
+    console.log('Success:', result.value);
 } else {
-  console.error('Error:', result.error);
+    console.error('Error:', result.error);
 }
-````
-
-```yaml
----
-lang: en # or 'ja' for Japanese
-title: Document Title
-title-en: English Title
-title-ja: 日本語タイトル
-related:
-    - ../../../README.md "Project Overview"
-    - DESIGN.md "Design Specifications"
-instructions-for-ais:
-    - This document should be written in English for AI readability.
-    - Content within code fences may be written in languages other than English.
-    - Prohibit updating this front-matter.
-    - Prohibit updating title line (1st line) in this document.
----
 ```
+````
+````
 
 ## Documentation Review Process
 
