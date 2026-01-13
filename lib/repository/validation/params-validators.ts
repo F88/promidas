@@ -10,7 +10,7 @@
  */
 import { ValidationError } from '../errors/validation-error.js';
 
-import { prototypeIdSchema, sampleSizeSchema } from './index.js';
+import { prototypeIdSchema, sampleSizeSchema } from './schemas.js';
 
 /**
  * Validator class for repository operations.
