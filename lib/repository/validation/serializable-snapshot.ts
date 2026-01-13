@@ -10,9 +10,11 @@
 import type { Logger } from '../../logger/logger.types.js';
 import { validateNormalizedPrototypeArray } from '../../utils/validation/index.js';
 import type { ValidationResult } from '../../utils/validation/types.js';
+import {
+  serializedAtSchema,
+  versionSchema,
+} from '../schemas/serializable-snapshot.js';
 import type { SerializableSnapshot } from '../types/index.js';
-
-import { serializedAtSchema, versionSchema } from './schemas.js';
 
 /**
  * Serializable snapshot validation error code.

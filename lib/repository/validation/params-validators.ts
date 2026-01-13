@@ -9,8 +9,7 @@
  * from './validation/index.js' instead of methods in this class.
  */
 import { ValidationError } from '../errors/validation-error.js';
-
-import { prototypeIdSchema, sampleSizeSchema } from './schemas.js';
+import { prototypeIdSchema, sampleSizeSchema } from '../schemas/params.js';
 
 /**
  * Validator class for repository operations.
