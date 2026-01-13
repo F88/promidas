@@ -310,6 +310,41 @@ if (!result.ok) {
 }
 ```
 
+**Advanced error handling with discriminated unions:**
+
+```ts
+const result = await repo.setupSnapshot({ limit: 1000 });
+
+if (!result.ok) {
+    switch (result.origin) {
+        case 'fetcher':
+            // FetcherSnapshotFailure: has status, details
+            console.error(`Fetch error [${result.code}]:`, result.message);
+            if (result.status === 401) {
+                // Handle authentication error
+                console.error('Authentication failed. Check API token.');
+            }
+            break;
+        case 'store':
+            // StoreSnapshotFailure: has dataState, cause
+            console.error(`Store error [${result.code}]:`, result.message);
+            if (result.dataState === 'corrupted') {
+                // Handle data corruption
+                console.error('Data corruption detected. Clearing cache.');
+            }
+            break;
+        case 'unknown':
+            // UnknownSnapshotFailure: minimal info
+            console.error('Unknown error:', result.message);
+            break;
+    }
+    return;
+}
+
+// Success path
+console.log(`Loaded ${result.stats.size} prototypes`);
+```
+
 ### Validation Errors (Exceptions)
 
 Methods that validate input parameters throw `ValidationError` for invalid arguments. This indicates programmer errors that should be fixed in code:
@@ -510,15 +545,6 @@ useEffect(() => {
     };
 }, []); // Empty deps: repo instance should remain stable
 ```
-
-### Design Notes
-
-- **Opt-in**: Events are disabled by default (zero overhead for CLI/script users)
-- **Rich Payloads**: Events include complete information (stats, error details)
-- **Concurrent Calls**: Multiple concurrent calls result in one event (matches API behavior)
-- **Browser Compatible**: Uses `events` package (Node.js EventEmitter polyfill)
-
-For detailed design rationale, see [DESIGN_EVENTS.md](DESIGN_EVENTS.md).
 
 ## Notes
 
