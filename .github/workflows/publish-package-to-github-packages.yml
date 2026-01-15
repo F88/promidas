@@ -15,9 +15,8 @@ concurrency:
 
 jobs:
   publish:
-
     # Workflow disabled - package now published to npmjs.com
-    if: false  # Workflow disabled - package now published to npmjs.com
+    if: false # Workflow disabled - package now published to npmjs.com
     name: Publish package to GitHub Packages
 
     runs-on: ubuntu-latest
