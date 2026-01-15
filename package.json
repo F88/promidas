@@ -1,12 +1,12 @@
 {
-  "name": "@f88/promidas",
+  "name": "promidas",
   "version": "1.1.0",
   "description": "In-memory snapshot manager for ProtoPedia prototypes with TTL and efficient data access.",
   "engines": {
     "node": ">=20"
   },
-  "private": false,
   "type": "module",
+  "private": false,
   "keywords": [
     "in-memory-store",
     "client",
@@ -128,8 +128,8 @@
     }
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com/",
-    "@f88:registry": "https://npm.pkg.github.com/",
-    "access": "restricted"
+    "registry": "https://registry.npmjs.org/",
+    "access": "public",
+    "provenance": true
   }
 }
