@@ -65,9 +65,9 @@ Modules are designed to be standalone and independently usable:
 Each module is importable via subpath exports:
 
 ```typescript
-import { createStore } from '@f88/promidas/store';
-import { createProtopediaFetcher } from '@f88/promidas/fetcher';
-import { createProtopediaRepository } from '@f88/promidas/repository';
+import { createStore } from 'promidas/store';
+import { createProtopediaFetcher } from 'promidas/fetcher';
+import { createProtopediaRepository } from 'promidas/repository';
 ```
 
 See `package.json` exports field and `__tests__/subpath-exports.test.ts` for the complete API contract.
@@ -300,7 +300,7 @@ Set breakpoints in your test files or source code, then use "Run and Debug" pane
 Use the built-in logger for debugging during development:
 
 ```typescript
-import { createConsoleLogger } from '@f88/promidas/logger';
+import { createConsoleLogger } from 'promidas/logger';
 
 const logger = createConsoleLogger('debug'); // 'debug' level for verbose output
 
@@ -355,7 +355,7 @@ npm run lint
 
 ### Common Development Errors
 
-#### TypeScript Error: "Cannot find module '@f88/promidas/..."
+#### TypeScript Error: "Cannot find module 'promidas/..."
 
 **Cause:** Import path doesn't match subpath exports defined in `package.json`.
 
@@ -363,10 +363,10 @@ npm run lint
 
 ```typescript
 // ❌ Incorrect
-import { createStore } from '@f88/promidas/lib/store';
+import { createStore } from 'promidas/lib/store';
 
 // ✅ Correct
-import { createStore } from '@f88/promidas/store';
+import { createStore } from 'promidas/store';
 ```
 
 #### ESLint Error: "Import order violation"
@@ -456,7 +456,7 @@ If conflicts persist, check `prettier.config.mjs` and `eslint.config.mjs` for mi
 
 ```typescript
 // In tests, use subpath exports
-import { createStore } from '@f88/promidas/store';
+import { createStore } from 'promidas/store';
 
 // Or use relative paths for internal testing
 import { createStore } from '../store';

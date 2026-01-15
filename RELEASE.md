@@ -18,7 +18,7 @@ instructions-for-ais:
 
 This document describes the release procedures for package maintainers.
 
-**Package Distribution:** This package is published to [GitHub Packages](https://github.com/F88/promidas/packages) (`@f88/promidas`). Releases are automatically published when a GitHub Release is created.
+**Package Distribution:** This package is published to [npmjs.com](https://www.npmjs.com/package/promidas) (`promidas`). Releases are automatically published when a GitHub Release is created.
 
 **Audience:** This document is for package maintainers only. Contributors should refer to [CONTRIBUTING.md](./CONTRIBUTING.md) for PR guidelines.
 
@@ -161,17 +161,17 @@ git push origin vx.y.z
 
 ### 5. Create GitHub Release
 
-1. Navigate to the GitHub repository page
-2. Go to "Releases" → "Draft a new release"
+1. Navigate to the repository's Releases page
+2. Click "Draft a new release"
 3. Select tag: `vx.y.z`
 4. Enter release title: `vx.y.z`
 5. Copy the relevant version content from CHANGELOG.md
 6. Click "Publish release"
 
-**Automated Publishing:** When the release is published, the [GitHub Actions workflow](.github/workflows/publish-package-to-github-packages.yml) automatically:
+**Automated Publishing:** When the release is published, the [GitHub Actions workflow](.github/workflows/publish-package-to-npmjs.yml) automatically:
 
 1. Builds the package (`npm run build`)
-2. Publishes to GitHub Packages (`npm publish`)
+2. Publishes to npmjs.com (`npm publish`)
 
 No manual `npm publish` is required.
 
@@ -184,7 +184,7 @@ If the GitHub Actions workflow fails:
 1. Check the workflow run logs in the "Actions" tab
 2. Verify `package.json` version matches the release tag
 3. Ensure all CI checks passed before creating the release
-4. Check GitHub Packages permissions
+4. Check npmjs.com authentication and NPM_TOKEN secret
 
 ### Tag Already Exists
 
@@ -206,4 +206,4 @@ git push origin vx.y.z
 
 - [Semantic Versioning](https://semver.org/)
 - [GitHub Releases Documentation](https://docs.github.com/en/repositories/releasing-projects-on-github)
-- [GitHub Packages Documentation](https://docs.github.com/en/packages)
+- [npm Documentation](https://docs.npmjs.com/)
