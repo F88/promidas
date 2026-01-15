@@ -70,7 +70,7 @@ PROMIDASは **Node.js 環境**(サーバーサイドやローカルスクリプ�
 #### 対策
 
 ```bash
-npm install github:F88/promidas protopedia-api-v2-client dotenv
+npm install promidas dotenv
 ```
 
 ### TypeScriptの型エラーが出る

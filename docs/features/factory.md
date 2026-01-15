@@ -24,7 +24,7 @@ PROMIDAS は、実行環境に応じた2つのファクトリー関数を提供�
 個人のPCでの開発、CLIツール、データ分析スクリプトなどに最適化されています。
 
 ```typescript
-import { createPromidasForLocal } from '@f88/promidas';
+import { createPromidasForLocal } from 'promidas';
 
 const repository = createPromidasForLocal({
     protopediaApiToken: 'your-api-token',
@@ -42,7 +42,7 @@ const repository = createPromidasForLocal({
 Webサーバー、バッチ処理、サーバーレス関数などのバックエンド環境に最適化されています。
 
 ```typescript
-import { createPromidasForServer } from '@f88/promidas';
+import { createPromidasForServer } from 'promidas';
 
 // トークンは環境変数 PROTOPEDIA_API_V2_TOKEN から自動読み込み
 const repository = createPromidasForServer();

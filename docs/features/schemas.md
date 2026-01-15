@@ -30,7 +30,7 @@ Schemas モジュールは以下の役割を担います:
 `NormalizedPrototype` 型のZodスキーマです。
 
 ```typescript
-import { normalizedPrototypeSchema } from '@f88/promidas/schemas';
+import { normalizedPrototypeSchema } from 'promidas/schemas';
 
 // API レスポンスをバリデーション
 const result = normalizedPrototypeSchema.safeParse(apiResponse);
@@ -49,7 +49,7 @@ if (result.success) {
 ### ファイルからの読み込み
 
 ```typescript
-import { normalizedPrototypeSchema } from '@f88/promidas/schemas';
+import { normalizedPrototypeSchema } from 'promidas/schemas';
 import { readFileSync } from 'fs';
 
 const fileContent = readFileSync('snapshot.json', 'utf-8');
@@ -69,7 +69,7 @@ if (result.success) {
 ### APIレスポンスの検証
 
 ```typescript
-import { normalizedPrototypeSchema } from '@f88/promidas/schemas';
+import { normalizedPrototypeSchema } from 'promidas/schemas';
 
 async function fetchPrototype(id: number) {
     const response = await fetch(`/api/prototypes/${id}`);
@@ -93,8 +93,8 @@ async function fetchPrototype(id: number) {
 両者は密接に連携し、完全な型安全性を提供します:
 
 ```typescript
-import type { NormalizedPrototype } from '@f88/promidas/types';
-import { normalizedPrototypeSchema } from '@f88/promidas/schemas';
+import type { NormalizedPrototype } from 'promidas/types';
+import { normalizedPrototypeSchema } from 'promidas/schemas';
 
 // TypeScript: コンパイル時に型をチェック
 function processPrototype(prototype: NormalizedPrototype) {

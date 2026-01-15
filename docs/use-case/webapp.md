@@ -73,7 +73,7 @@ GitHub Actionsなどで定期的にデータを取得する場合。
 ### 基本コード(Next.js App Router API Route例)
 
 ```typescript
-import { createPromidasForServer } from '@f88/promidas';
+import { createPromidasForServer } from 'promidas';
 
 // HMR (Hot Module Replacement) 対策: 開発環境でキャッシュがリセットされるのを防ぎます。
 const globalForPromidas = global as unknown as {

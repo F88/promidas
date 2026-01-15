@@ -126,7 +126,7 @@ ProtoPedia API Ver 2.0の公式ドキュメントには、 `Bearer Token` の取
 
 ```typescript
 // pages/api/prototypes.ts (サーバーサイド)
-import { createPromidasForServer } from '@f88/promidas';
+import { createPromidasForServer } from 'promidas';
 
 export async function GET() {
     // サーバー用の最適化設定 (10分TTL, warnログ)

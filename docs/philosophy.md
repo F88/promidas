@@ -46,16 +46,16 @@ repository → 統合モジュール(store + fetcher)
 
 ```typescript
 // 型定義のみ使用
-import type { NormalizedPrototype } from '@f88/promidas/types';
+import type { NormalizedPrototype } from 'promidas/types';
 
 // ユーティリティ関数のみ使用
-import { parseProtoPediaTimestamp } from '@f88/promidas/utils';
+import { parseProtoPediaTimestamp } from 'promidas/utils';
 
 // Storeのみ使用(独自のフェッチャーと組み合わせる)
-import { PrototypeInMemoryStore } from '@f88/promidas/store';
+import { PrototypeInMemoryStore } from 'promidas/store';
 
 // 統合されたRepository使用(最も簡単)
-import { createPromidasForLocal } from '@f88/promidas';
+import { createPromidasForLocal } from 'promidas';
 ```
 
 ### なぜモジュラー設計か
@@ -74,7 +74,7 @@ PROMIDASは、ユーザーの習熟度に応じて**段階的に複雑さを導�
 初心者や簡単なユースケース向け:
 
 ```typescript
-import { createPromidasForLocal } from '@f88/promidas';
+import { createPromidasForLocal } from 'promidas';
 
 const repo = createPromidasForLocal({
     protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
@@ -110,8 +110,8 @@ const repo = new PromidasRepositoryBuilder()
 高度なカスタマイズが必要な場合:
 
 ```typescript
-import { PrototypeInMemoryStore } from '@f88/promidas/store';
-import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+import { PrototypeInMemoryStore } from 'promidas/store';
+import { ProtopediaApiCustomClient } from 'promidas/fetcher';
 
 // 独自の組み合わせ
 const store = new PrototypeInMemoryStore({ ttlMs: 60 * 60 * 1000 });
@@ -131,7 +131,7 @@ PROMIDASは**TypeScriptファースト**の設計です。実行時エラーで�
 ### 完全な型サポート
 
 ```typescript
-import { createPromidasForLocal } from '@f88/promidas';
+import { createPromidasForLocal } from 'promidas';
 
 // 型推論が効く
 const repo = createPromidasForLocal({
@@ -183,7 +183,7 @@ const prototype = await repo.getPrototypeFromSnapshotByPrototypeId(123);
 TTLによる期限管理とメモリ制限:
 
 ```typescript
-import { PromidasRepositoryBuilder } from '@f88/promidas';
+import { PromidasRepositoryBuilder } from 'promidas';
 
 const repo = new PromidasRepositoryBuilder()
     .setStoreConfig({
@@ -225,7 +225,7 @@ PROMIDASは、特に**BEARER TOKENのセキュリティ**を重視します。
 ### 安全なデフォルト
 
 ```typescript
-import { createPromidasForLocal } from '@f88/promidas';
+import { createPromidasForLocal } from 'promidas';
 
 // ✅ TOKENをハードコードしない設計
 const repo = createPromidasForLocal({
@@ -255,13 +255,13 @@ PROMIDASの各モジュールは**独立して使える**ように設計され�
 
 ```typescript
 // Utilsだけ使う
-import { parseProtoPediaTimestamp } from '@f88/promidas/utils';
+import { parseProtoPediaTimestamp } from 'promidas/utils';
 
 // Storeだけ使う(独自のフェッチャーと組み合わせ)
-import { PrototypeInMemoryStore } from '@f88/promidas/store';
+import { PrototypeInMemoryStore } from 'promidas/store';
 
 // Fetcherだけ使う(独自のストレージと組み合わせ)
-import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+import { ProtopediaApiCustomClient } from 'promidas/fetcher';
 ```
 
 ### 他プロジェクトからの抽出

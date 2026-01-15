@@ -99,13 +99,13 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。パ
 ### パッケージのインストール
 
 ```bash
-npm install github:F88/promidas protopedia-api-v2-client
+npm install promidas
 ```
 
 または yarn の場合:
 
 ```bash
-yarn add github:F88/promidas protopedia-api-v2-client
+yarn add promidas
 ```
 
 ## 環境変数の設定
@@ -153,7 +153,7 @@ import 'dotenv/config';
 
 ```typescript
 import 'dotenv/config';
-import { createPromidasForLocal } from '@f88/promidas';
+import { createPromidasForLocal } from 'promidas';
 
 /**
  * Factory関数を使ってリポジトリインスタンスを作成する
@@ -204,7 +204,7 @@ await main(repo);
 
 ```typescript
 import 'dotenv/config';
-import { PromidasRepositoryBuilder } from '@f88/promidas';
+import { PromidasRepositoryBuilder } from 'promidas';
 
 /**
  * Builderを使ってリポジトリインスタンスを作成する
@@ -313,7 +313,7 @@ PROMIDASが取得するデータ(`NormalizedPrototype`)は、以下のような�
 - トークンを引数で受け取る (環境変数から読み込んでコードで指定)
 
 ```typescript
-import { createPromidasForLocal } from '@f88/promidas';
+import { createPromidasForLocal } from 'promidas';
 
 const repo = createPromidasForLocal({
     protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
@@ -337,7 +337,7 @@ const repo = createPromidasForLocal({
 - 環境変数から自動取得 (`PROTOPEDIA_API_V2_TOKEN` required)
 
 ```typescript
-import { createPromidasForServer } from '@f88/promidas';
+import { createPromidasForServer } from 'promidas';
 
 // 環境変数 PROTOPEDIA_API_V2_TOKEN が必須
 const repo = createPromidasForServer({
@@ -361,7 +361,7 @@ const repo = createPromidasForServer({
 **推奨**: 複雑な設定、段階的な構成、条件分岐が必要な場合
 
 ```typescript
-import { PromidasRepositoryBuilder } from '@f88/promidas';
+import { PromidasRepositoryBuilder } from 'promidas';
 
 const repo = new PromidasRepositoryBuilder()
     .setStoreConfig({ ttlMs: 30 * 60 * 1000, logLevel: 'debug' })
@@ -419,7 +419,7 @@ const random = await repo.getRandomPrototypeFromSnapshot();
 **TTL**は、Snapshotの有効期限です。TTLが切れた後、`getAllFromSnapshot()` などのメソッドを呼ぶと、データが期限切れであることを検知できます(`isExpired: true`)。一度 `setupSnapshot()` でデータを取得した後、`refreshSnapshot()` を呼ぶことで最新データに更新できます。
 
 ```typescript
-import { PromidasRepositoryBuilder } from '@f88/promidas';
+import { PromidasRepositoryBuilder } from 'promidas';
 
 const repo = new PromidasRepositoryBuilder()
     .setStoreConfig({
@@ -459,7 +459,7 @@ const data = await repo.getAllFromSnapshot();
 #### 2. TTLベース更新チェック (推奨: 長時間稼働アプリ)
 
 ```typescript
-import { PromidasRepositoryBuilder } from '@f88/promidas';
+import { PromidasRepositoryBuilder } from 'promidas';
 
 // TTLを設定
 const repo = new PromidasRepositoryBuilder()

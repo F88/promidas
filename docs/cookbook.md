@@ -19,8 +19,8 @@ instructions-for-ais:
 // 以下を事前に設定していることを想定しています。
 // process.env.PROTOPEDIA_API_V2_TOKEN = 'YOUR_TOKEN_HERE';
 
-import { createPromidasForLocal } from '@f88/promidas';
-import type { NormalizedPrototype } from '@f88/promidas/types';
+import { createPromidasForLocal } from 'promidas';
+import type { NormalizedPrototype } from 'promidas/types';
 
 const repo = createPromidasForLocal({
     protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
@@ -290,7 +290,7 @@ console.log(
 
 ```typescript
 import { readFileSync } from 'fs';
-import { createPromidasForLocal } from '@f88/promidas';
+import { createPromidasForLocal } from 'promidas';
 
 const repo = createPromidasForLocal({
     protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
@@ -438,7 +438,7 @@ console.log(
 大量のデータを取得する際、進捗状況を把握したい場合はカスタムコールバックを使用できます。
 
 ```typescript
-import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+import { ProtopediaApiCustomClient } from 'promidas/fetcher';
 
 // 進捗イベントハンドラー付きのカスタムクライアントを作成
 const client = new ProtopediaApiCustomClient({
@@ -495,7 +495,7 @@ if (result.ok) {
 ログレベルを `info` 以上にすると、stderr に進捗が表示されます。
 
 ```typescript
-import { createPromidasForLocal } from '@f88/promidas';
+import { createPromidasForLocal } from 'promidas';
 
 const repo = createPromidasForLocal({
     protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
