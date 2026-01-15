@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-01-15
+
 ### BREAKING CHANGES
 
 - **Node.js Support**: Minimum Node.js version updated from 20 to 22 (#84)
