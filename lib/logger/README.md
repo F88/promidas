@@ -28,8 +28,8 @@ instructions-for-ais:
 このモジュールは単体でも使用できます:
 
 ```typescript
-import { createConsoleLogger, createNoopLogger } from '@f88/promidas/logger';
-import type { Logger, LogLevel } from '@f88/promidas/logger';
+import { createConsoleLogger, createNoopLogger } from 'promidas/logger';
+import type { Logger, LogLevel } from 'promidas/logger';
 ```
 
 ## 🚀 簡単な使い方
@@ -37,7 +37,7 @@ import type { Logger, LogLevel } from '@f88/promidas/logger';
 ### 基本的な使い方
 
 ```typescript
-import { createConsoleLogger } from '@f88/promidas/logger';
+import { createConsoleLogger } from 'promidas/logger';
 
 // ロガーを作成 (デフォルト level: 'info')
 const logger = createConsoleLogger();
@@ -51,7 +51,7 @@ logger.error('データの取得に失敗しました');
 ### デバッグ用の詳細ログ
 
 ```typescript
-import { createConsoleLogger, ConsoleLogger } from '@f88/promidas/logger';
+import { createConsoleLogger, ConsoleLogger } from 'promidas/logger';
 
 // デバッグレベルのロガー (開発中に便利)
 const logger = new ConsoleLogger('debug');
@@ -77,7 +77,7 @@ logger2.level = 'debug';
 重要度に応じてログを分類できます:
 
 ```typescript
-import { LogLevel } from '@f88/promidas/logger';
+import { LogLevel } from 'promidas/logger';
 
 // 利用可能なログレベル (重要度順)
 LogLevel.Debug; // デバッグ情報 (開発中のみ)
@@ -89,7 +89,7 @@ LogLevel.Error; // エラー
 ### コンソール出力
 
 ```typescript
-import { createConsoleLogger, ConsoleLogger } from '@f88/promidas/logger';
+import { createConsoleLogger, ConsoleLogger } from 'promidas/logger';
 
 // Info 以上のログを出力
 const logger = new ConsoleLogger('info');
@@ -106,7 +106,7 @@ logger.debug('今度は表示されます');
 ### ログ出力を無効化
 
 ```typescript
-import { createNoopLogger } from '@f88/promidas/logger';
+import { createNoopLogger } from 'promidas/logger';
 
 // 何もログを出力しないロガー (テストや本番環境で便利)
 const logger = createNoopLogger();
@@ -120,7 +120,7 @@ logger.error('このエラーログも出力されません');
 独自のログ出力先を作成できます:
 
 ```typescript
-import type { Logger } from '@f88/promidas/logger';
+import type { Logger } from 'promidas/logger';
 
 const fileLogger: Logger = {
     debug: (message) => writeToFile('DEBUG: ' + message),
@@ -161,7 +161,7 @@ const logger = createNoopLogger();
 ## 📝 実用例
 
 ```typescript
-import { createConsoleLogger } from '@f88/promidas/logger';
+import { createConsoleLogger } from 'promidas/logger';
 
 const logger = createConsoleLogger();
 logger.level = 'info';

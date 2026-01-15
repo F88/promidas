@@ -300,7 +300,7 @@ export { newSchema } from './new-schema.js';
 **Mitigation**:
 
 - Tree-shakeable: Only import needed schemas
-- Separate entry point: `@f88/promidas/schemas`
+- Separate entry point: `promidas/schemas`
 - Optional: Apps not validating external data can skip this module
 
 ## Testing Strategy

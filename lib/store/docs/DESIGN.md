@@ -119,7 +119,7 @@ const store = new PrototypeInMemoryStore({
 When a custom logger is provided with a log level, the store attempts to update the logger's level property if mutable:
 
 ```ts
-import { createConsoleLogger } from '@f88/promidas/logger';
+import { createConsoleLogger } from 'promidas/logger';
 
 const logger = createConsoleLogger(); // level: 'info'
 const store = new PrototypeInMemoryStore({

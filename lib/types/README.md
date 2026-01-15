@@ -28,13 +28,13 @@ ProtoPediaのデータを型安全に扱うための型定義を提供します�
 このモジュールは単体でも使用できます:
 
 ```typescript
-import type { NormalizedPrototype, StatusCode } from '@f88/promidas/types';
+import type { NormalizedPrototype, StatusCode } from 'promidas/types';
 ```
 
 ## 🚀 使い方
 
 ```typescript
-import type { NormalizedPrototype } from '@f88/promidas/types';
+import type { NormalizedPrototype } from 'promidas/types';
 
 // 正規化されたプロトタイプデータの型
 const prototype: NormalizedPrototype = {
@@ -107,7 +107,7 @@ ProtoPediaプロトタイプの標準化されたデータ構造です。
 #### 型安全なデータアクセス
 
 ```typescript
-import type { NormalizedPrototype } from '@f88/promidas/types';
+import type { NormalizedPrototype } from 'promidas/types';
 
 function displayPrototype(prototype: NormalizedPrototype) {
     // 必須フィールドは常にアクセス可能
@@ -129,7 +129,7 @@ function displayPrototype(prototype: NormalizedPrototype) {
 #### 型ガードとの組み合わせ
 
 ```typescript
-import type { NormalizedPrototype } from '@f88/promidas/types';
+import type { NormalizedPrototype } from 'promidas/types';
 
 function hasVideo(prototype: NormalizedPrototype): boolean {
     return prototype.videoUrl !== undefined;
@@ -178,7 +178,7 @@ ProtoPediaのフィールド値を表す数値コードの型定義です。
 プロトタイプのステータスコード型です。
 
 ```typescript
-import type { StatusCode } from '@f88/promidas/types';
+import type { StatusCode } from 'promidas/types';
 
 type StatusCode = 1 | 2 | 3 | 4;
 ```
@@ -193,7 +193,7 @@ type StatusCode = 1 | 2 | 3 | 4;
 リリースフラグのコード型です。
 
 ```typescript
-import type { ReleaseFlagCode } from '@f88/promidas/types';
+import type { ReleaseFlagCode } from 'promidas/types';
 
 type ReleaseFlagCode = 1 | 2 | 3;
 ```
@@ -207,7 +207,7 @@ type ReleaseFlagCode = 1 | 2 | 3;
 ライセンスタイプのコード型です。
 
 ```typescript
-import type { LicenseTypeCode } from '@f88/promidas/types';
+import type { LicenseTypeCode } from 'promidas/types';
 
 type LicenseTypeCode = 0 | 1;
 ```
@@ -220,7 +220,7 @@ type LicenseTypeCode = 0 | 1;
 サンクスフラグのコード型です。
 
 ```typescript
-import type { ThanksFlagCode } from '@f88/promidas/types';
+import type { ThanksFlagCode } from 'promidas/types';
 
 type ThanksFlagCode = 0 | 1 | undefined;
 ```

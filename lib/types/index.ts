@@ -25,7 +25,7 @@
  *
  * @example
  * ```typescript
- * import type { NormalizedPrototype, StatusCode } from '@f88/promidas/types';
+ * import type { NormalizedPrototype, StatusCode } from 'promidas/types';
  *
  * function processPrototype(prototype: NormalizedPrototype) {
  *   // Required fields are always accessible

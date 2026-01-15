@@ -27,7 +27,7 @@ import type {
     LicenseTypeCode,
     ReleaseFlagCode,
     ThanksFlagCode,
-} from '@f88/promidas/types';
+} from 'promidas/types';
 ```
 
 ## Key Types
@@ -43,7 +43,7 @@ import type {
 ### Type-safe data access
 
 ```typescript
-import type { NormalizedPrototype } from '@f88/promidas/types';
+import type { NormalizedPrototype } from 'promidas/types';
 
 function render(prototype: NormalizedPrototype): string {
     const tags = prototype.tags.join(', ');
@@ -64,8 +64,8 @@ function getReleaseDate(prototype: NormalizedPrototype): string | undefined {
 ### Code unions with converters
 
 ```typescript
-import type { StatusCode } from '@f88/promidas/types';
-import { getPrototypeStatusLabel } from '@f88/promidas/utils';
+import type { StatusCode } from 'promidas/types';
+import { getPrototypeStatusLabel } from 'promidas/utils';
 
 function describeStatus(status: StatusCode): string {
     return getPrototypeStatusLabel(status);
@@ -75,7 +75,7 @@ function describeStatus(status: StatusCode): string {
 ### Enforcing immutability
 
 ```typescript
-import type { DeepReadonly, NormalizedPrototype } from '@f88/promidas/types';
+import type { DeepReadonly, NormalizedPrototype } from 'promidas/types';
 
 function useSnapshot(data: DeepReadonly<NormalizedPrototype>[]): void {
     // data is readonly; mutations are compile-time errors
@@ -89,7 +89,7 @@ function useSnapshot(data: DeepReadonly<NormalizedPrototype>[]): void {
 - Normalization (pipe-split, UTC conversion) happens in the fetcher; these types
   reflect the post-normalization shape.
 - For label/lookups, pair code unions with the utils converters
-  (`@f88/promidas/utils`).
+  (`promidas/utils`).
 
 ## Related Docs
 

@@ -31,7 +31,7 @@ This document describes the fetcher layer, data normalization, and integration w
 ### Basic Fetch Example
 
 ```typescript
-import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+import { ProtopediaApiCustomClient } from 'promidas/fetcher';
 
 const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
@@ -55,21 +55,21 @@ if (result.ok) {
 
 ```typescript
 // Named imports
-import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
-import { constructDisplayMessage } from '@f88/promidas/fetcher/utils/errors/messages';
+import { ProtopediaApiCustomClient } from 'promidas/fetcher';
+import { constructDisplayMessage } from 'promidas/fetcher/utils/errors/messages';
 
 // Type imports
 import type {
     FetchPrototypesResult,
     ProtopediaApiCustomClientConfig,
-} from '@f88/promidas/fetcher';
+} from 'promidas/fetcher';
 
 // Combined
 import {
     ProtopediaApiCustomClient,
     type FetchPrototypesResult,
     type ProtopediaApiCustomClientConfig,
-} from '@f88/promidas/fetcher';
+} from 'promidas/fetcher';
 ```
 
 ## API Client
@@ -97,7 +97,7 @@ as Node.js, browsers, or Next.js server components.
 #### Using ProtopediaApiCustomClient (with progress tracking)
 
 ```ts
-import { ProtopediaApiCustomClient } from '@f88/promidas';
+import { ProtopediaApiCustomClient } from 'promidas';
 
 const CONNECTION_AND_HEADER_TIMEOUT_MS = 5_000;
 
@@ -184,7 +184,7 @@ and custom event handlers can be provided for advanced use cases.
 ### Basic Usage (Automatic Logging)
 
 ```typescript
-import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+import { ProtopediaApiCustomClient } from 'promidas/fetcher';
 
 const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
@@ -248,7 +248,7 @@ const result = await client.fetchPrototypes({ limit: 10000 });
 The progress tracking system emits five event types during the fetch lifecycle:
 
 ```typescript
-import type { FetchProgressEvent } from '@f88/promidas/fetcher';
+import type { FetchProgressEvent } from 'promidas/fetcher';
 
 // Event types:
 type FetchProgressEvent =
@@ -279,11 +279,8 @@ type FetchProgressEvent =
 Use the `shouldProgressLog` utility to determine if progress should be logged to stderr:
 
 ```typescript
-import {
-    ProtopediaApiCustomClient,
-    shouldProgressLog,
-} from '@f88/promidas/fetcher';
-import { ConsoleLogger } from '@f88/promidas/logger';
+import { ProtopediaApiCustomClient, shouldProgressLog } from 'promidas/fetcher';
+import { ConsoleLogger } from 'promidas/logger';
 
 const logger = new ConsoleLogger('info');
 
@@ -333,7 +330,7 @@ The `ProtopediaApiCustomClient` provides a high-level `fetchPrototypes()` method
 that handles API calls, normalization, and error handling automatically:
 
 ```typescript
-import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+import { ProtopediaApiCustomClient } from 'promidas/fetcher';
 
 const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
@@ -407,7 +404,7 @@ console.log(rawResult.results); // Raw API response
 ### Error Types and Result Structure
 
 ```typescript
-import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+import { ProtopediaApiCustomClient } from 'promidas/fetcher';
 
 const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
@@ -488,8 +485,8 @@ if (!result.ok) {
 The client supports Fastify-style logger configuration with three patterns:
 
 ```typescript
-import { createConsoleLogger } from '@f88/promidas/logger';
-import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+import { createConsoleLogger } from 'promidas/logger';
+import { ProtopediaApiCustomClient } from 'promidas/fetcher';
 
 // Pattern 1: logLevel only (creates ConsoleLogger internally)
 const client1 = new ProtopediaApiCustomClient({
@@ -521,7 +518,7 @@ const client3 = new ProtopediaApiCustomClient({
 ### Logger Levels
 
 ```typescript
-import { createConsoleLogger, createNoopLogger } from '@f88/promidas/logger';
+import { createConsoleLogger, createNoopLogger } from 'promidas/logger';
 
 // Development - verbose logging
 const client = new ProtopediaApiCustomClient({
@@ -551,7 +548,7 @@ const testClient = new ProtopediaApiCustomClient({
 ### Custom Logger Implementation
 
 ```typescript
-import type { Logger } from '@f88/promidas/fetcher';
+import type { Logger } from 'promidas/fetcher';
 
 const customLogger: Logger = {
     debug: (msg, meta) => {

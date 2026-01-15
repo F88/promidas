@@ -171,7 +171,7 @@ types/
 
 **Design Rationale**:
 
-- Users can import code types from either `@f88/promidas/types` or `@f88/promidas/utils`
+- Users can import code types from either `promidas/types` or `promidas/utils`
 - Maintains single source of truth in `lib/types`
 - Improves discoverability for utils users
 
@@ -393,7 +393,7 @@ For integration examples, see [USAGE.md](USAGE.md#validation-utilities).
 
 **Shared Validation**: Validation utilities provide consistent validation across all modules
 
-**Type Reusability**: Code types re-exported for convenience (`@f88/promidas/utils` or `@f88/promidas/types`)
+**Type Reusability**: Code types re-exported for convenience (`promidas/utils` or `promidas/types`)
 
 For integration code examples, see [USAGE.md](USAGE.md#integration-examples).
 

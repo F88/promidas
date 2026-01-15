@@ -53,7 +53,7 @@ import {
     LicenseTypeCode,
     ReleaseFlagCode,
     ThanksFlagCode,
-} from '@f88/promidas/utils';
+} from 'promidas/utils';
 ```
 
 ### Basic Example
@@ -62,7 +62,7 @@ import {
 import {
     getPrototypeStatusLabel,
     parseProtoPediaTimestamp,
-} from '@f88/promidas/utils';
+} from 'promidas/utils';
 
 // Convert status code to Japanese label
 const label = getPrototypeStatusLabel(1);
@@ -82,8 +82,8 @@ Label converters transform ProtoPedia API numeric codes into human-readable Japa
 Convert prototype status codes to Japanese labels.
 
 ```typescript
-import { getPrototypeStatusLabel } from '@f88/promidas/utils';
-import type { StatusCode } from '@f88/promidas/utils';
+import { getPrototypeStatusLabel } from 'promidas/utils';
+import type { StatusCode } from 'promidas/utils';
 
 // All valid status values
 console.log(getPrototypeStatusLabel(1)); // 'アイデア' (Idea)
@@ -112,8 +112,8 @@ console.log(label); // '完成'
 Convert license type codes to Japanese labels.
 
 ```typescript
-import { getPrototypeLicenseTypeLabel } from '@f88/promidas/utils';
-import type { LicenseTypeCode } from '@f88/promidas/utils';
+import { getPrototypeLicenseTypeLabel } from 'promidas/utils';
+import type { LicenseTypeCode } from 'promidas/utils';
 
 // Valid license values
 console.log(getPrototypeLicenseTypeLabel(0)); // 'なし' (None)
@@ -135,8 +135,8 @@ console.log(label); // '表示(CC:BY)'
 Convert release flag codes to Japanese labels.
 
 ```typescript
-import { getPrototypeReleaseFlagLabel } from '@f88/promidas/utils';
-import type { ReleaseFlagCode } from '@f88/promidas/utils';
+import { getPrototypeReleaseFlagLabel } from 'promidas/utils';
+import type { ReleaseFlagCode } from 'promidas/utils';
 
 // Valid release flag values
 console.log(getPrototypeReleaseFlagLabel(1)); // '下書き保存' (Draft)
@@ -159,8 +159,8 @@ console.log(label); // '一般公開'
 Convert thanks flag codes to Japanese labels.
 
 ```typescript
-import { getPrototypeThanksFlagLabel } from '@f88/promidas/utils';
-import type { ThanksFlagCode } from '@f88/promidas/utils';
+import { getPrototypeThanksFlagLabel } from 'promidas/utils';
+import type { ThanksFlagCode } from 'promidas/utils';
 
 // Valid thanks flag values
 console.log(getPrototypeThanksFlagLabel(1)); // '初回表示済'
@@ -186,7 +186,7 @@ Time utilities parse and normalize timestamps from ProtoPedia API.
 Parse JST timestamps (space-separated format) to UTC ISO strings.
 
 ```typescript
-import { parseProtoPediaTimestamp } from '@f88/promidas/utils';
+import { parseProtoPediaTimestamp } from 'promidas/utils';
 
 // Current format: YYYY-MM-DD HH:MM:SS.0
 const timestamp1 = parseProtoPediaTimestamp('2025-12-12 10:00:00.0');
@@ -220,7 +220,7 @@ console.log(iso); // undefined (use parseW3cDtfTimestamp instead)
 **Timezone Conversion**:
 
 ```typescript
-import { JST_OFFSET_MS } from '@f88/promidas/utils';
+import { JST_OFFSET_MS } from 'promidas/utils';
 
 console.log(JST_OFFSET_MS); // 32400000 (9 hours in milliseconds)
 
@@ -235,7 +235,7 @@ console.log(utcTime); // '2025-12-12T03:00:00.000Z'
 Parse W3C Date and Time Formats (ISO 8601 subset with mandatory timezone).
 
 ```typescript
-import { parseW3cDtfTimestamp } from '@f88/promidas/utils';
+import { parseW3cDtfTimestamp } from 'promidas/utils';
 
 // Level 4: Complete date plus hours and minutes
 const level4 = parseW3cDtfTimestamp('2025-12-12T10:00Z');
@@ -286,7 +286,7 @@ Validation utilities provide type-safe validation of external data using the Res
 Validate a single NormalizedPrototype object.
 
 ```typescript
-import { validateNormalizedPrototype } from '@f88/promidas/utils';
+import { validateNormalizedPrototype } from 'promidas/utils';
 
 // Validate untrusted external data
 const untrustedData = JSON.parse(externalJson);
@@ -316,7 +316,7 @@ if (result.ok) {
 Validate an array of NormalizedPrototype objects.
 
 ```typescript
-import { validateNormalizedPrototypeArray } from '@f88/promidas/utils';
+import { validateNormalizedPrototypeArray } from 'promidas/utils';
 
 const arrayData = JSON.parse(externalJson);
 const result = validateNormalizedPrototypeArray(arrayData);
@@ -343,7 +343,7 @@ if (result.ok) {
 Validation functions return a Result type (discriminated union) instead of throwing exceptions.
 
 ```typescript
-import { validateNormalizedPrototype } from '@f88/promidas/utils';
+import { validateNormalizedPrototype } from 'promidas/utils';
 
 const result = validateNormalizedPrototype(untrustedData);
 
@@ -364,7 +364,7 @@ For Result pattern design rationale, see [DESIGN.md](DESIGN.md#result-pattern).
 Validation errors include detailed information about what failed.
 
 ```typescript
-import { validateNormalizedPrototype } from '@f88/promidas/utils';
+import { validateNormalizedPrototype } from 'promidas/utils';
 
 const invalidData = {
     prototypeId: 'not-a-number', // Should be number
@@ -398,8 +398,8 @@ Validation utilities use the shared Zod schema from `lib/schemas/normalized-prot
 // - lib/fetcher (API response validation)
 // - lib/repository (snapshot data validation)
 
-import { normalizedPrototypeSchema } from '@f88/promidas/schemas';
-import { validateNormalizedPrototype } from '@f88/promidas/utils';
+import { normalizedPrototypeSchema } from 'promidas/schemas';
+import { validateNormalizedPrototype } from 'promidas/utils';
 
 // Direct schema usage (advanced)
 const directResult = normalizedPrototypeSchema.safeParse(data);
@@ -428,7 +428,7 @@ import type {
     LicenseTypeCode,
     ReleaseFlagCode,
     ThanksFlagCode,
-} from '@f88/promidas/utils';
+} from 'promidas/utils';
 
 // Use in function signatures
 function filterByStatus(status: StatusCode): boolean {
@@ -468,8 +468,8 @@ import {
     getPrototypeLicenseTypeLabel,
     getPrototypeReleaseFlagLabel,
     getPrototypeThanksFlagLabel,
-} from '@f88/promidas/utils';
-import type { NormalizedPrototype } from '@f88/promidas/types';
+} from 'promidas/utils';
+import type { NormalizedPrototype } from 'promidas/types';
 
 function displayPrototype(prototype: NormalizedPrototype): void {
     console.log(`Name: ${prototype.prototypeNm}`);
@@ -496,10 +496,7 @@ function displayPrototype(prototype: NormalizedPrototype): void {
 ### Timestamp Formatting
 
 ```typescript
-import {
-    parseProtoPediaTimestamp,
-    parseW3cDtfTimestamp,
-} from '@f88/promidas/utils';
+import { parseProtoPediaTimestamp, parseW3cDtfTimestamp } from 'promidas/utils';
 
 // Parse from different sources
 const protoTimestamp = parseProtoPediaTimestamp('2025-12-12 10:00:00.0');
@@ -523,8 +520,8 @@ if (protoTimestamp) {
 import {
     getPrototypeStatusLabel,
     parseProtoPediaTimestamp,
-} from '@f88/promidas/utils';
-import type { NormalizedPrototype } from '@f88/promidas/types';
+} from 'promidas/utils';
+import type { NormalizedPrototype } from 'promidas/types';
 
 function createSummary(prototypes: NormalizedPrototype[]): void {
     // Count by status
@@ -561,8 +558,8 @@ function createSummary(prototypes: NormalizedPrototype[]): void {
 Safely validate data from external sources before use.
 
 ```typescript
-import { validateNormalizedPrototypeArray } from '@f88/promidas/utils';
-import type { NormalizedPrototype } from '@f88/promidas/types';
+import { validateNormalizedPrototypeArray } from 'promidas/utils';
+import type { NormalizedPrototype } from 'promidas/types';
 
 // Load data from file or API
 async function loadPrototypes(url: string): Promise<NormalizedPrototype[]> {
@@ -597,7 +594,7 @@ Use validation utilities with label converters for complete data processing.
 import {
     validateNormalizedPrototype,
     getPrototypeStatusLabel,
-} from '@f88/promidas/utils';
+} from 'promidas/utils';
 
 function processExternalData(rawData: unknown): void {
     // Step 1: Validate structure
@@ -625,7 +622,7 @@ function processExternalData(rawData: unknown): void {
 ### Always Handle Undefined
 
 ```typescript
-import { parseProtoPediaTimestamp } from '@f88/promidas/utils';
+import { parseProtoPediaTimestamp } from 'promidas/utils';
 
 // ✅ Good: Provide fallback
 const timestamp = parseProtoPediaTimestamp(raw) ?? new Date().toISOString();
@@ -644,11 +641,11 @@ const timestamp = parseProtoPediaTimestamp(raw)!; // Dangerous!
 
 ```typescript
 // ✅ Good: Import types separately
-import type { StatusCode } from '@f88/promidas/utils';
-import { getPrototypeStatusLabel } from '@f88/promidas/utils';
+import type { StatusCode } from 'promidas/utils';
+import { getPrototypeStatusLabel } from 'promidas/utils';
 
 // ✅ Also good: Combined import
-import { getPrototypeStatusLabel, type StatusCode } from '@f88/promidas/utils';
+import { getPrototypeStatusLabel, type StatusCode } from 'promidas/utils';
 ```
 
 ### Document Timezone Assumptions
@@ -669,7 +666,7 @@ function fetchPrototypes() {
 ### Leverage Type System
 
 ```typescript
-import type { StatusCode } from '@f88/promidas/utils';
+import type { StatusCode } from 'promidas/utils';
 
 // ✅ Good: Use code types in interfaces
 interface PrototypeData {

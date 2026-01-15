@@ -42,7 +42,7 @@
  *
  * @example
  * ```typescript
- * import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+ * import { ProtopediaApiCustomClient } from 'promidas/fetcher';
  *
  * const client = new ProtopediaApiCustomClient({
  *   protoPediaApiClientOptions: {

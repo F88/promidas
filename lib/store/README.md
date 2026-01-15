@@ -31,10 +31,10 @@ instructions-for-ais:
 import {
     PrototypeInMemoryStore,
     type NormalizedPrototype,
-} from '@f88/promidas/store';
+} from 'promidas/store';
 
 // Result型も提供しています
-import type { SetResult, SetSuccess, SetFailure } from '@f88/promidas/store';
+import type { SetResult, SetSuccess, SetFailure } from 'promidas/store';
 ```
 
 **注意**: `PrototypeInMemoryStore`のメソッド(`setAll`など)は例外をthrowします。`SetResult`型は、Store操作の結果をResult型パターンで扱いたい場合に使用できます。
@@ -42,7 +42,7 @@ import type { SetResult, SetSuccess, SetFailure } from '@f88/promidas/store';
 ## 🚀 簡単な使い方
 
 ```typescript
-import { PrototypeInMemoryStore } from '@f88/promidas/store';
+import { PrototypeInMemoryStore } from 'promidas/store';
 
 // 1. ストアを作成
 const store = new PrototypeInMemoryStore({
@@ -101,7 +101,7 @@ console.log(store.getAll()); // []
 ### 有効期限 (TTL)
 
 ```typescript
-import { PrototypeInMemoryStore } from '@f88/promidas/store';
+import { PrototypeInMemoryStore } from 'promidas/store';
 
 // 30分で期限切れになるストア
 const store = new PrototypeInMemoryStore({
@@ -137,8 +137,8 @@ console.log(store.isExpired()); // true (期限切れを検出)
 ### 基本的な使い方
 
 ```typescript
-import { PrototypeInMemoryStore } from '@f88/promidas/store';
-import type { NormalizedPrototype } from '@f88/promidas/types';
+import { PrototypeInMemoryStore } from 'promidas/store';
+import type { NormalizedPrototype } from 'promidas/types';
 
 const store = new PrototypeInMemoryStore({ ttlMs: 3600000 });
 
@@ -177,7 +177,7 @@ if (store.has()) {
 ### Logger の設定
 
 ```typescript
-import { createConsoleLogger } from '@f88/promidas/logger';
+import { createConsoleLogger } from 'promidas/logger';
 
 // デフォルト: infoレベルのコンソールlogger
 const store1 = new PrototypeInMemoryStore({

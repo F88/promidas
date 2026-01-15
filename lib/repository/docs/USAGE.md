@@ -97,7 +97,7 @@ export interface ProtopediaInMemoryRepository {
 For most use cases, use the factory functions:
 
 ```ts
-import { createPromidasForLocal } from '@f88/promidas';
+import { createPromidasForLocal } from 'promidas';
 
 const repo = createPromidasForLocal({
     protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
@@ -362,7 +362,7 @@ console.log(`Loaded ${result.stats.size} prototypes`);
 Methods that validate input parameters throw `ValidationError` for invalid arguments. This indicates programmer errors that should be fixed in code:
 
 ```ts
-import { ValidationError } from '@f88/promidas/repository';
+import { ValidationError } from 'promidas/repository';
 
 try {
     // Invalid: prototype ID must be a positive integer
@@ -403,7 +403,7 @@ The repository provides an optional event system for real-time state change noti
 Events are **disabled by default**. Enable them via `enableEvents: true`:
 
 ```ts
-import { PromidasRepositoryBuilder } from '@f88/promidas';
+import { PromidasRepositoryBuilder } from 'promidas';
 
 const repo = new PromidasRepositoryBuilder()
     .setStoreConfig({ ttlMs: 30_000 })
@@ -465,7 +465,7 @@ repo.events?.on('snapshotFailed', (error) => {
 
 ```tsx
 import { useEffect, useState } from 'react';
-import type { PrototypeInMemoryStats } from '@f88/promidas/store';
+import type { PrototypeInMemoryStats } from 'promidas/store';
 
 function PrototypeList({ repo }) {
     const [loading, setLoading] = useState(false);

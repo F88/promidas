@@ -1,5 +1,5 @@
 /**
- * Public entrypoint for the @f88/promidas library.
+ * Public entrypoint for the promidas library.
  *
  * ## Quick Start
  *
@@ -7,7 +7,7 @@
  *
  * @example
  * ```typescript
- * import { PromidasRepositoryBuilder } from '@f88/promidas';
+ * import { PromidasRepositoryBuilder } from 'promidas';
  *
  * const repo = new PromidasRepositoryBuilder()
  *   .setStoreConfig({ ttlMs: 30 * 60 * 1000 })
@@ -28,36 +28,36 @@
  * @example
  * ```typescript
  * // Type definitions
- * import type { NormalizedPrototype } from '@f88/promidas/types';
+ * import type { NormalizedPrototype } from 'promidas/types';
  *
  * // Utility functions and converters
  * import {
  *   parseProtoPediaTimestamp,
  *   getPrototypeStatusLabel
- * } from '@f88/promidas/utils';
+ * } from 'promidas/utils';
  *
  * // Logger interface and implementations
- * import { createConsoleLogger } from '@f88/promidas/logger';
+ * import { createConsoleLogger } from 'promidas/logger';
  *
  * // API client and data fetching
  * import {
  *   ProtopediaApiCustomClient
- * } from '@f88/promidas/fetcher';
+ * } from 'promidas/fetcher';
  *
  * // In-memory store
- * import { PrototypeInMemoryStore } from '@f88/promidas/store';
+ * import { PrototypeInMemoryStore } from 'promidas/store';
  *
  * // Repository builder
- * import { PromidasRepositoryBuilder } from '@f88/promidas';
+ * import { PromidasRepositoryBuilder } from 'promidas';
  * ```
  *
  * ## Available Subpath Exports
  *
- * - `@f88/promidas/types` — Type definitions (NormalizedPrototype)
- * - `@f88/promidas/utils` — Utility functions and converters
- * - `@f88/promidas/logger` — Logger interface and implementations
- * - `@f88/promidas/fetcher` — API client and data fetching utilities
- * - `@f88/promidas/store` — In-memory store implementation
+ * - `promidas/types` — Type definitions (NormalizedPrototype)
+ * - `promidas/utils` — Utility functions and converters
+ * - `promidas/logger` — Logger interface and implementations
+ * - `promidas/fetcher` — API client and data fetching utilities
+ * - `promidas/store` — In-memory store implementation
  *
  * @packageDocumentation
  */

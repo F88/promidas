@@ -22,7 +22,7 @@ import type { FetchProgressEvent } from '../types/progress-event.types.js';
  * };
  *
  * // Pattern 2: Custom logger with logLevel
- * import { createConsoleLogger } from '@f88/promidas/logger';
+ * import { createConsoleLogger } from 'promidas/logger';
  * const config2: ProtopediaApiCustomClientConfig = {
  *   protoPediaApiClientOptions: {
  *     token: process.env.PROTOPEDIA_API_TOKEN,

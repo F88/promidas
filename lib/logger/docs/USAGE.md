@@ -32,7 +32,7 @@ This document provides comprehensive usage examples and best practices for the l
 ### Basic Usage
 
 ```typescript
-import { createConsoleLogger } from '@f88/promidas/logger';
+import { createConsoleLogger } from 'promidas/logger';
 
 const logger = createConsoleLogger();
 
@@ -50,17 +50,17 @@ logger.debug('Now this will appear');
 
 ```typescript
 // Named imports (recommended)
-import { createConsoleLogger, createNoopLogger } from '@f88/promidas/logger';
+import { createConsoleLogger, createNoopLogger } from 'promidas/logger';
 
 // Type imports
-import type { Logger, LogLevel } from '@f88/promidas/logger';
+import type { Logger, LogLevel } from 'promidas/logger';
 
 // Combined
 import {
     createConsoleLogger,
     type Logger,
     type LogLevel,
-} from '@f88/promidas/logger';
+} from 'promidas/logger';
 ```
 
 ## Log Levels
@@ -116,7 +116,7 @@ logger.level = 'silent';
 ### Creating a Console Logger
 
 ```typescript
-import { createConsoleLogger } from '@f88/promidas/logger';
+import { createConsoleLogger } from 'promidas/logger';
 
 // Default level is 'info'
 const logger1 = createConsoleLogger();
@@ -173,7 +173,7 @@ logger.level = getLogLevel();
 ### Multiple Loggers for Different Modules
 
 ```typescript
-import { createConsoleLogger } from '@f88/promidas/logger';
+import { createConsoleLogger } from 'promidas/logger';
 
 // Different log levels per concern
 const logger = createConsoleLogger();
@@ -200,7 +200,7 @@ const apiClient = createApiClient({
 ### Creating a No-op Logger
 
 ```typescript
-import { createNoopLogger } from '@f88/promidas/logger';
+import { createNoopLogger } from 'promidas/logger';
 
 const logger = createNoopLogger();
 
@@ -212,7 +212,7 @@ logger.error('This too', { data: 'ignored' });
 ### Conditional Logger Selection
 
 ```typescript
-import { createConsoleLogger, createNoopLogger } from '@f88/promidas/logger';
+import { createConsoleLogger, createNoopLogger } from 'promidas/logger';
 
 const logger =
     process.env.ENABLE_LOGGING === 'true'
@@ -230,7 +230,7 @@ if ('level' in logger) {
 ### Implementing the Logger Interface
 
 ```typescript
-import type { Logger } from '@f88/promidas/logger';
+import type { Logger } from 'promidas/logger';
 
 // Custom logger that prefixes messages
 const createPrefixedLogger = (prefix: string): Logger => {
@@ -249,7 +249,7 @@ logger.info('Started'); // Console: "[MyApp] Started"
 ### Winston Integration
 
 ```typescript
-import type { Logger } from '@f88/promidas/logger';
+import type { Logger } from 'promidas/logger';
 import winston from 'winston';
 
 const winstonLogger = winston.createLogger({
@@ -269,7 +269,7 @@ const logger: Logger = {
 ### Pino Integration
 
 ```typescript
-import type { Logger } from '@f88/promidas/logger';
+import type { Logger } from 'promidas/logger';
 import pino from 'pino';
 
 const pinoLogger = pino({ level: 'info' });
@@ -285,7 +285,7 @@ const logger: Logger = {
 ### Testing with Mock Logger
 
 ```typescript
-import type { Logger } from '@f88/promidas/logger';
+import type { Logger } from 'promidas/logger';
 import { describe, it, expect } from 'vitest';
 
 const createMockLogger = (): Logger & { logs: string[] } => {
@@ -316,8 +316,8 @@ describe('MyService', () => {
 ### With Fetcher
 
 ```typescript
-import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
-import { createConsoleLogger } from '@f88/promidas/logger';
+import { ProtopediaApiCustomClient } from 'promidas/fetcher';
+import { createConsoleLogger } from 'promidas/logger';
 
 const logger = createConsoleLogger();
 
@@ -334,7 +334,7 @@ const client = new ProtopediaApiCustomClient({
 
 ```typescript
 import { createProtoPediaClient } from 'protopedia-api-v2-client';
-import { createConsoleLogger } from '@f88/promidas/logger';
+import { createConsoleLogger } from 'promidas/logger';
 
 const logger = createConsoleLogger();
 

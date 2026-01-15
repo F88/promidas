@@ -35,7 +35,7 @@ TypeScriptの型定義(`lib/types`)と組み合わせて、コンパイル時と
 このモジュールは単体でも使用できます:
 
 ```typescript
-import { normalizedPrototypeSchema } from '@f88/promidas/schemas';
+import { normalizedPrototypeSchema } from 'promidas/schemas';
 ```
 
 ## 🚀 使い方
@@ -43,7 +43,7 @@ import { normalizedPrototypeSchema } from '@f88/promidas/schemas';
 ### 基本的な検証
 
 ```typescript
-import { normalizedPrototypeSchema } from '@f88/promidas/schemas';
+import { normalizedPrototypeSchema } from 'promidas/schemas';
 
 // 外部データを検証
 const data = JSON.parse(jsonString);
@@ -62,7 +62,7 @@ if (result.success) {
 ### スナップショットインポート時の検証
 
 ```typescript
-import { normalizedPrototypeSchema } from '@f88/promidas/schemas';
+import { normalizedPrototypeSchema } from 'promidas/schemas';
 
 const snapshot = JSON.parse(await fs.readFile('snapshot.json', 'utf-8'));
 
@@ -79,7 +79,7 @@ const validatedPrototypes = snapshot.prototypes.map((proto: unknown) => {
 ### コード値の厳格な検証
 
 ```typescript
-import { normalizedPrototypeSchema } from '@f88/promidas/schemas';
+import { normalizedPrototypeSchema } from 'promidas/schemas';
 
 // status は 1|2|3|4 のみ許可
 const invalidData = {
@@ -106,7 +106,7 @@ const result = normalizedPrototypeSchema.safeParse(invalidData);
 - `licenseType`: `0` (なし) | `1` (CC:BY)
 - `thanksFlg`: `0` (未表示) | `1` (表示済) | `undefined` (古いデータ)
 
-**対応する型:** `NormalizedPrototype` (`@f88/promidas/types`)
+**対応する型:** `NormalizedPrototype` (`promidas/types`)
 
 ## 🔗 関連モジュール
 
@@ -123,8 +123,8 @@ const result = normalizedPrototypeSchema.safeParse(invalidData);
 ## 🤝 型との関係
 
 ```typescript
-import type { NormalizedPrototype } from '@f88/promidas/types';
-import { normalizedPrototypeSchema } from '@f88/promidas/schemas';
+import type { NormalizedPrototype } from 'promidas/types';
+import { normalizedPrototypeSchema } from 'promidas/schemas';
 
 // TypeScript型 (コンパイル時)
 const prototype: NormalizedPrototype = {
