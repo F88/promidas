@@ -1,18 +1,21 @@
 {
   "name": "promidas",
   "version": "1.1.0",
-  "description": "In-memory snapshot manager for ProtoPedia prototypes with TTL and efficient data access.",
+  "description": "Toolset library for ProtoPedia API providing independent store and fetcher components, and high-level repository.",
   "engines": {
     "node": ">=22"
   },
   "type": "module",
   "private": false,
   "keywords": [
-    "in-memory-store",
-    "client",
     "protopedia",
-    "nodejs",
-    "typescript"
+    "in-memory-store",
+    "api-client",
+    "data-management",
+    "snapshot",
+    "cache",
+    "typescript",
+    "nodejs"
   ],
   "author": "F88 <685250+F88@users.noreply.github.com>",
   "license": "MIT",
