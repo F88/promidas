@@ -57,7 +57,7 @@ All methods live on `PrototypeInMemoryStore` in `lib/store/store.ts`.
 The store accepts both `logger` and `logLevel` parameters. When no logger is provided, a `ConsoleLogger` is created with the specified level (default: `'info'`).
 
 ```ts
-import { PrototypeInMemoryStore } from '@f88/promidas/store';
+import { PrototypeInMemoryStore } from 'promidas/store';
 
 // Default logger with 'info' level
 const store1 = new PrototypeInMemoryStore({ ttlMs: 30000 });
@@ -69,7 +69,7 @@ const store2 = new PrototypeInMemoryStore({
 });
 
 // Custom logger
-import { createConsoleLogger } from '@f88/promidas/logger';
+import { createConsoleLogger } from 'promidas/logger';
 const store3 = new PrototypeInMemoryStore({
     ttlMs: 30000,
     logger: createConsoleLogger('debug'),
@@ -163,7 +163,7 @@ A typical usage pattern is stale-while-revalidate:
 ### Example: Ensure Fresh Snapshot
 
 ```ts
-import { PrototypeInMemoryStore } from '@f88/promidas';
+import { PrototypeInMemoryStore } from 'promidas';
 
 async function ensureFreshSnapshot(
     store: PrototypeInMemoryStore,
@@ -241,7 +241,7 @@ const prototype = store.getByPrototypeId(123);
 The constructor throws `ConfigurationError` when invalid configuration is provided:
 
 ```typescript
-import { ConfigurationError } from '@f88/promidas/store';
+import { ConfigurationError } from 'promidas/store';
 
 try {
     const store = new PrototypeInMemoryStore({
@@ -259,10 +259,7 @@ try {
 `setAll()` throws specific error types when validation fails. All errors guarantee that store data remains unchanged. For design details, see [DESIGN.md](DESIGN.md#error-handling-design).
 
 ```typescript
-import {
-    DataSizeExceededError,
-    SizeEstimationError,
-} from '@f88/promidas/store';
+import { DataSizeExceededError, SizeEstimationError } from 'promidas/store';
 
 try {
     const result = store.setAll(prototypes);
@@ -291,7 +288,7 @@ import {
     DataSizeExceededError,
     SizeEstimationError,
     type SetResult,
-} from '@f88/promidas/store';
+} from 'promidas/store';
 ```
 
 **Note**: `PrototypeInMemoryStore` methods throw exceptions directly. These Result types are provided for consumers who prefer the Result pattern over exception-based error handling.

@@ -19,7 +19,7 @@ instructions-for-ais:
 
 This document provides contribution guidelines for this project.
 
-**Package Distribution:** This package is published to [GitHub Packages](https://github.com/F88/promidas/packages) (`@f88/promidas`).
+**Package Distribution:** This package is published to [npmjs.com](https://www.npmjs.com/package/promidas) (`promidas`).
 
 For development environment setup and daily development workflow, see [DEVELOPMENT.md](./DEVELOPMENT.md).
 

@@ -3,7 +3,7 @@
  *
  * @description
  * Verifies that all package.json subpath exports resolve correctly and export expected symbols.
- * This test ensures that users can import from subpaths like @f88/promidas/fetcher, etc.
+ * This test ensures that users can import from subpaths like promidas/fetcher, etc.
  *
  * @see {@link ../package.json} - exports field configuration
  */
@@ -39,9 +39,9 @@ describe('subpath exports', () => {
     console.log('\n');
   });
 
-  describe('@f88/promidas (root)', () => {
+  describe('promidas (root)', () => {
     it('should export factory functions and Builder', async () => {
-      const root = await import('@f88/promidas');
+      const root = await import('promidas');
 
       // Should export beginner-friendly factory functions
       expect(root).toHaveProperty('createPromidasForLocal');
@@ -60,9 +60,9 @@ describe('subpath exports', () => {
     });
   });
 
-  describe('@f88/promidas/types', () => {
+  describe('promidas/types', () => {
     it('should export type definitions (type-only module)', async () => {
-      const types = await import('@f88/promidas/types');
+      const types = await import('promidas/types');
 
       // Note: All exports are type-only (no runtime values)
       // NormalizedPrototype, StatusCode, ReleaseFlagCode, LicenseTypeCode, ThanksFlagCode
@@ -79,9 +79,9 @@ describe('subpath exports', () => {
     });
   });
 
-  describe('@f88/promidas/utils', () => {
+  describe('promidas/utils', () => {
     it('should export utility functions only (no types)', async () => {
-      const utils = await import('@f88/promidas/utils');
+      const utils = await import('promidas/utils');
 
       // Time utilities
       expect(utils).toHaveProperty('parseProtoPediaTimestamp');
@@ -107,7 +107,7 @@ describe('subpath exports', () => {
       expect(typeof utils.getPrototypeThanksFlagLabel).toBe('function');
 
       // Should NOT export code types (breaking change: removed in refactor)
-      // Import from @f88/promidas/types instead
+      // Import from promidas/types instead
       expect(utils).not.toHaveProperty('StatusCode');
       expect(utils).not.toHaveProperty('ReleaseFlagCode');
       expect(utils).not.toHaveProperty('LicenseTypeCode');
@@ -115,9 +115,9 @@ describe('subpath exports', () => {
     });
   });
 
-  describe('@f88/promidas/logger', () => {
+  describe('promidas/logger', () => {
     it('should export logger factories', async () => {
-      const logger = await import('@f88/promidas/logger');
+      const logger = await import('promidas/logger');
 
       expect(logger).toHaveProperty('createConsoleLogger');
       expect(typeof logger.createConsoleLogger).toBe('function');
@@ -133,9 +133,9 @@ describe('subpath exports', () => {
     });
   });
 
-  describe('@f88/promidas/fetcher', () => {
+  describe('promidas/fetcher', () => {
     it('should export fetcher class', async () => {
-      const fetcher = await import('@f88/promidas/fetcher');
+      const fetcher = await import('promidas/fetcher');
 
       // API client class
       expect(fetcher).toHaveProperty('ProtopediaApiCustomClient');
@@ -157,9 +157,9 @@ describe('subpath exports', () => {
     });
   });
 
-  describe('@f88/promidas/store', () => {
+  describe('promidas/store', () => {
     it('should export Store class and re-exported types', async () => {
-      const store = await import('@f88/promidas/store');
+      const store = await import('promidas/store');
 
       expect(store).toHaveProperty('PrototypeInMemoryStore');
       expect(typeof store.PrototypeInMemoryStore).toBe('function');
@@ -172,13 +172,13 @@ describe('subpath exports', () => {
 
       // Re-exported types for convenience (NormalizedPrototype, Logger, LogLevel)
       // Note: These are type-only exports, so no runtime values to test
-      // Users can import types like: import type { NormalizedPrototype } from '@f88/promidas/store'
+      // Users can import types like: import type { NormalizedPrototype } from 'promidas/store'
     });
   });
 
-  describe('@f88/promidas/repository', () => {
+  describe('promidas/repository', () => {
     it('should export repository types', async () => {
-      const repository = await import('@f88/promidas/repository');
+      const repository = await import('promidas/repository');
 
       // Repository module exports types only (no factory function in current implementation)
       // The factory function was moved to the Builder pattern in main module
@@ -192,9 +192,9 @@ describe('subpath exports', () => {
 
   describe('type-only subpath exports', () => {
     const typeOnlySubpaths = [
-      '@f88/promidas/fetcher/types',
-      '@f88/promidas/store/types',
-      '@f88/promidas/repository/types',
+      'promidas/fetcher/types',
+      'promidas/store/types',
+      'promidas/repository/types',
     ];
 
     it.each(typeOnlySubpaths)(
@@ -214,7 +214,7 @@ describe('subpath exports', () => {
 
   describe('integration: root vs subpath exports', () => {
     it('should provide Builder from root', async () => {
-      const root = await import('@f88/promidas');
+      const root = await import('promidas');
 
       // Builder in root
       expect(root.PromidasRepositoryBuilder).toBeDefined();
@@ -222,8 +222,8 @@ describe('subpath exports', () => {
     });
 
     it('should allow using multiple subpaths together', async () => {
-      const utils = await import('@f88/promidas/utils');
-      const fetcher = await import('@f88/promidas/fetcher');
+      const utils = await import('promidas/utils');
+      const fetcher = await import('promidas/fetcher');
 
       // All modules are independent and functional
       expect(utils.parseProtoPediaTimestamp).toBeDefined();

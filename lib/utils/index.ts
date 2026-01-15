@@ -52,7 +52,7 @@
  *   parseProtoPediaTimestamp,
  *   deepMerge,
  *   sanitizeDataForLogging,
- * } from '@f88/promidas/utils';
+ * } from 'promidas/utils';
  *
  * // Convert status code
  * const label = getPrototypeStatusLabel(1); // => '公開'

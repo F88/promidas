@@ -1,18 +1,21 @@
 {
-  "name": "@f88/promidas",
+  "name": "promidas",
   "version": "1.1.0",
-  "description": "In-memory snapshot manager for ProtoPedia prototypes with TTL and efficient data access.",
+  "description": "Toolset library for ProtoPedia API providing independent store and fetcher components, and high-level repository.",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
-  "private": false,
   "type": "module",
+  "private": false,
   "keywords": [
-    "in-memory-store",
-    "client",
     "protopedia",
-    "nodejs",
-    "typescript"
+    "in-memory-store",
+    "api-client",
+    "data-management",
+    "snapshot",
+    "cache",
+    "typescript",
+    "nodejs"
   ],
   "author": "F88 <685250+F88@users.noreply.github.com>",
   "license": "MIT",
@@ -58,21 +61,21 @@
     "@faker-js/faker": "^10.2.0",
     "@types/eslint": "^9.6.1",
     "@types/node": "^24.10.2",
-    "@typescript-eslint/eslint-plugin": "^8.52.0",
-    "@typescript-eslint/parser": "^8.52.0",
-    "@vitest/coverage-v8": "^4.0.16",
-    "@vitest/ui": "^4.0.16",
+    "@typescript-eslint/eslint-plugin": "^8.53.0",
+    "@typescript-eslint/parser": "^8.53.0",
+    "@vitest/coverage-v8": "^4.0.17",
+    "@vitest/ui": "^4.0.17",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
-    "prettier": "^3.7.4",
+    "prettier": "^3.8.0",
     "protopedia-api-v2-client": "^3.0.0",
     "rimraf": "^6.1.2",
     "ts-essentials": "^10.1.1",
     "typed-emitter": "^2.1.0",
     "typescript": "^5.9.3",
     "vitepress": "^1.6.4",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.17"
   },
   "files": [
     "README.md",
@@ -128,8 +131,8 @@
     }
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com/",
-    "@f88:registry": "https://npm.pkg.github.com/",
-    "access": "restricted"
+    "registry": "https://registry.npmjs.org/",
+    "access": "public",
+    "provenance": true
   }
 }

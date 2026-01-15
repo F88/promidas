@@ -30,10 +30,7 @@ API から取得したプロトタイプ情報をメモリに保存して、素�
 このモジュールは単体でも使用できます:
 
 ```typescript
-import {
-    type NormalizedPrototype,
-    type Logger,
-} from '@f88/promidas/repository';
+import { type NormalizedPrototype, type Logger } from 'promidas/repository';
 ```
 
 ## 🚀 クイックスタート
@@ -41,7 +38,7 @@ import {
 初心者向けのファクトリー関数を使った簡単な例:
 
 ```typescript
-import { createPromidasForLocal } from '@f88/promidas';
+import { createPromidasForLocal } from 'promidas';
 
 // 1. リポジトリを作成 (ローカル開発用の最適化設定)
 const repository = createPromidasForLocal({

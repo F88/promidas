@@ -26,7 +26,7 @@
  * @example
  * ```typescript
  * // With Repository/Store (recommended pattern)
- * import { PromidasRepositoryBuilder } from '@f88/promidas';
+ * import { PromidasRepositoryBuilder } from 'promidas';
  * const logger = createConsoleLogger();
  * const repo = new PromidasRepositoryBuilder()
  *   .setStoreConfig({ logger, logLevel: 'debug' })

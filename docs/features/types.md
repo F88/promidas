@@ -30,7 +30,7 @@ Types モジュールは以下の役割を担います:
 ProtoPediaのプロトタイプデータを正規化した型定義です。
 
 ```typescript
-import type { NormalizedPrototype } from '@f88/promidas/types';
+import type { NormalizedPrototype } from 'promidas/types';
 
 const prototype: NormalizedPrototype = {
     prototypeId: 123,
@@ -46,7 +46,7 @@ const prototype: NormalizedPrototype = {
 プロトタイプのステータスを表すリテラル型です。
 
 ```typescript
-import type { StatusCode } from '@f88/promidas/types';
+import type { StatusCode } from 'promidas/types';
 
 const status: StatusCode = 1; // 1 | 2 | 3 | 4 のみ許可
 ```
@@ -56,7 +56,7 @@ const status: StatusCode = 1; // 1 | 2 | 3 | 4 のみ許可
 ライセンスコードを表すリテラル型です。
 
 ```typescript
-import type { LicenseCode } from '@f88/promidas/types';
+import type { LicenseCode } from 'promidas/types';
 
 const license: LicenseCode = 1; // 1 | 2 | 3 | 4 | 5 のみ許可
 ```
@@ -69,8 +69,8 @@ const license: LicenseCode = 1; // 1 | 2 | 3 | 4 | 5 のみ許可
 両者を組み合わせることで、完全な型安全性(compile-time + runtime)を実現します。
 
 ```typescript
-import type { NormalizedPrototype } from '@f88/promidas/types';
-import { normalizedPrototypeSchema } from '@f88/promidas/schemas';
+import type { NormalizedPrototype } from 'promidas/types';
+import { normalizedPrototypeSchema } from 'promidas/schemas';
 
 // コンパイル時: TypeScriptが型をチェック
 const data: NormalizedPrototype = fetchedData;

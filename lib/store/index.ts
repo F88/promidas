@@ -52,7 +52,7 @@
  *
  * @example
  * ```typescript
- * import { PrototypeInMemoryStore } from '@f88/promidas/store';
+ * import { PrototypeInMemoryStore } from 'promidas/store';
  *
  * const store = new PrototypeInMemoryStore({
  *   ttlMs: 30 * 60 * 1000, // 30 minutes

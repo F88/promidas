@@ -20,7 +20,7 @@ instructions-for-ais:
 Factory 関数を使わずに、Builder を直接使用してインスタンスを作成します。
 
 ```typescript
-import { PromidasRepositoryBuilder } from '@f88/promidas';
+import { PromidasRepositoryBuilder } from 'promidas';
 
 const builder = new PromidasRepositoryBuilder();
 const repository = builder.build();

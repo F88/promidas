@@ -36,13 +36,13 @@ import {
     parseProtoPediaTimestamp,
     getPrototypeStatusLabel,
     validateNormalizedPrototype,
-} from '@f88/promidas/utils';
+} from 'promidas/utils';
 ```
 
 型定義が必要な場合は、[Typesモジュール](../types/README.md)から import してください:
 
 ```typescript
-import type { StatusCode, NormalizedPrototype } from '@f88/promidas/types';
+import type { StatusCode, NormalizedPrototype } from 'promidas/types';
 ```
 
 ## 🚀 簡単な使い方
@@ -50,7 +50,7 @@ import type { StatusCode, NormalizedPrototype } from '@f88/promidas/types';
 ### データ変換の例
 
 ```typescript
-import { getPrototypeStatusLabel } from '@f88/promidas/utils';
+import { getPrototypeStatusLabel } from 'promidas/utils';
 
 // ステータスコードを日本語ラベルに変換
 const label = getPrototypeStatusLabel(1);
@@ -60,7 +60,7 @@ console.log(label); // 'アイデア'
 ### 日時変換の例
 
 ```typescript
-import { parseProtoPediaTimestamp } from '@f88/promidas/utils';
+import { parseProtoPediaTimestamp } from 'promidas/utils';
 
 // ProtoPedia の日時 (JST) を世界標準時 (UTC) に変換
 const timestamp = parseProtoPediaTimestamp('2025-12-12 10:00:00.0');
@@ -70,7 +70,7 @@ console.log(timestamp); // '2025-12-12T01:00:00.000Z'
 ### データ検証の例
 
 ```typescript
-import { validateNormalizedPrototype } from '@f88/promidas/utils';
+import { validateNormalizedPrototype } from 'promidas/utils';
 
 // 外部データを安全に検証
 const result = validateNormalizedPrototype(untrustedData);
@@ -105,7 +105,7 @@ import {
     getPrototypeLicenseTypeLabel, // ライセンスコード → ラベル
     getPrototypeReleaseFlagLabel, // リリースフラグコード → ラベル
     getPrototypeThanksFlagLabel, // サンクスフラグコード → ラベル
-} from '@f88/promidas/utils';
+} from 'promidas/utils';
 ```
 
 ### 日時関連の定数と関数
@@ -115,7 +115,7 @@ import {
     parseProtoPediaTimestamp, // ProtoPedia 形式をパース
     parseW3cDtfTimestamp, // 標準的な ISO 形式をパース
     JST_OFFSET_MS, // 日本時間のオフセット (9時間)
-} from '@f88/promidas/utils';
+} from 'promidas/utils';
 ```
 
 ### 検証関数
@@ -124,7 +124,7 @@ import {
 import {
     validateNormalizedPrototype, // 単一データの検証
     validateNormalizedPrototypeArray, // 配列データの検証
-} from '@f88/promidas/utils';
+} from 'promidas/utils';
 ```
 
 ---

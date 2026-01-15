@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/F88/promidas/actions/workflows/ci.yml/badge.svg)](https://github.com/F88/promidas/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/F88/promidas/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/F88/promidas/actions/workflows/github-code-scanning/codeql)
-[![Publish package to GitHub Packages](https://github.com/F88/promidas/actions/workflows/publish-package-to-github-packages.yml/badge.svg)](https://github.com/F88/promidas/actions/workflows/publish-package-to-github-packages.yml)
+[![Publish package to npmjs.com](https://github.com/F88/promidas/actions/workflows/publish-package-to-npmjs.yml/badge.svg)](https://github.com/F88/promidas/actions/workflows/publish-package-to-npmjs.yml)
 [![codecov](https://codecov.io/github/F88/promidas/graph/badge.svg)](https://codecov.io/github/F88/promidas)
 
 ![Release](https://img.shields.io/github/v/release/F88/promidas?label=release)
@@ -30,7 +30,7 @@ A toolset library for ProtoPedia providing independent store and fetcher compone
 **今すぐ試す:**
 
 ```bash
-npm install github:F88/promidas protopedia-api-v2-client
+npm install promidas
 export PROTOPEDIA_API_V2_TOKEN="your-token-here"
 npx tsx scripts/try-protopedia-repository.ts
 ```
@@ -93,7 +93,7 @@ This repository provides a modular toolset for managing ProtoPedia data, consist
         - `createPromidasForServer()` - Optimized for server/production (10min TTL, 30s timeout, minimal logging)
     - **Builder Pattern** (`lib/builder.ts`): Step-by-step configuration for advanced use cases
         - `PromidasRepositoryBuilder` - Fluent API for complex configurations
-    - Exported from main module: `import { createPromidasForLocal, PromidasRepositoryBuilder } from '@f88/promidas'`
+    - Exported from main module: `import { createPromidasForLocal, PromidasRepositoryBuilder } from 'promidas'`
 
 This project extracts and generalizes the data-fetching and in-memory data management capabilities originally implemented in [F88/mugen-protopedia](https://github.com/F88/mugen-protopedia/), providing them as a standalone, reusable library for various applications.
 
@@ -117,53 +117,53 @@ Each module can be imported independently using subpath exports:
 
 ```typescript
 // Type definitions
-import type { NormalizedPrototype, StatusCode } from '@f88/promidas/types';
+import type { NormalizedPrototype, StatusCode } from 'promidas/types';
 
 // Runtime validation schemas
-import { normalizedPrototypeSchema } from '@f88/promidas/schemas';
+import { normalizedPrototypeSchema } from 'promidas/schemas';
 
 // Utility functions
 import {
     parseProtoPediaTimestamp,
     getPrototypeStatusLabel,
-} from '@f88/promidas/utils';
+} from 'promidas/utils';
 
 // Logger
-import { createConsoleLogger, type Logger } from '@f88/promidas/logger';
+import { createConsoleLogger, type Logger } from 'promidas/logger';
 
 // API client and fetcher
 import {
     ProtopediaApiCustomClient,
     normalizePrototype,
-} from '@f88/promidas/fetcher';
+} from 'promidas/fetcher';
 
 // In-memory store
 import {
     PrototypeInMemoryStore,
     type NormalizedPrototype,
-} from '@f88/promidas/store';
+} from 'promidas/store';
 
 // Repository implementation
-import { ProtopediaInMemoryRepositoryImpl } from '@f88/promidas/repository';
+import { ProtopediaInMemoryRepositoryImpl } from 'promidas/repository';
 
 // Factory functions and Builder (main module)
 import {
     createPromidasForLocal,
     createPromidasForServer,
     PromidasRepositoryBuilder,
-} from '@f88/promidas';
+} from 'promidas';
 ```
 
 **Available subpath exports:**
 
-- `@f88/promidas` — High-level APIs: Factory functions and Builder (recommended)
-- `@f88/promidas/types` — Type definitions
-- `@f88/promidas/schemas` — Runtime validation schemas (Zod)
-- `@f88/promidas/utils` — Utility functions and converters
-- `@f88/promidas/logger` — Logger interface and implementations
-- `@f88/promidas/fetcher` — API client and data fetching
-- `@f88/promidas/store` — In-memory store
-- `@f88/promidas/repository` — Repository implementation
+- `promidas` — High-level APIs: Factory functions and Builder (recommended)
+- `promidas/types` — Type definitions
+- `promidas/schemas` — Runtime validation schemas (Zod)
+- `promidas/utils` — Utility functions and converters
+- `promidas/logger` — Logger interface and implementations
+- `promidas/fetcher` — API client and data fetching
+- `promidas/store` — In-memory store
+- `promidas/repository` — Repository implementation
 
 ## For Contributors
 

@@ -31,16 +31,16 @@ instructions-for-ais:
 
 ```typescript
 // Zodスキーマをインポート
-import { normalizedPrototypeSchema } from '@f88/promidas/schemas';
+import { normalizedPrototypeSchema } from 'promidas/schemas';
 
 // 型定義も必要な場合
-import type { NormalizedPrototype } from '@f88/promidas/types';
+import type { NormalizedPrototype } from 'promidas/types';
 ```
 
 ### 基本的な検証
 
 ```typescript
-import { normalizedPrototypeSchema } from '@f88/promidas/schemas';
+import { normalizedPrototypeSchema } from 'promidas/schemas';
 
 const data = {
     id: 1,
@@ -144,7 +144,7 @@ if (!result.success) {
 
 ```typescript
 import fs from 'fs/promises';
-import { normalizedPrototypeSchema } from '@f88/promidas/schemas';
+import { normalizedPrototypeSchema } from 'promidas/schemas';
 
 async function loadPrototypesFromFile(filePath: string) {
     // ファイル読み込み
@@ -172,7 +172,7 @@ async function loadPrototypesFromFile(filePath: string) {
 
 ```typescript
 import { z } from 'zod';
-import { normalizedPrototypeSchema } from '@f88/promidas/schemas';
+import { normalizedPrototypeSchema } from 'promidas/schemas';
 
 // 配列スキーマを定義
 const prototypesArraySchema = z.array(normalizedPrototypeSchema);
@@ -195,7 +195,7 @@ function validatePrototypesArray(data: unknown) {
 ### 3. 部分的な検証
 
 ```typescript
-import { normalizedPrototypeSchema } from '@f88/promidas/schemas';
+import { normalizedPrototypeSchema } from 'promidas/schemas';
 
 // 一部のフィールドのみ検証
 const partialSchema = normalizedPrototypeSchema.pick({
@@ -216,7 +216,7 @@ const result = partialSchema.safeParse({
 
 ```typescript
 import { z } from 'zod';
-import { normalizedPrototypeSchema } from '@f88/promidas/schemas';
+import { normalizedPrototypeSchema } from 'promidas/schemas';
 
 // オプショナルフィールドにデフォルト値を設定
 const schemaWithDefaults = normalizedPrototypeSchema.extend({
@@ -255,8 +255,8 @@ const result = schemaWithTransform.parse({
 ### Repositoryでの使用
 
 ```typescript
-import { normalizedPrototypeSchema } from '@f88/promidas/schemas';
-import type { NormalizedPrototype } from '@f88/promidas/types';
+import { normalizedPrototypeSchema } from 'promidas/schemas';
+import type { NormalizedPrototype } from 'promidas/types';
 
 class CustomRepository {
     async importSnapshot(data: unknown) {
@@ -282,8 +282,8 @@ class CustomRepository {
 ### Utilsでの使用
 
 ```typescript
-import { normalizedPrototypeSchema } from '@f88/promidas/schemas';
-import type { Logger } from '@f88/promidas/logger';
+import { normalizedPrototypeSchema } from 'promidas/schemas';
+import type { Logger } from 'promidas/logger';
 
 export function validatePrototype(
     data: unknown,
@@ -315,7 +315,7 @@ export function validatePrototype(
 ### Fetcherでの使用
 
 ```typescript
-import { normalizedPrototypeSchema } from '@f88/promidas/schemas';
+import { normalizedPrototypeSchema } from 'promidas/schemas';
 
 async function fetchAndValidate(url: string) {
     const response = await fetch(url);

@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- **Node.js Support**: Minimum Node.js version updated from 20 to 22 (#84)
+    - Node.js 20 and 21 are no longer supported
+
+### Changed
+
+- **Package Name**: Changed from scoped `@f88/promidas` to unscoped `promidas` for npmjs publication (#84)
+- **Package Registry**: Updated `publishConfig` to publish to npmjs.org instead of GitHub Packages (#84)
+- **Package Access**: Changed access from `restricted` to `public` for npmjs publication (#84)
+- **Documentation**: Updated all import examples and references to use `promidas` instead of `@f88/promidas` (#84)
+
+### Added
+
+- **CI/CD**: Added GitHub Actions workflow for automated npm publishing on release (#84)
+
 ## [1.1.0] - 2026-01-13
 
 ### Added

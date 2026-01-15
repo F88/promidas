@@ -12,7 +12,7 @@
  *   parseProtoPediaTimestamp,
  *   parseW3cDtfTimestamp,
  *   JST_OFFSET_MS,
- * } from '@f88/promidas/utils/time';
+ * } from 'promidas/utils/time';
  *
  * // Parse ProtoPedia format (JST)
  * parseProtoPediaTimestamp('2025-11-14 12:03:07.0');

@@ -64,7 +64,7 @@ PROMIDAS をダウンロードして使えるようにします。
 
 ```bash
 npm init -y
-npm install github:F88/promidas protopedia-api-v2-client dotenv
+npm install promidas dotenv
 ```
 
 これだけで、必要なツールがすべて揃います。数分かかる場合があります。
@@ -99,7 +99,7 @@ PROTOPEDIA_API_V2_TOKEN=あなたのトークン
 ```javascript
 // 必要な機能を取り込む
 import 'dotenv/config';
-import { createPromidasForLocal } from '@f88/promidas';
+import { createPromidasForLocal } from 'promidas';
 
 // メインの処理
 async function main() {

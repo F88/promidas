@@ -388,7 +388,7 @@ export type Logger = {
 
 ```typescript
 import { createProtoPediaClient } from 'protopedia-api-v2-client';
-import { createConsoleLogger } from '@f88/promidas/logger';
+import { createConsoleLogger } from 'promidas/logger';
 
 const logger = createConsoleLogger();
 const apiClient = createProtoPediaClient({

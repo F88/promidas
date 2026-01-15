@@ -29,7 +29,7 @@ All modules under `lib/` are designed as **standalone, independently usable comp
 - **Function independently**: Be usable without requiring the full repository layer or other high-level modules
 - **Provide clear public API**: Export well-defined interfaces through `index.ts`
 - **Include comprehensive documentation**: Enable developers to use the module in isolation
-- **Support subpath exports**: Be importable via package subpath (e.g., `@f88/promidas/store`, `@f88/promidas/fetcher`)
+- **Support subpath exports**: Be importable via package subpath (e.g., `promidas/store`, `promidas/fetcher`)
 - **Minimize dependencies**: Depend only on foundational modules (types, logger, utils) when necessary
 
 This design principle allows developers to:
@@ -42,13 +42,13 @@ This design principle allows developers to:
 
 ```typescript
 // Use only the store module
-import { PrototypeInMemoryStore } from '@f88/promidas/store';
+import { PrototypeInMemoryStore } from 'promidas/store';
 
 // Use only the fetcher module
-import { ProtopediaApiCustomClient } from '@f88/promidas/fetcher';
+import { ProtopediaApiCustomClient } from 'promidas/fetcher';
 
 // Or use the full repository layer
-import { PromidasRepositoryBuilder } from '@f88/promidas';
+import { PromidasRepositoryBuilder } from 'promidas';
 ```
 
 ## Documentation Structure

@@ -20,7 +20,7 @@ import type { SnapshotOperationFailure } from './snapshot-operation.types.js';
  *
  * @example
  * ```typescript
- * import { PromidasRepositoryBuilder } from '@f88/promidas';
+ * import { PromidasRepositoryBuilder } from 'promidas';
  *
  * const repo = new PromidasRepositoryBuilder()
  *   .setRepositoryConfig({ enableEvents: true })

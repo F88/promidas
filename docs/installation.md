@@ -49,13 +49,13 @@ Node.jsがインストールされていない場合は、[超初心者向けク
 ### npm でインストール
 
 ```bash
-npm install github:F88/promidas protopedia-api-v2-client
+npm install promidas
 ```
 
 ### yarn でインストール
 
 ```bash
-yarn add github:F88/promidas protopedia-api-v2-client
+yarn add promidas
 ```
 
 ### インストールの確認
@@ -63,13 +63,13 @@ yarn add github:F88/promidas protopedia-api-v2-client
 インストールが成功したか確認するには、以下のコマンドを実行します:
 
 ```bash
-npm list @f88/promidas
+npm list promidas
 ```
 
 または yarn の場合:
 
 ```bash
-yarn list --pattern @f88/promidas
+yarn list --pattern promidas
 ```
 
 パッケージのバージョンが表示されれば、インストールは成功です。
@@ -81,13 +81,13 @@ PROMIDASを最新バージョンに更新する方法です。
 ### npm でアップデート
 
 ```bash
-npm install github:F88/promidas
+npm install promidas
 ```
 
 ### yarn でアップデート
 
 ```bash
-yarn add github:F88/promidas
+yarn add promidas
 ```
 
 ### アップデート後の確認
@@ -103,13 +103,13 @@ yarn add github:F88/promidas
 npm を使用している場合:
 
 ```bash
-npm list @f88/promidas
+npm list promidas
 ```
 
 yarn を使用している場合:
 
 ```bash
-yarn list --pattern @f88/promidas
+yarn list --pattern promidas
 ```
 
 ### コード内で確認
@@ -117,7 +117,7 @@ yarn list --pattern @f88/promidas
 TypeScriptまたはJavaScriptのコード内でバージョンを確認することもできます:
 
 ```typescript
-import { version } from '@f88/promidas';
+import { version } from 'promidas';
 
 console.log(`PROMIDAS version: ${version}`);
 ```
@@ -129,20 +129,20 @@ PROMIDASをアンインストールする場合は、以下のコマンドを実
 ### npm でアンインストール
 
 ```bash
-npm uninstall @f88/promidas
+npm uninstall promidas
 ```
 
 ### yarn でアンインストール
 
 ```bash
-yarn remove @f88/promidas
+yarn remove promidas
 ```
 
-## GitHub Packages について
+## npmjs.com での公開について
 
-PROMIDASは現在、GitHubリポジトリから直接インストールする形式で提供されています。
+PROMIDASは [npmjs.com](https://www.npmjs.com/package/promidas) で公開されています。
 
-将来的にGitHub Packagesやnpmレジストリからの提供に移行する可能性があります。その場合、このドキュメントは更新されます。
+通常の npm パッケージと同様に `npm install promidas` でインストールできます。
 
 ## トラブルシューティング
 
@@ -175,13 +175,13 @@ PROMIDASは現在、GitHubリポジトリから直接インストールする形
 
     ```bash
     rm package-lock.json
-    npm install github:F88/promidas
+    npm install promidas
     ```
 
 2. **強制的に再インストール**:
 
     ```bash
-    npm install github:F88/promidas --force
+    npm install promidas --force
     ```
 
 ## 次のステップ

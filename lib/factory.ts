@@ -16,8 +16,8 @@
  *
  * @example Creating a custom factory
  * ```typescript
- * import { PromidasRepositoryBuilder } from '@f88/promidas';
- * import type { ProtopediaInMemoryRepository } from '@f88/promidas';
+ * import { PromidasRepositoryBuilder } from 'promidas';
+ * import type { ProtopediaInMemoryRepository } from 'promidas';
  *
  * export function createMyCustomRepository(): ProtopediaInMemoryRepository {
  *   return new PromidasRepositoryBuilder()

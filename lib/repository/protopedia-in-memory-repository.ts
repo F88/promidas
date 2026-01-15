@@ -39,7 +39,7 @@
  *
  * ## Usage Recommendation
  *
- * For normal usage, import from `@f88/promidas` instead of direct instantiation:
+ * For normal usage, import from `promidas` instead of direct instantiation:
  * - `createPromidasForLocal()` for local development
  * - `createPromidasForServer()` for server environments
  * - `PromidasRepositoryBuilder` for advanced customization
@@ -163,7 +163,7 @@ const SAMPLE_SIZE_THRESHOLD_RATIO = 0.5;
  *
  * ## Usage
  *
- * **Recommended**: Import from `@f88/promidas` instead of direct instantiation
+ * **Recommended**: Import from `promidas` instead of direct instantiation
  *
  * **Direct instantiation** (advanced):
  * ```typescript

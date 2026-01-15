@@ -27,7 +27,7 @@
  *
  * @example
  * ```typescript
- * import type { NormalizedPrototype } from '@f88/promidas/repository';
+ * import type { NormalizedPrototype } from 'promidas/repository';
  *
  * const prototypes: NormalizedPrototype[] = await repository.getAllFromSnapshot();
  * ```
@@ -41,7 +41,7 @@ export type { NormalizedPrototype } from '../types/index.js';
  *
  * @example
  * ```typescript
- * import type { Logger } from '@f88/promidas/repository';
+ * import type { Logger } from 'promidas/repository';
  *
  * const customLogger: Logger = {
  *   debug: (msg) => console.debug(msg),
@@ -77,7 +77,7 @@ export type { PrototypeInMemoryStats as ProtopediaInMemoryRepositoryStats } from
  *
  * @example
  * ```typescript
- * import type { PrototypeInMemoryStoreConfig } from '@f88/promidas/repository';
+ * import type { PrototypeInMemoryStoreConfig } from 'promidas/repository';
  *
  * const storeConfig: PrototypeInMemoryStoreConfig = {
  *   ttlMs: 30 * 60 * 1000,
@@ -128,7 +128,7 @@ export { ValidationError } from './errors/validation-error.js';
  * This is the concrete implementation of {@link ProtopediaInMemoryRepository}.
  * Exported for testing purposes and type inspection.
  *
- * **Note**: For normal usage, import from `@f88/promidas` instead.
+ * **Note**: For normal usage, import from `promidas` instead.
  * See module documentation for usage examples.
  *
  * @see {@link ProtopediaInMemoryRepository} for the interface definition
