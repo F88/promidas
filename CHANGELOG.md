@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **CI/CD Security**: Migrated npm publishing to OIDC-only authentication, eliminating long-lived tokens
+- **Documentation**: Clarified contribution workflow for external contributors in CONTRIBUTING.md
+
 ## [2.0.0] - 2026-01-15
 
 ### BREAKING CHANGES
