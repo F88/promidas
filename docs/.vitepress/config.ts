@@ -4,7 +4,7 @@ import { defineConfig } from 'vitepress';
 export default defineConfig({
   title: '🧰 PROMIDAS',
   description:
-    'In-memory snapshot manager for ProtoPedia prototypes with TTL and efficient data access',
+    'A toolset library for ProtoPedia providing independent store and fetcher components, and a high-level repository for easy data management.',
   lang: 'ja',
   base: '/promidas/',
   appearance: true, // or 'dark' for dark by default, 'force-dark' to force dark mode
