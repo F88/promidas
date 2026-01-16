@@ -1,5 +1,6 @@
 ---
 title:
+description: ProtoPediaのデータを「もっと手軽に」「もっと高速に」扱うためのツールセット
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.
