@@ -19,14 +19,13 @@ A toolset library for ProtoPedia providing independent store and fetcher compone
 
 ## クイックスタート
 
-**[📖 ドキュメントサイト](https://f88.github.io/promidas/)** - 使い方とサンプルコード
+- **[📖 ドキュメント](https://f88.github.io/promidas/)** - 使い方とサンプルコード
+- **[🛝 PROMIDAS Playground](https://f88.github.io/PROMIDAS-demo/)** - デモ
 
-**[🛝 PROMIDAS Playground](https://f88.github.io/PROMIDAS-demo/)** - デモ
+**初めての方**
 
-**初めての方へ:**
-
-1. [スタートガイド](https://f88.github.io/promidas/getting-started.html) - インストールと最初の一歩
-2. [ユースケース](https://f88.github.io/promidas/use-case/) - あなたの利用シーンを選ぶ
+- [スタートガイド](https://f88.github.io/promidas/getting-started.html) - インストールと最初の一歩
+- [ユースケース](https://f88.github.io/promidas/use-case/) - あなたの利用シーンを選ぶ
 
 **今すぐ試す:**
 
