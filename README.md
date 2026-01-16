@@ -2,8 +2,9 @@
 
 [![CI](https://github.com/F88/promidas/actions/workflows/ci.yml/badge.svg)](https://github.com/F88/promidas/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/F88/promidas/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/F88/promidas/actions/workflows/github-code-scanning/codeql)
-[![Publish package to npmjs.com](https://github.com/F88/promidas/actions/workflows/publish-package-to-npmjs.yml/badge.svg)](https://github.com/F88/promidas/actions/workflows/publish-package-to-npmjs.yml)
 [![codecov](https://codecov.io/github/F88/promidas/graph/badge.svg)](https://codecov.io/github/F88/promidas)
+[![Publish package to npmjs.com](https://github.com/F88/promidas/actions/workflows/publish-package-to-npmjs.yml/badge.svg)](https://github.com/F88/promidas/actions/workflows/publish-package-to-npmjs.yml)
+[![Deploy VitePress site to Pages](https://github.com/F88/promidas/actions/workflows/deploy-docs.yml/badge.svg)](https://github.com/F88/promidas/actions/workflows/deploy-docs.yml)
 
 ![Release](https://img.shields.io/github/v/release/F88/promidas?label=release)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
