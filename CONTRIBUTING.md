@@ -19,6 +19,8 @@ instructions-for-ais:
 
 This document provides contribution guidelines for this project.
 
+External contributors do not have write access to this repository, so contributions follow a **fork-based workflow**.
+
 **Package Distribution:** This package is published to [npmjs.com](https://www.npmjs.com/package/promidas) (`promidas`).
 
 For development environment setup and daily development workflow, see [DEVELOPMENT.md](./DEVELOPMENT.md).
