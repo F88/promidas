@@ -33,7 +33,7 @@ by fetcher, store, repository, and utils.
   fields, UTC ISO timestamps, numeric counts).
 - Code unions such as `StatusCode`, `LicenseTypeCode`, `ReleaseFlagCode`, and
   `ThanksFlagCode` used across converters and repositories.
-- Shared helper types (e.g., `DeepReadonly`) that enforce immutability for
+- Shared helper types that enforce immutability for
   snapshot consumers.
 
 ## Exclusions
@@ -60,8 +60,8 @@ by fetcher, store, repository, and utils.
 
 ### Immutability and Safety
 
-- Public consumers are expected to treat returned data as immutable; paired
-  `DeepReadonly` exports support this contract in other modules.
+- Public consumers are expected to treat returned data as immutable; native
+  `readonly` types support this contract in other modules.
 - Types are written to avoid surprise widening; optional properties stay
   optional, and required properties are explicit.
 

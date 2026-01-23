@@ -104,11 +104,11 @@ For custom logger integration (e.g., Winston, Pino), see [lib/logger/README.md](
 - `size: number`
     - The number of prototypes currently stored.
 
-- `getAll(): readonly DeepReadonly<NormalizedPrototype>[]`
+- `getAll(): readonly NormalizedPrototype[]`
     - Returns the latest snapshot array in its original order with
       type-level immutability protection.
 
-- `getByPrototypeId(id: number): DeepReadonly<NormalizedPrototype> | null`
+- `getByPrototypeId(id: number): NormalizedPrototype | null`
     - O(1) lookup by numeric ID via the internal prototypeIdIndex.
 
 - `getPrototypeIds(): readonly number[]`
@@ -127,7 +127,7 @@ For custom logger integration (e.g., Winston, Pino), see [lib/logger/README.md](
         - the duration since `cachedAt` exceeds `ttlMs`.
     - Expiry does **not** clear data; it is only a signal to refresh.
 
-- `getSnapshot(): { data: readonly DeepReadonly<NormalizedPrototype>[]; cachedAt: Date | null; isExpired: boolean }`
+- `getSnapshot(): { data: readonly NormalizedPrototype[]; cachedAt: Date | null; isExpired: boolean }`
     - Returns a lightweight view of the snapshot and its expiry state.
 
 ### Refresh coordination and stats

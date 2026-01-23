@@ -78,12 +78,12 @@ export interface ProtopediaInMemoryRepository {
     refreshSnapshot(): Promise<SnapshotOperationResult>;
     getPrototypeFromSnapshotByPrototypeId(
         prototypeId: number,
-    ): Promise<DeepReadonly<NormalizedPrototype> | null>;
-    getRandomPrototypeFromSnapshot(): Promise<DeepReadonly<NormalizedPrototype> | null>;
+    ): Promise<NormalizedPrototype | null>;
+    getRandomPrototypeFromSnapshot(): Promise<NormalizedPrototype | null>;
     getRandomSampleFromSnapshot(
         size: number,
-    ): Promise<readonly DeepReadonly<NormalizedPrototype>[]>;
-    getAllFromSnapshot(): Promise<readonly DeepReadonly<NormalizedPrototype>[]>;
+    ): Promise<readonly NormalizedPrototype[]>;
+    getAllFromSnapshot(): Promise<readonly NormalizedPrototype[]>;
     getPrototypeIdsFromSnapshot(): Promise<readonly number[]>;
     analyzePrototypes(): Promise<{ min: number | null; max: number | null }>;
     getStats(): ProtopediaInMemoryRepositoryStats;

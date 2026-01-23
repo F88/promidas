@@ -232,7 +232,7 @@ See [USAGE.md](USAGE.md#error-handling) for usage examples.
 **Characteristics**:
 
 - All reads from memory (no network I/O)
-- Data is read-only (`DeepReadonly<T>`)
+- Data is read-only (native `readonly`)
 - Explicit refresh operations only
 - TTL-based expiration tracking
 

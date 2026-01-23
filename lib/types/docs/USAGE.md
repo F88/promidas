@@ -77,7 +77,7 @@ function describeStatus(status: StatusCode): string {
 ```typescript
 import type { DeepReadonly, NormalizedPrototype } from 'promidas/types';
 
-function useSnapshot(data: DeepReadonly<NormalizedPrototype>[]): void {
+function useSnapshot(data: NormalizedPrototype[]): void {
     // data is readonly; mutations are compile-time errors
     console.log(data.length);
 }
