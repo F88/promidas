@@ -1,3 +1,12 @@
+/**
+ * @file generate-version.mjs
+ * @description
+ * Reads the version from `package.json` and generates `lib/version.ts`.
+ * This ensures the library can report its own version number at runtime.
+ *
+ * Usage:
+ * Executed automatically during the build process (`npm run prebuild`).
+ */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
