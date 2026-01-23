@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **CI/CD Security**: Migrated npm publishing to OIDC-only authentication, eliminating long-lived tokens
 - **Documentation**: Clarified contribution workflow for external contributors in CONTRIBUTING.md
+- **Refactoring**: Removed `DeepReadonly` dependency and switched to native `readonly` types (#89)
+    - Removed `ts-essentials` from dependencies
+    - Updated `NormalizedPrototype` and repository interfaces to use native `readonly` modifiers
+- **Development Environment**: Updated pinned Node.js version to v22.22.0
 
 ## [2.0.0] - 2026-01-15
 
