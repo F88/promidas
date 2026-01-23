@@ -17,6 +17,7 @@
  * ## Key Features
  *
  * - **Type safety** - All fields are strongly typed with appropriate nullability
+ * - **Immutability** - All fields and arrays are strictly readonly
  * - **Consistency** - Ensures uniform data structure across the application
  * - **API compatibility** - Handles optional fields from protopedia-api-v2-client v3.0.0+
  * - **Strict typing** - Uses `exactOptionalPropertyTypes: true` for maximum safety
@@ -51,66 +52,66 @@ import type {
  *   from JST to UTC ISO 8601 format
  * - **Optional fields** have appropriate default values applied when missing
  *
- * ## Type Safety
+ * ## Type Safety & Immutability
  *
- * This type uses TypeScript's `exactOptionalPropertyTypes: true` setting.
- * Optional properties are explicitly typed as `Type?: undefined | Type`
- * to ensure proper handling of undefined values.
+ * - **Readonly**: All properties and array fields are `readonly` to enforce immutability.
+ * - **Exact Optional**: Uses `exactOptionalPropertyTypes: true` (`Type?: undefined | Type`)
+ *   to distinguish between missing keys and undefined values.
  *
  * @see {@link normalizePrototype} for the transformation logic
  */
 export type NormalizedPrototype = {
   /* ID */
-  id: number;
+  readonly id: number;
 
   /* Editorial information  */
-  createDate: string;
-  updateDate?: undefined | string;
-  releaseDate?: undefined | string;
-  createId?: undefined | number;
-  updateId?: undefined | number;
-  releaseFlg: ReleaseFlagCode;
+  readonly createDate: string;
+  readonly updateDate?: undefined | string;
+  readonly releaseDate?: undefined | string;
+  readonly createId?: undefined | number;
+  readonly updateId?: undefined | number;
+  readonly releaseFlg: ReleaseFlagCode;
 
   /* Basic information */
-  status: StatusCode;
-  prototypeNm: string;
-  summary: string;
-  freeComment: string;
-  systemDescription: string;
+  readonly status: StatusCode;
+  readonly prototypeNm: string;
+  readonly summary: string;
+  readonly freeComment: string;
+  readonly systemDescription: string;
 
   /** Users and Team */
-  users: string[];
-  teamNm: string;
+  readonly users: readonly string[];
+  readonly teamNm: string;
 
   /** Tags, Materials, Events, and Awards */
-  tags: string[];
-  materials: string[];
-  events: string[];
-  awards: string[];
+  readonly tags: readonly string[];
+  readonly materials: readonly string[];
+  readonly events: readonly string[];
+  readonly awards: readonly string[];
 
   /* URLs */
   // URL of official site (if any)
-  officialLink?: undefined | string;
+  readonly officialLink?: undefined | string;
   // URL of YouTube or Vimeo video (if any)
-  videoUrl?: undefined | string;
+  readonly videoUrl?: undefined | string;
   // URL of eyecatch image
-  mainUrl: string;
+  readonly mainUrl: string;
   // URLs of related link
-  relatedLink?: undefined | string;
-  relatedLink2?: undefined | string;
-  relatedLink3?: undefined | string;
-  relatedLink4?: undefined | string;
-  relatedLink5?: undefined | string;
+  readonly relatedLink?: undefined | string;
+  readonly relatedLink2?: undefined | string;
+  readonly relatedLink3?: undefined | string;
+  readonly relatedLink4?: undefined | string;
+  readonly relatedLink5?: undefined | string;
   /* counts */
-  viewCount: number;
-  goodCount: number;
-  commentCount: number;
+  readonly viewCount: number;
+  readonly goodCount: number;
+  readonly commentCount: number;
 
   /* Others */
-  uuid?: undefined | string;
-  nid?: undefined | string;
-  revision?: undefined | number;
-  licenseType?: undefined | LicenseTypeCode;
-  thanksFlg?: undefined | ThanksFlagCode;
-  slideMode?: undefined | number;
+  readonly uuid?: undefined | string;
+  readonly nid?: undefined | string;
+  readonly revision?: undefined | number;
+  readonly licenseType?: undefined | LicenseTypeCode;
+  readonly thanksFlg?: undefined | ThanksFlagCode;
+  readonly slideMode?: undefined | number;
 };

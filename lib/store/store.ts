@@ -5,7 +5,6 @@
  * The store sits above upstream fetch logic, allowing server actions to reuse
  * canonical data without repeated API calls while still respecting TTL limits.
  */
-import type { DeepReadonly } from 'ts-essentials';
 
 import {
   ConsoleLogger,
@@ -95,7 +94,7 @@ export type PrototypeInMemoryStats = {
 type RefreshTask = () => Promise<void>;
 
 export type Snapshot = {
-  data: readonly DeepReadonly<NormalizedPrototype>[];
+  data: readonly NormalizedPrototype[];
   cachedAt: Date | null;
   isExpired: boolean;
 };
@@ -455,8 +454,8 @@ export class PrototypeInMemoryStore {
    * **Performance**: Direct reference with zero overhead - suitable for
    * high-frequency reads of large datasets.
    */
-  getAll(): readonly DeepReadonly<NormalizedPrototype>[] {
-    return this.prototypes as readonly DeepReadonly<NormalizedPrototype>[];
+  getAll(): readonly NormalizedPrototype[] {
+    return this.prototypes;
   }
 
   /**
@@ -500,11 +499,9 @@ export class PrototypeInMemoryStore {
    * - Measured: ~0.0002ms per lookup (10,000 items)
    * - Memory overhead: ~40 bytes per entry (including index metadata and hash table)
    */
-  getByPrototypeId(
-    prototypeId: number,
-  ): DeepReadonly<NormalizedPrototype> | null {
+  getByPrototypeId(prototypeId: number): NormalizedPrototype | null {
     const prototype = this.prototypeIdIndex.get(prototypeId) ?? null;
-    return prototype as DeepReadonly<NormalizedPrototype> | null;
+    return prototype;
   }
 
   /**

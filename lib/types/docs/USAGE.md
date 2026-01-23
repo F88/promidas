@@ -36,7 +36,6 @@ import type {
   UTC ISO timestamps, numeric counts).
 - Code unions: `StatusCode`, `LicenseTypeCode`, `ReleaseFlagCode`,
   `ThanksFlagCode`.
-- Readonly helpers: `DeepReadonly<T>` (used by store/repository APIs).
 
 ## Typical Patterns
 
@@ -75,9 +74,9 @@ function describeStatus(status: StatusCode): string {
 ### Enforcing immutability
 
 ```typescript
-import type { DeepReadonly, NormalizedPrototype } from 'promidas/types';
+import type { NormalizedPrototype } from 'promidas/types';
 
-function useSnapshot(data: DeepReadonly<NormalizedPrototype>[]): void {
+function useSnapshot(data: readonly NormalizedPrototype[]): void {
     // data is readonly; mutations are compile-time errors
     console.log(data.length);
 }

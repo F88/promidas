@@ -55,7 +55,6 @@
 import { EventEmitter } from 'events';
 
 import type { ListPrototypesParams } from 'protopedia-api-v2-client';
-import type { DeepReadonly } from 'ts-essentials';
 
 import { ProtopediaApiCustomClient } from '../fetcher/index.js';
 import type { FetchPrototypesResult } from '../fetcher/types/result.types.js';
@@ -927,7 +926,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    */
   async getPrototypeFromSnapshotByPrototypeId(
     prototypeId: number,
-  ): Promise<DeepReadonly<NormalizedPrototype> | null> {
+  ): Promise<NormalizedPrototype | null> {
     RepositoryParamsValidator.validatePrototypeId(prototypeId);
     return this.#store.getByPrototypeId(prototypeId);
   }
@@ -950,7 +949,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    * call overhead. The current implementation is simpler and equally
    * efficient.
    */
-  async getRandomPrototypeFromSnapshot(): Promise<DeepReadonly<NormalizedPrototype> | null> {
+  async getRandomPrototypeFromSnapshot(): Promise<NormalizedPrototype | null> {
     if (this.#store.size === 0) {
       return null;
     }
@@ -984,7 +983,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    */
   async getRandomSampleFromSnapshot(
     size: number,
-  ): Promise<readonly DeepReadonly<NormalizedPrototype>[]> {
+  ): Promise<readonly NormalizedPrototype[]> {
     RepositoryParamsValidator.validateSampleSize(size);
 
     if (size <= 0 || this.#store.size === 0) {
@@ -1031,9 +1030,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    * Return all prototypes from the current snapshot.
    * Never performs HTTP requests.
    */
-  async getAllFromSnapshot(): Promise<
-    readonly DeepReadonly<NormalizedPrototype>[]
-  > {
+  async getAllFromSnapshot(): Promise<readonly NormalizedPrototype[]> {
     return this.#store.getAll();
   }
 
@@ -1047,7 +1044,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    * @returns Object containing min and max IDs, or null values if array is empty
    */
   analyzePrototypesWithForLoop(
-    prototypes: readonly DeepReadonly<NormalizedPrototype>[],
+    prototypes: readonly NormalizedPrototype[],
   ): PrototypeAnalysisResult {
     if (prototypes.length === 0) {
       return { min: null, max: null };
