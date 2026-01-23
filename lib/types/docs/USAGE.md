@@ -36,7 +36,6 @@ import type {
   UTC ISO timestamps, numeric counts).
 - Code unions: `StatusCode`, `LicenseTypeCode`, `ReleaseFlagCode`,
   `ThanksFlagCode`.
-- Readonly helpers: `DeepReadonly<T>` (used by store/repository APIs).
 
 ## Typical Patterns
 
