@@ -75,9 +75,9 @@ function describeStatus(status: StatusCode): string {
 ### Enforcing immutability
 
 ```typescript
-import type { DeepReadonly, NormalizedPrototype } from 'promidas/types';
+import type { NormalizedPrototype } from 'promidas/types';
 
-function useSnapshot(data: NormalizedPrototype[]): void {
+function useSnapshot(data: readonly NormalizedPrototype[]): void {
     // data is readonly; mutations are compile-time errors
     console.log(data.length);
 }
