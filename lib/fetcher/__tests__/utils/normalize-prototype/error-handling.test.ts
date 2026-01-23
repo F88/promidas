@@ -276,7 +276,7 @@ describe('Error Handling & Edge Cases', () => {
       const result2 = normalizePrototype(upstream);
 
       // Modifying one should not affect the other
-      result1.tags.push('new-tag');
+      (result1.tags as string[]).push('new-tag');
       expect(result2.tags).not.toContain('new-tag');
     });
   });

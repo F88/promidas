@@ -175,7 +175,7 @@ describe('ProtopediaInMemoryRepositoryImpl - snapshot serialization', () => {
         expect(serializedProto.awards).toEqual(['award1']);
 
         // Verify independence - modifying serialized data doesn't affect original
-        serializedProto.users.push('user4');
+        (serializedProto.users as string[]).push('user4');
         expect(proto.users).toHaveLength(3); // Original unchanged
       });
 
