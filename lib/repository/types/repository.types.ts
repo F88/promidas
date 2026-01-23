@@ -6,7 +6,6 @@
 import type { EventEmitter } from 'events';
 
 import type { ListPrototypesParams } from 'protopedia-api-v2-client';
-import type { DeepReadonly } from 'ts-essentials';
 
 import type { Logger, LogLevel } from '../../logger/index.js';
 import type {
@@ -188,7 +187,7 @@ export interface ProtopediaInMemoryRepository {
    *
    * @returns Read-only array of all prototypes
    */
-  getAllFromSnapshot(): Promise<readonly DeepReadonly<NormalizedPrototype>[]>;
+  getAllFromSnapshot(): Promise<readonly NormalizedPrototype[]>;
 
   /**
    * Get all prototype IDs from the current in-memory snapshot.
@@ -219,7 +218,7 @@ export interface ProtopediaInMemoryRepository {
    */
   getPrototypeFromSnapshotByPrototypeId(
     prototypeId: number,
-  ): Promise<DeepReadonly<NormalizedPrototype> | null>;
+  ): Promise<NormalizedPrototype | null>;
 
   /**
    * Get a random prototype from the current in-memory snapshot.
@@ -231,7 +230,7 @@ export interface ProtopediaInMemoryRepository {
    * It does not throw due to ProtoPedia API failures; it only reflects
    * the current in-memory state of the snapshot.
    */
-  getRandomPrototypeFromSnapshot(): Promise<DeepReadonly<NormalizedPrototype> | null>;
+  getRandomPrototypeFromSnapshot(): Promise<NormalizedPrototype | null>;
 
   /**
    * Get random samples from the current in-memory snapshot.
@@ -248,7 +247,7 @@ export interface ProtopediaInMemoryRepository {
    */
   getRandomSampleFromSnapshot(
     size: number,
-  ): Promise<readonly DeepReadonly<NormalizedPrototype>[]>;
+  ): Promise<readonly NormalizedPrototype[]>;
 
   /**
    * Get current snapshot as a serializable object.
