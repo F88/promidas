@@ -44,7 +44,7 @@ export type SerializableSnapshot = {
    * Format: Semantic versioning (e.g., "1.0.0")
    * Used to validate compatibility when deserializing.
    */
-  version: string;
+  readonly version: string;
 
   /**
    * ISO-8601 UTC timestamp when the snapshot was serialized.
@@ -52,12 +52,12 @@ export type SerializableSnapshot = {
    * Format: "YYYY-MM-DDTHH:mm:ss.sssZ"
    * Useful for tracking snapshot age and debugging.
    */
-  serializedAt: string;
+  readonly serializedAt: string;
 
   /**
    * Array of normalized prototypes.
    *
    * Contains all prototypes from the snapshot at the time of export.
    */
-  prototypes: NormalizedPrototype[];
+  readonly prototypes: readonly NormalizedPrototype[];
 };

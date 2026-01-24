@@ -726,7 +726,9 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
     }
 
     // Store the validated data
-    const storeResult: SetResult = this.storeSnapshot(data.prototypes);
+    const storeResult: SetResult = this.storeSnapshot([
+      ...data.prototypes,
+    ] as NormalizedPrototype[]);
 
     // Return early on store failure, converting to SnapshotOperationFailure
     if (!storeResult.ok) {
