@@ -78,6 +78,9 @@ function verifyLinks() {
 
       if (!targetFile) {
         // Anchor only, e.g. #section
+        if (validateAnchor('', '', file, anchor || '', relativePath, link)) {
+          hasError = true;
+        }
         continue;
       }
 

@@ -131,7 +131,60 @@ Some text
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining('Normalization Mismatch'),
       );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Normalization Mismatch'),
+      );
       expect(result).toBe(true); // invalid because strict match failed (it returns error=true)
+    });
+
+    it('should validate anchor in the same file (empty target)', () => {
+      // should resolve to currentFile
+      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+      vi.spyOn(fs, 'statSync').mockReturnValue({
+        isDirectory: () => false,
+      } as any);
+      vi.spyOn(path, 'extname').mockReturnValue('.md');
+      vi.spyOn(fs, 'readFileSync').mockReturnValue('# My Heading');
+
+      // targetFile='' -> should use currentFile
+      const result = validateAnchor(
+        '', // resolvedTarget ignored if targetFile empty
+        '', // targetFile empty
+        '/docs/foo.md', // currentFile
+        'my-heading', // anchor
+        'foo.md',
+        '[Link](#my-heading)',
+      );
+
+      // 'my-heading' matches '# My Heading' (after extraction/slugify)
+      // extractHeadings -> ['my-heading']
+      expect(result).toBe(false); // Success
+    });
+
+    it('should fail for missing anchor in the same file', () => {
+      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+      vi.spyOn(fs, 'statSync').mockReturnValue({
+        isDirectory: () => false,
+      } as any);
+      vi.spyOn(path, 'extname').mockReturnValue('.md');
+      vi.spyOn(fs, 'readFileSync').mockReturnValue('# My Heading');
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      const result = validateAnchor(
+        '',
+        '',
+        '/docs/foo.md',
+        'missing-heading',
+        'foo.md',
+        '[Link](#missing-heading)',
+      );
+
+      expect(result).toBe(true); // Error
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Anchor "#missing-heading" not found'),
+      );
     });
   });
 
