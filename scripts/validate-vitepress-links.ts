@@ -175,13 +175,28 @@ function verifyLinks() {
         if (fs.existsSync(actualFile) && path.extname(actualFile) === '.md') {
           const fileContent = fs.readFileSync(actualFile, 'utf-8');
           const headings = extractHeadings(fileContent);
+
           if (!headings.includes(anchor)) {
-            console.error(
-              `❌ [Broken Anchor] In ${relativePath}: ${link} -> Anchor "#${anchor}" not found in ${path.relative(PROJECT_ROOT, actualFile)}`,
+            // Check for normalization mismatch (NFC vs NFD)
+            const normalizedAnchor = anchor.normalize('NFC');
+            const match = headings.find(
+              (h) => h.normalize('NFC') === normalizedAnchor,
             );
-            // hasError = true; // Turn on error after verification
-            // console.log(`Available headings: ${headings.join(', ')}`);
-            hasError = true;
+
+            if (match) {
+              console.error(
+                `⚠️  [Normalization Mismatch] In ${relativePath}: ${link} -> Anchor "#${anchor}" doesn't strictly match heading id "#${match}".\n` +
+                  `    The link might not work in some browsers due to NFC/NFD differences.\n` +
+                  `    Recommended: Use a custom ID for the heading (e.g. # Heading {#custom-id}) or copy the exact header text.`,
+              );
+              hasError = true;
+            } else {
+              console.error(
+                `❌ [Broken Anchor] In ${relativePath}: ${link} -> Anchor "#${anchor}" not found in ${path.relative(PROJECT_ROOT, actualFile)}`,
+              );
+              // console.log(`Available headings: ${headings.join(', ')}`);
+              hasError = true;
+            }
           }
         }
       }
@@ -222,22 +237,15 @@ function slugify(text: string): string {
   return (
     text
       .toLowerCase()
-      .replace(/<[^>]+>/g, '') // remove html tags
       .trim()
+      .replace(/<[^>]+>/g, '') // remove html tags
       .replace(/[\s\t\n\r]+/g, '-') // spaces to dash
-      // Keep alphanumeric, dashes, and broad unicode range for non-latin
-      // Removing standard punctuation: . , / ? ! : ; ' " ` ~ @ # $ % ^ & * ( ) [ ] { } | \
-      .replace(/[.,/#!$%^&*;:{}=\-_`~()\[\]]/g, '')
-      // Note: github-slugger keeps some things?
-      // Actually, let's just use a permissive range:
-      // Keep: Word chars, Dash, Unicode letters/numbers.
-      // It's safer to strip known bad chars than to list good chars for unicode.
-      // For verify-links, we can try to match "exact text" or "slugified text".
-      // But let's try a better regex.
-      // This regex removes anything that IS NOT word, space(already gone), or dash.
-      // But \w doesn't match Japanese.
-      // So we strip specific punctuation.
-      .replace(/[^\w\-\u0080-\uFFFF]+/g, '') // Keep all unicode
+      // Remove standard punctuation but keep dash, underscore, and unicode (including emojis)
+      // Removing: . , / ? ! : ; ' " ` ~ @ # $ % ^ & * ( ) [ ] { } | \
+      .replace(/[.,/#!$%^&*;:{}=`~()\[\]]/g, '')
+      // Keep word chars, dash, underscore, and all non-ascii unicode (including emojis)
+      // Explicitly allow range \u{0080}-\u{10FFFF} to include emojis and Japanese
+      .replace(/[^\w\-\u0080-\u{10FFFF}]+/gu, '')
       .replace(/-+/g, '-')
   );
 }
