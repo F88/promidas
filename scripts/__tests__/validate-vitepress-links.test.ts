@@ -10,6 +10,7 @@ import {
   validateExternalLink,
   validateAbsoluteLink,
   validateRelativeLink,
+  isPathSafe,
 } from '../validate-vitepress-links.js';
 
 // Upgrade: Mocking fs and path if we want deep integration tests,
@@ -196,12 +197,16 @@ Some text
 
     it('should validate existing absolute file', () => {
       vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+      vi.spyOn(fs, 'statSync').mockReturnValue({
+        isDirectory: () => false,
+      } as any);
+      // Now returns the path, not false (error)
       const result = validateAbsoluteLink(
         '/guide.md',
         'docs/intro.md',
         '[Guide](/guide.md)',
       );
-      expect(result).toBe(false);
+      expect(result).toContain('/guide.md'); // Should return resolved path
     });
 
     it('should validate existing absolute file without extension', () => {
@@ -215,7 +220,7 @@ Some text
         'docs/intro.md',
         '[Guide](/guide)',
       );
-      expect(result).toBe(false);
+      expect(result).toContain('/guide.md');
     });
 
     it('should report missing absolute file', () => {
@@ -230,14 +235,31 @@ Some text
         '[Missing](/missing)',
       );
 
-      expect(result).toBe(true);
+      expect(result).toBeNull(); // null means error
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining('Broken Absolute Link'),
       );
     });
+
+    it('should validate absolute directory with index.md', () => {
+      // Exists? Yes. Is Dir? Yes. index.md exists? Yes.
+      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+      vi.spyOn(fs, 'statSync').mockReturnValue({
+        isDirectory: () => true,
+      } as any);
+
+      const result = validateAbsoluteLink(
+        '/guide',
+        'docs/intro.md',
+        '[Guide](/guide)',
+      );
+      expect(result).toContain('/guide');
+    });
   });
 
   describe('validateRelativeLink', () => {
+    const validDir = path.join(process.cwd(), 'docs');
+
     beforeEach(() => {
       vi.restoreAllMocks();
     });
@@ -249,7 +271,7 @@ Some text
       } as any);
 
       const result = validateRelativeLink(
-        '/abs/docs',
+        validDir,
         './other.md',
         'docs/intro.md',
         '[Other](./other.md)',
@@ -268,7 +290,7 @@ Some text
       vi.spyOn(fs, 'existsSync').mockReturnValue(true);
 
       const result = validateRelativeLink(
-        '/abs/docs',
+        validDir,
         './subdir',
         'docs/intro.md',
         '[Subdir](./subdir)',
@@ -290,7 +312,7 @@ Some text
         .mockImplementation(() => {});
 
       const result = validateRelativeLink(
-        '/abs/docs',
+        validDir,
         './empty-dir',
         'docs/intro.md',
         '[Empty](./empty-dir)',
@@ -309,7 +331,7 @@ Some text
       vi.spyOn(fs, 'existsSync').mockReturnValueOnce(true);
 
       const result = validateRelativeLink(
-        '/abs/docs',
+        validDir,
         './foo',
         'docs/intro.md',
         '[Foo](./foo)',
@@ -325,7 +347,7 @@ Some text
         .mockImplementation(() => {});
 
       const result = validateRelativeLink(
-        '/abs/docs',
+        validDir,
         './missing',
         'docs/intro.md',
         '[Missing](./missing)',
@@ -334,6 +356,28 @@ Some text
       expect(result).toBeNull();
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining('Broken Relative Link'),
+      );
+    });
+  });
+
+  describe('Security Checks', () => {
+    const validDir = path.join(process.cwd(), 'docs');
+
+    it('should block directory traversal', () => {
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      const result = validateRelativeLink(
+        validDir,
+        '../../../../etc/passwd',
+        'docs/intro.md',
+        '[Unsafe](../../../../etc/passwd)',
+      );
+
+      expect(result).toBeNull();
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Link target escapes project root'),
       );
     });
   });

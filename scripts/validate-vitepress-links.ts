@@ -98,23 +98,28 @@ function verifyLinks() {
       }
 
       // 3. Absolute path (VitePress specific)
-      if (targetFile.startsWith('/')) {
-        if (validateAbsoluteLink(targetFile, relativePath, link)) {
-          hasError = true;
-        }
-        continue;
-      }
+      // If absolute, resolve logic is similar to relative but from DOCS_ROOT
+      let resolvedTarget: string | null = null;
 
-      // 4. Relative path
-      const resolvedTarget = validateRelativeLink(
-        dir,
-        targetFile,
-        relativePath,
-        link,
-      );
-      if (!resolvedTarget) {
-        hasError = true;
-        continue;
+      if (targetFile.startsWith('/')) {
+        resolvedTarget = validateAbsoluteLink(targetFile, relativePath, link);
+        if (!resolvedTarget) {
+          hasError = true;
+          continue;
+        }
+        // Proceed to anchor check using resolvedTarget
+      } else {
+        // 4. Relative path
+        resolvedTarget = validateRelativeLink(
+          dir,
+          targetFile,
+          relativePath,
+          link,
+        );
+        if (!resolvedTarget) {
+          hasError = true;
+          continue;
+        }
       }
 
       // 5. Anchor check (if file exists)
@@ -180,23 +185,52 @@ function validateExternalLink(
   return false;
 }
 
+function isPathSafe(targetPath: string): boolean {
+  const relative = path.relative(PROJECT_ROOT, targetPath);
+  return !relative.startsWith('..') && !path.isAbsolute(relative);
+}
+
 function validateAbsoluteLink(
   targetFile: string,
   relativePath: string,
   link: string,
-): boolean {
+): string | null {
   // /foo.md -> docs/foo.md
   const absoluteTarget = path.join(DOCS_ROOT, targetFile);
-  if (
-    !fs.existsSync(absoluteTarget) &&
-    !fs.existsSync(absoluteTarget + '.md')
-  ) {
+
+  // Security check: Traversal prevention
+  if (!isPathSafe(absoluteTarget)) {
     console.error(
-      `❌ [Broken Absolute Link] In ${relativePath}: ${link} -> File not found: ${absoluteTarget}`,
+      `❌ [Security Error] In ${relativePath}: ${link} -> Link target escapes project root: ${absoluteTarget}`,
     );
-    return true;
+    return null;
   }
-  return false;
+
+  if (fs.existsSync(absoluteTarget)) {
+    // Target exists exactly
+    if (fs.statSync(absoluteTarget).isDirectory()) {
+      // Absolute directory link - check index.md
+      if (!fs.existsSync(path.join(absoluteTarget, 'index.md'))) {
+        console.error(
+          `❌ [Broken Directory Link] In ${relativePath}: ${link} -> Directory found but no 'index.md': ${absoluteTarget}`,
+        );
+        return null;
+      }
+    }
+    return absoluteTarget;
+  }
+
+  if (fs.existsSync(absoluteTarget + '.md')) {
+    const targetWithExt = absoluteTarget + '.md';
+    // Safety check again just in case (though appending .md shouldn't break out if base didn't)
+    if (!isPathSafe(targetWithExt)) return null;
+    return targetWithExt;
+  }
+
+  console.error(
+    `❌ [Broken Absolute Link] In ${relativePath}: ${link} -> File not found: ${absoluteTarget}`,
+  );
+  return null;
 }
 
 function validateRelativeLink(
@@ -206,6 +240,14 @@ function validateRelativeLink(
   link: string,
 ): string | null {
   const resolvedTarget = path.resolve(dir, targetFile);
+
+  // Security check: Traversal prevention
+  if (!isPathSafe(resolvedTarget)) {
+    console.error(
+      `❌ [Security Error] In ${relativePath}: ${link} -> Link target escapes project root: ${resolvedTarget}`,
+    );
+    return null;
+  }
 
   if (fs.existsSync(resolvedTarget)) {
     // Target exists exactly
@@ -221,7 +263,10 @@ function validateRelativeLink(
     return resolvedTarget;
   } else if (fs.existsSync(resolvedTarget + '.md')) {
     // Target exists with .md extension
-    return resolvedTarget + '.md';
+    const targetWithExt = resolvedTarget + '.md';
+    // Safety check mostly redundant but safe
+    if (!isPathSafe(targetWithExt)) return null;
+    return targetWithExt;
   } else {
     console.error(
       `❌ [Broken Relative Link] In ${relativePath}: ${link} -> File not found: ${resolvedTarget}`,
@@ -331,6 +376,7 @@ export {
   validateAbsoluteLink,
   validateAnchor,
   validateRelativeLink,
+  isPathSafe,
 };
 
 // Only run if main module
