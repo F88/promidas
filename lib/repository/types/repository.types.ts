@@ -252,7 +252,7 @@ export interface ProtopediaInMemoryRepository {
    * the current in-memory state of the snapshot.
    *
    * @param size - Maximum number of random samples to return
-   * @returns Read-only array of random prototypes
+   * @returns Read-only array of random prototypes. Returns an empty array when `size <= 0` or the snapshot is empty. If `size` exceeds available data, all available prototypes are returned in a random order.
    * @throws {ValidationError} If size is not an integer
    *
    * @remarks
