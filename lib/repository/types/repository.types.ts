@@ -33,7 +33,7 @@ export type ProtopediaInMemoryRepositoryConfig = {
    *
    * @default undefined (creates ConsoleLogger with 'info' level)
    */
-  logger?: Logger;
+  readonly logger?: Logger;
 
   /**
    * Log level for creating a default ConsoleLogger.
@@ -45,7 +45,7 @@ export type ProtopediaInMemoryRepositoryConfig = {
    *
    * @default 'info'
    */
-  logLevel?: LogLevel;
+  readonly logLevel?: LogLevel;
 
   /**
    * Enable event notifications for snapshot operations.
@@ -64,7 +64,7 @@ export type ProtopediaInMemoryRepositoryConfig = {
    * @see {@link RepositoryEvents} for available event types
    * @see {@link https://github.com/F88/promidas/issues/19 | Issue #19: Event Notification System}
    */
-  enableEvents?: boolean;
+  readonly enableEvents?: boolean;
 };
 
 /**

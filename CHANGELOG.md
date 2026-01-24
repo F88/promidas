@@ -22,6 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Type Safety**: Strengthened immutability by applying `readonly` to core fetcher types (`NetworkFailure`, `FetchPrototypesResult`, `FetchProgressEvent`). Code that mutates these objects will now fail to compile.
 - **Configuration**: Converted `CustomFetchConfig`, `FetchWithProgressConfig`, `FetchWithTimeoutConfig` from `interface` to `type` aliases with `readonly` properties. Users relying on interface merging to extend these types will need to update their code.
 
+#### `lib/repository`
+
+- **Type Safety**: Converted `ProtopediaInMemoryRepositoryConfig`, `RepositorySuccess`, `RepositoryFailure`, and all `SnapshotOperation` types (`SnapshotOperationSuccess`, `SnapshotOperationFailure`, etc.) to use `readonly` properties.
+- **Configuration**: `ProtopediaInMemoryRepositoryConfig` properties are now `readonly`.
+
 #### `lib/store`
 
 - **Type Safety**: `SetResult` (including `SetSuccess` and `SetFailure`) types now have `readonly` properties.

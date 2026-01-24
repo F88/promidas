@@ -27,9 +27,9 @@ import type {
  */
 export type SnapshotOperationSuccess = {
   /** Indicates successful operation. */
-  ok: true;
+  readonly ok: true;
   /** Statistics about the current snapshot after the operation. */
-  stats: PrototypeInMemoryStats;
+  readonly stats: PrototypeInMemoryStats;
 };
 
 /**
@@ -39,11 +39,11 @@ export type SnapshotOperationSuccess = {
  */
 export type SnapshotOperationFailureBase = {
   /** Indicates failed operation. */
-  ok: false;
+  readonly ok: false;
   /** Origin layer where the failure occurred. */
-  origin: 'fetcher' | 'store' | 'repository' | 'unknown';
+  readonly origin: 'fetcher' | 'store' | 'repository' | 'unknown';
   /** Human-readable error message. */
-  message: string;
+  readonly message: string;
 };
 
 /**
@@ -53,7 +53,7 @@ export type SnapshotOperationFailureBase = {
  */
 export type UnknownSnapshotFailure = SnapshotOperationFailureBase & {
   /** Indicates failure with unknown origin. */
-  origin: 'unknown';
+  readonly origin: 'unknown';
 };
 
 /**
@@ -63,15 +63,15 @@ export type UnknownSnapshotFailure = SnapshotOperationFailureBase & {
  */
 export type FetcherSnapshotFailure = SnapshotOperationFailureBase & {
   /** Indicates failure originated from fetcher layer. */
-  origin: 'fetcher';
+  readonly origin: 'fetcher';
   /** Coarse-grained classification of the failure cause. */
-  kind: FetchFailureKind;
+  readonly kind: FetchFailureKind;
   /** Canonical error code from the fetcher. */
-  code: FetcherErrorCode;
+  readonly code: FetcherErrorCode;
   /** HTTP status code if applicable. */
-  status?: number;
+  readonly status?: number;
   /** Additional error details from request and response. */
-  details: FetchPrototypesFailure['details'];
+  readonly details: FetchPrototypesFailure['details'];
 };
 
 /**
@@ -94,11 +94,11 @@ export type StoreSnapshotFailure = SetFailure;
  */
 export type RepositorySnapshotFailure = SnapshotOperationFailureBase & {
   /** Indicates failure originated from repository layer. */
-  origin: 'repository';
+  readonly origin: 'repository';
   /** Coarse-grained classification of the failure cause. */
-  kind: RepositoryFailureKind;
+  readonly kind: RepositoryFailureKind;
   /** Canonical error code from the repository. */
-  code: RepositoryErrorCode;
+  readonly code: RepositoryErrorCode;
 };
 
 /**
