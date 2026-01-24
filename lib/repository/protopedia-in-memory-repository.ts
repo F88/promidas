@@ -519,7 +519,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
       }
 
       // Store the fetched data
-      const storeResult: SetResult = this.storeSnapshot(
+      const storeResult = this.storeSnapshot(
         convertedFetchResult.data,
       );
 
