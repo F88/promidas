@@ -24,8 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### `lib/repository`
 
-- **Type Safety**: Converted `ProtopediaInMemoryRepositoryConfig`, `RepositorySuccess`, `RepositoryFailure`, and all `SnapshotOperation` types (`SnapshotOperationSuccess`, `SnapshotOperationFailure`, etc.) to use `readonly` properties.
-- **Type Safety**: Converted `SerializableSnapshot`, `PrototypeAnalysisResult`, `NumericStats`, `TagCount`, and `ExtendedAnalysisResult` to use `readonly` properties.
+- **Type Safety**: Converted configuration types (`ProtopediaInMemoryRepositoryConfig`), result types (`RepositorySuccess`, `RepositoryFailure`), snapshot types (`SerializableSnapshot`), analytics types (`PrototypeAnalysisResult`, etc.), and snapshot operation types to use `readonly` properties.
 
 #### `lib/store`
 
