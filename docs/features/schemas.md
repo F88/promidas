@@ -1,8 +1,5 @@
 ---
-lang: ja
 title: Schemas
-title-en: Schemas
-title-ja: 実行時検証スキーマ
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.

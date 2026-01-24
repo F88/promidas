@@ -1,8 +1,5 @@
 ---
-lang: ja
 title: Types
-title-en: Types
-title-ja: 型定義
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.

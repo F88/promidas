@@ -1,12 +1,5 @@
 ---
-lang: ja
 title: Local Script Use Cases
-title-en: Local Script Use Cases
-title-ja: ローカルスクリプト向けユースケース
-related:
-    - ./index.md "Use Cases Overview"
-    - ./webapp.md "Server Execution Use Cases"
-    - https://github.com/F88/promidas/blob/main/lib/repository/README.md "Repository Module"
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.

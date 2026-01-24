@@ -1,11 +1,5 @@
 ---
-lang: ja
 title: Installation and Update
-title-en: Installation and Update
-title-ja: インストールとアップデート
-related:
-    - ./getting-started.md "Getting Started"
-    - ./quickstart-beginners.md "Quickstart for Beginners"
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.

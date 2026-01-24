@@ -1,12 +1,5 @@
 ---
-lang: ja
 title: Troubleshooting
-title-en: Troubleshooting
-title-ja: トラブルシューティング
-related:
-    - ./getting-started.md "Getting Started"
-    - ./cookbook.md "Cookbook"
-    - https://protopediav2.docs.apiary.io/ "ProtoPedia API Docs"
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.

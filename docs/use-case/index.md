@@ -1,14 +1,5 @@
 ---
-lang: ja
 title: Use Cases
-title-en: Use Cases
-title-ja: ユースケース
-related:
-    - ../../README.md "Project Overview"
-    - ../getting-started.md "Getting Started"
-    - ./local.md "Local Execution Use Cases"
-    - ./webapp.md "Server Execution Use Cases"
-    - https://github.com/F88/promidas/blob/main/DEVELOPMENT.md "Development Guide"
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.

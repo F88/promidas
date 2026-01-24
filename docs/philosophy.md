@@ -1,12 +1,5 @@
 ---
-lang: ja
 title: Project Philosophy
-title-en: Project Philosophy
-title-ja: プロジェクトの哲学
-related:
-    - ./index.md "Documentation Index"
-    - ../README.md "Project Overview"
-    - https://github.com/F88/promidas/blob/main/CONTRIBUTING.md "Contributing Guide"
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.
@@ -289,7 +282,7 @@ PROMIDASの哲学は以下の原則に基づいています:
 5. **セキュリティ意識** - 初心者がセキュアに使える設計
 6. **独立性** - 各モジュールが独立して動作
 
-これらの原則は、長期的な保守性、使いやすさ、安全性を確保するために設計されています。
+## これらの原則は、長期的な保守性、使いやすさ、安全性を確保するために設計されています。
 
 ## 関連ドキュメント
 
@@ -300,3 +293,7 @@ PROMIDASの哲学は以下の原則に基づいています:
 ## ライセンス
 
 MIT License - 詳細は[LICENSE](https://github.com/F88/promidas/blob/main/LICENSE)を参照してください。
+
+```
+
+```
