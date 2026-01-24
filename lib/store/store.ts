@@ -16,6 +16,7 @@ import {
   SizeEstimationError,
 } from './errors/store-error.js';
 import type { PrototypeInMemoryStoreConfig } from './types/config.types.js';
+import type { Snapshot } from './types/snapshot.types.js';
 import type { PrototypeInMemoryStats } from './types/stats.types.js';
 
 const DEFAULT_TTL_MS = 30 * 60 * 1_000; // 30 minutes
@@ -28,12 +29,6 @@ const DEFAULT_DATA_SIZE_BYTES = 10 * 1024 * 1024; // 10 MiB
 export const LIMIT_DATA_SIZE_BYTES = 30 * 1024 * 1024; // 30 MiB
 
 type RefreshTask = () => Promise<void>;
-
-export type Snapshot = {
-  data: readonly NormalizedPrototype[];
-  cachedAt: Date | null;
-  isExpired: boolean;
-};
 
 /**
  * In-memory store that keeps the full set of normalized prototypes with an ID-based index.

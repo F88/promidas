@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **No Declaration Merging**: Converted `SanitizeOptions` converted from `interface` to `readonly type` in `lib/utils`.
     - **No Declaration Merging**: Converted `PrototypeInMemoryStoreConfig` specific types to `readonly type` in `lib/store` and moved to `lib/store/types/config.types.ts`.
     - **No Declaration Merging**: Converted `PrototypeInMemoryStats` specific types to `readonly type` in `lib/store` and moved to `lib/store/types/stats.types.ts`.
+    - **No Declaration Merging**: Converted `Snapshot` type to `readonly type` in `lib/store` and moved to `lib/store/types/snapshot.types.ts`.
     - **No Declaration Merging**: Converted `CustomFetchConfig`, `FetchWithProgressConfig`, `FetchWithTimeoutConfig` from `interface` to `type` aliases with `readonly` properties. Users relying on interface merging to extend these types will need to update their code.
 
 ### Changed

@@ -1,4 +1,5 @@
 import type { StoreDataState } from '../errors/store-error.js';
+
 import type { PrototypeInMemoryStats } from './stats.types.js';
 
 /**
