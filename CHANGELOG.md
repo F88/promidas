@@ -46,6 +46,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Documentation
 
+- Improved JSDoc documentation for repository and store methods (#80).
+    - Added `@throws` annotations for validation errors.
+    - Clarified return values for empty snapshots and edge cases.
+    - Added performance and memory usage warnings for large dataset operations.
 - Clarified contribution workflow for external contributors in CONTRIBUTING.md.
 
 ## [2.0.0] - 2026-01-15
