@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `NetworkFailure` object construction in `handler.ts` refactored to avoid mutation.
 
 - **Configuration Types**: Standardized configuration interfaces to `type` aliases
+    - **No Declaration Merging**: Converted `SanitizeOptions` converted from `interface` to `readonly type` in `lib/utils`.
     - **No Declaration Merging**: Converted `CustomFetchConfig`, `FetchWithProgressConfig`, `FetchWithTimeoutConfig` from `interface` to `type` aliases with `readonly` properties. Users relying on interface merging to extend these types will need to update their code.
 
 ### Changed
