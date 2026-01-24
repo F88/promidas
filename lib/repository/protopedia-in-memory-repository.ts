@@ -366,7 +366,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
    *
    * @internal
    */
-  private storeSnapshot(data: NormalizedPrototype[]): SetResult {
+  private storeSnapshot(data: readonly NormalizedPrototype[]): SetResult {
     try {
       this.#store.setAll(data);
 
@@ -726,9 +726,7 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
     }
 
     // Store the validated data
-    const storeResult: SetResult = this.storeSnapshot([
-      ...data.prototypes,
-    ] as NormalizedPrototype[]);
+    const storeResult = this.storeSnapshot(data.prototypes);
 
     // Return early on store failure, converting to SnapshotOperationFailure
     if (!storeResult.ok) {
