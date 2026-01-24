@@ -161,6 +161,19 @@ function finalize(
   } satisfies FetchPrototypesResult;
 }
 
+function updateDetailsWithCode(
+  details: NetworkFailure['details'],
+  code: string,
+): NetworkFailure['details'] {
+  return {
+    ...details,
+    res: {
+      ...details.res,
+      code,
+    },
+  };
+}
+
 /**
  * Normalize a {@link ProtoPediaApiError} into a fetcher HTTP failure result.
  *
@@ -243,13 +256,7 @@ export function handleNotProtoPediaApiError(
     };
     const code = errorObj.code ?? errorObj.cause?.code;
     if (code !== undefined) {
-      details = {
-        ...details,
-        res: {
-          ...details.res,
-          code,
-        },
-      };
+      details = updateDetailsWithCode(details, code);
     }
   }
 
@@ -259,13 +266,10 @@ export function handleNotProtoPediaApiError(
 
   if (details.res?.code === undefined && isOpaqueFetchError) {
     // Keep diagnostics (use generic network code) but classify as CORS_BLOCKED.
-    const newDetails = {
-      ...details,
-      res: {
-        ...details.res,
-        code: DEFAULT_NETWORK_ERROR_CODE,
-      },
-    };
+    const newDetails = updateDetailsWithCode(
+      details,
+      DEFAULT_NETWORK_ERROR_CODE,
+    );
     const result = createFailureResult(message, newDetails);
     return finalize(result, 'cors', 'CORS_BLOCKED');
   }
