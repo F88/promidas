@@ -1,12 +1,5 @@
 ---
-lang: ja
 title: Security Guidelines
-title-en: Security Guidelines
-title-ja: セキュリティガイドライン
-related:
-    - ./use-case/index.md "Use Cases"
-    - ./getting-started.md "Getting Started"
-    - ./use-case/webapp.md "Server Execution Use Cases"
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.

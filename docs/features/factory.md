@@ -1,8 +1,5 @@
 ---
-lang: ja
 title: Repository Factory
-title-en: Repository Factory
-title-ja: リポジトリファクトリー
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.

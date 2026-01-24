@@ -1,12 +1,5 @@
 ---
-lang: ja
 title: Project Philosophy
-title-en: Project Philosophy
-title-ja: プロジェクトの哲学
-related:
-    - ./index.md "Documentation Index"
-    - ../README.md "Project Overview"
-    - https://github.com/F88/promidas/blob/main/CONTRIBUTING.md "Contributing Guide"
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.

@@ -1,8 +1,5 @@
 ---
-lang: ja
 title: Cookbook
-title-en: Cookbook
-title-ja: 逆引きレシピ集
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.

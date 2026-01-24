@@ -1,13 +1,5 @@
 ---
-lang: ja
 title: Server Execution Use Cases
-title-en: Server Execution Use Cases
-title-ja: サーバー実行向けユースケース
-related:
-    - ./index.md "Use Cases Overview"
-    - ./local.md "Local Execution Use Cases"
-    - ../getting-started.md "Getting Started"
-    - https://github.com/F88/promidas/blob/main/lib/repository/README.md "Repository Module"
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.

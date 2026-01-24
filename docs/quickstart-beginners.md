@@ -1,16 +1,10 @@
 ---
-lang: ja
 title: Quickstart for Beginners
-title-en: Quickstart for Beginners
-title-ja: 超初心者向けクイックスタート
-related:
-    - ./getting-started.md "Standard Getting Started"
-    - ./cookbook.md "Cookbook"
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.
     - Prohibit updating this front-matter.
-    - Prohibit updating title line (1st line) in this document
+    - Prohibit updating title line (1st line) in this document.
 ---
 
 # 超初心者向けクイックスタート

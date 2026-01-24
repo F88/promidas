@@ -1,12 +1,5 @@
 ---
-lang: ja
 title: Getting Started
-title-en: Getting Started
-title-ja: はじめに
-related:
-    - ./use-case/index.md "Use Cases"
-    - ./use-case/local.md "Local Execution Use Cases"
-    - ../README.md "Project Overview"
 instructions-for-ais:
     - This document should be written in Japanese.
     - Use half-width characters for numbers, letters, and symbols.
