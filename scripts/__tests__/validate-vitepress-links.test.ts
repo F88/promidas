@@ -381,4 +381,23 @@ Some text
       );
     });
   });
+
+  describe('isPathSafe', () => {
+    const root = process.cwd();
+
+    it('should return true for paths inside project', () => {
+      expect(isPathSafe(path.join(root, 'docs/index.md'))).toBe(true);
+      expect(isPathSafe(path.join(root, 'README.md'))).toBe(true);
+    });
+
+    it('should return false for paths outside project', () => {
+      expect(isPathSafe(path.join(root, '../outside.txt'))).toBe(false);
+      expect(isPathSafe('/etc/passwd')).toBe(false);
+    });
+
+    it('should handle traversal attempts in logic', () => {
+      // isPathSafe takes resolved paths, but if we pass something that resolves outside
+      expect(isPathSafe(path.resolve(root, '../../etc/passwd'))).toBe(false);
+    });
+  });
 });
