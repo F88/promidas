@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **CI/CD Security**: Migrated npm publishing to OIDC-only authentication, eliminating long-lived tokens
+- **CI/CD Configuration**: Migrated Codecov integration to `codecov-action@v5` with OIDC authentication and unified test results upload
 - **Documentation**: Clarified contribution workflow for external contributors in CONTRIBUTING.md
 - **Development Environment**: Updated pinned Node.js version to v22.22.0
 
