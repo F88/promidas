@@ -38,13 +38,13 @@ const MAX_DEPTH = 100;
 /**
  * Options for customizing data sanitization behavior.
  */
-export interface SanitizeOptions {
+export type SanitizeOptions = {
   /**
    * Additional key patterns to treat as sensitive and redact.
    * These are added to the default list of sensitive keys.
    */
-  additionalSensitiveKeys?: string[];
-}
+  readonly additionalSensitiveKeys?: readonly string[];
+};
 
 /**
  * Cache for compiled RegExp patterns to avoid recompilation on every call.
@@ -63,7 +63,7 @@ const MAX_PATTERN_LENGTH = 100;
  * @param keys - Array of custom sensitive key patterns
  * @throws {TypeError} If any key is invalid
  */
-function validateSensitiveKeys(keys: string[]): void {
+function validateSensitiveKeys(keys: readonly string[]): void {
   for (const key of keys) {
     if (typeof key !== 'string') {
       throw new TypeError(
@@ -92,7 +92,7 @@ function validateSensitiveKeys(keys: string[]): void {
  * @param additionalKeys - Additional keys to include in the pattern
  * @returns Compiled RegExp for matching sensitive keys
  */
-function getSensitivePattern(additionalKeys: string[] = []): RegExp {
+function getSensitivePattern(additionalKeys: readonly string[] = []): RegExp {
   if (additionalKeys.length === 0) {
     return SENSITIVE_KEY_PATTERN;
   }
