@@ -293,7 +293,3 @@ PROMIDASの哲学は以下の原則に基づいています:
 ## ライセンス
 
 MIT License - 詳細は[LICENSE](https://github.com/F88/promidas/blob/main/LICENSE)を参照してください。
-
-```
-
-```
