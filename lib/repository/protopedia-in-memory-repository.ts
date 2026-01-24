@@ -1019,6 +1019,8 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
   /**
    * Return all prototype IDs from the current snapshot.
    * Never performs HTTP requests.
+   *
+   * @returns Read-only array of prototype IDs. Returns an empty array if the snapshot is empty.
    */
   async getPrototypeIdsFromSnapshot(): Promise<readonly number[]> {
     return this.#store.getPrototypeIds();
@@ -1027,6 +1029,12 @@ export class ProtopediaInMemoryRepositoryImpl implements ProtopediaInMemoryRepos
   /**
    * Return all prototypes from the current snapshot.
    * Never performs HTTP requests.
+   *
+   * @returns Read-only array of all prototypes. Returns an empty array if the snapshot is empty.
+   *
+   * @remarks
+   * **Performance Warning**: This method returns a reference to the internal array.
+   * While efficient (O(1)), iterating over very large arrays may impact performance.
    */
   async getAllFromSnapshot(): Promise<readonly NormalizedPrototype[]> {
     return this.#store.getAll();

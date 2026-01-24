@@ -185,7 +185,11 @@ export interface ProtopediaInMemoryRepository {
    * It does not throw due to ProtoPedia API failures; it only reflects
    * the current in-memory state of the snapshot.
    *
-   * @returns Read-only array of all prototypes
+   * @returns Read-only array of all prototypes. Returns an empty array if the snapshot is empty.
+   *
+   * @remarks
+   * **Performance Warning**: This method returns a reference to the internal array.
+   * While efficient (O(1)), iterating over very large arrays may impact performance.
    */
   getAllFromSnapshot(): Promise<readonly NormalizedPrototype[]>;
 
@@ -202,7 +206,7 @@ export interface ProtopediaInMemoryRepository {
    * It does not throw due to ProtoPedia API failures; it only reflects
    * the current in-memory state of the snapshot.
    *
-   * @returns Read-only array of prototype IDs
+   * @returns Read-only array of prototype IDs. Returns an empty array if the snapshot is empty.
    */
   getPrototypeIdsFromSnapshot(): Promise<readonly number[]>;
 
@@ -215,6 +219,10 @@ export interface ProtopediaInMemoryRepository {
    * This method does NOT perform HTTP calls.
    * It does not throw due to ProtoPedia API failures; it only reflects
    * the current in-memory state of the snapshot.
+   *
+   * @param prototypeId - The prototype ID to retrieve
+   * @returns The prototype if found, or null if not found
+   * @throws {ValidationError} If prototypeId is not a positive integer
    */
   getPrototypeFromSnapshotByPrototypeId(
     prototypeId: number,
@@ -244,6 +252,12 @@ export interface ProtopediaInMemoryRepository {
    * the current in-memory state of the snapshot.
    *
    * @param size - Maximum number of random samples to return
+   * @returns Read-only array of random prototypes
+   * @throws {ValidationError} If size is not an integer
+   *
+   * @remarks
+   * **Performance Note**: This method uses a hybrid algorithm (Set-based vs Fisher-Yates)
+   * depending on the sample size ratio to optimize performance.
    */
   getRandomSampleFromSnapshot(
     size: number,
@@ -262,7 +276,13 @@ export interface ProtopediaInMemoryRepository {
    * This method does NOT perform HTTP calls.
    * It only reflects the current in-memory state of the snapshot.
    *
-   * @returns Serializable snapshot object with version, timestamp, and prototypes
+   * @returns Serializable snapshot object with version, timestamp, and prototypes.
+   *          If the snapshot is empty, prototypes will be an empty array.
+   *
+   * @remarks
+   * **Memory Warning**: This method creates deep copies of all prototypes to ensure
+   * serialization safety (removing readonly constraints). For very large datasets,
+   * this may cause high memory usage.
    *
    * @example
    * ```typescript
