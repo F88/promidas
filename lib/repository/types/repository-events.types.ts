@@ -9,6 +9,7 @@
  */
 import type { PrototypeInMemoryStats } from '../../store/index.js';
 
+import type { ProtopediaInMemoryRepositoryConfig } from './repository.types.js';
 import type { SnapshotOperationFailure } from './snapshot-operation.types.js';
 
 /**
