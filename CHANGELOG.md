@@ -21,11 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `NetworkFailure` object construction in `handler.ts` refactored to avoid mutation.
 
 - **Configuration Types**: Standardized configuration interfaces to `type` aliases
-    - **No Declaration Merging**: Converted `CustomFetchConfig`, `FetchWithProgressConfig`, `FetchWithTimeoutConfig` from `interface` to `readonly type`. Users relying on interface merging to extend these types will need to update their code.
+    - **No Declaration Merging**: Converted `CustomFetchConfig`, `FetchWithProgressConfig`, `FetchWithTimeoutConfig` from `interface` to `type` aliases with `readonly` properties. Users relying on interface merging to extend these types will need to update their code.
 
 ### Changed
 
 - **CI/CD Security**: Migrated npm publishing to OIDC-only authentication, eliminating long-lived tokens
+- **CI/CD Configuration**: Migrated Codecov integration to `codecov-action@v5` with OIDC authentication and unified test results upload
 - **Documentation**: Clarified contribution workflow for external contributors in CONTRIBUTING.md
 - **Development Environment**: Updated pinned Node.js version to v22.22.0
 

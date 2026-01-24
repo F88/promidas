@@ -18,6 +18,10 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
     timeout-minutes: 5
 
     strategy:
@@ -63,18 +67,22 @@ jobs:
       - name: Run tests for Codecov Test Analytics
         run: npm run test:codecov
 
-      - name: Upload test results to Codecov
+      - name: Upload test results to Codecov with GitHub Action
         if: ${{ !cancelled() }}
-        uses: codecov/test-results-action@v1
+        uses: codecov/codecov-action@v5
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          report_type: test_results
+          # token: ${{ secrets.CODECOV_TOKEN }}
+          use_oidc: true
           fail_ci_if_error: false
 
       # - name: Run tests
       #   run: npm run test:coverage
 
-      - name: Upload coverage reports to Codecov
+      - name: Upload coverage reports to Codecov with GitHub Action
         uses: codecov/codecov-action@v5
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          report_type: coverage
+          # token: ${{ secrets.CODECOV_TOKEN }}
+          use_oidc: true
           fail_ci_if_error: false
