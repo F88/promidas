@@ -76,7 +76,10 @@ export type UpstreamPrototype = ResultOfListPrototypesApiResponse;
  * ```
  */
 export type NetworkFailure = {
-  /** Error message from Error.message or fallback string */
+  /**
+   * Opaque error value (often an Error instance or string) that will be resolved
+   * into a display message by higher-level error handling.
+   */
   readonly error: unknown;
   /**
    * HTTP status code from server response (e.g., 404, 500).
