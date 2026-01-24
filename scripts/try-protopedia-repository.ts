@@ -1,3 +1,24 @@
+/**
+ * @file try-protopedia-repository.ts
+ * @description
+ * Integration test / Playground script to verify ProtopediaInMemoryRepository behavior manually.
+ *
+ * This script attempts to:
+ * 1. Initialize the repository (Factory vs Builder patterns).
+ * 2. Setup a snapshot by fetching data from the API.
+ * 3. Verify snapshot statistics and TTL behavior.
+ * 4. Retrieve random prototypes and verify ID lookup.
+ * 5. Test snapshot refreshing.
+ *
+ * Useful for verifying end-to-end functionality during development.
+ *
+ * Environment Variables:
+ * - PROTOPEDIA_API_V2_TOKEN: Required.
+ *
+ * Usage:
+ * $ export PROTOPEDIA_API_V2_TOKEN=...
+ * $ npx tsx scripts/try-protopedia-repository.ts
+ */
 import {
   type ListPrototypesParams,
   type ProtoPediaApiClientOptions,

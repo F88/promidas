@@ -1,3 +1,18 @@
+/**
+ * @file get-sample-data.ts
+ * @description
+ * Fetches real prototype data from the ProtoPedia API (v2) and saves it locally.
+ * Generates both JSON and TSV format files in `scripts/sample-data/` with timestamps.
+ * Useful for collecting real-world data for testing and analysis.
+ *
+ * Environment Variables:
+ * - PROTOPEDIA_API_V2_TOKEN: Required. API access token.
+ * - PROTOPEDIA_API_V2_BASE_URL: Optional. Base URL for the API.
+ *
+ * Usage:
+ * $ export PROTOPEDIA_API_V2_TOKEN=...
+ * $ npx tsx scripts/get-sample-data.ts
+ */
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
