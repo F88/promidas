@@ -377,7 +377,7 @@ export class PrototypeInMemoryStore {
    * Returns type-level readonly reference to the internal prototypes array.
    * The readonly type provides compile-time safety but not runtime protection.
    *
-   * @returns Type-level readonly array of prototypes
+   * @returns Type-level readonly array of prototypes. Returns an empty array if no data is stored.
    *
    * @remarks
    * **Type Safety**: This method returns a readonly-typed reference without
@@ -444,7 +444,7 @@ export class PrototypeInMemoryStore {
    * entire prototype objects. Useful for operations that only need IDs, such as
    * ID-based filtering, statistics, or exporting ID lists.
    *
-   * @returns Read-only array of prototype IDs in insertion order
+   * @returns Read-only array of prototype IDs in insertion order. Returns an empty array if no data is stored.
    *
    * @performance
    * - Time complexity: O(n) - must iterate through all Map keys
