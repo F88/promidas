@@ -14,9 +14,9 @@
  */
 export type PrototypeAnalysisResult = {
   /** Minimum prototype ID, or null if no prototypes exist in snapshot. */
-  min: number | null;
+  readonly min: number | null;
   /** Maximum prototype ID, or null if no prototypes exist in snapshot. */
-  max: number | null;
+  readonly max: number | null;
 };
 
 /**
@@ -29,13 +29,13 @@ export type PrototypeAnalysisResult = {
  */
 export type NumericStats = {
   /** Sum of all values */
-  total: number;
+  readonly total: number;
   /** Average (mean) value */
-  avg: number;
+  readonly avg: number;
   /** Minimum value */
-  min: number;
+  readonly min: number;
   /** Maximum value */
-  max: number;
+  readonly max: number;
 };
 
 /**
@@ -48,9 +48,9 @@ export type NumericStats = {
  */
 export type TagCount = {
   /** Tag name */
-  name: string;
+  readonly name: string;
   /** Number of occurrences */
-  count: number;
+  readonly count: number;
 };
 
 /**
@@ -70,22 +70,22 @@ export type TagCount = {
  */
 export type ExtendedAnalysisResult = {
   /** Total number of prototypes in snapshot */
-  count: number;
+  readonly count: number;
   /** ID range (same as PrototypeAnalysisResult) */
-  idRange: {
-    min: number | null;
-    max: number | null;
+  readonly idRange: {
+    readonly min: number | null;
+    readonly max: number | null;
   };
   /** Number of unique tags across all prototypes */
-  uniqueTags: number;
+  readonly uniqueTags: number;
   /** Number of unique users across all prototypes */
-  uniqueUsers: number;
+  readonly uniqueUsers: number;
   /** Top 10 most frequent tags */
-  topTags: TagCount[];
+  readonly topTags: readonly TagCount[];
   /** View count statistics */
-  viewCount: NumericStats;
+  readonly viewCount: NumericStats;
   /** Good (like) count statistics */
-  goodCount: NumericStats;
+  readonly goodCount: NumericStats;
   /** Comment count statistics */
-  commentCount: NumericStats;
+  readonly commentCount: NumericStats;
 };

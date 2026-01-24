@@ -31,7 +31,7 @@ export type RepositoryErrorCode =
  */
 export type RepositorySuccess = {
   /** Indicates successful operation. */
-  ok: true;
+  readonly ok: true;
 };
 
 /**
@@ -45,17 +45,17 @@ export type RepositorySuccess = {
  */
 export type RepositoryFailure = {
   /** Indicates failed operation. */
-  ok: false;
+  readonly ok: false;
   /** Always repository-originated. */
-  origin: 'repository';
+  readonly origin: 'repository';
   /** Coarse-grained classification of the failure cause. */
-  kind: RepositoryFailureKind;
+  readonly kind: RepositoryFailureKind;
   /** Canonical error code from the repository. */
-  code: RepositoryErrorCode;
+  readonly code: RepositoryErrorCode;
   /** Human-readable error message. */
-  message: string;
+  readonly message: string;
   /** Underlying cause of the error (optional). */
-  cause?: unknown;
+  readonly cause?: unknown;
 };
 
 /**

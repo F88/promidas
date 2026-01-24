@@ -14,6 +14,7 @@ import {
   PrototypeInMemoryStore,
   SizeEstimationError,
 } from '../../../../../store/index.js';
+import type { NormalizedPrototype } from '../../../../../types/index.js';
 import { ProtopediaInMemoryRepositoryImpl } from '../../../../protopedia-in-memory-repository.js';
 import {
   createTestContext,
@@ -197,8 +198,16 @@ describe('ProtopediaInMemoryRepositoryImpl - snapshot serialization', () => {
         expect(snapshot2.prototypes).toHaveLength(2);
 
         // Modifying snapshot1 doesn't affect snapshot2
-        snapshot1.prototypes.push(makeNormalizedPrototype({ id: 999 }));
-        expect(snapshot2.prototypes).toHaveLength(2);
+        //
+        // NOTE: We cast to any/mutable to force a mutation on the readonly array for testing purposes.
+        // This highlights that `readonly` provides compile-time safety but does NOT enforce runtime
+        // immutability (e.g. via Object.freeze), which is a deliberate design choice for performance.
+        // Here we strictly verify that appropriate deep copies were made during serialization.
+        (snapshot1.prototypes as NormalizedPrototype[]).push(
+          makeNormalizedPrototype({ id: 999 }),
+        );
+        expect(snapshot1.prototypes).toHaveLength(2);
+        expect(snapshot2.prototypes).toHaveLength(2); // Should remain unchanged
       });
     });
 

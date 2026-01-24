@@ -306,7 +306,9 @@ export class PrototypeInMemoryStore {
    * Size calculation is performed AFTER deduplication to ensure accurate size checking.
    * If duplicate IDs are present in the input array, only the last occurrence is kept.
    */
-  setAll(prototypes: NormalizedPrototype[]): { dataSizeBytes: number } {
+  setAll(prototypes: readonly NormalizedPrototype[]): {
+    dataSizeBytes: number;
+  } {
     // Build O(1) lookup index by prototype ID first to deduplicate
     // Note: If duplicate IDs are present in the input array, the last one wins.
     const uniqueMap = new Map(
