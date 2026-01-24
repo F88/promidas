@@ -1,5 +1,5 @@
 import type { StoreDataState } from '../errors/store-error.js';
-import type { PrototypeInMemoryStats } from '../store.js';
+import type { PrototypeInMemoryStats } from './stats.types.js';
 
 /**
  * Failure kinds specific to store operations.
@@ -27,9 +27,9 @@ export type StoreErrorCode =
  */
 export type SetSuccess = {
   /** Indicates successful operation. */
-  ok: true;
+  readonly ok: true;
   /** Statistics about the current snapshot after storing. */
-  stats: PrototypeInMemoryStats;
+  readonly stats: PrototypeInMemoryStats;
 };
 
 /**
@@ -39,19 +39,19 @@ export type SetSuccess = {
  */
 export type SetFailure = {
   /** Indicates failed operation. */
-  ok: false;
+  readonly ok: false;
   /** Always store-originated. */
-  origin: 'store';
+  readonly origin: 'store';
   /** Coarse-grained classification of the failure cause. */
-  kind: StoreFailureKind;
+  readonly kind: StoreFailureKind;
   /** Canonical error code from the store. */
-  code: StoreErrorCode;
+  readonly code: StoreErrorCode;
   /** Human-readable error message. */
-  message: string;
+  readonly message: string;
   /** State of the store's data when the error occurred. */
-  dataState: StoreDataState;
+  readonly dataState: StoreDataState;
   /** Underlying cause of the error (for serialization failures). */
-  cause?: unknown;
+  readonly cause?: unknown;
 };
 
 /**

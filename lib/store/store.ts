@@ -6,12 +6,7 @@
  * canonical data without repeated API calls while still respecting TTL limits.
  */
 
-import {
-  ConsoleLogger,
-  type Logger,
-  type LogLevel,
-  createConsoleLogger,
-} from '../logger/index.js';
+import { ConsoleLogger, type Logger, type LogLevel } from '../logger/index.js';
 import type { NormalizedPrototype } from '../types/index.js';
 import { sanitizeDataForLogging } from '../utils/index.js';
 
@@ -20,6 +15,8 @@ import {
   DataSizeExceededError,
   SizeEstimationError,
 } from './errors/store-error.js';
+import type { PrototypeInMemoryStoreConfig } from './types/config.types.js';
+import type { PrototypeInMemoryStats } from './types/stats.types.js';
 
 const DEFAULT_TTL_MS = 30 * 60 * 1_000; // 30 minutes
 const DEFAULT_DATA_SIZE_BYTES = 10 * 1024 * 1024; // 10 MiB
@@ -29,67 +26,6 @@ const DEFAULT_DATA_SIZE_BYTES = 10 * 1024 * 1024; // 10 MiB
  * Attempting to configure a store with a size larger than this will throw an error.
  */
 export const LIMIT_DATA_SIZE_BYTES = 30 * 1024 * 1024; // 30 MiB
-
-/**
- * Configuration options for the PrototypeInMemoryStore.
- */
-export type PrototypeInMemoryStoreConfig = {
-  /**
-   * TTL in milliseconds after which the cached snapshot is considered expired.
-   * @default 1800000 (30 minutes)
-   */
-  ttlMs?: number;
-
-  /**
-   * Maximum allowed data size in bytes for storing snapshots.
-   * @default 10485760 (10 MiB)
-   */
-  maxDataSizeBytes?: number;
-
-  /**
-   * Custom logger instance.
-   *
-   * @remarks
-   * - If provided, the logger will be used as-is
-   * - If provided with logLevel, the level will be updated if logger is mutable
-   * - If not provided, creates a ConsoleLogger with the specified logLevel
-   *
-   * @default undefined (creates ConsoleLogger with 'info' level)
-   */
-  logger?: Logger;
-
-  /**
-   * Log level for creating a default ConsoleLogger.
-   *
-   * @remarks
-   * - Only used when `logger` is NOT provided
-   * - Creates a new ConsoleLogger with this level
-   * - If logger is provided and mutable, updates its level property
-   *
-   * @default 'info'
-   */
-  logLevel?: LogLevel;
-};
-
-/**
- * Statistics and metadata about the current state of the PrototypeInMemoryStore.
- *
- * Provides information about cache health, configuration, and runtime state.
- */
-export type PrototypeInMemoryStats = {
-  /** Number of prototypes currently stored in the cache. */
-  size: number;
-  /** Timestamp when the snapshot was last cached, or null if never cached. */
-  cachedAt: Date | null;
-  /** Whether the cached snapshot has exceeded its TTL. */
-  isExpired: boolean;
-  /** Remaining time in milliseconds until expiration. 0 if expired or no data cached. */
-  remainingTtlMs: number;
-  /** Exact size of the cached snapshot in bytes (JSON serialized). */
-  dataSizeBytes: number;
-  /** Whether a background refresh operation is currently in progress. */
-  refreshInFlight: boolean;
-};
 
 type RefreshTask = () => Promise<void>;
 

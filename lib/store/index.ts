@@ -81,10 +81,10 @@
 export {
   LIMIT_DATA_SIZE_BYTES,
   PrototypeInMemoryStore,
-  type PrototypeInMemoryStats,
-  type PrototypeInMemoryStoreConfig,
   type Snapshot as PrototypeInMemorySnapshot,
 } from './store.js';
+export type { PrototypeInMemoryStoreConfig } from './types/config.types.js';
+export type { PrototypeInMemoryStats } from './types/stats.types.js';
 
 // Errors
 export {
