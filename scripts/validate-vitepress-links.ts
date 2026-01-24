@@ -332,8 +332,8 @@ function extractHeadings(content: string): string[] {
     }
     if (inCodeBlock) return;
 
-    // Match headings
-    const match = line.match(/^(#{1,6})\s+(.+)$/);
+    // Match headings (with or without a space after the hashes)
+    const match = line.match(/^(#{1,6})\s*(.+)$/);
     if (match && match[2]) {
       let headingText = match[2].trim();
       // Handle VitePress custom heading IDs: "### Title {#custom-id}"
