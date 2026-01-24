@@ -103,7 +103,11 @@ export type NetworkFailure = {
     readonly res?: {
       /** HTTP status text (e.g., "Not Found", "Internal Server Error") */
       readonly statusText?: string;
-      /** Error code from the API (e.g., "RESOURCE_NOT_FOUND") */
+      /**
+       * Error identifier from the API or runtime/network layer
+       * (e.g., "RESOURCE_NOT_FOUND", "ENOTFOUND", "ECONNREFUSED",
+       * "TIMEOUT", "ABORTED", "NETWORK_ERROR").
+       */
       readonly code?: string;
     };
   };
