@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Type Safety**: Strengthened immutability by applying `readonly` to core fetcher types
     - **Immutability Enforcement**: `NetworkFailure`, `FetchPrototypesResult`, `FetchProgressEvent` and their properties are now `readonly`. Code that mutates these objects will now fail to compile.
     - `NetworkFailure` object construction in `handler.ts` refactored to avoid mutation.
+    - **Immutability Enforcement**: `SetResult` (including `SetSuccess` and `SetFailure`) types in `lib/store` now have `readonly` properties.
 
 - **Configuration Types**: Standardized configuration interfaces to `type` aliases
     - **No Declaration Merging**: Converted `SanitizeOptions` converted from `interface` to `readonly type` in `lib/utils`.
