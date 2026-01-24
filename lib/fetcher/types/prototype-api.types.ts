@@ -76,32 +76,39 @@ export type UpstreamPrototype = ResultOfListPrototypesApiResponse;
  * ```
  */
 export type NetworkFailure = {
-  /** Error message from Error.message or fallback string */
-  error: unknown;
+  /**
+   * Opaque error value (often an Error instance or string) that will be resolved
+   * into a display message by higher-level error handling.
+   */
+  readonly error: unknown;
   /**
    * HTTP status code from server response (e.g., 404, 500).
    * Undefined for network errors where no server response was received
    * (e.g., ENOTFOUND, ECONNREFUSED, AbortError).
    */
-  status?: number;
+  readonly status?: number;
   /**
    * Additional error details from request and response.
    * Always present, but may be an empty object for errors without metadata.
    */
-  details: {
+  readonly details: {
     /** Request information (compatible with ProtoPediaApiError.req from v2.0.0) */
-    req?: {
+    readonly req?: {
       /** HTTP method (e.g., "GET", "POST") */
-      method?: string;
+      readonly method?: string;
       /** Request URL */
-      url?: string;
+      readonly url?: string;
     };
     /** Response information (compatible with ProtoPediaApiError metadata) */
-    res?: {
+    readonly res?: {
       /** HTTP status text (e.g., "Not Found", "Internal Server Error") */
-      statusText?: string;
-      /** Error code from the API (e.g., "RESOURCE_NOT_FOUND") */
-      code?: string;
+      readonly statusText?: string;
+      /**
+       * Error identifier from the API or runtime/network layer
+       * (e.g., "RESOURCE_NOT_FOUND", "ENOTFOUND", "ECONNREFUSED",
+       * "TIMEOUT", "ABORTED", "NETWORK_ERROR").
+       */
+      readonly code?: string;
     };
   };
 };

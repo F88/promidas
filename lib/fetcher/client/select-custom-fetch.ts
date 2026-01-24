@@ -17,28 +17,28 @@ import { createFetchWithProgress } from './fetch-with-progress.js';
 /**
  * Configuration for custom fetch selection.
  */
-export interface CustomFetchConfig {
+export type CustomFetchConfig = {
   /**
    * Logger instance for custom fetch implementations.
    */
-  logger: Logger;
+  readonly logger: Logger;
 
   /**
    * Whether to enable progress logging.
    */
-  enableProgressLog: boolean;
+  readonly enableProgressLog: boolean;
 
   /**
    * Base fetch function to wrap with progress tracking.
    * If not provided, uses global fetch.
    */
-  baseFetch?: typeof fetch;
+  readonly baseFetch?: typeof fetch;
 
   /**
    * Optional callback for progress events.
    */
-  onProgressEvent?: (event: FetchProgressEvent) => void;
-}
+  readonly onProgressEvent?: (event: FetchProgressEvent) => void;
+};
 
 /**
  * Select appropriate custom fetch function based on configuration.

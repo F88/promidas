@@ -131,10 +131,8 @@ function createFailureResult(
     origin: 'fetcher',
     error,
     details,
+    ...(status !== undefined && { status }),
   };
-  if (status !== undefined) {
-    result.status = status;
-  }
   return result;
 }
 
@@ -161,6 +159,19 @@ function finalize(
     kind,
     code,
   } satisfies FetchPrototypesResult;
+}
+
+function updateDetailsWithCode(
+  details: NetworkFailure['details'],
+  code: string,
+): NetworkFailure['details'] {
+  return {
+    ...details,
+    res: {
+      ...details.res,
+      code,
+    },
+  };
 }
 
 /**
@@ -235,7 +246,7 @@ export function handleNotProtoPediaApiError(
   const message =
     error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN;
 
-  const details: NetworkFailure['details'] = {};
+  let details: NetworkFailure['details'] = {};
   // Extract network error code from error.code or error.cause.code
   // (Node.js native fetch wraps ENOTFOUND etc. in error.cause)
   if (hasErrorCode(error)) {
@@ -245,8 +256,7 @@ export function handleNotProtoPediaApiError(
     };
     const code = errorObj.code ?? errorObj.cause?.code;
     if (code !== undefined) {
-      details.res ??= {};
-      details.res.code = code;
+      details = updateDetailsWithCode(details, code);
     }
   }
 
@@ -256,9 +266,11 @@ export function handleNotProtoPediaApiError(
 
   if (details.res?.code === undefined && isOpaqueFetchError) {
     // Keep diagnostics (use generic network code) but classify as CORS_BLOCKED.
-    details.res ??= {};
-    details.res.code = DEFAULT_NETWORK_ERROR_CODE;
-    const result = createFailureResult(message, details);
+    const newDetails = updateDetailsWithCode(
+      details,
+      DEFAULT_NETWORK_ERROR_CODE,
+    );
+    const result = createFailureResult(message, newDetails);
     return finalize(result, 'cors', 'CORS_BLOCKED');
   }
 

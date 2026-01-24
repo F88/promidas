@@ -71,22 +71,22 @@ export function shouldProgressLog(logger: Logger): boolean {
  * });
  * ```
  */
-export interface FetchWithProgressConfig {
+export type FetchWithProgressConfig = {
   /**
    * Logger instance for progress output.
    */
-  logger: Logger;
+  readonly logger: Logger;
 
   /**
    * Whether to log progress to the logger.
    */
-  enableProgressLog: boolean;
+  readonly enableProgressLog: boolean;
 
   /**
    * Base fetch function to wrap with progress tracking.
    * If not provided, uses global fetch.
    */
-  baseFetch?: typeof fetch;
+  readonly baseFetch?: typeof fetch;
 
   /**
    * Optional callback for progress events.
@@ -99,8 +99,8 @@ export interface FetchWithProgressConfig {
    *
    * @param event - Progress event with type-specific data
    */
-  onProgressEvent?: (event: FetchProgressEvent) => void;
-}
+  readonly onProgressEvent?: (event: FetchProgressEvent) => void;
+};
 
 /**
  * Estimate total response size from URL parameters.

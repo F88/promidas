@@ -48,7 +48,7 @@ export type ProtopediaApiCustomClientConfig = {
    * This allows full control over the official client's configuration,
    * including token, baseUrl, fetch implementation, and timeout settings.
    */
-  protoPediaApiClientOptions?: ProtoPediaApiClientOptions;
+  readonly protoPediaApiClientOptions?: ProtoPediaApiClientOptions;
 
   /**
    * Custom logger instance.
@@ -60,7 +60,7 @@ export type ProtopediaApiCustomClientConfig = {
    *
    * @default undefined (creates ConsoleLogger with 'info' level)
    */
-  logger?: Logger;
+  readonly logger?: Logger;
 
   /**
    * Log level for creating a default ConsoleLogger.
@@ -72,7 +72,7 @@ export type ProtopediaApiCustomClientConfig = {
    *
    * @default 'info'
    */
-  logLevel?: LogLevel;
+  readonly logLevel?: LogLevel;
 
   /**
    * Enable download progress logging.
@@ -85,7 +85,7 @@ export type ProtopediaApiCustomClientConfig = {
    *
    * @default true
    */
-  progressLog?: boolean;
+  readonly progressLog?: boolean;
 
   /**
    * Download progress callback.
@@ -141,5 +141,5 @@ export type ProtopediaApiCustomClientConfig = {
    * });
    * ```
    */
-  progressCallback?: (event: FetchProgressEvent) => void;
+  readonly progressCallback?: (event: FetchProgressEvent) => void;
 };
