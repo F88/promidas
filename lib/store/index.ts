@@ -78,13 +78,7 @@
  */
 
 // Core Store
-export {
-  LIMIT_DATA_SIZE_BYTES,
-  PrototypeInMemoryStore,
-  type PrototypeInMemoryStats,
-  type PrototypeInMemoryStoreConfig,
-  type Snapshot as PrototypeInMemorySnapshot,
-} from './store.js';
+export { LIMIT_DATA_SIZE_BYTES, PrototypeInMemoryStore } from './store.js';
 
 // Errors
 export {
@@ -95,9 +89,14 @@ export {
   type StoreDataState,
 } from './errors/store-error.js';
 
-// Result Types
+// Result Types & Config
 export type {
+  PrototypeInMemoryStoreConfig,
+  PrototypeInMemoryStats,
+  Snapshot as PrototypeInMemorySnapshot,
   SetResult,
+  SetSuccess,
+  SetFailure,
   StoreErrorCode,
   StoreFailureKind,
 } from './types/index.js';

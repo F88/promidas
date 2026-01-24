@@ -11,25 +11,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### BREAKING CHANGES
 
-- **Refactoring**: Removed `DeepReadonly` dependency and switched to native `readonly` types (#89)
-    - **Type Incompatibility**: Public methods previously returning `DeepReadonly<T>` now return `readonly T`. This may cause type errors for consumers explicitly using `DeepReadonly` types.
-    - Updated `NormalizedPrototype` and repository interfaces to use native `readonly` modifiers.
+#### General
+
+- **Refactoring**: Removed `DeepReadonly` dependency and switched to native `readonly` types (#89).
+    - Public methods previously returning `DeepReadonly<T>` now return `readonly T`.
     - Removed `ts-essentials` from dependencies.
 
-- **Type Safety**: Strengthened immutability by applying `readonly` to core fetcher types
-    - **Immutability Enforcement**: `NetworkFailure`, `FetchPrototypesResult`, `FetchProgressEvent` and their properties are now `readonly`. Code that mutates these objects will now fail to compile.
-    - `NetworkFailure` object construction in `handler.ts` refactored to avoid mutation.
+#### `lib/fetcher`
 
-- **Configuration Types**: Standardized configuration interfaces to `type` aliases
-    - **No Declaration Merging**: Converted `SanitizeOptions` converted from `interface` to `readonly type` in `lib/utils`.
-    - **No Declaration Merging**: Converted `CustomFetchConfig`, `FetchWithProgressConfig`, `FetchWithTimeoutConfig` from `interface` to `type` aliases with `readonly` properties. Users relying on interface merging to extend these types will need to update their code.
+- **Type Safety**: Strengthened immutability by applying `readonly` to core fetcher types (`NetworkFailure`, `FetchPrototypesResult`, `FetchProgressEvent`). Code that mutates these objects will now fail to compile.
+- **Configuration**: Converted `CustomFetchConfig`, `FetchWithProgressConfig`, `FetchWithTimeoutConfig` from `interface` to `type` aliases with `readonly` properties. Users relying on interface merging to extend these types will need to update their code.
+
+#### `lib/store`
+
+- **Type Safety**: `SetResult` (including `SetSuccess` and `SetFailure`) types now have `readonly` properties.
+- **Refactoring**: Converted `PrototypeInMemoryStoreConfig`, `PrototypeInMemoryStats`, and `Snapshot` to `readonly type` aliases and moved them to `lib/store/types/`.
+
+#### `lib/utils`
+
+- **Configuration**: Converted `SanitizeOptions` from `interface` to `readonly type`.
 
 ### Changed
 
-- **CI/CD Security**: Migrated npm publishing to OIDC-only authentication, eliminating long-lived tokens
-- **CI/CD Configuration**: Migrated Codecov integration to `codecov-action@v5` with OIDC authentication and unified test results upload
-- **Documentation**: Clarified contribution workflow for external contributors in CONTRIBUTING.md
-- **Development Environment**: Updated pinned Node.js version to v22.22.0
+#### CI/CD & Development
+
+- **Security**: Migrated npm publishing to OIDC-only authentication, eliminating long-lived tokens.
+- **Configuration**: Migrated Codecov integration to `codecov-action@v5` with OIDC authentication and unified test results upload.
+- **Environment**: Updated pinned Node.js version to v22.22.0.
+
+#### Documentation
+
+- Clarified contribution workflow for external contributors in CONTRIBUTING.md.
 
 ## [2.0.0] - 2026-01-15
 
