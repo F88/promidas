@@ -227,7 +227,17 @@ function extractHeadings(content: string): string[] {
     // Match headings
     const match = line.match(/^(#{1,6})\s+(.+)$/);
     if (match && match[2]) {
-      slugs.push(slugify(match[2]));
+      let headingText = match[2].trim();
+      // Handle VitePress custom heading IDs: "### Title {#custom-id}"
+      const customIdMatch = headingText.match(/\s*\{#([A-Za-z0-9\-_]+)\}\s*$/);
+      if (customIdMatch) {
+        // Use the explicit custom ID as the anchor, matching VitePress behavior
+        slugs.push(customIdMatch[1]!);
+      } else {
+        // Fallback: slugify the heading text (without any trailing {#...})
+        headingText = headingText.replace(/\s*\{#.+\}\s*$/, '').trim();
+        slugs.push(slugify(headingText));
+      }
     }
   });
   return slugs;
