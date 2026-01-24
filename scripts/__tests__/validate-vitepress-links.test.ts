@@ -188,6 +188,23 @@ Some text
         expect.stringContaining('Broken GitHub Link'),
       );
     });
+
+    it('should NOT ignore repository files with "issues" in the name', () => {
+      vi.spyOn(fs, 'existsSync').mockReturnValue(false); // File missing
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+      const repo = 'https://github.com/F88/promidas';
+
+      // matches /issues so currently skipped (false), but should be validated -> missing -> true
+      const result = validateExternalLink(
+        `${repo}/blob/main/docs/issues.md`,
+        'docs/intro.md',
+        '[Issues Guide]',
+      );
+
+      expect(result).toBe(true); // Should be error (true) because file missing
+    });
   });
 
   describe('validateAbsoluteLink', () => {

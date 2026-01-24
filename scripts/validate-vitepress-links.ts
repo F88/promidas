@@ -163,10 +163,11 @@ function validateExternalLink(
       .replace(`${repoPrefix}/raw/main/`, '');
 
     // If it's just the repo root or issues/discussions, skip
+    // Only skip top-level tabs, not files like 'docs/issues.md'
     if (
       targetFile === repoPrefix ||
-      targetFile.includes('/issues') ||
-      targetFile.includes('/discussions')
+      targetFile.startsWith(`${repoPrefix}/issues`) ||
+      targetFile.startsWith(`${repoPrefix}/discussions`)
     ) {
       return false;
     }
