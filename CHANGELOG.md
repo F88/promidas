@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### `lib/store`
 
 - **Type Safety**: `SetResult` (including `SetSuccess` and `SetFailure`) types now have `readonly` properties.
+- **Type Safety**: Updated `PrototypeInMemoryStore.setAll()` signature to accept `readonly NormalizedPrototype[]`, allowing usage with immutable data sources.
 - **Refactoring**: Converted `PrototypeInMemoryStoreConfig`, `PrototypeInMemoryStats`, and `Snapshot` to `readonly type` aliases and moved them to `lib/store/types/`.
 
 #### `lib/utils`

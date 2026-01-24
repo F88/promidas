@@ -14,6 +14,7 @@ import {
   PrototypeInMemoryStore,
   SizeEstimationError,
 } from '../../../../../store/index.js';
+import type { NormalizedPrototype } from '../../../../../types/index.js';
 import { ProtopediaInMemoryRepositoryImpl } from '../../../../protopedia-in-memory-repository.js';
 import {
   createTestContext,
@@ -197,12 +198,12 @@ describe('ProtopediaInMemoryRepositoryImpl - snapshot serialization', () => {
         expect(snapshot2.prototypes).toHaveLength(2);
 
         // Modifying snapshot1 doesn't affect snapshot2
-        // snapshot1.prototypes.push(makeNormalizedPrototype({ id: 999 })); // Error: readonly
-        // We can't mutate snapshot1.prototypes directly anymore.
-        // But to test independence, we can just check that snapshot2 didn't change even if we *could* mutate snapshot1 (which we can't).
-        // Since we can't mutate, the test logic "modify 1, check 2" is now enforcing the very immutability we added.
-        // We will simulate a mutation by casting to any or just check that they are different references.
-        expect(snapshot1.prototypes).not.toBe(snapshot2.prototypes);
+        // We cast to any/mutable to force a mutation on the readonly array for testing purposes
+        (snapshot1.prototypes as NormalizedPrototype[]).push(
+          makeNormalizedPrototype({ id: 999 }),
+        );
+        expect(snapshot1.prototypes).toHaveLength(2);
+        expect(snapshot2.prototypes).toHaveLength(2); // Should remain unchanged
       });
     });
 
