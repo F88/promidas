@@ -25,7 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### `lib/repository`
 
 - **Type Safety**: Converted `ProtopediaInMemoryRepositoryConfig`, `RepositorySuccess`, `RepositoryFailure`, and all `SnapshotOperation` types (`SnapshotOperationSuccess`, `SnapshotOperationFailure`, etc.) to use `readonly` properties.
-- **Configuration**: `ProtopediaInMemoryRepositoryConfig` properties are now `readonly`.
 
 #### `lib/store`
 
