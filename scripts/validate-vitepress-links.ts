@@ -86,36 +86,8 @@ function verifyLinks() {
         targetFile.startsWith('http://') ||
         targetFile.startsWith('https://')
       ) {
-        // Special check for own repository links
-        // Pattern: https://github.com/F88/promidas/blob/main/path/to/file
-        const repoPrefix = 'https://github.com/F88/promidas';
-        if (targetFile.startsWith(repoPrefix)) {
-          const relativePathFromRepo = targetFile
-            .replace(`${repoPrefix}/blob/main/`, '')
-            .replace(`${repoPrefix}/tree/main/`, '')
-            .replace(`${repoPrefix}/edit/main/`, '')
-            .replace(`${repoPrefix}/raw/main/`, '');
-
-          // If it's just the repo root or issues/discussions, skip
-          if (
-            targetFile === repoPrefix ||
-            targetFile.includes('/issues') ||
-            targetFile.includes('/discussions')
-          ) {
-            continue;
-          }
-
-          // Check if it's a file path validation
-          // Ignore unrelated paths like 'releases', 'pulls' etc if they exist
-          if (targetFile.includes('/blob/') || targetFile.includes('/tree/')) {
-            const localPath = path.resolve(PROJECT_ROOT, relativePathFromRepo);
-            if (!fs.existsSync(localPath)) {
-              console.error(
-                `❌ [Broken GitHub Link] In ${relativePath}: ${link} -> Local file not found: ${localPath}`,
-              );
-              hasError = true;
-            }
-          }
+        if (validateExternalLink(targetFile, relativePath, link)) {
+          hasError = true;
         }
         continue;
       }
@@ -127,77 +99,37 @@ function verifyLinks() {
 
       // 3. Absolute path (VitePress specific)
       if (targetFile.startsWith('/')) {
-        // /foo.md -> docs/foo.md
-        const absoluteTarget = path.join(DOCS_ROOT, targetFile);
-        if (
-          !fs.existsSync(absoluteTarget) &&
-          !fs.existsSync(absoluteTarget + '.md')
-        ) {
-          console.error(
-            `❌ [Broken Absolute Link] In ${relativePath}: ${link} -> File not found: ${absoluteTarget}`,
-          );
+        if (validateAbsoluteLink(targetFile, relativePath, link)) {
           hasError = true;
         }
         continue;
       }
 
       // 4. Relative path
-      const resolvedTarget = path.resolve(dir, targetFile);
-
-      if (!fs.existsSync(resolvedTarget)) {
-        if (fs.existsSync(resolvedTarget + '.md')) {
-          // warning omitted
-        } else if (
-          fs.existsSync(resolvedTarget) &&
-          fs.statSync(resolvedTarget).isDirectory() &&
-          fs.existsSync(path.join(resolvedTarget, 'index.md'))
-        ) {
-          // Link to directory implies index.md
-        } else {
-          console.error(
-            `❌ [Broken Relative Link] In ${relativePath}: ${link} -> File not found: ${resolvedTarget}`,
-          );
-          hasError = true;
-          continue;
-        }
+      const resolvedTarget = validateRelativeLink(
+        dir,
+        targetFile,
+        relativePath,
+        link,
+      );
+      if (!resolvedTarget) {
+        hasError = true;
+        continue;
       }
 
       // 5. Anchor check (if file exists)
       if (anchor) {
-        const targetFilePath = targetFile ? resolvedTarget : file;
-        // If target is directory, append index.md
-        const actualFile =
-          fs.existsSync(targetFilePath) &&
-          fs.statSync(targetFilePath).isDirectory()
-            ? path.join(targetFilePath, 'index.md')
-            : targetFilePath;
-
-        if (fs.existsSync(actualFile) && path.extname(actualFile) === '.md') {
-          const fileContent = fs.readFileSync(actualFile, 'utf-8');
-          const headings = extractHeadings(fileContent);
-
-          if (!headings.includes(anchor)) {
-            // Check for normalization mismatch (NFC vs NFD)
-            const normalizedAnchor = anchor.normalize('NFC');
-            const match = headings.find(
-              (h) => h.normalize('NFC') === normalizedAnchor,
-            );
-
-            if (match) {
-              console.error(
-                `⚠️  [Normalization Mismatch] In ${relativePath}: ${link} -> Anchor "#${anchor}" doesn't strictly match heading id "#${match}".\n` +
-                  `    The link might not work in some browsers due to NFC/NFD differences.\n` +
-                  `    Recommended: Use a custom ID for the heading (e.g. # Heading {#custom-id}) or copy the exact header text.`,
-              );
-              hasError = true;
-            } else {
-              console.error(
-                `❌ [Broken Anchor] In ${relativePath}: ${link} -> Anchor "#${anchor}" not found in ${path.relative(PROJECT_ROOT, actualFile)}`,
-              );
-              // console.log(`Available headings: ${headings.join(', ')}`);
-              hasError = true;
-            }
-          }
+        if (
+          validateAnchor(
+            resolvedTarget,
+            targetFile,
+            file,
+            anchor,
+            relativePath,
+            link,
+          )
+        ) {
+          hasError = true;
         }
       }
     }
@@ -209,6 +141,137 @@ function verifyLinks() {
   } else {
     console.log('All links verified.');
   }
+}
+
+function validateExternalLink(
+  targetFile: string,
+  relativePath: string,
+  link: string,
+): boolean {
+  // Special check for own repository links
+  const repoPrefix = 'https://github.com/F88/promidas';
+  if (targetFile.startsWith(repoPrefix)) {
+    const relativePathFromRepo = targetFile
+      .replace(`${repoPrefix}/blob/main/`, '')
+      .replace(`${repoPrefix}/tree/main/`, '')
+      .replace(`${repoPrefix}/edit/main/`, '')
+      .replace(`${repoPrefix}/raw/main/`, '');
+
+    // If it's just the repo root or issues/discussions, skip
+    if (
+      targetFile === repoPrefix ||
+      targetFile.includes('/issues') ||
+      targetFile.includes('/discussions')
+    ) {
+      return false;
+    }
+
+    // Check if it's a file path validation
+    if (targetFile.includes('/blob/') || targetFile.includes('/tree/')) {
+      const localPath = path.resolve(PROJECT_ROOT, relativePathFromRepo);
+      if (!fs.existsSync(localPath)) {
+        console.error(
+          `❌ [Broken GitHub Link] In ${relativePath}: ${link} -> Local file not found: ${localPath}`,
+        );
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function validateAbsoluteLink(
+  targetFile: string,
+  relativePath: string,
+  link: string,
+): boolean {
+  // /foo.md -> docs/foo.md
+  const absoluteTarget = path.join(DOCS_ROOT, targetFile);
+  if (
+    !fs.existsSync(absoluteTarget) &&
+    !fs.existsSync(absoluteTarget + '.md')
+  ) {
+    console.error(
+      `❌ [Broken Absolute Link] In ${relativePath}: ${link} -> File not found: ${absoluteTarget}`,
+    );
+    return true;
+  }
+  return false;
+}
+
+function validateRelativeLink(
+  dir: string,
+  targetFile: string,
+  relativePath: string,
+  link: string,
+): string | null {
+  const resolvedTarget = path.resolve(dir, targetFile);
+
+  if (fs.existsSync(resolvedTarget)) {
+    // Target exists exactly
+    if (fs.statSync(resolvedTarget).isDirectory()) {
+      // If it's a directory, check for index.md
+      if (!fs.existsSync(path.join(resolvedTarget, 'index.md'))) {
+        console.error(
+          `❌ [Broken Directory Link] In ${relativePath}: ${link} -> Directory found but no 'index.md': ${resolvedTarget}`,
+        );
+        return null;
+      }
+    }
+    return resolvedTarget;
+  } else if (fs.existsSync(resolvedTarget + '.md')) {
+    // Target exists with .md extension
+    return resolvedTarget + '.md';
+  } else {
+    console.error(
+      `❌ [Broken Relative Link] In ${relativePath}: ${link} -> File not found: ${resolvedTarget}`,
+    );
+    return null;
+  }
+}
+
+function validateAnchor(
+  resolvedTarget: string,
+  targetFile: string,
+  currentFile: string,
+  anchor: string,
+  relativePath: string,
+  link: string,
+): boolean {
+  const targetFilePath = targetFile ? resolvedTarget : currentFile;
+  // If target is directory, append index.md
+  const actualFile =
+    fs.existsSync(targetFilePath) && fs.statSync(targetFilePath).isDirectory()
+      ? path.join(targetFilePath, 'index.md')
+      : targetFilePath;
+
+  if (fs.existsSync(actualFile) && path.extname(actualFile) === '.md') {
+    const fileContent = fs.readFileSync(actualFile, 'utf-8');
+    const headings = extractHeadings(fileContent);
+
+    if (!headings.includes(anchor)) {
+      // Check for normalization mismatch (NFC vs NFD)
+      const normalizedAnchor = anchor.normalize('NFC');
+      const match = headings.find(
+        (h) => h.normalize('NFC') === normalizedAnchor,
+      );
+
+      if (match) {
+        console.error(
+          `⚠️  [Normalization Mismatch] In ${relativePath}: ${link} -> Anchor "#${anchor}" doesn't strictly match heading id "#${match}".\n` +
+            `    The link might not work in some browsers due to NFC/NFD differences.\n` +
+            `    Recommended: Use a custom ID for the heading (e.g. # Heading {#custom-id}) or copy the exact header text.`,
+        );
+        return true;
+      } else {
+        console.error(
+          `❌ [Broken Anchor] In ${relativePath}: ${link} -> Anchor "#${anchor}" not found in ${path.relative(PROJECT_ROOT, actualFile)}`,
+        );
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 function extractHeadings(content: string): string[] {
@@ -260,4 +323,17 @@ function slugify(text: string): string {
   );
 }
 
-verifyLinks();
+// Export for testing
+export {
+  slugify,
+  extractHeadings,
+  validateExternalLink,
+  validateAbsoluteLink,
+  validateAnchor,
+  validateRelativeLink,
+};
+
+// Only run if main module
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  verifyLinks();
+}
