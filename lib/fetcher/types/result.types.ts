@@ -60,23 +60,23 @@ export type FetcherErrorCode =
  * Successful response from fetchPrototypes containing an array of prototypes.
  */
 export type FetchPrototypesSuccess = {
-  ok: true;
-  data: NormalizedPrototype[];
+  readonly ok: true;
+  readonly data: NormalizedPrototype[];
 };
 
 /**
  * Failed response from fetchPrototypes with error details.
  */
 export type FetchPrototypesFailure = {
-  ok: false;
+  readonly ok: false;
   /** Always fetcher-originated. */
-  origin: 'fetcher';
+  readonly origin: 'fetcher';
   /** Coarse-grained classification of the failure cause. */
-  kind: FetchFailureKind;
+  readonly kind: FetchFailureKind;
   /** Canonicalized error code (in addition to details.res.code). */
-  code: FetcherErrorCode;
+  readonly code: FetcherErrorCode;
   /** Human-readable error message. */
-  error: string;
+  readonly error: string;
 } & Omit<NetworkFailure, 'error'>;
 
 /**
@@ -90,8 +90,8 @@ export type FetchPrototypesResult =
  * Successful response from fetchRandomPrototype containing a single prototype.
  */
 export type FetchRandomPrototypeSuccess = {
-  ok: true;
-  data: NormalizedPrototype;
+  readonly ok: true;
+  readonly data: NormalizedPrototype;
 };
 
 /**
@@ -110,5 +110,5 @@ export type FetchRandomPrototypeResult =
  * Result type for fetchPrototypeById function - either success with single prototype or failure.
  */
 export type FetchPrototypeByIdResult =
-  | { ok: true; data: NormalizedPrototype }
+  | { readonly ok: true; readonly data: NormalizedPrototype }
   | FetchPrototypesFailure;

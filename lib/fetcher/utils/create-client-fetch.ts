@@ -21,12 +21,12 @@ import { createFetchWithStrippedHeaders } from './create-fetch-with-stripped-hea
  * Parameters for creating a customized fetch function.
  */
 export type CreateClientFetchParams = {
-  logger: Logger;
-  enableProgressLog: boolean;
-  progressCallback: ((event: FetchProgressEvent) => void) | undefined;
-  timeoutMs: number | undefined;
-  providedFetch: typeof fetch | undefined;
-  stripHeaders?: string[] | undefined;
+  readonly logger: Logger;
+  readonly enableProgressLog: boolean;
+  readonly progressCallback: ((event: FetchProgressEvent) => void) | undefined;
+  readonly timeoutMs: number | undefined;
+  readonly providedFetch: typeof fetch | undefined;
+  readonly stripHeaders?: string[] | undefined;
 };
 
 /**

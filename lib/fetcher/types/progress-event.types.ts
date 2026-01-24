@@ -21,7 +21,7 @@
  * ```
  */
 export type FetchProgressRequestStartEvent = {
-  type: 'request-start';
+  readonly type: 'request-start';
 };
 
 /**
@@ -40,21 +40,21 @@ export type FetchProgressRequestStartEvent = {
  * ```
  */
 export type FetchProgressResponseReceivedEvent = {
-  type: 'response-received';
+  readonly type: 'response-received';
   /**
    * Time spent from request start to header reception (milliseconds).
    */
-  prepareTimeMs: number;
+  readonly prepareTimeMs: number;
   /**
    * Estimated total download size in bytes.
    * Derived from Content-Length header or URL parameters.
    */
-  estimatedTotal: number;
+  readonly estimatedTotal: number;
   /**
    * Number of items being fetched (from URL limit parameter).
    * 0 if limit parameter is not present.
    */
-  limit: number;
+  readonly limit: number;
 };
 
 /**
@@ -72,21 +72,21 @@ export type FetchProgressResponseReceivedEvent = {
  * ```
  */
 export type FetchProgressDownloadProgressEvent = {
-  type: 'download-progress';
+  readonly type: 'download-progress';
   /**
    * Number of bytes received so far.
    */
-  received: number;
+  readonly received: number;
   /**
    * Total number of bytes to download.
    * May be 0 if Content-Length header is missing.
    */
-  total: number;
+  readonly total: number;
   /**
    * Download progress as a percentage (0-100).
    * 0 if total is unknown.
    */
-  percentage: number;
+  readonly percentage: number;
 };
 
 /**
@@ -105,24 +105,24 @@ export type FetchProgressDownloadProgressEvent = {
  * ```
  */
 export type FetchProgressCompleteEvent = {
-  type: 'complete';
+  readonly type: 'complete';
   /**
    * Total number of bytes actually received.
    */
-  received: number;
+  readonly received: number;
   /**
    * Estimated total size in bytes (from headers or URL parameters).
    */
-  estimatedTotal: number;
+  readonly estimatedTotal: number;
   /**
    * Time spent downloading the response body (milliseconds).
    */
-  downloadTimeMs: number;
+  readonly downloadTimeMs: number;
   /**
    * Total time from request start to completion (milliseconds).
    * Includes both preparation and download time.
    */
-  totalTimeMs: number;
+  readonly totalTimeMs: number;
 };
 
 /**
@@ -142,28 +142,28 @@ export type FetchProgressCompleteEvent = {
  * ```
  */
 export type FetchProgressErrorEvent = {
-  type: 'error';
+  readonly type: 'error';
   /**
    * Error message describing what went wrong.
    */
-  error: string;
+  readonly error: string;
   /**
    * Number of bytes successfully received before the error occurred.
    */
-  received: number;
+  readonly received: number;
   /**
    * Estimated total size in bytes (from headers or URL parameters).
    */
-  estimatedTotal: number;
+  readonly estimatedTotal: number;
   /**
    * Time spent on download attempt before error (milliseconds).
    */
-  downloadTimeMs: number;
+  readonly downloadTimeMs: number;
   /**
    * Total time from request start to error (milliseconds).
    * Includes both preparation and download time.
    */
-  totalTimeMs: number;
+  readonly totalTimeMs: number;
 };
 
 /**

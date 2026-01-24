@@ -16,6 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Updated `NormalizedPrototype` and repository interfaces to use native `readonly` modifiers.
     - Removed `ts-essentials` from dependencies.
 
+- **Type Safety**: Strengthened immutability by applying `readonly` to core fetcher types
+    - **Immutability Enforcement**: `NetworkFailure`, `FetchPrototypesResult`, `FetchProgressEvent` and their properties are now `readonly`. Code that mutates these objects will now fail to compile.
+    - `NetworkFailure` object construction in `handler.ts` refactored to avoid mutation.
+
+- **Configuration Types**: Standardized configuration interfaces to `type` aliases
+    - **No Declaration Merging**: Converted `CustomFetchConfig`, `FetchWithProgressConfig`, `FetchWithTimeoutConfig` from `interface` to `readonly type`. Users relying on interface merging to extend these types will need to update their code.
+
 ### Changed
 
 - **CI/CD Security**: Migrated npm publishing to OIDC-only authentication, eliminating long-lived tokens

@@ -1,9 +1,9 @@
 import { PromidasTimeoutError } from '../errors/fetcher-error.js';
 
-export interface FetchWithTimeoutConfig {
-  timeoutMs: number;
-  baseFetch?: typeof fetch | undefined;
-}
+export type FetchWithTimeoutConfig = {
+  readonly timeoutMs: number;
+  readonly baseFetch?: typeof fetch | undefined;
+};
 
 function isAbortError(error: unknown): error is DOMException {
   return error instanceof DOMException && error.name === 'AbortError';
