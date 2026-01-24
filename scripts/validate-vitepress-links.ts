@@ -360,7 +360,7 @@ function slugify(text: string): string {
       .replace(/[\s\t\n\r]+/g, '-') // spaces to dash
       // Remove standard punctuation but keep dash, underscore, and unicode (including emojis)
       // Removing: . , / ? ! : ; ' " ` ~ @ # $ % ^ & * ( ) [ ] { } | \
-      .replace(/[.,/?!$%^&*;:'"@:{}=`~()|\\\[\]]/g, '')
+      .replace(/[.,/?!$%^&*;:'"@{}=`~()|\\\[\]]/g, '')
       // Keep word chars, dash, underscore, and all non-ascii unicode (including emojis)
       // Explicitly allow range \u{0080}-\u{10FFFF} to include emojis and Japanese
       .replace(/[^\w\-\u0080-\u{10FFFF}]+/gu, '')
