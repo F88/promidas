@@ -25,7 +25,7 @@ A toolset library for ProtoPedia providing independent store and fetcher compone
 **初めての方**
 
 - [スタートガイド](https://f88.github.io/promidas/getting-started.html) - インストールと最初の一歩
-- [ユースケース](https://f88.github.io/promidas/use-case/) - あなたの利用シーンを選ぶ
+- [ユースケース](https://f88.github.io/promidas/use-cases/) - あなたの利用シーンを選ぶ
 
 **今すぐ試す:**
 

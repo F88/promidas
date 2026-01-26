@@ -35,7 +35,7 @@ lib/                      # Source code
 docs/                     # VitePress documentation site
   ├── index.md           # Documentation home
   ├── features/          # Feature documentation
-  └── use-case/          # Usage examples by scenario
+  └── use-cases/          # Usage examples by scenario
 scripts/                  # Utility scripts
   ├── generate-version.mjs  # Version generation for builds
   └── try-*.ts           # Demo/trial scripts
