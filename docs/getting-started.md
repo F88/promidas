@@ -86,7 +86,7 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。パ
 
 ### 前提条件
 
-- Node.js 20以上
+- Node.js 22以上
 - npm または yarn
 
 ### パッケージのインストール
