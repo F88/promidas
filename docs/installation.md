@@ -36,7 +36,7 @@ node -v
 
 `v22.0.0` 以上のバージョンが表示されれば問題ありません。
 
-Node.jsがインストールされていない場合は、[超初心者向けクイックスタート](./quickstart-beginners.md)を参照してください。
+Node.jsがインストールされていない場合は、[初心者向けクイックスタート](./quickstart-beginners.md)を参照してください。
 
 ## インストール
 
@@ -183,5 +183,5 @@ PROMIDASは [npmjs.com](https://www.npmjs.com/package/promidas) で公開され�
 インストールが完了したら、以下のドキュメントを参照して実際にPROMIDASを使い始めましょう:
 
 - **[Getting Started](./getting-started.md)**: 環境変数の設定と最初のコード例
-- **[超初心者向けクイックスタート](./quickstart-beginners.md)**: 段階的に学ぶガイド
+- **[初心者向けクイックスタート](./quickstart-beginners.md)**: 段階的に学ぶガイド
 - **[Cookbook](./cookbook.md)**: コピー&ペーストで使えるコード集

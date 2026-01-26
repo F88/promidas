@@ -7,7 +7,7 @@ instructions-for-ais:
     - Prohibit updating title line (1st line) in this document.
 ---
 
-# 超初心者向けクイックスタート
+# 初心者向けクイックスタート
 
 **「Node.js って何？」「黒い画面（ターミナル）は怖い」という方のためのガイドです。**
 
