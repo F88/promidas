@@ -2,6 +2,10 @@ import { defineConfig } from 'vitepress';
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
+  srcExclude: [
+    // Agent Instructions exclude from build
+    'AGENT.md'
+  ],
   title: '🧰 PROMIDAS',
   description:
     'A toolset library for ProtoPedia providing independent store and fetcher components, and a high-level repository for easy data management.',
