@@ -7,6 +7,8 @@ instructions-for-ais:
     - Prohibit updating title line (1st line) in this document.
 ---
 
+<!-- markdownlint-disable MD024 -->
+
 # トラブルシューティング (FAQ)
 
 PROMIDASを使っていて問題が発生した場合の対処法をまとめました。

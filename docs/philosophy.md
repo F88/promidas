@@ -7,6 +7,8 @@ instructions-for-ais:
     - Prohibit updating title line (1st line) in this document.
 ---
 
+<!-- markdownlint-disable MD024 -->
+
 # PROMIDAS プロジェクトの哲学
 
 このドキュメントでは、PROMIDASの設計原則と開発哲学について説明します。
