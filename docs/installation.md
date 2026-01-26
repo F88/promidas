@@ -24,7 +24,6 @@ instructions-for-ais:
 PROMIDASを使用するには、以下の環境が必要です:
 
 - **Node.js**: バージョン 22 以上
-- **パッケージマネージャー**: npm または yarn
 
 ### Node.jsのインストール確認
 
@@ -46,24 +45,12 @@ Node.jsがインストールされていない場合は、[初心者向けクイ
 npm install promidas
 ```
 
-### yarn でインストール
-
-```bash
-yarn add promidas
-```
-
 ### インストールの確認
 
 インストールが成功したか確認するには、以下のコマンドを実行します:
 
 ```bash
 npm list promidas
-```
-
-または yarn の場合:
-
-```bash
-yarn list --pattern promidas
 ```
 
 パッケージのバージョンが表示されれば、インストールは成功です。
@@ -78,12 +65,6 @@ PROMIDASを最新バージョンに更新する方法です。
 npm install promidas
 ```
 
-### yarn でアップデート
-
-```bash
-yarn add promidas
-```
-
 ### アップデート後の確認
 
 アップデートが成功したか確認するには、[バージョン確認](#バージョン確認)のセクションを参照してください。
@@ -94,16 +75,8 @@ yarn add promidas
 
 ### コマンドラインで確認
 
-npm を使用している場合:
-
 ```bash
 npm list promidas
-```
-
-yarn を使用している場合:
-
-```bash
-yarn list --pattern promidas
 ```
 
 ### コード内で確認
@@ -124,12 +97,6 @@ PROMIDASをアンインストールする場合は、以下のコマンドを実
 
 ```bash
 npm uninstall promidas
-```
-
-### yarn でアンインストール
-
-```bash
-yarn remove promidas
 ```
 
 ## npmjs.com での公開について
