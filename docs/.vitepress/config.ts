@@ -4,7 +4,7 @@ import { defineConfig } from 'vitepress';
 export default defineConfig({
   srcExclude: [
     // Agent Instructions exclude from build
-    'AGENT.md'
+    'AGENT.md',
   ],
   title: '🧰 PROMIDAS',
   description:
