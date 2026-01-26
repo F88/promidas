@@ -160,9 +160,9 @@ PROMIDASは `GET https://protopedia.net/v2/api/prototype/list`(作品一覧取�
 
 ### 関連ドキュメント
 
-- **[ユースケース](./use-case/index.md)**: 実行場所とセキュリティの基礎
+- **[ユースケース](./use-cases/index.md)**: 実行場所とセキュリティの基礎
 - **[Getting Started](./getting-started.md)**: TOKENの取得と環境設定
-- **[サーバー実行向けユースケース](./use-case/webapp.md)**: サーバー環境での実装パターン
+- **[サーバー実行向けユースケース](./use-cases/webapp.md)**: サーバー環境での実装パターン
 
 ### 公式リソース
 

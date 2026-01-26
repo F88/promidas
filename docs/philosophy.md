@@ -211,7 +211,7 @@ PROMIDASは、特に**BEARER TOKENのセキュリティ**を重視します。
 
 ドキュメントでセキュリティリスクを**繰り返し警告**:
 
-- [ユースケース](./use-case/index.md)で実行場所の重要性を説明
+- [ユースケース](./use-cases/index.md)で実行場所の重要性を説明
 - [Getting Started](./getting-started.md)でTOKENの危険性を説明
 - ローカル実行(安全)から始める学習パスを推奨
 
@@ -228,7 +228,7 @@ const repo = createPromidasForLocal({
 
 ### サーバー実行への警告
 
-[サーバー実行向けドキュメント](./use-case/webapp.md)で明確に警告:
+[サーバー実行向けドキュメント](./use-cases/webapp.md)で明確に警告:
 
 - フロントエンドでTOKENを使わない
 - バックエンドでのみ使用する

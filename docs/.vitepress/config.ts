@@ -40,9 +40,9 @@ export default defineConfig({
         text: '💡 ユースケース',
         collapsed: false,
         items: [
-          { text: 'ユースケース概要', link: '/use-case/' },
-          { text: 'ローカルでの実行', link: '/use-case/local' },
-          { text: 'サーバーでの実行', link: '/use-case/webapp' },
+          { text: 'ユースケース概要', link: '/use-cases/' },
+          { text: 'ローカルでの実行', link: '/use-cases/local' },
+          { text: 'サーバーでの実行', link: '/use-cases/webapp' },
         ],
       },
       {
