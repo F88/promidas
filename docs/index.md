@@ -155,9 +155,9 @@ Zodスキーマによる実行時のバリデーションを提供します。
 
 ## 🔗 リンク
 
-- [GitHub Repository](https://github.com/F88/promidas)
-- [ProtoPedia API Ver 2.0 Docs](https://protopediav2.docs.apiary.io/)
-- [PROMIDAS Demo (GitHub Pages)](https://f88.github.io/PROMIDAS-demo/)
+- [🛝 PROMIDAS Playground](https://f88.github.io/PROMIDAS-demo/) PROMIDAS を利用したデモサイト
+- [GitHub Repository](https://github.com/F88/promidas) PROMIDAS のGitHubリポジトリ
+- [ProtoPedia API Ver 2.0 Docs](https://protopediav2.docs.apiary.io/) ProtoPedia API Ver 2.0 の公式ドキュメント
 
 ## 📄 ライセンス
 
