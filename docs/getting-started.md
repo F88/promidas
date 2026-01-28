@@ -215,7 +215,7 @@ import { createPromidasForLocal, ProtopediaInMemoryRepository } from 'promidas';
  * Factory関数を使ってリポジトリインスタンスを作成する
  */
 function createRepository() {
-    // ローカル/開発環境向けのFarctory関数を使用
+    // ローカル/開発環境向けのFactory関数を使用
     return createPromidasForLocal({
         protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
         logLevel: 'info', // オプション
