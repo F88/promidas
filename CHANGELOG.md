@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-01-28
+
 ### BREAKING CHANGES
 
 #### General
@@ -50,6 +52,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Added `@throws` annotations for validation errors.
     - Clarified return values for empty snapshots and edge cases.
     - Added performance and memory usage warnings for large dataset operations.
+- Refactored documentation structure for improved clarity and consistency (#102).
+    - Updated Node.js version references from 20 to 22 across all documentation.
+    - Added comprehensive TypeScript setup guide with `moduleResolution: "NodeNext"` configuration.
+    - Simplified package manager examples to npm-only (removed yarn).
 - Clarified contribution workflow for external contributors in CONTRIBUTING.md.
 
 ## [2.0.0] - 2026-01-15
