@@ -20,7 +20,7 @@ import { createPromidasForLocal } from 'promidas';
 import type { NormalizedPrototype } from 'promidas/types';
 
 const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
 });
 
 // 例: 最初にスナップショットをセットアップ (必要に応じてオプションを調整)
@@ -290,7 +290,7 @@ import { readFileSync } from 'fs';
 import { createPromidasForLocal } from 'promidas';
 
 const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
 });
 
 // JSONファイルからスナップショットを読み込む
@@ -440,7 +440,7 @@ import { ProtopediaApiCustomClient } from 'promidas/fetcher';
 // 進捗イベントハンドラー付きのカスタムクライアントを作成
 const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     },
     progressLog: false, // 自動ログを無効化
     progressCallback: (event) => {
@@ -495,7 +495,7 @@ if (result.ok) {
 import { createPromidasForLocal } from 'promidas';
 
 const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     logLevel: 'info', // info 以上で進捗ログが表示される
 });
 

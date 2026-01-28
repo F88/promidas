@@ -217,7 +217,7 @@ import { createPromidasForLocal } from 'promidas';
 function createRepository() {
     // ローカル/開発環境向けのFarctory関数を使用
     return createPromidasForLocal({
-        protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+        protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
         logLevel: 'info', // オプション
     });
 }
@@ -270,7 +270,7 @@ function createRepository() {
     return new PromidasRepositoryBuilder()
         .setApiClientConfig({
             protoPediaApiClientOptions: {
-                token: process.env.PROTOPEDIA_API_V2_TOKEN,
+                token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
             },
         })
         .build();
@@ -365,7 +365,7 @@ PROMIDASが取得するデータ(`NormalizedPrototype`)は、以下のような�
 import { createPromidasForLocal } from 'promidas';
 
 const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     logLevel: 'info', // optional, default: 'info'
 });
 ```
@@ -416,7 +416,7 @@ const repo = new PromidasRepositoryBuilder()
     .setStoreConfig({ ttlMs: 30 * 60 * 1000, logLevel: 'debug' })
     .setApiClientConfig({
         protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+            token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
         },
         logLevel: 'debug',
     })
@@ -476,7 +476,7 @@ const repo = new PromidasRepositoryBuilder()
     })
     .setApiClientConfig({
         protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+            token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
         },
     })
     .build();
@@ -515,7 +515,7 @@ const repo = new PromidasRepositoryBuilder()
     .setStoreConfig({ ttlMs: 30 * 60 * 1000 }) // 30分
     .setApiClientConfig({
         protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+            token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
         },
     })
     .build();

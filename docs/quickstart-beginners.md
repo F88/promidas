@@ -101,7 +101,7 @@ async function main() {
 
     // ツールを初期化 (トークンは .env から自動で読み込まれます)
     const repo = createPromidasForLocal({
-        protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+        protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN
     });
 
     // データ取得開始

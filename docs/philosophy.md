@@ -72,7 +72,7 @@ PROMIDASは、ユーザーの習熟度に応じて**段階的に複雑さを導�
 import { createPromidasForLocal } from 'promidas';
 
 const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
 });
 ```
 
@@ -89,7 +89,7 @@ const repo = new PromidasRepositoryBuilder()
     .setStoreConfig({ ttlMs: 30 * 60 * 1000, logLevel: 'debug' })
     .setApiClientConfig({
         protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+            token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
         },
         logLevel: 'debug',
     })
@@ -130,7 +130,7 @@ import { createPromidasForLocal } from 'promidas';
 
 // 型推論が効く
 const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
 });
 
 const data = await repo.getAllFromSnapshot(); // readonly NormalizedPrototype[]
@@ -187,7 +187,7 @@ const repo = new PromidasRepositoryBuilder()
     })
     .setApiClientConfig({
         protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+            token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
         },
     })
     .build();
@@ -224,7 +224,7 @@ import { createPromidasForLocal } from 'promidas';
 
 // ✅ TOKENをハードコードしない設計
 const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN, // 環境変数推奨
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token', // 環境変数推奨
 });
 ```
 
