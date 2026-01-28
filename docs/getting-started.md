@@ -133,12 +133,13 @@ PROMIDASを使う場合、以下の最小構成を推奨します:
 ```json
 {
     "compilerOptions": {
-        "target": "ES2022",
+        "target": "ESNext",
         "module": "NodeNext",
         "moduleResolution": "NodeNext",
         "esModuleInterop": true,
         "strict": true,
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true
     }
 }
 ```
@@ -146,7 +147,7 @@ PROMIDASを使う場合、以下の最小構成を推奨します:
 ### TypeScriptファイルの実行方法
 
 ```bash
-npx tsx your-script.ts
+npx tsx your-script.ts # ファイルが存在しない場合はエラーが発生します
 ```
 
 ## インストール
