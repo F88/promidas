@@ -105,7 +105,7 @@ export const customClientForNextJs = new ProtopediaApiCustomClient({
     logger: myLogger,
     progressLog: true, // Progress tracking enabled
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token' ?? '',
+        token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
         baseUrl: 'https://api.protopedia.net',
         fetch: async (url, init) => {
             const controller = new AbortController();
@@ -142,7 +142,7 @@ import { createProtoPediaClient } from 'protopedia-api-v2-client';
 const CONNECTION_AND_HEADER_TIMEOUT_MS = 5_000;
 
 export const customClientForNextJs = createProtoPediaClient({
-    token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token' ?? '',
+    token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     baseUrl: 'https://api.protopedia.net',
     fetch: async (url, init) => {
         const controller = new AbortController();
