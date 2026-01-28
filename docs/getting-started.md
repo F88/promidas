@@ -209,7 +209,7 @@ import 'dotenv/config';
 
 ```typescript
 import 'dotenv/config';
-import { createPromidasForLocal } from 'promidas';
+import { createPromidasForLocal, ProtopediaInMemoryRepository } from 'promidas';
 
 /**
  * Factory関数を使ってリポジトリインスタンスを作成する
@@ -225,7 +225,7 @@ function createRepository() {
 /**
  * メイン処理
  */
-async function main(repo) {
+async function main(repo: ProtopediaInMemoryRepository) {
     // データ取得
     console.log('Fetching data from ProtoPedia API...');
     const result = await repo.setupSnapshot({ limit: 100 });
@@ -260,7 +260,7 @@ await main(repo);
 
 ```typescript
 import 'dotenv/config';
-import { PromidasRepositoryBuilder } from 'promidas';
+import { createPromidasForLocal, ProtopediaInMemoryRepository } from 'promidas';
 
 /**
  * Builderを使ってリポジトリインスタンスを作成する
@@ -276,7 +276,7 @@ function createRepository() {
         .build();
 }
 
-async function main(repo) {
+async function main(repo: ProtopediaInMemoryRepository) {
     // 以降は同じ
     const result = await repo.setupSnapshot({ limit: 100 });
     if (!result.ok) {
