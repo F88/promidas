@@ -96,7 +96,7 @@ PROMIDASは**TypeScriptでの利用を強く推奨**します。TypeScriptを使
 - **ドキュメント代わりになる**: 型定義が関数の使い方を明示
 - **PROMIDAS自体がTypeScriptで開発**: 完全な型定義が最初から提供される
 
-**JavaScriptでも使えます**: TypeScriptなしでも`.mjs`や`.js`でPROMIDASを利用できます。詳細は[超初心者向けクイックスタート](./quickstart-beginners.md)を参照してください。
+**JavaScriptでも使えます**: TypeScriptなしでも`.mjs`や`.js`でPROMIDASを利用できます。詳細は[初心者向けクイックスタート](./quickstart-beginners.md)を参照してください。
 
 ### TypeScriptのインストール
 
