@@ -595,7 +595,7 @@ const customClientForNextJs = new ProtopediaApiCustomClient({
     logger: myLogger,
     progressLog: true, // Progress tracking enabled
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
         fetch: async (url, init) => {
             // Custom fetch with Next.js features
             return await globalThis.fetch(url, {

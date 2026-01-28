@@ -35,7 +35,7 @@ import { ProtopediaApiCustomClient } from 'promidas/fetcher';
 
 const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     },
 });
 
@@ -105,7 +105,7 @@ export const customClientForNextJs = new ProtopediaApiCustomClient({
     logger: myLogger,
     progressLog: true, // Progress tracking enabled
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN ?? '',
+        token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token' ?? '',
         baseUrl: 'https://api.protopedia.net',
         fetch: async (url, init) => {
             const controller = new AbortController();
@@ -142,7 +142,7 @@ import { createProtoPediaClient } from 'protopedia-api-v2-client';
 const CONNECTION_AND_HEADER_TIMEOUT_MS = 5_000;
 
 export const customClientForNextJs = createProtoPediaClient({
-    token: process.env.PROTOPEDIA_API_V2_TOKEN ?? '',
+    token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token' ?? '',
     baseUrl: 'https://api.protopedia.net',
     fetch: async (url, init) => {
         const controller = new AbortController();
@@ -188,7 +188,7 @@ import { ProtopediaApiCustomClient } from 'promidas/fetcher';
 
 const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     },
     logLevel: 'info', // Progress logs appear at 'info' level
     progressLog: true, // Default: enabled
@@ -208,7 +208,7 @@ For custom progress handling (e.g., progress bars, UI updates):
 ```typescript
 const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     },
     progressLog: false, // Disable automatic logging
     progressCallback: (event) => {
@@ -316,7 +316,7 @@ The progress tracking system consists of three modules:
 ```typescript
 const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     },
     progressLog: false, // No progress tracking
 });
@@ -334,7 +334,7 @@ import { ProtopediaApiCustomClient } from 'promidas/fetcher';
 
 const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     },
     logLevel: 'debug',
 });
@@ -362,7 +362,7 @@ For cases where you need the raw API response without normalization:
 ```typescript
 const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     },
 });
 
@@ -408,7 +408,7 @@ import { ProtopediaApiCustomClient } from 'promidas/fetcher';
 
 const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     },
 });
 
@@ -491,7 +491,7 @@ import { ProtopediaApiCustomClient } from 'promidas/fetcher';
 // Pattern 1: logLevel only (creates ConsoleLogger internally)
 const client1 = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     },
     logLevel: 'debug',
 });
@@ -500,7 +500,7 @@ const client1 = new ProtopediaApiCustomClient({
 const logger = createConsoleLogger();
 const client2 = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     },
     logger,
     logLevel: 'debug', // Updates logger's level if mutable
@@ -509,7 +509,7 @@ const client2 = new ProtopediaApiCustomClient({
 // Pattern 3: Custom logger only
 const client3 = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     },
     logger, // Uses logger's existing level
 });
@@ -523,7 +523,7 @@ import { createConsoleLogger, createNoopLogger } from 'promidas/logger';
 // Development - verbose logging
 const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     },
     logLevel: 'debug',
 });
@@ -531,7 +531,7 @@ const client = new ProtopediaApiCustomClient({
 // Production - minimal logging
 const prodClient = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     },
     logLevel: 'error',
 });
@@ -539,7 +539,7 @@ const prodClient = new ProtopediaApiCustomClient({
 // Testing - silent logger
 const testClient = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     },
     logger: createNoopLogger(),
 });
@@ -567,7 +567,7 @@ const customLogger: Logger = {
 
 const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     },
     logger: customLogger,
 });

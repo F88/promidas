@@ -323,7 +323,7 @@ const logger = createConsoleLogger();
 
 const client = new ProtopediaApiCustomClient({
     protoPediaApiClientOptions: {
-        token: process.env.PROTOPEDIA_API_V2_TOKEN,
+        token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     },
     logger,
     logLevel: 'info',
@@ -339,7 +339,7 @@ import { createConsoleLogger } from 'promidas/logger';
 const logger = createConsoleLogger();
 
 const client = createProtoPediaClient({
-    token: process.env.PROTOPEDIA_API_V2_TOKEN,
+    token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     logger,
     logLevel: 'debug',
 });

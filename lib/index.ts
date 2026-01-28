@@ -12,7 +12,7 @@
  * const repo = new PromidasRepositoryBuilder()
  *   .setStoreConfig({ ttlMs: 30 * 60 * 1000 })
  *   .setApiClientConfig({
- *     protoPediaApiClientOptions: { token: process.env.PROTOPEDIA_API_V2_TOKEN }
+ *     protoPediaApiClientOptions: { token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token' }
  *   })
  *   .build();
  *

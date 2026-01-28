@@ -31,7 +31,7 @@ import type { Logger } from './logger.types.js';
  *   .setApiClientConfig({
  *     logger,
  *     logLevel: 'debug',
- *     protoPediaApiClientOptions: { token: process.env.PROTOPEDIA_API_V2_TOKEN }
+ *     protoPediaApiClientOptions: { token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token' }
  *   })
  *   .build();
  * ```

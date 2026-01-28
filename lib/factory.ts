@@ -93,7 +93,7 @@ import { VERSION } from './version.js';
  * @example With custom log level
  * ```typescript
  * const repository = createPromidasForLocal({
- *   protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN!,
+ *   protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token'!,
  *   logLevel: 'warn', // Only show warnings and errors
  * });
  * ```
