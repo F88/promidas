@@ -18,10 +18,10 @@ export default defineConfig({
     // logo: '/logo.svg',
 
     nav: [
-      { text: 'ホーム', link: '/' },
-      { text: 'デモ', link: 'https://f88.github.io/PROMIDAS-demo/' },
+      { text: '🏠 ホーム', link: '/' },
+      { text: '🛝 デモ', link: 'https://f88.github.io/PROMIDAS-demo/' },
       {
-        text: `ProtoPedia`,
+        text: `🔗 ProtoPedia`,
         link: 'https://protopedia.net/prototype/7917',
       },
     ],
