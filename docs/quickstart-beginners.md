@@ -57,8 +57,9 @@ PROMIDAS をダウンロードして使えるようにします。
 **Windows/Mac 共通:**
 
 ```bash
-npm init -y
-npm install promidas dotenv
+npm init -y # package.json を作成
+npm pkg set type=module # ESモジュールを有効化
+npm install promidas dotenv # 必要なツールをインストール
 ```
 
 これだけで、必要なツールがすべて揃います。数分かかる場合があります。
@@ -101,7 +102,7 @@ async function main() {
 
     // ツールを初期化 (トークンは .env から自動で読み込まれます)
     const repo = createPromidasForLocal({
-        protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN
+        protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
     });
 
     // データ取得開始
