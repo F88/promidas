@@ -259,11 +259,11 @@ await main(repo);
 #### 方法2: Builder (高度な設定が必要な場合)
 
 ```typescript
-import "dotenv/config";
+import 'dotenv/config';
 import {
-  PromidasRepositoryBuilder,
-  ProtopediaInMemoryRepository,
-} from "promidas";
+    PromidasRepositoryBuilder,
+    ProtopediaInMemoryRepository,
+} from 'promidas';
 
 /**
  * Builderを使ってリポジトリインスタンスを作成する
