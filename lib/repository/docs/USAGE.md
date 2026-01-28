@@ -100,7 +100,7 @@ For most use cases, use the factory functions:
 import { createPromidasForLocal } from 'promidas';
 
 const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
 });
 ```
 
@@ -409,7 +409,7 @@ const repo = new PromidasRepositoryBuilder()
     .setStoreConfig({ ttlMs: 30_000 })
     .setApiClientConfig({
         protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+            token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
         },
     })
     .setRepositoryConfig({

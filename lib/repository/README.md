@@ -42,7 +42,7 @@ import { createPromidasForLocal } from 'promidas';
 
 // 1. リポジトリを作成 (ローカル開発用の最適化設定)
 const repository = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
 });
 
 // 2. データを読み込む

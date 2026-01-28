@@ -47,7 +47,7 @@ instructions-for-ais:
 import { createPromidasForLocal } from 'promidas';
 
 const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
 });
 
 // 起動時に全データ取得
@@ -106,7 +106,7 @@ PROTOPEDIA_API_V2_TOKEN=your-token-here
 import { createPromidasForLocal } from 'promidas';
 
 const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     logLevel: 'info', // optional
 });
 
@@ -135,7 +135,7 @@ const repo = new PromidasRepositoryBuilder()
 
     .setApiClientConfig({
         protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+            token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
         },
     })
     .build();
@@ -162,7 +162,7 @@ import { createPromidasForLocal } from 'promidas';
 import { writeFileSync } from 'fs';
 
 const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
 });
 
 await repo.setupSnapshot({ limit: 10000 });
@@ -192,7 +192,7 @@ console.log(`Exported ${allData.length} prototypes`);
 import { createPromidasForLocal } from 'promidas';
 
 const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
 });
 
 await repo.setupSnapshot({ limit: 10000 });
@@ -236,7 +236,7 @@ console.log('Top 20 tags:', topTags);
 import { createPromidasForLocal } from 'promidas';
 
 const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
 });
 
 await repo.setupSnapshot({ limit: 10000 });
@@ -268,7 +268,7 @@ import { createPromidasForLocal } from 'promidas';
 import { writeFileSync, mkdirSync } from 'fs';
 
 const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
 });
 
 await repo.setupSnapshot({ limit: 10000 });
@@ -314,7 +314,7 @@ console.log('Generated static data files');
 import { createPromidasForLocal } from 'promidas';
 
 const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
 });
 ```
 
@@ -324,7 +324,7 @@ const repo = createPromidasForLocal({
 const repo = new PromidasRepositoryBuilder()
     .setApiClientConfig({
         protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+            token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
         },
     })
     .build();
@@ -342,7 +342,7 @@ const repo = new PromidasRepositoryBuilder()
 import { createPromidasForLocal } from 'promidas';
 
 const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     logLevel: 'debug', // 詳細なログを出力
 });
 ```
@@ -354,7 +354,7 @@ const repo = new PromidasRepositoryBuilder()
     .setStoreConfig({ logLevel: 'debug' })
     .setApiClientConfig({
         protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+            token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
         },
         logLevel: 'debug',
     })
@@ -374,7 +374,7 @@ const repo = new PromidasRepositoryBuilder()
     })
     .setApiClientConfig({
         protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+            token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
         },
     })
     .build();
@@ -393,7 +393,7 @@ const repo = new PromidasRepositoryBuilder()
     })
     .setApiClientConfig({
         protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+            token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
         },
     })
     .build();
@@ -413,7 +413,7 @@ const repo = new PromidasRepositoryBuilder()
     .setStoreConfig({ ttlMs: Infinity, logLevel: 'debug' })
     .setApiClientConfig({
         protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+            token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
         },
         logLevel: 'debug',
     })
@@ -428,7 +428,7 @@ const repo = new PromidasRepositoryBuilder()
 import { createPromidasForLocal } from 'promidas';
 
 const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
 });
 
 await repo.setupSnapshot({ limit: 10000 });
@@ -467,7 +467,7 @@ console.log('Generated tag-cloud.html');
 import { createPromidasForLocal } from 'promidas';
 
 const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
 });
 
 await repo.setupSnapshot({ limit: 10000 });
@@ -524,7 +524,7 @@ const repo = new PromidasRepositoryBuilder()
     })
     .setApiClientConfig({
         protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+            token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
         },
     })
     .build();
@@ -550,7 +550,7 @@ if (!result.ok) {
 import { createPromidasForLocal } from 'promidas';
 
 const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     logLevel: 'debug',
 });
 ```
@@ -572,7 +572,7 @@ if (existsSync(CACHE_FILE)) {
 } else {
     // APIから取得してキャッシュ
     const repo = createPromidasForLocal({
-        protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+        protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     });
     await repo.setupSnapshot({ limit: 10000 });
     allData = await repo.getAllFromSnapshot();

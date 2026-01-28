@@ -2,6 +2,10 @@ import { defineConfig } from 'vitepress';
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
+  srcExclude: [
+    // Agent Instructions exclude from build
+    'AGENT.md',
+  ],
   title: '🧰 PROMIDAS',
   description:
     'A toolset library for ProtoPedia providing independent store and fetcher components, and a high-level repository for easy data management.',
@@ -14,10 +18,10 @@ export default defineConfig({
     // logo: '/logo.svg',
 
     nav: [
-      { text: 'ホーム', link: '/' },
-      { text: 'デモ', link: 'https://f88.github.io/PROMIDAS-demo/' },
+      { text: '🏠 ホーム', link: '/' },
+      { text: '🛝 デモ', link: 'https://f88.github.io/PROMIDAS-demo/' },
       {
-        text: `ProtoPedia`,
+        text: `🔗 ProtoPedia`,
         link: 'https://protopedia.net/prototype/7917',
       },
     ],
@@ -36,9 +40,9 @@ export default defineConfig({
         text: '💡 ユースケース',
         collapsed: false,
         items: [
-          { text: 'ユースケース概要', link: '/use-case/' },
-          { text: 'ローカルでの実行', link: '/use-case/local' },
-          { text: 'サーバーでの実行', link: '/use-case/webapp' },
+          { text: 'ユースケース概要', link: '/use-cases/' },
+          { text: 'ローカルでの実行', link: '/use-cases/local' },
+          { text: 'サーバーでの実行', link: '/use-cases/webapp' },
         ],
       },
       {

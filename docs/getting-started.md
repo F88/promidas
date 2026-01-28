@@ -15,6 +15,7 @@ instructions-for-ais:
 
 - [まず読んでください](#まず読んでください)
 - [ProtoPedia API Ver 2.0について](#protopedia-api-ver-20について)
+- [TypeScript環境のセットアップ (推奨)](#typescript-setup)
 - [インストール](#インストール)
 - [環境変数の設定](#環境変数の設定)
 - [最初のコード例](#最初のコード例)
@@ -26,11 +27,11 @@ instructions-for-ais:
 
 ## まず読んでください
 
-⚠️ **コードを書く前に、必ず[ユースケース](./use-case/index.md)を読んでください**
+⚠️ **コードを書く前に、必ず[ユースケース](./use-cases/index.md)を読んでください**
 
 PROMIDASの使用には**BEARER TOKEN**が必要です。実行場所(ローカル/サーバー)によってセキュリティリスクが大きく異なるため、自分の用途に合った使い方を理解することが重要です。
 
-**特にAPI初心者の方は、[ユースケース](./use-case/index.md)の「実行場所とセキュリティ」セクションを必ず読んでください。**
+**特にAPI初心者の方は、[ユースケース](./use-cases/index.md)の「実行場所とセキュリティ」セクションを必ず読んでください。**
 
 ## ProtoPedia API Ver 2.0について
 
@@ -78,7 +79,76 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。パ
 **詳しくは以下をご覧ください:**
 
 - **[セキュリティガイドライン](./security.md)**: TOKEN管理とセキュリティのベストプラクティス
-- **[ユースケース](./use-case/index.md)**: 実行場所とセキュリティの基礎
+- **[ユースケース](./use-cases/index.md)**: 実行場所とセキュリティの基礎
+
+## TypeScript環境のセットアップ (推奨) {#typescript-setup}
+
+📝 **このドキュメントについて**: 以降のコード例やガイドは、特に断りがない限り**TypeScriptを使用することを前提**としています。
+
+PROMIDASは**TypeScriptでの利用を強く推奨**します。TypeScriptを使うことで、型安全性と優れた開発体験が得られます。
+
+### なぜTypeScriptを推奨するのか?
+
+**PROMIDASの利点:**
+
+- **型安全性**: コンパイル時にエラーを検出し、実行時エラーを防ぐ
+- **優れたエディタサポート**: VSCodeなどで自動補完、型情報の表示、リファクタリング支援
+- **ドキュメント代わりになる**: 型定義が関数の使い方を明示
+- **PROMIDAS自体がTypeScriptで開発**: 完全な型定義が最初から提供される
+
+**JavaScriptでも使えます**: TypeScriptなしでも`.mjs`や`.js`でPROMIDASを利用できます。詳細は[初心者向けクイックスタート](./quickstart-beginners.md)を参照してください。
+
+### TypeScriptのインストール
+
+プロジェクトにTypeScriptをインストールします:
+
+```bash
+npm install --save-dev typescript tsx @types/node
+```
+
+**パッケージの説明:**
+
+- `typescript`: TypeScriptコンパイラ (必須)
+- `tsx`: TypeScriptファイルを直接実行するツール (オプション - このチュートリアルで使用)
+- `@types/node`: Node.js APIの型定義 (オプション - 型補完のため推奨)
+
+💡 **補足**: `tsx`と`@types/node`は必須ではありませんが、このチュートリアルでは`tsx`を使った実行方法を紹介しているため、一緒にインストールすることを推奨します。`tsx`なしでも、`tsc`でコンパイルしてから`node`で実行できます。
+
+### TypeScript設定ファイル (tsconfig.json)
+
+#### 自動生成する方法 (推奨 - 初心者向け)
+
+TypeScriptコンパイラが設定ファイルのテンプレートを自動生成してくれます:
+
+```bash
+npx tsc --init
+```
+
+このコマンドで`tsconfig.json`が作成されます。生成されたファイルには多くのオプションがコメント付きで記載されているので、必要に応じてカスタマイズできます。
+
+#### PROMIDAS向けの最小構成
+
+PROMIDASを使う場合、以下の最小構成を推奨します:
+
+```json
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "esModuleInterop": true,
+        "strict": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true
+    }
+}
+```
+
+### TypeScriptファイルの実行方法
+
+```bash
+npx tsx your-script.ts # ファイルが存在しない場合はエラーが発生します
+```
 
 ## インストール
 
@@ -86,19 +156,12 @@ BEARER TOKENは、ProtoPedia APIを利用するための認証情報です。パ
 
 ### 前提条件
 
-- Node.js 20以上
-- npm または yarn
+- Node.js 22以上
 
 ### パッケージのインストール
 
 ```bash
 npm install promidas
-```
-
-または yarn の場合:
-
-```bash
-yarn add promidas
 ```
 
 ## 環境変数の設定
@@ -146,15 +209,15 @@ import 'dotenv/config';
 
 ```typescript
 import 'dotenv/config';
-import { createPromidasForLocal } from 'promidas';
+import { createPromidasForLocal, ProtopediaInMemoryRepository } from 'promidas';
 
 /**
  * Factory関数を使ってリポジトリインスタンスを作成する
  */
 function createRepository() {
-    // ローカル/開発環境向けのFarctory関数を使用
+    // ローカル/開発環境向けのFactory関数を使用
     return createPromidasForLocal({
-        protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+        protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
         logLevel: 'info', // オプション
     });
 }
@@ -162,7 +225,7 @@ function createRepository() {
 /**
  * メイン処理
  */
-async function main(repo) {
+async function main(repo: ProtopediaInMemoryRepository) {
     // データ取得
     console.log('Fetching data from ProtoPedia API...');
     const result = await repo.setupSnapshot({ limit: 100 });
@@ -197,7 +260,10 @@ await main(repo);
 
 ```typescript
 import 'dotenv/config';
-import { PromidasRepositoryBuilder } from 'promidas';
+import {
+    PromidasRepositoryBuilder,
+    ProtopediaInMemoryRepository,
+} from 'promidas';
 
 /**
  * Builderを使ってリポジトリインスタンスを作成する
@@ -207,13 +273,13 @@ function createRepository() {
     return new PromidasRepositoryBuilder()
         .setApiClientConfig({
             protoPediaApiClientOptions: {
-                token: process.env.PROTOPEDIA_API_V2_TOKEN,
+                token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
             },
         })
         .build();
 }
 
-async function main(repo) {
+async function main(repo: ProtopediaInMemoryRepository) {
     // 以降は同じ
     const result = await repo.setupSnapshot({ limit: 100 });
     if (!result.ok) {
@@ -235,13 +301,6 @@ await main(repo);
 
 ```bash
 npx tsx your-script.ts
-```
-
-または、TypeScriptをコンパイルしてから実行:
-
-```bash
-npx tsc your-script.ts
-node your-script.js
 ```
 
 ## データ構造を見てみよう
@@ -309,7 +368,7 @@ PROMIDASが取得するデータ(`NormalizedPrototype`)は、以下のような�
 import { createPromidasForLocal } from 'promidas';
 
 const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     logLevel: 'info', // optional, default: 'info'
 });
 ```
@@ -360,7 +419,7 @@ const repo = new PromidasRepositoryBuilder()
     .setStoreConfig({ ttlMs: 30 * 60 * 1000, logLevel: 'debug' })
     .setApiClientConfig({
         protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+            token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
         },
         logLevel: 'debug',
     })
@@ -420,7 +479,7 @@ const repo = new PromidasRepositoryBuilder()
     })
     .setApiClientConfig({
         protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+            token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
         },
     })
     .build();
@@ -459,7 +518,7 @@ const repo = new PromidasRepositoryBuilder()
     .setStoreConfig({ ttlMs: 30 * 60 * 1000 }) // 30分
     .setApiClientConfig({
         protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+            token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
         },
     })
     .build();
@@ -520,7 +579,7 @@ console.log(`Remaining TTL: ${stats.remainingTtlMs}ms`);
 
 安全なローカル実行についてさらに深く知りたい場合:
 
-- **[ローカル実行向けユースケース](./use-case/local.md)**
+- **[ローカル実行向けユースケース](./use-cases/local.md)**
 
 ### トラブルシューティング
 

@@ -7,6 +7,8 @@ instructions-for-ais:
     - Prohibit updating title line (1st line) in this document.
 ---
 
+<!-- markdownlint-disable MD024 -->
+
 # PROMIDAS プロジェクトの哲学
 
 このドキュメントでは、PROMIDASの設計原則と開発哲学について説明します。
@@ -70,7 +72,7 @@ PROMIDASは、ユーザーの習熟度に応じて**段階的に複雑さを導�
 import { createPromidasForLocal } from 'promidas';
 
 const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
 });
 ```
 
@@ -87,7 +89,7 @@ const repo = new PromidasRepositoryBuilder()
     .setStoreConfig({ ttlMs: 30 * 60 * 1000, logLevel: 'debug' })
     .setApiClientConfig({
         protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+            token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
         },
         logLevel: 'debug',
     })
@@ -128,7 +130,7 @@ import { createPromidasForLocal } from 'promidas';
 
 // 型推論が効く
 const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN,
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
 });
 
 const data = await repo.getAllFromSnapshot(); // readonly NormalizedPrototype[]
@@ -185,7 +187,7 @@ const repo = new PromidasRepositoryBuilder()
     })
     .setApiClientConfig({
         protoPediaApiClientOptions: {
-            token: process.env.PROTOPEDIA_API_V2_TOKEN,
+            token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
         },
     })
     .build();
@@ -211,7 +213,7 @@ PROMIDASは、特に**BEARER TOKENのセキュリティ**を重視します。
 
 ドキュメントでセキュリティリスクを**繰り返し警告**:
 
-- [ユースケース](./use-case/index.md)で実行場所の重要性を説明
+- [ユースケース](./use-cases/index.md)で実行場所の重要性を説明
 - [Getting Started](./getting-started.md)でTOKENの危険性を説明
 - ローカル実行(安全)から始める学習パスを推奨
 
@@ -222,13 +224,13 @@ import { createPromidasForLocal } from 'promidas';
 
 // ✅ TOKENをハードコードしない設計
 const repo = createPromidasForLocal({
-    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN, // 環境変数推奨
+    protopediaApiToken: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token', // 環境変数推奨
 });
 ```
 
 ### サーバー実行への警告
 
-[サーバー実行向けドキュメント](./use-case/webapp.md)で明確に警告:
+[サーバー実行向けドキュメント](./use-cases/webapp.md)で明確に警告:
 
 - フロントエンドでTOKENを使わない
 - バックエンドでのみ使用する

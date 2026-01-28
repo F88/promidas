@@ -38,9 +38,9 @@ APIから取得したデータをメモリ上に保存(キャッシュ)するこ
 
 まずはここから始めましょう。セキュリティの基本と導入手順を解説します。
 
-1. **[超初心者向けクイックスタート](./quickstart-beginners.md)**
+1. **[初心者向けクイックスタート](./quickstart-beginners.md)**
     - Node.jsの知識がゼロでも安心。インストールから実行までを最短で行うためのガイドです。
-2. **[ユースケース (Use Cases)](./use-case/index.md)**
+2. **[ユースケース (Use Cases)](./use-cases/index.md)**
     - ⚠️ **最重要**: 「どこで実行するか」によるセキュリティリスクの違いを理解します。
 3. **[Getting Started](./getting-started.md)**
     - インストール、トークン取得、そして最初のコードを実行するまでのステップバイステップガイドです。
@@ -51,7 +51,7 @@ APIから取得したデータをメモリ上に保存(キャッシュ)するこ
 
 ローカル環境(自分のPC)で安全にデータを活用するためのガイドです。
 
-1. **[ローカル実行向けユースケース](./use-case/local.md)**
+1. **[ローカル実行向けユースケース](./use-cases/local.md)**
     - データ分析、静的サイト生成、個人用ツール開発などの実践ガイド。
 2. **[Cookbook (逆引きレシピ集)](./cookbook.md)**
     - 「特定のタグを検索したい」「CSV出力したい」「ランキングを作りたい」など、コピー&ペーストで使えるコード集。
@@ -60,7 +60,7 @@ APIから取得したデータをメモリ上に保存(キャッシュ)するこ
 
 **上級者向け**。セキュリティとアーキテクチャの深い理解が必要です。
 
-1. **[サーバー実行向けユースケース](./use-case/webapp.md)**
+1. **[サーバー実行向けユースケース](./use-cases/webapp.md)**
     - Webアプリケーション開発のためのリソースマップ。高度なカスタマイズやセキュリティ設計について。
 2. **[モジュール別リファレンス](#module-reference)**
     - 各コンポーネントの詳細設計書へのリンクです。
@@ -69,15 +69,15 @@ APIから取得したデータをメモリ上に保存(キャッシュ)するこ
 
 ### 入門・ガイド
 
-- **[ユースケース (Use Cases)](./use-case/index.md)** - 実行場所とセキュリティの基礎
+- **[ユースケース (Use Cases)](./use-cases/index.md)** - 実行場所とセキュリティの基礎
 - **[Getting Started](./getting-started.md)** - 導入とチュートリアル
 - **[トラブルシューティング (FAQ)](./troubleshooting.md)** - よくあるエラーと対処法
 
 ### 実践レシピ
 
-- **[ローカル実行向けユースケース](./use-case/local.md)** - 分析・ツール開発ガイド
+- **[ローカル実行向けユースケース](./use-cases/local.md)** - 分析・ツール開発ガイド
 - **[Cookbook (逆引きレシピ集)](./cookbook.md)** - 実用コードスニペット集
-- **[サーバー実行向けユースケース](./use-case/webapp.md)** - WebApp開発リソースマップ
+- **[サーバー実行向けユースケース](./use-cases/webapp.md)** - WebApp開発リソースマップ
 
 ### 🧩 主な機能
 
@@ -155,9 +155,9 @@ Zodスキーマによる実行時のバリデーションを提供します。
 
 ## 🔗 リンク
 
-- [GitHub Repository](https://github.com/F88/promidas)
-- [ProtoPedia API Ver 2.0 Docs](https://protopediav2.docs.apiary.io/)
-- [PROMIDAS Demo (GitHub Pages)](https://f88.github.io/PROMIDAS-demo/)
+- [🛝 PROMIDAS Playground](https://f88.github.io/PROMIDAS-demo/) PROMIDAS を利用したデモサイト
+- [GitHub Repository](https://github.com/F88/promidas) PROMIDAS のGitHubリポジトリ
+- [ProtoPedia API Ver 2.0 Docs](https://protopediav2.docs.apiary.io/) ProtoPedia API Ver 2.0 の公式ドキュメント
 
 ## 📄 ライセンス
 

@@ -7,7 +7,7 @@ instructions-for-ais:
     - Prohibit updating title line (1st line) in this document.
 ---
 
-# 超初心者向けクイックスタート
+# 初心者向けクイックスタート
 
 **「Node.js って何？」「黒い画面（ターミナル）は怖い」という方のためのガイドです。**
 
@@ -34,7 +34,7 @@ PROMIDAS を動かすための「エンジン」である Node.js をインス�
     node -v
     ```
 
-3. `v20.10.0` のような数字が表示されれば成功です！
+3. `v22.0.0` のような数字が表示されれば成功です！
 
 ## ステップ 2: フォルダの作成
 
@@ -57,8 +57,9 @@ PROMIDAS をダウンロードして使えるようにします。
 **Windows/Mac 共通:**
 
 ```bash
-npm init -y
-npm install promidas dotenv
+npm init -y # package.json を作成
+npm pkg set type=module # ESモジュールを有効化
+npm install promidas dotenv # 必要なツールをインストール
 ```
 
 これだけで、必要なツールがすべて揃います。数分かかる場合があります。
@@ -152,11 +153,26 @@ node index.mjs
 
 ## 次は何をする？
 
-無事に動いたら、プログラムを少し書き換えてみましょう。
-**[Cookbook (逆引きレシピ集)](./cookbook.md)** には、コピペで使える便利なコードがたくさん載っています。
+無事に動いたら、次のステップに進みましょう。
+
+### TypeScript に挑戦する (推奨)
+
+PROMIDAS は **TypeScript** 環境での開発を推奨しています。
+
+TypeScript は、JavaScript に「型（データの種類）」の情報を加えた言語です。
+「数字を入れるはずの場所に文字を入れてしまった」といったミスを、実行する前に教えてくれます。
+また、AIアシスタント（GitHub Copilotなど）を使う際にも、型情報があることでより正確なコードを提案してくれるようになります。
+
+**[Getting Started](./getting-started.md)** では、TypeScript 環境のセットアップから解説しています。ぜひ次は、こちらに挑戦してみてください。
+
+👉 **[Getting Started へ移動する](./getting-started.md)**
+
+### もっとコードを書いてみる
+
+**[Cookbook (逆引きレシピ集)](./cookbook.md)** には、コピペで使える便利なコードがたくさん載っています。是非参考にして下さい。
 
 - 特定のタグ（M5Stackなど）の作品一覧を表示する
 - データをCSVファイルとして保存する
 - 人気ランキングを作る
 
-👉 **[Cookbook へ移動する](./cookbook.md)**
+👉 **[Cookbook (逆引きレシピ集) へ移動する](./cookbook.md)**
