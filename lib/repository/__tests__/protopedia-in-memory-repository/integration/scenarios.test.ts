@@ -144,7 +144,7 @@ describe('ProtopediaInMemoryRepositoryImpl - integration', () => {
         id: 12345,
         prototypeNm: 'Test Prototype',
         teamNm: 'Test Team',
-        users: 'user1|user2|user3',
+        users: 'user1@id1|user2@id2|user3@id3',
         mainUrl: 'https://example.com/proto',
         viewCount: 100,
         goodCount: 50,

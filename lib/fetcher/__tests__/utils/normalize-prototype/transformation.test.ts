@@ -108,7 +108,7 @@ describe('Transformation Consistency', () => {
     it('produces consistent results on multiple normalizations', () => {
       const upstream = createMinimalUpstream({
         tags: 'tag1|tag2|tag3',
-        users: 'user1|user2',
+        users: 'user1@id1|user2@id2',
         createDate: '2024-01-01 12:00:00.0',
       });
 

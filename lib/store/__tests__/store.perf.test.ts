@@ -33,7 +33,7 @@ const createPrototype = (id: number): NormalizedPrototype => ({
   id,
   prototypeNm: `Prototype ${id}`,
   teamNm: 'Team',
-  users: ['User'],
+  users: ['User@user'],
   summary: '',
   systemDescription: '',
   status: 1,

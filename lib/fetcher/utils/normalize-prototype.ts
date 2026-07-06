@@ -13,7 +13,10 @@ import type {
 import type { UpstreamPrototype } from '../types/prototype-api.types.js';
 
 import { normalizeProtoPediaTimestamp } from './normalize-protopedia-timestamp.js';
-import { splitPipeSeparatedString } from './string-parsers.js';
+import {
+  splitPipeSeparatedString,
+  splitPipeSeparatedUsers,
+} from './string-parsers.js';
 
 /**
  * Transform an upstream prototype object into the normalized shape.
@@ -22,9 +25,16 @@ import { splitPipeSeparatedString } from './string-parsers.js';
  * {@link NormalizedPrototype}, applying the following transformations:
  *
  * **Pipe-separated fields** (split into trimmed arrays):
- * - tags, users, awards, events, materials
+ * - tags, awards, events, materials
  * - Uses {@link splitPipeSeparatedString}
  * - Empty segments filtered out
+ * - null/undefined → empty array
+ *
+ * **Users field** (`users`):
+ * - Uses {@link splitPipeSeparatedUsers} (not the plain pipe splitter)
+ * - Each username is `displayName@profileId`, and a `displayName` may contain an
+ *   un-escaped `|`; the `@`-aware split keeps such a username whole (issue #112)
+ * - **Not trimmed** — whitespace is part of the display name
  * - null/undefined → empty array
  *
  * **Timestamp fields** (normalized to UTC ISO strings):
@@ -51,14 +61,14 @@ import { splitPipeSeparatedString } from './string-parsers.js';
  *   id: 123,
  *   prototypeNm: 'My Project',
  *   tags: 'IoT | AI | Robotics',
- *   users: 'user1|user2',
+ *   users: 'user1@id1|user2@id2',
  *   createDate: '2024-01-01 12:00:00.0',
  *   // ...other fields
  * };
  *
  * const normalized = normalizePrototype(upstream);
  * // normalized.tags => ['IoT', 'AI', 'Robotics']
- * // normalized.users => ['user1', 'user2']
+ * // normalized.users => ['user1@id1', 'user2@id2']
  * // normalized.createDate => '2024-01-01T03:00:00.000Z' (JST → UTC)
  * ```
  */
@@ -103,7 +113,7 @@ export function normalizePrototype(p: UpstreamPrototype): NormalizedPrototype {
     systemDescription: p.systemDescription ?? '' /* Default to empty string */,
 
     /** Users and Team */
-    users: splitPipeSeparatedString(p.users),
+    users: splitPipeSeparatedUsers(p.users),
     teamNm: p.teamNm ?? '' /* Default to empty string */,
 
     /** Tags, Materials, Events, and Awards */

@@ -152,7 +152,7 @@ describe('ProtopediaInMemoryRepositoryImpl - snapshot serialization', () => {
       it('creates deep copies of array fields', () => {
         const proto = makeNormalizedPrototype({
           id: 1,
-          users: 'user1|user2|user3',
+          users: 'user1@id1|user2@id2|user3@id3',
           tags: 'tag1|tag2',
           materials: 'mat1',
           events: 'event1|event2',
@@ -169,7 +169,11 @@ describe('ProtopediaInMemoryRepositoryImpl - snapshot serialization', () => {
         const serializedProto = snapshot.prototypes[0]!;
 
         // Verify arrays are copied
-        expect(serializedProto.users).toEqual(['user1', 'user2', 'user3']);
+        expect(serializedProto.users).toEqual([
+          'user1@id1',
+          'user2@id2',
+          'user3@id3',
+        ]);
         expect(serializedProto.tags).toEqual(['tag1', 'tag2']);
         expect(serializedProto.materials).toEqual(['mat1']);
         expect(serializedProto.events).toEqual(['event1', 'event2']);
@@ -548,7 +552,7 @@ describe('ProtopediaInMemoryRepositoryImpl - snapshot serialization', () => {
           mainUrl: 'https://example.com/main.jpg',
           officialLink: 'https://example.com',
           videoUrl: 'https://youtube.com/watch?v=test',
-          users: 'user1|user2|user3',
+          users: 'user1@id1|user2@id2|user3@id3',
           tags: 'tag1|tag2|tag3',
           materials: 'material1|material2',
           events: 'event1|event2',
@@ -990,7 +994,7 @@ describe('ProtopediaInMemoryRepositoryImpl - snapshot serialization', () => {
           mainUrl: 'https://example.com/main.jpg',
           officialLink: 'https://example.com',
           videoUrl: 'https://youtube.com/watch?v=test',
-          users: 'user1|user2|user3',
+          users: 'user1@id1|user2@id2|user3@id3',
           tags: 'tag1|tag2|tag3',
           materials: 'material1|material2',
           events: 'event1|event2',

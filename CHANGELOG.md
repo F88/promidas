@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+#### `lib/fetcher`
+
+- **`users` normalization**: a display name containing an un-escaped `|` no longer
+  splits one user into several. `normalizePrototype` now parses `users` with an
+  `@`-aware splitter that keeps each `displayName@profileId` whole and preserves
+  whitespace (#112).
+
+### Added
+
+#### `lib/fetcher`
+
+- `splitPipeSeparatedUsers` — `@`-aware splitter for the `users` field (#112).
+
 ## [3.0.0] - 2026-01-28
 
 ### BREAKING CHANGES
