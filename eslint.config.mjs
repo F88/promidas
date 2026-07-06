@@ -1,4 +1,4 @@
-import eslintPluginImport from 'eslint-plugin-import';
+import eslintPluginImportX from 'eslint-plugin-import-x';
 import eslintPluginTs from '@typescript-eslint/eslint-plugin';
 import eslintParserTs from '@typescript-eslint/parser';
 
@@ -28,7 +28,7 @@ export default [
     },
     plugins: {
       '@typescript-eslint': eslintPluginTs,
-      import: eslintPluginImport,
+      'import-x': eslintPluginImportX,
     },
     rules: {
       // General
@@ -39,7 +39,7 @@ export default [
       '@typescript-eslint/no-explicit-any': 'off',
 
       // Import ordering / hygiene
-      'import/order': [
+      'import-x/order': [
         'warn',
         {
           'newlines-between': 'always',

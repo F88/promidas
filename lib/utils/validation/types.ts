@@ -63,5 +63,4 @@ export type ValidationErrorCode = 'VALIDATION_ERROR';
  * ```
  */
 export type ValidationResult<T, TErrorCode extends string = string> =
-  | ValidationSuccess<T>
-  | ValidationFailure<TErrorCode>;
+  ValidationSuccess<T> | ValidationFailure<TErrorCode>;

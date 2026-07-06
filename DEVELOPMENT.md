@@ -261,6 +261,17 @@ All checks must pass for a PR to be merged.
 
 For more details on the CI configuration, refer to the [workflow file](.github/workflows/ci.yml).
 
+### Dependency Maintenance
+
+Dependencies are updated via [Renovate](https://docs.renovatebot.com/) (`renovate.json`). Renovate opens PRs and tracks pending updates in the "Dependency Dashboard" issue.
+
+- **`protopedia-api-v2-client` (peer dependency)**: update deliberately and keep the supported range accurate.
+- **devDependencies (patch / minor)**: backward compatible; merge once CI is green.
+- **Major updates**: may contain breaking changes. Evaluate on a branch by running `npm install` then `npm run typecheck`, `npm run build`, `npm test`, `npm run lint`. Merge only if green; otherwise fix or defer.
+- **TypeScript**: stays on the `5.x` line for now; `6.x` is deferred until the toolchain is ready.
+- **`@types/node`**: stays on the `24.x` line for now; newer majors are deferred.
+- **Keep dependency updates separate from releases.**
+
 ## Debugging
 
 ### VSCode Debugging Configuration

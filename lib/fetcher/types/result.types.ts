@@ -13,12 +13,7 @@ import type { NetworkFailure } from './prototype-api.types.js';
  * - unknown: Classification failed; fall back to code UNKNOWN
  */
 export type FetchFailureKind =
-  | 'http'
-  | 'cors'
-  | 'network'
-  | 'timeout'
-  | 'abort'
-  | 'unknown';
+  'http' | 'cors' | 'network' | 'timeout' | 'abort' | 'unknown';
 
 /**
  * Canonical error codes exposed by the fetcher.
@@ -83,8 +78,7 @@ export type FetchPrototypesFailure = {
  * Result type for fetchPrototypes function - either success with data or failure with error.
  */
 export type FetchPrototypesResult =
-  | FetchPrototypesSuccess
-  | FetchPrototypesFailure;
+  FetchPrototypesSuccess | FetchPrototypesFailure;
 
 /**
  * Successful response from fetchRandomPrototype containing a single prototype.
@@ -103,8 +97,7 @@ export type FetchRandomPrototypeFailure = FetchPrototypesFailure;
  * Result type for fetchRandomPrototype function - either success with single prototype or failure.
  */
 export type FetchRandomPrototypeResult =
-  | FetchRandomPrototypeSuccess
-  | FetchRandomPrototypeFailure;
+  FetchRandomPrototypeSuccess | FetchRandomPrototypeFailure;
 
 /**
  * Result type for fetchPrototypeById function - either success with single prototype or failure.

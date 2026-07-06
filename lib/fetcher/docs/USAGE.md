@@ -579,8 +579,7 @@ const client = new ProtopediaApiCustomClient({
 
 ```typescript
 type FetchPrototypesResult =
-    | { ok: true; data: NormalizedPrototype[] }
-    | FetchPrototypesFailure;
+    { ok: true; data: NormalizedPrototype[] } | FetchPrototypesFailure;
 
 type FetchPrototypesFailure = {
     ok: false;

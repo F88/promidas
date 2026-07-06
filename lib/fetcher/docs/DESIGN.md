@@ -180,8 +180,7 @@ export type ProtopediaApiCustomClientConfig = {
 
 ```typescript
 export type FetchPrototypesResult =
-    | { ok: true; data: NormalizedPrototype[] }
-    | FetchPrototypesFailure;
+    { ok: true; data: NormalizedPrototype[] } | FetchPrototypesFailure;
 
 type FetchPrototypesFailure = {
     ok: false;
