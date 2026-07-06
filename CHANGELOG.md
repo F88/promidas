@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.1] - 2026-07-06
+
 ### Fixed
 
 #### `lib/fetcher`
@@ -17,12 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   splits one user into several. `normalizePrototype` now parses `users` with an
   `@`-aware splitter that keeps each `displayName@profileId` whole and preserves
   whitespace (#112).
-
-### Added
-
-#### `lib/fetcher`
-
-- `splitPipeSeparatedUsers` — `@`-aware splitter for the `users` field (#112).
 
 ## [3.0.0] - 2026-01-28
 
