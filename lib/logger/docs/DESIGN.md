@@ -224,8 +224,7 @@ const createLogMethod = (
     currentLevel: LogLevel,
     targetLevel: LogLevel,
     consoleFn:
-        | ((message?: unknown, ...optionalParams: unknown[]) => void)
-        | undefined,
+        ((message?: unknown, ...optionalParams: unknown[]) => void) | undefined,
 ) => {
     return (message: string, meta?: unknown): void => {
         if (!shouldLog(currentLevel, targetLevel) || !consoleFn) {

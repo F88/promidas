@@ -7,10 +7,7 @@
  * - `unknown`: Classification failed or unexpected error
  */
 export type RepositoryFailureKind =
-  | 'validation'
-  | 'invalid_state'
-  | 'size_estimation'
-  | 'unknown';
+  'validation' | 'invalid_state' | 'size_estimation' | 'unknown';
 
 /**
  * Error codes for repository-originated failures.

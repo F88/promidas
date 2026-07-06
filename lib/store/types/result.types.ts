@@ -19,9 +19,7 @@ export type StoreFailureKind = 'storage_limit' | 'serialization' | 'unknown';
  * - `STORE_UNKNOWN`: Unexpected error from store
  */
 export type StoreErrorCode =
-  | 'STORE_CAPACITY_EXCEEDED'
-  | 'STORE_SERIALIZATION_FAILED'
-  | 'STORE_UNKNOWN';
+  'STORE_CAPACITY_EXCEEDED' | 'STORE_SERIALIZATION_FAILED' | 'STORE_UNKNOWN';
 
 /**
  * Successful result from setAll operation.

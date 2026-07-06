@@ -157,5 +157,4 @@ export type SnapshotOperationFailure =
  * ```
  */
 export type SnapshotOperationResult =
-  | SnapshotOperationSuccess
-  | SnapshotOperationFailure;
+  SnapshotOperationSuccess | SnapshotOperationFailure;

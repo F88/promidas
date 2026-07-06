@@ -144,13 +144,10 @@ export const createPromidasForLocal = (options?: {
 
 ```typescript
 type SnapshotOperationResult =
-    | { ok: true; stats: PrototypeInMemoryStats }
-    | SnapshotOperationFailure;
+    { ok: true; stats: PrototypeInMemoryStats } | SnapshotOperationFailure;
 
 type SnapshotOperationFailure =
-    | FetcherSnapshotFailure
-    | StoreSnapshotFailure
-    | UnknownSnapshotFailure;
+    FetcherSnapshotFailure | StoreSnapshotFailure | UnknownSnapshotFailure;
 
 type FetcherSnapshotFailure = {
     ok: false;
