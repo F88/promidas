@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+#### `lib/fetcher`
+
+- **`users` normalization**: fixed fragmentation of the `users` field when a maker's
+  display name contains an un-escaped `|` (#112). The ProtoPedia API joins usernames
+  (`displayName@profileId`) with `|` and does not escape a `|` inside a display name,
+  so the plain pipe splitter split one user into several (real data: prototype id
+  3571 `nisshi.dev | にっし@nishida24`). `normalizePrototype` now parses `users` with
+  a dedicated `@`-aware splitter that treats a `|` as a delimiter only after an `@`
+  has appeared in the current username, keeping such a username whole. Whitespace is
+  preserved verbatim (no trimming). The other pipe-separated fields (`tags`,
+  `materials`, `events`, `awards`) are unchanged.
+
+### Added
+
+#### `lib/fetcher`
+
+- `splitPipeSeparatedUsers` utility (exported from `lib/fetcher/utils`) — an
+  `@`-aware splitter for the `users` field (#112).
+
 ## [3.0.0] - 2026-01-28
 
 ### BREAKING CHANGES
