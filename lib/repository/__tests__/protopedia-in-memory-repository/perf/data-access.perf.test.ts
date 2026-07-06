@@ -46,7 +46,7 @@ const makePrototype = (
   summary: '',
   tags: '',
   teamNm: 'team',
-  users: 'user1|user2',
+  users: 'user1@id1|user2@id2',
   status: 1,
   releaseFlg: 1,
   revision: 1,

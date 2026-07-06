@@ -528,11 +528,14 @@ describe('Error Handling & Edge Cases', () => {
     });
 
     it('handles pipe-separated field with mixed empty and valid segments', () => {
+      // Uses `tags` (the plain pipe splitter). `users` intentionally differs: it
+      // uses the `@`-aware splitter, so this generic naive-split case does not
+      // apply to it (see fields.test.ts > users field).
       const upstream = createMinimalUpstream({
-        users: 'user1||  ||user2||  ||',
+        tags: 'tag1||  ||tag2||  ||',
       });
       const result = normalizePrototype(upstream);
-      expect(result.users).toEqual(['user1', 'user2']);
+      expect(result.tags).toEqual(['tag1', 'tag2']);
     });
 
     it('handles pipe-separated field with Unicode whitespace', () => {

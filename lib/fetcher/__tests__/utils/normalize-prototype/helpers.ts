@@ -53,7 +53,7 @@ export function createMinimalUpstream(
     summary: 'A test prototype',
     freeComment: 'A comment',
     systemDescription: 'A description',
-    users: 'user1|user2',
+    users: 'user1@id1|user2@id2',
     teamNm: 'Team Alpha',
     tags: 'IoT|AI',
     materials: 'material1',

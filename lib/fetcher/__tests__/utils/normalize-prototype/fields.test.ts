@@ -29,6 +29,10 @@ import { describe, expect, it } from 'vitest';
 
 import type { UpstreamPrototype } from '../../../types/prototype-api.types.js';
 import { normalizePrototype } from '../../../utils/normalize-prototype.js';
+import {
+  splitPipeSeparatedString,
+  splitPipeSeparatedUsers,
+} from '../../../utils/string-parsers.js';
 
 import { createMinimalUpstream } from './helpers.js';
 
@@ -546,10 +550,17 @@ describe('Field-focused testing', () => {
   });
 
   describe('users field', () => {
-    it('splits pipe-separated users', () => {
-      const upstream = createMinimalUpstream({ users: 'user1|user2|user3' });
+    // `users` uses the `@`-aware splitter (splitPipeSeparatedUsers), not the plain
+    // pipe splitter: each username is `displayName@profileId`, whitespace is kept,
+    // and a `|` inside a display name does not split the username (issue #112).
+    // Exhaustive splitter behavior is covered in string-parsers.test.ts; these
+    // tests verify normalizePrototype delegates to it.
+    it('splits pipe-separated usernames (displayName@profileId)', () => {
+      const upstream = createMinimalUpstream({
+        users: 'user1@id1|user2@id2|user3@id3',
+      });
       const result = normalizePrototype(upstream);
-      expect(result.users).toEqual(['user1', 'user2', 'user3']);
+      expect(result.users).toEqual(['user1@id1', 'user2@id2', 'user3@id3']);
     });
 
     it('returns empty array when users is empty string', () => {
@@ -565,77 +576,57 @@ describe('Field-focused testing', () => {
       expect(result.users).toEqual([]);
     });
 
-    it('trims whitespace from segments', () => {
-      const upstream = createMinimalUpstream({ users: ' user1 | user2 ' });
+    it('keeps a display name containing "|" as one username (issue #112)', () => {
+      const upstream = createMinimalUpstream({
+        users: 'nisshi.dev | にっし@nishida24|もちゃ@mochagram',
+      });
       const result = normalizePrototype(upstream);
-      expect(result.users).toEqual(['user1', 'user2']);
+      expect(result.users).toEqual([
+        'nisshi.dev | にっし@nishida24',
+        'もちゃ@mochagram',
+      ]);
     });
 
-    it('filters empty segments', () => {
-      const upstream = createMinimalUpstream({ users: 'user1||user2' });
-      const result = normalizePrototype(upstream);
-      expect(result.users).toEqual(['user1', 'user2']);
+    it('uses splitPipeSeparatedUsers, not the plain pipe splitter', () => {
+      // An input where the two splitters diverge (display name contains `|`):
+      // the result must match splitPipeSeparatedUsers and NOT the naive splitter.
+      const users = 'nisshi.dev | にっし@nishida24|もちゃ@mochagram';
+      const result = normalizePrototype(createMinimalUpstream({ users }));
+      expect(result.users).toEqual(splitPipeSeparatedUsers(users));
+      expect(result.users).not.toEqual(splitPipeSeparatedString(users));
     });
 
-    it('handles consecutive pipes correctly', () => {
-      const upstream = createMinimalUpstream({ users: 'user1|||user2' });
+    it('does not trim whitespace (it is part of the display name)', () => {
+      const upstream = createMinimalUpstream({ users: ' とりさん@torisan' });
       const result = normalizePrototype(upstream);
-      expect(result.users).toEqual(['user1', 'user2']);
+      expect(result.users).toEqual([' とりさん@torisan']);
     });
 
-    it('handles leading pipes', () => {
-      const upstream = createMinimalUpstream({ users: '|user1|user2' });
+    it('handles a single username', () => {
+      const upstream = createMinimalUpstream({ users: '@yuukankin' });
       const result = normalizePrototype(upstream);
-      expect(result.users).toEqual(['user1', 'user2']);
-    });
-
-    it('handles trailing pipes', () => {
-      const upstream = createMinimalUpstream({ users: 'user1|user2|' });
-      const result = normalizePrototype(upstream);
-      expect(result.users).toEqual(['user1', 'user2']);
-    });
-
-    it('handles only pipes (returns empty array)', () => {
-      const upstream = createMinimalUpstream({ users: '|||' });
-      const result = normalizePrototype(upstream);
-      expect(result.users).toEqual([]);
-    });
-
-    it('handles whitespace-only segments', () => {
-      const upstream = createMinimalUpstream({ users: 'user1| |user2' });
-      const result = normalizePrototype(upstream);
-      expect(result.users).toEqual(['user1', 'user2']);
-    });
-
-    it('handles single item without pipes', () => {
-      const upstream = createMinimalUpstream({ users: 'single-user' });
-      const result = normalizePrototype(upstream);
-      expect(result.users).toEqual(['single-user']);
+      expect(result.users).toEqual(['@yuukankin']);
     });
 
     describe('MEDIUM: Special characters and Unicode', () => {
-      it('handles special characters in segments', () => {
+      it('keeps an empty display name (@profileId) and Unicode display names', () => {
         const upstream = createMinimalUpstream({
-          users: 'user-1|user_2|user@3',
+          users: '@user_1|🚀 Rocket@rocket|AI 人工知能@ai',
         });
         const result = normalizePrototype(upstream);
-        expect(result.users).toEqual(['user-1', 'user_2', 'user@3']);
+        expect(result.users).toEqual([
+          '@user_1',
+          '🚀 Rocket@rocket',
+          'AI 人工知能@ai',
+        ]);
       });
 
-      it('handles Unicode and emoji in segments', () => {
+      it('keeps a display name with @ (multi-@) as one username', () => {
         const upstream = createMinimalUpstream({
-          users: '🚀 Rocket|AI 人工知能',
+          users: 'げんろく@Karakuri-Musha@genroku',
         });
         const result = normalizePrototype(upstream);
-        expect(result.users).toEqual(['🚀 Rocket', 'AI 人工知能']);
-      });
-
-      it('handles segments with internal spaces', () => {
-        const upstream = createMinimalUpstream({
-          users: 'John Doe|Jane Smith',
-        });
-        const result = normalizePrototype(upstream);
-        expect(result.users).toEqual(['John Doe', 'Jane Smith']);
+        expect(result.users).toEqual(['げんろく@Karakuri-Musha@genroku']);
       });
     });
   });

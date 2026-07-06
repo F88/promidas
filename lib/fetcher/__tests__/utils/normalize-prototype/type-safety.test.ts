@@ -260,7 +260,7 @@ describe('Type Safety & Contract Testing', () => {
 
   describe('Array element type validation', () => {
     it('ensures all users array elements are strings', () => {
-      const upstream = createMinimalUpstream({ users: 'alice|bob|charlie' });
+      const upstream = createMinimalUpstream({ users: 'alice@a|bob@b|charlie@c' });
       const result = normalizePrototype(upstream);
       expect(result.users.every((user) => typeof user === 'string')).toBe(true);
     });
@@ -590,7 +590,7 @@ describe('Type Safety & Contract Testing', () => {
 
     it('does not modify pipe-separated fields in input', () => {
       const upstream = createMinimalUpstream({
-        users: 'alice|bob|charlie',
+        users: 'alice@a|bob@b|charlie@c',
         tags: 'IoT|AI',
       });
       const originalUsers = upstream.users;

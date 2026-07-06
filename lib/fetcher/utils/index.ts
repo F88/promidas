@@ -4,7 +4,10 @@
  * Utility functions for ProtoPedia API data processing.
  */
 
-export { splitPipeSeparatedString } from './string-parsers.js';
+export {
+  splitPipeSeparatedString,
+  splitPipeSeparatedUsers,
+} from './string-parsers.js';
 
 export { normalizePrototype } from './normalize-prototype.js';
 export type { UpstreamPrototype } from '../types/prototype-api.types.js';
