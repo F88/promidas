@@ -260,7 +260,9 @@ describe('Type Safety & Contract Testing', () => {
 
   describe('Array element type validation', () => {
     it('ensures all users array elements are strings', () => {
-      const upstream = createMinimalUpstream({ users: 'alice@a|bob@b|charlie@c' });
+      const upstream = createMinimalUpstream({
+        users: 'alice@a|bob@b|charlie@c',
+      });
       const result = normalizePrototype(upstream);
       expect(result.users.every((user) => typeof user === 'string')).toBe(true);
     });

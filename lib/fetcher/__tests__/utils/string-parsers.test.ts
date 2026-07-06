@@ -306,7 +306,10 @@ describe('splitPipeSeparatedUsers', () => {
     it('keeps a trailing no-@ unit as its own element', () => {
       // The | after "aaa@xxx" is a delimiter (@ already seen); the trailing "xxx"
       // never gets an @, so it is kept as-is rather than dropped or merged back.
-      expect(splitPipeSeparatedUsers('aaa@xxx|xxx')).toEqual(['aaa@xxx', 'xxx']);
+      expect(splitPipeSeparatedUsers('aaa@xxx|xxx')).toEqual([
+        'aaa@xxx',
+        'xxx',
+      ]);
     });
 
     it('treats a leading no-@ fragment before the first @ as display (Case A)', () => {
