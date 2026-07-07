@@ -18,7 +18,9 @@ instructions-for-ais:
 
 This document describes the release procedures for package maintainers.
 
-**Package Distribution:** This package is published to [npmjs.com](https://www.npmjs.com/package/promidas) (`promidas`). Releases are automatically published when a GitHub Release is created.
+**Package Distribution:** This package is published to [npmjs.com](https://www.npmjs.com/package/promidas) (`promidas`).
+
+Releases are automatically published when a GitHub Release is created.
 
 **Audience:** This document is for package maintainers only. Contributors should refer to [CONTRIBUTING.md](./CONTRIBUTING.md) for PR guidelines.
 
@@ -48,15 +50,7 @@ npm run test:exports
 
 Ensure there are no export validation errors. See [DEVELOPMENT.md](./DEVELOPMENT.md#subpath-exports-validation) for details.
 
-#### c. Run Performance Tests
-
-```bash
-npm run test:perf
-```
-
-Ensure there are no performance regressions. See [DEVELOPMENT.md](./DEVELOPMENT.md#performance-tests) for requirements.
-
-#### d. Code Quality Checks
+#### c. Code Quality Checks
 
 ```bash
 # Linter
@@ -71,13 +65,21 @@ npm run typecheck
 
 Ensure all checks pass.
 
-#### e. Verify Build
+#### d. Verify Build
 
 ```bash
 npm run build
 ```
 
 Ensure there are no build errors.
+
+#### e. Run Performance Tests
+
+```bash
+npm run test:perf
+```
+
+Ensure there are no performance regressions. See [DEVELOPMENT.md](./DEVELOPMENT.md#performance-tests) for requirements.
 
 ### 2. Version Update
 
@@ -92,12 +94,12 @@ Update the version following Semantic Versioning:
 #### Method A: Using npm version (Recommended)
 
 ```bash
-# Update version automatically
+# Update version
 npm version patch --no-git-tag-version  # or minor, major
-# This updates package.json and package-lock.json
 
-# Ensure package-lock.json is synchronized
-npm install
+# Regenerate lib/version.ts from the new version, then run tests
+npm run build
+npm test
 ```
 
 Proceed to Step 3.
@@ -124,31 +126,11 @@ Proceed to Step 3.
 
 Document the changes in `CHANGELOG.md`:
 
-```markdown
-## [0.6.0] - 2025-12-12
-
-### Added
-
-- Description of new features
-
-### Changed
-
-- Description of changes
-
-### Fixed
-
-- Description of bug fixes
-
-### Breaking Changes
-
-- Description of breaking changes (if any)
-```
-
 ### 4. Commit and Create Tag
 
 ```bash
-# Commit changes (package.json, package-lock.json, CHANGELOG.md)
-git add package.json package-lock.json CHANGELOG.md
+# Commit changes (include the regenerated lib/version.ts)
+git add package.json package-lock.json CHANGELOG.md lib/version.ts
 git commit -m "chore(release): x.y.z"
 
 # Create tag (signed, using .npmrc configuration)
@@ -175,6 +157,9 @@ git push origin vx.y.z
 
 No manual `npm publish` is required.
 
+> Trusted Publishing requires npm 11.5.1 or later, which the workflow provisions.
+> The legacy `publish-package-to-github-packages.yml` workflow is disabled.
+
 ## Troubleshooting
 
 ### Release Workflow Failed
@@ -184,7 +169,7 @@ If the GitHub Actions workflow fails:
 1. Check the workflow run logs in the "Actions" tab
 2. Verify `package.json` version matches the release tag
 3. Ensure all CI checks passed before creating the release
-4. Check npmjs.com authentication and NPM_TOKEN secret
+4. Verify the Trusted Publishing configuration on npmjs (the package's trusted publisher must reference this repository and the `publish-package-to-npmjs.yml` workflow)
 
 ### Tag Already Exists
 
