@@ -29,9 +29,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   upstream List Prototypes response envelope (`metadata`, `count`, `links` -
   everything except `results`) at debug level right after the API call, so
   the reported `count` can be cross-checked against the number of items
-  actually received. The envelope is a few hundred bytes and is logged even
-  when `results` is absent; `results` itself is excluded because it can be
-  megabytes in size (#127).
+  actually received. The log payload is `{ envelope, params }` - upstream
+  fields stay nested under `envelope`, separate from the local request
+  `params`, so their origin is unambiguous and future upstream fields
+  cannot collide with local keys. The envelope is a few hundred bytes and
+  is logged even when `results` is absent; `results` itself is excluded
+  because it can be megabytes in size (#127).
 
 ## [3.0.1] - 2026-07-06
 
