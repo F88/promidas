@@ -157,9 +157,11 @@ describe('ProtopediaApiCustomClient - Methods - fetchPrototypes', () => {
       expect(mockLogger.debug).toHaveBeenCalledWith(
         'Upstream API response envelope.',
         {
-          metadata: { detail: 'OK', title: 'OK', status: 200 },
-          count: 1,
-          links: { self: 'https://example.com/api/prototype/list' },
+          envelope: {
+            metadata: { detail: 'OK', title: 'OK', status: 200 },
+            count: 1,
+            links: { self: 'https://example.com/api/prototype/list' },
+          },
           params,
         },
       );
@@ -184,6 +186,8 @@ describe('ProtopediaApiCustomClient - Methods - fetchPrototypes', () => {
       );
       expect(envelopeCall).toBeDefined();
       expect(envelopeCall![1]).not.toHaveProperty('results');
+      expect(envelopeCall![1]).not.toHaveProperty('envelope.results');
+      expect(envelopeCall![1]).toHaveProperty('envelope.count', 2);
     });
 
     it('logs the envelope even when results is absent', async () => {
@@ -203,8 +207,10 @@ describe('ProtopediaApiCustomClient - Methods - fetchPrototypes', () => {
       expect(mockLogger.debug).toHaveBeenCalledWith(
         'Upstream API response envelope.',
         {
-          metadata: { detail: 'OK', title: 'OK', status: 200 },
-          count: 0,
+          envelope: {
+            metadata: { detail: 'OK', title: 'OK', status: 200 },
+            count: 0,
+          },
           params,
         },
       );

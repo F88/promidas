@@ -235,9 +235,11 @@ export class ProtopediaApiCustomClient {
       // diagnostics. The envelope is a few hundred bytes regardless of the
       // query; `results` is excluded because it can be megabytes in size.
       // Rest-spread so future envelope fields are logged automatically.
+      // Kept under its own key so upstream fields can never collide with
+      // (or be mistaken for) the local `params`.
       const { results, ...envelope } = upstream;
       this.#logger.debug('Upstream API response envelope.', {
-        ...envelope,
+        envelope,
         params,
       });
 
