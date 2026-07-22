@@ -234,7 +234,9 @@ const client = new ProtopediaApiCustomClient({
                 } else {
                     // Error body transfer finished (e.g. 401 JSON payload);
                     // let the caller's error handling report the failure
-                    console.log(`\nTransfer finished with HTTP ${event.status}`);
+                    console.log(
+                        `\nTransfer finished with HTTP ${event.status}`,
+                    );
                 }
                 break;
             case 'error':
