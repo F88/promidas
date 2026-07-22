@@ -25,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Not breaking for normal callback consumers: receiving events is
       unaffected. Only code that constructs `FetchProgressEvent` objects
       itself (e.g. mocks in tests) must now supply `status`.
+- **Response envelope logging**: `ProtopediaApiCustomClient` now logs the
+  upstream response envelope (everything except the potentially huge
+  `results`) at debug level as `{ envelope, params }`, so the upstream
+  `count` can be cross-checked against the items actually received - even
+  when `results` is absent (#127).
 
 ## [3.0.1] - 2026-07-06
 

@@ -138,6 +138,85 @@ describe('ProtopediaApiCustomClient - Methods - fetchPrototypes', () => {
     expect(clientInstance.listPrototypes).toHaveBeenCalledTimes(2);
   });
 
+  describe('response envelope logging', () => {
+    it('logs the envelope (non-results fields) at debug level', async () => {
+      const clientInstance = {
+        listPrototypes: vi.fn().mockResolvedValue({
+          metadata: { detail: 'OK', title: 'OK', status: 200 },
+          count: 1,
+          links: { self: 'https://example.com/api/prototype/list' },
+          results: [{ id: 1, prototypeNm: 'p1' }],
+        }),
+      };
+      createProtoPediaClientMock.mockReturnValue(clientInstance);
+
+      const client = new ProtopediaApiCustomClient({ logger: mockLogger });
+      const params = { offset: 0, limit: 10 };
+      await client.fetchPrototypes(params);
+
+      expect(mockLogger.debug).toHaveBeenCalledWith(
+        'Upstream API response envelope.',
+        {
+          envelope: {
+            metadata: { detail: 'OK', title: 'OK', status: 200 },
+            count: 1,
+            links: { self: 'https://example.com/api/prototype/list' },
+          },
+          params,
+        },
+      );
+    });
+
+    it('does not include results in the envelope log', async () => {
+      const clientInstance = {
+        listPrototypes: vi.fn().mockResolvedValue({
+          count: 2,
+          results: [{ id: 1 }, { id: 2 }],
+        }),
+      };
+      createProtoPediaClientMock.mockReturnValue(clientInstance);
+
+      const client = new ProtopediaApiCustomClient({ logger: mockLogger });
+      await client.fetchPrototypes({ offset: 0, limit: 10 });
+
+      const envelopeCall = (
+        mockLogger.debug as ReturnType<typeof vi.fn>
+      ).mock.calls.find(
+        (call) => call[0] === 'Upstream API response envelope.',
+      );
+      expect(envelopeCall).toBeDefined();
+      expect(envelopeCall![1]).not.toHaveProperty('results');
+      expect(envelopeCall![1]).not.toHaveProperty('envelope.results');
+      expect(envelopeCall![1]).toHaveProperty('envelope.count', 2);
+    });
+
+    it('logs the envelope even when results is absent', async () => {
+      const clientInstance = {
+        listPrototypes: vi.fn().mockResolvedValue({
+          metadata: { detail: 'OK', title: 'OK', status: 200 },
+          count: 0,
+        }),
+      };
+      createProtoPediaClientMock.mockReturnValue(clientInstance);
+
+      const client = new ProtopediaApiCustomClient({ logger: mockLogger });
+      const params = { offset: 0, limit: 10 };
+      const result = await client.fetchPrototypes(params);
+
+      expect(result.ok).toBe(true);
+      expect(mockLogger.debug).toHaveBeenCalledWith(
+        'Upstream API response envelope.',
+        {
+          envelope: {
+            metadata: { detail: 'OK', title: 'OK', status: 200 },
+            count: 0,
+          },
+          params,
+        },
+      );
+    });
+  });
+
   describe('error handling / logging', () => {
     it('logs with warn for client errors (4xx status)', async () => {
       // Create a plain object that matches ProtoPediaApiError structure
