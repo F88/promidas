@@ -197,7 +197,9 @@ function estimateTotalSize(url: string): {
  *         break;
  *       case 'complete':
  *         progressBar?.complete();
- *         console.log(`Downloaded ${event.received} bytes in ${event.totalTimeMs}ms`);
+ *         if (event.status >= 200 && event.status < 300) {
+ *           console.log(`Downloaded ${event.received} bytes in ${event.totalTimeMs}ms`);
+ *         }
  *         break;
  *     }
  *   },
@@ -261,6 +263,7 @@ export function createFetchWithProgress(
     }
     onProgressEvent?.({
       type: 'response-received',
+      status: response.status,
       prepareTimeMs,
       estimatedTotal: total,
       limit: estimatedItemCount,
@@ -285,6 +288,7 @@ export function createFetchWithProgress(
 
       onProgressEvent?.({
         type: 'complete',
+        status: response.status,
         received: 0,
         estimatedTotal: total,
         downloadTimeMs: 0,
@@ -326,6 +330,7 @@ export function createFetchWithProgress(
               // Fire complete event
               onProgressEvent?.({
                 type: 'complete',
+                status: response.status,
                 received,
                 estimatedTotal: total,
                 downloadTimeMs: bodyElapsedMs,
@@ -363,6 +368,7 @@ export function createFetchWithProgress(
               // Fire download-progress event
               onProgressEvent?.({
                 type: 'download-progress',
+                status: response.status,
                 received,
                 total,
                 percentage,
@@ -395,6 +401,7 @@ export function createFetchWithProgress(
           // Fire error event
           onProgressEvent?.({
             type: 'error',
+            status: response.status,
             error: errorMessage,
             received,
             estimatedTotal: total,
