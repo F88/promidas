@@ -1,6 +1,6 @@
 {
   "name": "promidas",
-  "version": "3.0.1",
+  "version": "3.1.0",
   "description": "Toolset library for ProtoPedia API providing independent store and fetcher components, and high-level repository.",
   "engines": {
     "node": ">=22"
