@@ -94,6 +94,7 @@ onProgressEvent?.({ type: 'request-start' });
 // 2. response-received: Fired when headers are received
 onProgressEvent?.({
     type: 'response-received',
+    status: number, // HTTP status code (also fires for 4xx/5xx)
     prepareTimeMs: number, // Time from request start to headers
     estimatedTotal: number, // Estimated download size
     limit: number, // From URL parameter
@@ -102,23 +103,27 @@ onProgressEvent?.({
 // 3. download-progress: Fired periodically during body download (throttled to 500ms)
 onProgressEvent?.({
     type: 'download-progress',
+    status: number, // HTTP status code
     received: number,
     total: number,
     percentage: number,
 });
 
-// 4. complete: Fired when download finishes successfully
+// 4. complete: Fired when the body transfer finishes
+//    (fact report - fires for 4xx/5xx error bodies too; check status)
 onProgressEvent?.({
     type: 'complete',
+    status: number, // HTTP status code
     received: number,
     estimatedTotal: number,
     downloadTimeMs: number, // Body download time
     totalTimeMs: number, // Request start to complete
 });
 
-// 5. error: Fired when stream reading fails
+// 5. error: Fired when stream reading fails (regardless of HTTP status)
 onProgressEvent?.({
     type: 'error',
+    status: number, // HTTP status code of the response being read
     error: string, // Error message
     received: number, // Bytes received before error
     estimatedTotal: number,

@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+#### `lib/fetcher`
+
+- **Progress events**: `FetchProgressEvent` variants emitted after response
+  headers arrive (`response-received`, `download-progress`, `complete`,
+  `error`) now carry a required readonly `status` field with the HTTP status
+  code. Real-time consumers can now distinguish a completed transfer of an
+  error body (e.g. a 97-byte 401 JSON payload) from a successful fetch,
+  instead of reporting "download complete" for error responses (#126).
+    - `complete` remains a fact report ("the body transfer finished") and
+      fires for 4xx/5xx as well, mirroring WHATWG `fetch` semantics; check
+      `status` before presenting it as a success.
+    - Not breaking for normal callback consumers: receiving events is
+      unaffected. Only code that constructs `FetchProgressEvent` objects
+      itself (e.g. mocks in tests) must now supply `status`.
+
 ## [3.0.1] - 2026-07-06
 
 ### Fixed

@@ -130,6 +130,7 @@ describe('createFetchWithProgress', () => {
       expect(responseReceivedEvent).toBeDefined();
       expect(responseReceivedEvent![0]).toMatchObject({
         type: 'response-received',
+        status: 200,
         prepareTimeMs: expect.any(Number),
         estimatedTotal: expect.any(Number),
         limit: 100,
@@ -166,6 +167,7 @@ describe('createFetchWithProgress', () => {
       expect(completeEvent).toBeDefined();
       expect(completeEvent![0]).toMatchObject({
         type: 'complete',
+        status: 200,
         received: 4,
         estimatedTotal: expect.any(Number),
         downloadTimeMs: expect.any(Number),
@@ -240,11 +242,72 @@ describe('createFetchWithProgress', () => {
       expect(completeEvent).toBeDefined();
       expect(completeEvent![0]).toMatchObject({
         type: 'complete',
+        status: 204,
         received: 0,
         estimatedTotal: expect.any(Number),
         downloadTimeMs: 0,
         totalTimeMs: expect.any(Number),
       });
+    });
+
+    it('carries HTTP status on events for error responses (4xx)', async () => {
+      const logger = createConsoleLogger();
+      const events: FetchProgressEvent[] = [];
+      const onProgressEvent = vi.fn((event) => {
+        events.push(event);
+      });
+
+      const customFetch = createFetchWithProgress({
+        logger,
+        enableProgressLog: false,
+        onProgressEvent,
+      });
+
+      // Simulate a 401 error JSON body without Content-Length,
+      // as returned by the ProtoPedia API for an invalid token
+      const errorBody = JSON.stringify({ code: 'CLIENT_UNAUTHORIZED' });
+      const mockResponse = new Response(errorBody, {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
+      const response = await customFetch(
+        'https://api.example.com/data?limit=10000',
+      );
+      await response.text();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // The body transfer completes, so 'complete' (not 'error') fires,
+      // but consumers can now detect the failure via status
+      const responseReceivedEvent = events.find(
+        (e) => e.type === 'response-received',
+      );
+      expect(responseReceivedEvent).toBeDefined();
+      expect(responseReceivedEvent).toMatchObject({
+        type: 'response-received',
+        status: 401,
+      });
+
+      const downloadProgressEvent = events.find(
+        (e) => e.type === 'download-progress',
+      );
+      expect(downloadProgressEvent).toBeDefined();
+      expect(downloadProgressEvent).toMatchObject({
+        type: 'download-progress',
+        status: 401,
+      });
+
+      const completeEvent = events.find((e) => e.type === 'complete');
+      expect(completeEvent).toBeDefined();
+      expect(completeEvent).toMatchObject({
+        type: 'complete',
+        status: 401,
+        received: errorBody.length,
+      });
+
+      expect(events.some((e) => e.type === 'error')).toBe(false);
     });
   });
 
@@ -707,6 +770,7 @@ describe('createFetchWithProgress', () => {
       expect(errorEvents).toHaveLength(1);
       expect(errorEvents[0]).toMatchObject({
         type: 'error',
+        status: 200,
         error: 'Stream read error',
         received: 3,
         estimatedTotal: 100,
@@ -762,6 +826,7 @@ describe('createFetchWithProgress', () => {
       expect(errorEvents).toHaveLength(1);
       expect(errorEvents[0]).toMatchObject({
         type: 'error',
+        status: 200,
         error: 'Non-Error value thrown',
         received: 3,
         estimatedTotal: 100,
@@ -827,6 +892,7 @@ describe('createFetchWithProgress', () => {
       expect(errorEvents).toHaveLength(1);
       expect(errorEvents[0]).toMatchObject({
         type: 'error',
+        status: 200,
         error: 'Stream read error',
         received: 3,
         estimatedTotal: 100,

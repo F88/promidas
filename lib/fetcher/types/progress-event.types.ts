@@ -42,6 +42,14 @@ export type FetchProgressRequestStartEvent = {
 export type FetchProgressResponseReceivedEvent = {
   readonly type: 'response-received';
   /**
+   * HTTP status code of the response (e.g., 200, 401, 404).
+   *
+   * This event fires for any response whose headers arrived, including
+   * 4xx/5xx errors. Consumers should check this value before presenting
+   * the download as a successful fetch.
+   */
+  readonly status: number;
+  /**
    * Time spent from request start to header reception (milliseconds).
    */
   readonly prepareTimeMs: number;
@@ -74,6 +82,13 @@ export type FetchProgressResponseReceivedEvent = {
 export type FetchProgressDownloadProgressEvent = {
   readonly type: 'download-progress';
   /**
+   * HTTP status code of the response being downloaded (e.g., 200, 401).
+   *
+   * Progress events fire for 4xx/5xx error bodies too; consumers can
+   * use this to adjust or suppress progress display for error responses.
+   */
+  readonly status: number;
+  /**
    * Number of bytes received so far.
    */
   readonly received: number;
@@ -90,22 +105,36 @@ export type FetchProgressDownloadProgressEvent = {
 };
 
 /**
- * Event fired when download completes successfully.
+ * Event fired when the response body transfer finishes.
  *
- * This event marks the successful completion of the entire request lifecycle,
- * including both preparation and download phases.
+ * `complete` is a fact report: the response body transfer finished.
+ * It makes no claim about HTTP success - mirroring WHATWG `fetch`,
+ * which resolves on 401/404 and rejects only on transport failures,
+ * this event also fires after draining the body of a 4xx/5xx error
+ * response. Check `status` before presenting it as a success.
  *
  * @example
  * ```typescript
  * if (event.type === 'complete') {
- *   console.log(`Downloaded ${event.received} bytes`);
- *   console.log(`Total time: ${event.totalTimeMs}ms`);
- *   console.log(`Download time: ${event.downloadTimeMs}ms`);
+ *   if (event.status >= 200 && event.status < 300) {
+ *     console.log(`Downloaded ${event.received} bytes`);
+ *     console.log(`Total time: ${event.totalTimeMs}ms`);
+ *   } else {
+ *     // e.g., the body was an error payload; let the caller's
+ *     // error handling speak instead of reporting success
+ *   }
  * }
  * ```
  */
 export type FetchProgressCompleteEvent = {
   readonly type: 'complete';
+  /**
+   * HTTP status code of the response (e.g., 200, 401, 404).
+   *
+   * `complete` means the transfer finished, not that the request
+   * succeeded - check this value to distinguish the two.
+   */
+  readonly status: number;
   /**
    * Total number of bytes actually received.
    */
@@ -129,8 +158,14 @@ export type FetchProgressCompleteEvent = {
  * Event fired when an error occurs during stream reading.
  *
  * This event is emitted when an error is thrown while reading the
- * response body stream, such as network errors, timeout errors,
- * or authentication failures (e.g., 401 Unauthorized).
+ * response body stream, such as network errors or timeout errors.
+ *
+ * Note: a non-2xx HTTP status alone does NOT fire this event. When an
+ * error body (4xx/5xx) is transferred to the end, `complete` fires;
+ * check `status` on that event to detect it. This event fires only
+ * when reading the body stream fails, regardless of the HTTP status -
+ * so `status` here may be any value (e.g., a 200 or 401 response whose
+ * body was cut off mid-transfer).
  *
  * @example
  * ```typescript
@@ -143,6 +178,14 @@ export type FetchProgressCompleteEvent = {
  */
 export type FetchProgressErrorEvent = {
   readonly type: 'error';
+  /**
+   * HTTP status code of the response whose body was being read.
+   *
+   * Always available: this event only fires after response headers
+   * have arrived (pre-response failures such as DNS errors reject
+   * the fetch call itself and emit no events after `request-start`).
+   */
+  readonly status: number;
   /**
    * Error message describing what went wrong.
    */
@@ -179,13 +222,18 @@ export type FetchProgressErrorEvent = {
  * 1. `request-start` → Request initiated
  * 2. `response-received` → Headers received
  * 3. `download-progress` (multiple, throttled) → Body streaming
- * 4. `complete` → Download finished successfully
+ * 4. `complete` → Body transfer finished
+ *
+ * **HTTP error flow (4xx/5xx):** same as the success flow. The error
+ * body is still a body, so its transfer ends with `complete`, not
+ * `error`. Check `status` on `response-received` / `complete` to
+ * distinguish this case.
  *
  * **Error flow (stream reading failure):**
  * 1. `request-start` → Request initiated
  * 2. `response-received` → Headers received
  * 3. `download-progress` (optional) → Partial data received
- * 4. `error` → Stream reading failed (e.g., network error, auth failure)
+ * 4. `error` → Stream reading failed (e.g., network error)
  *
  * Note: `download-progress` events may occur before `error` if some chunks
  * were successfully read before the failure.
