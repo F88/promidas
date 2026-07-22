@@ -160,10 +160,12 @@ export type FetchProgressCompleteEvent = {
  * This event is emitted when an error is thrown while reading the
  * response body stream, such as network errors or timeout errors.
  *
- * Note: HTTP error responses (4xx/5xx) do NOT fire this event. Their
- * body transfer completes normally, so they fire `complete` instead;
- * check `status` on that event to detect them. This event is reserved
- * for transport-level failures.
+ * Note: a non-2xx HTTP status alone does NOT fire this event. When an
+ * error body (4xx/5xx) is transferred to the end, `complete` fires;
+ * check `status` on that event to detect it. This event fires only
+ * when reading the body stream fails, regardless of the HTTP status -
+ * so `status` here may be any value (e.g., a 200 or 401 response whose
+ * body was cut off mid-transfer).
  *
  * @example
  * ```typescript
@@ -181,7 +183,7 @@ export type FetchProgressErrorEvent = {
    *
    * Always available: this event only fires after response headers
    * have arrived (pre-response failures such as DNS errors reject
-   * the fetch call itself and emit no event).
+   * the fetch call itself and emit no events after `request-start`).
    */
   readonly status: number;
   /**

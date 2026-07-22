@@ -227,9 +227,15 @@ const client = new ProtopediaApiCustomClient({
                 );
                 break;
             case 'complete':
-                console.log(
-                    `\nComplete: ${event.received} bytes in ${event.downloadTimeMs}ms (total: ${event.totalTimeMs}ms)`,
-                );
+                if (event.status >= 200 && event.status < 300) {
+                    console.log(
+                        `\nComplete: ${event.received} bytes in ${event.downloadTimeMs}ms (total: ${event.totalTimeMs}ms)`,
+                    );
+                } else {
+                    // Error body transfer finished (e.g. 401 JSON payload);
+                    // let the caller's error handling report the failure
+                    console.log(`\nTransfer finished with HTTP ${event.status}`);
+                }
                 break;
             case 'error':
                 console.error(
@@ -255,24 +261,30 @@ type FetchProgressEvent =
     | FetchProgressRequestStartEvent // Fired when fetch() is called
     | FetchProgressResponseReceivedEvent // Fired when headers are received
     | FetchProgressDownloadProgressEvent // Fired during body download (throttled to 500ms)
-    | FetchProgressCompleteEvent // Fired when download completes successfully
+    | FetchProgressCompleteEvent // Fired when the body transfer finishes (check status - fires for 4xx/5xx too)
     | FetchProgressErrorEvent; // Fired when stream reading fails
 ```
 
 **Event Properties**:
 
-| Event Type          | Properties                                                           |
-| ------------------- | -------------------------------------------------------------------- |
-| `request-start`     | `type: 'request-start'`                                              |
-| `response-received` | `type, prepareTimeMs, estimatedTotal, limit`                         |
-| `download-progress` | `type, received, total, percentage`                                  |
-| `complete`          | `type, received, estimatedTotal, downloadTimeMs, totalTimeMs`        |
-| `error`             | `type, error, received, estimatedTotal, downloadTimeMs, totalTimeMs` |
+| Event Type          | Properties                                                                   |
+| ------------------- | ---------------------------------------------------------------------------- |
+| `request-start`     | `type: 'request-start'`                                                      |
+| `response-received` | `type, status, prepareTimeMs, estimatedTotal, limit`                         |
+| `download-progress` | `type, status, received, total, percentage`                                  |
+| `complete`          | `type, status, received, estimatedTotal, downloadTimeMs, totalTimeMs`        |
+| `error`             | `type, status, error, received, estimatedTotal, downloadTimeMs, totalTimeMs` |
+
+All events fired after response headers arrive carry `status` (the HTTP
+status code). `complete` means the body transfer finished, not that the
+request succeeded - an error body (e.g. a 401 JSON payload) also ends
+with `complete`, so check `status` before presenting it as a success.
 
 **Event Lifecycle**:
 
 - **Success flow**: `request-start` → `response-received` → `download-progress` (multiple) → `complete`
-- **Error flow**: `request-start` → `response-received` → `download-progress` (optional) → `error` (stream reading fails)
+- **HTTP error flow (4xx/5xx)**: same as the success flow - the error body is still a body, so its transfer ends with `complete` (with `status` 4xx/5xx), not `error`
+- **Error flow**: `request-start` → `response-received` → `download-progress` (optional) → `error` (stream reading fails, regardless of HTTP status)
 
 ### Controlling stderr Output
 
