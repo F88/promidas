@@ -231,18 +231,28 @@ export class ProtopediaApiCustomClient {
     try {
       const upstream = await this.#client.listPrototypes(params);
 
+      // Log the response envelope (everything except `results`) for
+      // diagnostics. The envelope is a few hundred bytes regardless of the
+      // query; `results` is excluded because it can be megabytes in size.
+      // Rest-spread so future envelope fields are logged automatically.
+      const { results, ...envelope } = upstream;
+      this.#logger.debug('Upstream API response envelope.', {
+        ...envelope,
+        params,
+      });
+
       let data: NormalizedPrototype[] = [];
-      if (!Array.isArray(upstream.results)) {
+      if (!Array.isArray(results)) {
         this.#logger.warn(
           'Upstream API response "results" is not an array. Returning empty data.',
           {
-            upstreamResults: upstream.results,
+            upstreamResults: results,
             params,
           },
         );
         // data remains empty array as initialized
       } else {
-        data = upstream.results.map((value, index) => {
+        data = results.map((value, index) => {
           const original = value as UpstreamPrototype;
           const normalized = normalizePrototype(original);
 
