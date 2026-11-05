@@ -158,7 +158,6 @@ git push origin vx.y.z
 No manual `npm publish` is required.
 
 > Trusted Publishing requires npm 11.5.1 or later, which the workflow provisions.
-> The legacy `publish-package-to-github-packages.yml` workflow is disabled.
 
 ## Troubleshooting
 
