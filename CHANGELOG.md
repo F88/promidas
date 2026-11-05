@@ -47,6 +47,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   of `kind: 'timeout'` / `code: 'TIMEOUT'`. This also affected requests
   without `timeoutMs`, which time out at the SDK default of 15s (#134).
 
+### Changed
+
+#### CI/CD & Development
+
+- **Security**: Adopted the GitHub Actions workflow lockfile
+  (`.github/workflows/actions.lock`), which pins every direct and transitive
+  action to a verified commit. A new `verify-lockfile` workflow checks it on
+  pull requests and pushes to `main` (#139).
+- **Cleanup**: Removed the legacy `publish-package-to-github-packages.yml`
+  workflow, which was already disabled (#139).
+- **CI**: Tests now run on Node.js 22, 24, and 26.
+- **Development**: Updated dev dependencies, including Vitest 5.
+
 ## [3.1.0] - 2026-07-22
 
 ### Added
