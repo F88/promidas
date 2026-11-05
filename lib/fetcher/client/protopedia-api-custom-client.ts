@@ -106,7 +106,7 @@ export class ProtopediaApiCustomClient {
    *
    * @param config - Configuration options for the client
    * @param config.protoPediaApiClientOptions - Options for protopedia-api-v2-client
-   * @param config.protoPediaApiClientOptions.timeoutMs - Optional request timeout in milliseconds
+   * @param config.protoPediaApiClientOptions.timeoutMs - Optional request timeout in milliseconds (passed to the SDK; SDK default: 15000, `0` disables it)
    * @param config.protoPediaApiClientOptions.fetch - Optional custom fetch implementation
    * @param config.logger - Custom logger instance
    * @param config.logLevel - Log level for default logger or to update existing logger
@@ -145,11 +145,10 @@ export class ProtopediaApiCustomClient {
       progressCallback,
     } = config ?? {};
 
-    const {
-      timeoutMs,
-      fetch: providedFetch,
-      ...sdkOptions
-    } = protoPediaApiClientOptions;
+    // Issue #134: `timeoutMs` stays in `sdkOptions` so the SDK owns the
+    // request timeout. A timeout surfaces as a `DOMException` named
+    // `TimeoutError`, which `handleApiError` maps to TIMEOUT.
+    const { fetch: providedFetch, ...sdkOptions } = protoPediaApiClientOptions;
 
     // Fastify-style logger configuration
     if (logger) {
@@ -196,7 +195,6 @@ export class ProtopediaApiCustomClient {
       logger: this.#logger,
       enableProgressLog: progressLog,
       progressCallback,
-      timeoutMs,
       providedFetch: providedFetch as typeof fetch | undefined,
       stripHeaders,
     });

@@ -9,7 +9,7 @@
  * errors are classified as network/timeout/abort/unknown.
  *
  * Key responsibilities:
- * - Mapping `PromidasTimeoutError` (timeout) to a TIMEOUT failure.
+ * - Mapping `TimeoutError` (request timeout, e.g. the SDK's `timeoutMs`) to a TIMEOUT failure.
  * - Detecting `AbortError` (caller-driven abort) and mapping it to an ABORTED failure.
  * - Normalizing {@link ProtoPediaApiError} into HTTP failures with status/statusText.
  * - Preserving network error codes (ENOTFOUND, ECONNREFUSED, etc.) when available.
@@ -19,7 +19,6 @@
  */
 import { ProtoPediaApiError } from 'protopedia-api-v2-client';
 
-import { PromidasTimeoutError } from '../../errors/fetcher-error.js';
 import type { NetworkFailure } from '../../types/prototype-api.types.js';
 import type {
   FetchFailureKind,
@@ -33,6 +32,7 @@ import type {
  */
 const ERROR_NAMES = {
   ABORT: 'AbortError',
+  TIMEOUT: 'TimeoutError',
 } as const;
 
 /**
@@ -85,6 +85,19 @@ const STATUS_CODE_MAP: Record<number, FetcherErrorCode> = {
  */
 function isAbortError(error: unknown): error is DOMException {
   return error instanceof DOMException && error.name === ERROR_NAMES.ABORT;
+}
+
+/**
+ * Type guard to check if an error is a TimeoutError.
+ *
+ * protopedia-api-v2-client aborts with this error when its `timeoutMs`
+ * elapses; `AbortSignal.timeout()` in a custom fetch produces the same.
+ *
+ * @param error - The error to check
+ * @returns True if the error is a DOMException with name 'TimeoutError'
+ */
+function isTimeoutError(error: unknown): error is DOMException {
+  return error instanceof DOMException && error.name === ERROR_NAMES.TIMEOUT;
 }
 
 /**
@@ -204,7 +217,7 @@ export function handleProtoPediaApiError(
  * Normalize non-ProtoPedia errors into fetcher failure results.
  *
  * Paths:
- * - PromidasTimeoutError → timeout/TIMEOUT (no HTTP status)
+ * - TimeoutError → timeout/TIMEOUT (request timeout, no HTTP status)
  * - AbortError → abort/ABORTED (caller-driven abort, no HTTP status)
  * - Network-ish errors with code → network/<code>
  * - Opaque fetch (known TypeError messages) → cors/CORS_BLOCKED
@@ -217,12 +230,11 @@ export function handleProtoPediaApiError(
 export function handleNotProtoPediaApiError(
   error: unknown,
 ): FetchPrototypesResult {
-  /**
-   * Handle explicit timeout errors (distinguishable from AbortError).
-   * These are fetcher-level timeouts, not HTTP 408 responses.
-   */
-  // Handle explicit timeout errors (distinguishable from AbortError)
-  if (error instanceof PromidasTimeoutError) {
+  // Handle TimeoutError (request timeout, distinguishable from AbortError).
+  // Checked before the generic code extraction below: DOMException carries a
+  // legacy numeric `code` (23 for TimeoutError) that must not be mistaken for
+  // a network error code (Issue #134). Not an HTTP 408 response.
+  if (isTimeoutError(error)) {
     const result = createFailureResult(ERROR_MESSAGES.TIMEOUT, {
       res: {
         code: 'TIMEOUT',

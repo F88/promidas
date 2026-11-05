@@ -266,6 +266,8 @@ For more details on the CI configuration, refer to the [workflow file](.github/w
 Dependencies are updated via [Renovate](https://docs.renovatebot.com/) (`renovate.json`). Renovate opens PRs and tracks pending updates in the "Dependency Dashboard" issue.
 
 - **`protopedia-api-v2-client` (peer dependency)**: update deliberately and keep the supported range accurate.
+    - Unlike other devDependencies, its devDependency is pinned to an exact version (e.g. `4.0.0`) on purpose. SDK releases can change runtime behavior (error handling, logging) without API changes, so tests must run against a known version, and each update should show up as a visible `package.json` change in a Renovate PR.
+    - Keep the devDependency within the `peerDependencies` range. Narrowing the peer range is a breaking change for promidas.
 - **devDependencies (patch / minor)**: backward compatible; merge once CI is green.
 - **Major updates**: may contain breaking changes. Evaluate on a branch by running `npm install` then `npm run typecheck`, `npm run build`, `npm test`, `npm run lint`. Merge only if green; otherwise fix or defer.
 - **TypeScript**: stays on the `5.x` line for now; `6.x` is deferred until the toolchain is ready.

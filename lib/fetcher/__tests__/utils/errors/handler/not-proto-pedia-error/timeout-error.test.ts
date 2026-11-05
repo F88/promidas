@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { PromidasTimeoutError } from '../../../../../errors/fetcher-error.js';
 import { handleNotProtoPediaApiError } from '../../../../../utils/errors/handler.js';
 
 describe('handleNotProtoPediaApiError', () => {
-  it('maps PromidasTimeoutError to TIMEOUT with code', () => {
-    const timeoutError = new PromidasTimeoutError(5000);
+  it('maps TimeoutError to TIMEOUT with code', () => {
+    // Same shape the SDK throws when its timeoutMs elapses
+    const timeoutError = new DOMException(
+      'Request timed out after 5000 ms',
+      'TimeoutError',
+    );
     const result = handleNotProtoPediaApiError(timeoutError);
 
     expect(result).toEqual({
@@ -20,5 +23,14 @@ describe('handleNotProtoPediaApiError', () => {
         },
       },
     });
+  });
+
+  it('does not treat the DOMException legacy code of TimeoutError as a network code (Issue #134)', () => {
+    const timeoutError = new DOMException('timed out', 'TimeoutError');
+    expect(timeoutError.code).toBe(23);
+
+    const result = handleNotProtoPediaApiError(timeoutError);
+
+    expect(result).toMatchObject({ kind: 'timeout', code: 'TIMEOUT' });
   });
 });

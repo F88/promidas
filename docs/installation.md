@@ -45,6 +45,21 @@ Node.jsがインストールされていない場合は、[初心者向けクイ
 npm install promidas
 ```
 
+### protopedia-api-v2-client について
+
+PROMIDAS は ProtoPedia API との通信に [`protopedia-api-v2-client`](https://www.npmjs.com/package/protopedia-api-v2-client) を使います。peer dependency (必須) として宣言しているため、npm 7 以降では `npm install promidas` で自動的にインストールされます。
+
+次の場合は、一緒にインストールしてください:
+
+- npm 以外のパッケージマネージャー (Yarn など) を使う場合
+- `protopedia-api-v2-client` のバージョンを自分の `package.json` で管理したい場合
+
+```bash
+npm install promidas protopedia-api-v2-client
+```
+
+現在の対応バージョンは `protopedia-api-v2-client` 4.x です。
+
 ### インストールの確認
 
 インストールが成功したか確認するには、以下のコマンドを実行します:

@@ -75,9 +75,6 @@ export type { ProtopediaApiCustomClientConfig } from './client/config.js';
 // Progress Events
 export type { FetchProgressEvent } from './types/progress-event.types.js';
 
-// Errors
-export { PromidasTimeoutError } from './errors/fetcher-error.js';
-
 // Result Types
 export type {
   FetchPrototypesResult,
