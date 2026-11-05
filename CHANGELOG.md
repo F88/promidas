@@ -23,6 +23,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
       `ListPrototypesParams_Old` removed) do not affect promidas users:
       promidas already requires Node.js 22+ and does not use the removed type.
 
+### Fixed
+
+#### `lib/fetcher`
+
+- **SDK timeouts were misclassified**: a `TimeoutError` was reported as
+  `kind: 'network'` with `code: 23` (the legacy `DOMException` code) instead
+  of `kind: 'timeout'` / `code: 'TIMEOUT'`. This also affected requests
+  without `timeoutMs`, which time out at the SDK default of 15s (#134).
+
 ## [3.1.0] - 2026-07-22
 
 ### Added
