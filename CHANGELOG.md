@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+#### General
+
+- **Peer dependency**: `protopedia-api-v2-client` now requires `^4.0.0`
+  (previously `^3.0.0`).
+    - Apps that list `protopedia-api-v2-client@^3` in their own
+      `package.json` must upgrade it to `^4.0.0` together with promidas;
+      otherwise npm fails with `ERESOLVE`. Apps that rely on npm's automatic
+      peer installation get v4 automatically.
+    - The SDK v4 breaking changes (Node.js 20 support dropped,
+      `ListPrototypesParams_Old` removed) do not affect promidas users:
+      promidas already requires Node.js 22+ and does not use the removed type.
+
 ## [3.1.0] - 2026-07-22
 
 ### Added
