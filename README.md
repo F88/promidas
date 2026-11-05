@@ -35,6 +35,8 @@ export PROTOPEDIA_API_V2_TOKEN="your-token-here"
 npx tsx scripts/try-protopedia-repository.ts
 ```
 
+PROMIDAS は [`protopedia-api-v2-client`](https://www.npmjs.com/package/protopedia-api-v2-client) を peer dependency として使います。npm 7 以降では自動でインストールされます。詳しくは [インストール](https://f88.github.io/promidas/installation.html) を参照してください。
+
 ---
 
 ## Project Overview
