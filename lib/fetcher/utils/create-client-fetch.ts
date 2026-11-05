@@ -3,7 +3,6 @@
  *
  * This module provides a factory function that creates a customized fetch function
  * by composing multiple fetch wrappers based on configuration:
- * - Timeout wrapper (if timeoutMs is specified)
  * - Header stripping wrapper (for browser compatibility)
  * - Progress tracking wrapper (if progress features are enabled)
  *
@@ -11,7 +10,6 @@
  */
 
 import type { Logger } from '../../logger/index.js';
-import { createFetchWithTimeout } from '../client/fetch-with-timeout.js';
 import { selectCustomFetch } from '../client/select-custom-fetch.js';
 import type { FetchProgressEvent } from '../types/progress-event.types.js';
 
@@ -24,7 +22,6 @@ export type CreateClientFetchParams = {
   readonly logger: Logger;
   readonly enableProgressLog: boolean;
   readonly progressCallback: ((event: FetchProgressEvent) => void) | undefined;
-  readonly timeoutMs: number | undefined;
   readonly providedFetch: typeof fetch | undefined;
   readonly stripHeaders?: string[] | undefined;
 };
@@ -33,20 +30,18 @@ export type CreateClientFetchParams = {
  * Create a customized fetch function with optional features.
  *
  * This function composes multiple fetch wrappers in the following order:
- * 1. Timeout wrapper (if timeoutMs is specified)
- * 2. Header stripping wrapper (if stripHeaders is specified)
- * 3. Progress tracking wrapper (if enableProgressLog or progressCallback is specified)
+ * 1. Header stripping wrapper (if stripHeaders is specified)
+ * 2. Progress tracking wrapper (if enableProgressLog or progressCallback is specified)
  *
  * @param params - Configuration parameters for fetch customization
  * @returns Customized fetch function, or undefined to use default fetch
  *
- * @example Basic usage with timeout
+ * @example Basic usage
  * ```typescript
  * const customFetch = createClientFetch({
  *   logger: myLogger,
  *   enableProgressLog: false,
  *   progressCallback: undefined,
- *   timeoutMs: 30000,
  *   providedFetch: undefined,
  * });
  * ```
@@ -61,7 +56,6 @@ export type CreateClientFetchParams = {
  *       console.log(`Progress: ${event.percentage}%`);
  *     }
  *   },
- *   timeoutMs: undefined,
  *   providedFetch: undefined,
  * });
  * ```
@@ -73,24 +67,15 @@ export function createClientFetch(
     logger,
     enableProgressLog,
     progressCallback,
-    timeoutMs,
     providedFetch,
     stripHeaders,
   } = params;
-
-  const timeoutWrappedFetch: typeof fetch | undefined =
-    typeof timeoutMs === 'number'
-      ? createFetchWithTimeout({
-          timeoutMs,
-          baseFetch: providedFetch,
-        })
-      : providedFetch;
 
   const shouldStripHeaders =
     Array.isArray(stripHeaders) && stripHeaders.length > 0;
 
   const baseFetchForStripping: typeof fetch | undefined = shouldStripHeaders
-    ? (timeoutWrappedFetch ??
+    ? (providedFetch ??
       (typeof globalThis.fetch === 'function'
         ? (globalThis.fetch as typeof fetch)
         : undefined))
@@ -103,7 +88,7 @@ export function createClientFetch(
           headerNames: stripHeaders,
         })
       : undefined
-    : timeoutWrappedFetch;
+    : providedFetch;
 
   // If user provides a custom fetch, wrap it with progress tracking.
   // Otherwise, progress tracking wraps the global fetch.

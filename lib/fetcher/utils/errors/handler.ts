@@ -9,7 +9,6 @@
  * errors are classified as network/timeout/abort/unknown.
  *
  * Key responsibilities:
- * - Mapping `PromidasTimeoutError` (timeout) to a TIMEOUT failure.
  * - Mapping `TimeoutError` (request timeout, e.g. the SDK's `timeoutMs`) to a TIMEOUT failure.
  * - Detecting `AbortError` (caller-driven abort) and mapping it to an ABORTED failure.
  * - Normalizing {@link ProtoPediaApiError} into HTTP failures with status/statusText.
@@ -20,7 +19,6 @@
  */
 import { ProtoPediaApiError } from 'protopedia-api-v2-client';
 
-import { PromidasTimeoutError } from '../../errors/fetcher-error.js';
 import type { NetworkFailure } from '../../types/prototype-api.types.js';
 import type {
   FetchFailureKind,
@@ -219,7 +217,6 @@ export function handleProtoPediaApiError(
  * Normalize non-ProtoPedia errors into fetcher failure results.
  *
  * Paths:
- * - PromidasTimeoutError → timeout/TIMEOUT (no HTTP status)
  * - TimeoutError → timeout/TIMEOUT (request timeout, no HTTP status)
  * - AbortError → abort/ABORTED (caller-driven abort, no HTTP status)
  * - Network-ish errors with code → network/<code>
@@ -233,21 +230,6 @@ export function handleProtoPediaApiError(
 export function handleNotProtoPediaApiError(
   error: unknown,
 ): FetchPrototypesResult {
-  /**
-   * Handle explicit timeout errors (distinguishable from AbortError).
-   * These are fetcher-level timeouts, not HTTP 408 responses.
-   */
-  // Handle explicit timeout errors (distinguishable from AbortError)
-  if (error instanceof PromidasTimeoutError) {
-    const result = createFailureResult(ERROR_MESSAGES.TIMEOUT, {
-      res: {
-        code: 'TIMEOUT',
-      },
-    });
-
-    return finalize(result, 'timeout', 'TIMEOUT');
-  }
-
   // Handle TimeoutError (request timeout, distinguishable from AbortError).
   // Checked before the generic code extraction below: DOMException carries a
   // legacy numeric `code` (23 for TimeoutError) that must not be mistaken for

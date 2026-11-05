@@ -15,7 +15,6 @@ export type { UpstreamPrototype } from '../types/prototype-api.types.js';
 export { normalizeProtoPediaTimestamp } from './normalize-protopedia-timestamp.js';
 
 export { handleApiError } from './errors/handler.js';
-export { PromidasTimeoutError } from '../errors/fetcher-error.js';
 export {
   resolveErrorMessage,
   constructDisplayMessage,

@@ -23,10 +23,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
       `ListPrototypesParams_Old` removed) do not affect promidas users:
       promidas already requires Node.js 22+ and does not use the removed type.
 
+#### `lib/fetcher`
+
+- **Timeout delegated to the SDK**: `ProtopediaApiCustomClient` now passes
+  `timeoutMs` to `protopedia-api-v2-client` instead of applying its own fetch
+  timeout wrapper (#134).
+    - `PromidasTimeoutError` is removed. `listPrototypes()` now throws the
+      SDK's `DOMException` named `TimeoutError` on timeout. Check
+      `error instanceof DOMException && error.name === 'TimeoutError'`, or use
+      `fetchPrototypes()` and check `result.kind === 'timeout'`.
+    - `timeoutMs: 0` now disables the timeout (SDK semantics). Previously it
+      aborted the request almost immediately.
+
 ### Fixed
 
 #### `lib/fetcher`
 
+- **`timeoutMs` over 15s was ignored**: requests were aborted by the SDK's
+  default 15s timer, so the 90s (`createPromidasForLocal`) and 30s
+  (`createPromidasForServer`) timeouts had no effect (#134).
 - **SDK timeouts were misclassified**: a `TimeoutError` was reported as
   `kind: 'network'` with `code: 23` (the legacy `DOMException` code) instead
   of `kind: 'timeout'` / `code: 'TIMEOUT'`. This also affected requests

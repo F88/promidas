@@ -6,7 +6,6 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import type { Logger } from '../../../../../logger/index.js';
 import { ProtopediaApiCustomClient } from '../../../../client/protopedia-api-custom-client.js';
-import { PromidasTimeoutError } from '../../../../errors/fetcher-error.js';
 
 vi.mock('protopedia-api-v2-client', async (importOriginal) => {
   const actual =
@@ -78,8 +77,11 @@ describe('ProtopediaApiCustomClient - Error Handling - AbortError', () => {
     );
   });
 
-  it('handles PromidasTimeoutError (timeout)', async () => {
-    const timeoutError = new PromidasTimeoutError(5000);
+  it('handles TimeoutError (timeout)', async () => {
+    const timeoutError = new DOMException(
+      'Request timed out after 5000 ms',
+      'TimeoutError',
+    );
     const clientInstance = {
       listPrototypes: vi.fn().mockRejectedValue(timeoutError),
     };

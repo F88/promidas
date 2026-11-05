@@ -102,8 +102,10 @@ describe('ProtopediaApiCustomClient - Constructor - Initialization', () => {
       },
     });
 
+    // Issue #134: timeoutMs is passed through so the SDK owns the timeout
     expect(createProtoPediaClientMock).toHaveBeenCalledWith({
       fetch: expect.any(Function),
+      timeoutMs,
       userAgent: expect.stringMatching(
         /^ProtopediaApiCustomClient\/\d+\.\d+\.\d+ \(promidas\)$/,
       ),

@@ -282,12 +282,11 @@ constructor(config?: ProtopediaApiCustomClientConfig | null) {
         logger: this.#logger,
         enableProgressLog: progressLog,
         progressCallback, // Single event handler function
-        timeoutMs,
         providedFetch,
         stripHeaders, // Browser compatibility
     });
 
-    // Pass to SDK client
+    // Pass to SDK client (sdkOptions includes timeoutMs; the SDK owns the timeout)
     this.#client = createProtoPediaClient({
         ...sdkOptions,
         fetch: clientFetch,
