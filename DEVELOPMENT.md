@@ -76,7 +76,7 @@ See `package.json` exports field and `__tests__/subpath-exports.test.ts` for the
 
 ### Requirements
 
-- Node.js >= 20
+- Node.js >= 22
 - npm
 
 ### Installation
@@ -205,7 +205,7 @@ npm run test:perf
 This runs the following performance tests:
 
 - `lib/store/__tests__/store.perf.test.ts` - Store read/write performance
-- `lib/repository/__tests__/protopedia-in-memory-repository/data-access.perf.test.ts` - Repository data access performance
+- `lib/repository/__tests__/protopedia-in-memory-repository/perf/data-access.perf.test.ts` - Repository data access performance
 
 Performance requirements:
 
