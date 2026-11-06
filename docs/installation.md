@@ -58,7 +58,7 @@ PROMIDAS は ProtoPedia API との通信に [`protopedia-api-v2-client`](https:/
 npm install promidas protopedia-api-v2-client
 ```
 
-現在の対応バージョンは `protopedia-api-v2-client` 4.x です。
+現在の対応バージョンは `protopedia-api-v2-client` 5.x です。
 
 ### インストールの確認
 

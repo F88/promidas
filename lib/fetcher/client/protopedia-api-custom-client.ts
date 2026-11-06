@@ -106,7 +106,7 @@ export class ProtopediaApiCustomClient {
    *
    * @param config - Configuration options for the client
    * @param config.protoPediaApiClientOptions - Options for protopedia-api-v2-client
-   * @param config.protoPediaApiClientOptions.timeoutMs - Optional request timeout in milliseconds (passed to the SDK; SDK default: 15000, `0` disables it)
+   * @param config.protoPediaApiClientOptions.timeoutMs - Optional maximum time in milliseconds until the whole response is received (passed to the SDK; SDK default: 60000, `0` disables it)
    * @param config.protoPediaApiClientOptions.fetch - Optional custom fetch implementation
    * @param config.logger - Custom logger instance
    * @param config.logLevel - Log level for default logger or to update existing logger

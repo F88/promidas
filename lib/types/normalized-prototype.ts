@@ -19,7 +19,7 @@
  * - **Type safety** - All fields are strongly typed with appropriate nullability
  * - **Immutability** - All fields and arrays are strictly readonly
  * - **Consistency** - Ensures uniform data structure across the application
- * - **API compatibility** - Handles optional fields from protopedia-api-v2-client v3.0.0+
+ * - **API compatibility** - Handles optional fields from protopedia-api-v2-client
  * - **Strict typing** - Uses `exactOptionalPropertyTypes: true` for maximum safety
  *
  * ## Related Components
