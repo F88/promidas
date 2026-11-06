@@ -84,7 +84,7 @@ const repository = new PromidasRepositoryBuilder()
     .setApiClientConfig({
         protoPediaApiClientOptions: {
             token: '...',
-            timeoutMs: 5000, // 5秒でタイムアウト(高速応答を強制)
+            timeoutMs: 120_000, // レスポンスの受信完了まで最大 2 分 (大きなデータや遅い回線向け)
         },
     })
     .build();

@@ -64,6 +64,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CI**: Tests now run on Node.js 22, 24, and 26.
 - **Development**: Updated dev dependencies, including Vitest 5.
 
+#### Documentation
+
+- Fixed the custom `fetch` samples, which replaced `init.signal` and disabled
+  `timeoutMs` and cancellation.
+
 ## [3.1.0] - 2026-07-22
 
 ### Added
