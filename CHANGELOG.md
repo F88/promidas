@@ -34,6 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
       `fetchPrototypes()` and check `result.kind === 'timeout'`.
     - `timeoutMs: 0` now disables the timeout (SDK semantics). Previously it
       aborted the request almost immediately.
+- **Node.js fetch failures are no longer reported as CORS**: a `TypeError` with the
+  message `fetch failed` and no error code, such as a refused connection, is now
+  `kind: 'network'` / `code: 'NETWORK_ERROR'` instead of `kind: 'cors'` /
+  `code: 'CORS_BLOCKED'`. Browser messages keep `CORS_BLOCKED` (#141).
 - **`timeoutMs` covers the whole response**: With SDK v5, `timeoutMs` limits the
   time until the response body is received, not only the response headers. A
   slow download that succeeded before can now time out. Without `timeoutMs`, the

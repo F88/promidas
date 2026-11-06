@@ -13,7 +13,8 @@
  * - Detecting `AbortError` (caller-driven abort) and mapping it to an ABORTED failure.
  * - Normalizing {@link ProtoPediaApiError} into HTTP failures with status/statusText.
  * - Preserving network error codes (ENOTFOUND, ECONNREFUSED, etc.) when available.
- * - Classifying opaque fetch failures (TypeError with well-known messages) as CORS_BLOCKED.
+ * - Classifying Node.js fetch failures without a code as NETWORK_ERROR.
+ * - Classifying opaque browser fetch failures (TypeError with well-known messages) as CORS_BLOCKED.
  * - Ensuring all API errors are normalized into {@link FetchPrototypesResult}
  *   without throwing exceptions.
  */
@@ -58,10 +59,15 @@ const DEFAULT_NETWORK_ERROR_CODE = 'NETWORK_ERROR' as const;
  */
 const KNOWN_FETCH_NETWORK_ERROR_MESSAGES = new Set<string>([
   'Failed to fetch',
-  'fetch failed',
   'Load failed',
   'NetworkError when attempting to fetch resource.',
 ]);
+
+/**
+ * Message of a failed Node.js fetch. Node.js has no CORS, so this is always a
+ * network failure, even without a structured error code.
+ */
+const NODE_FETCH_FAILURE_MESSAGE = 'fetch failed';
 
 const STATUS_CODE_MAP: Record<number, FetcherErrorCode> = {
   400: 'CLIENT_BAD_REQUEST',
@@ -220,7 +226,8 @@ export function handleProtoPediaApiError(
  * - TimeoutError → timeout/TIMEOUT (request timeout, no HTTP status)
  * - AbortError → abort/ABORTED (caller-driven abort, no HTTP status)
  * - Network-ish errors with code → network/<code>
- * - Opaque fetch (known TypeError messages) → cors/CORS_BLOCKED
+ * - Node.js fetch failure without a code → network/NETWORK_ERROR
+ * - Opaque browser fetch (known TypeError messages) → cors/CORS_BLOCKED
  * - Fallback → unknown/UNKNOWN
  *
  * Notes:
@@ -270,6 +277,19 @@ export function handleNotProtoPediaApiError(
     if (code !== undefined) {
       details = updateDetailsWithCode(details, code);
     }
+  }
+
+  if (
+    details.res?.code === undefined &&
+    error instanceof TypeError &&
+    message === NODE_FETCH_FAILURE_MESSAGE
+  ) {
+    const newDetails = updateDetailsWithCode(
+      details,
+      DEFAULT_NETWORK_ERROR_CODE,
+    );
+    const result = createFailureResult(message, newDetails);
+    return finalize(result, 'network', DEFAULT_NETWORK_ERROR_CODE);
   }
 
   const isOpaqueFetchError =
