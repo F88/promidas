@@ -128,7 +128,7 @@ export function createPromidasForLocal(config: {
   const apiClientConfig: ProtopediaApiCustomClientConfig = {
     protoPediaApiClientOptions: {
       token: config.protopediaApiToken,
-      // Timeout for API requests (SDK default: 15000ms = 15s)
+      // Maximum time until the whole response is received (SDK default: 60s)
       // Reference: 20MB download time by connection speed:
       //   - 10 Mbps: ~16s
       //   - 5 Mbps: ~32s

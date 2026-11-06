@@ -10,7 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Logger } from '../../../../../logger/index.js';
 import { ProtopediaApiCustomClient } from '../../../../client/protopedia-api-custom-client.js';
 
-const SDK_DEFAULT_TIMEOUT_MS = 15_000;
+const SDK_DEFAULT_TIMEOUT_MS = 60_000;
 
 const silentLogger: Logger = {
   debug: () => {},
@@ -75,7 +75,7 @@ describe('ProtopediaApiCustomClient - SDK timeout (Issue #134)', () => {
 
   it('succeeds when the response takes longer than the SDK default but within timeoutMs', async () => {
     const delayMs = SDK_DEFAULT_TIMEOUT_MS + 5_000;
-    const client = createClient(delayMs, 30_000);
+    const client = createClient(delayMs, 90_000);
 
     const promise = client.fetchPrototypes({ limit: 1 });
     await vi.advanceTimersByTimeAsync(delayMs);
@@ -97,7 +97,7 @@ describe('ProtopediaApiCustomClient - SDK timeout (Issue #134)', () => {
   });
 
   it('fails with TIMEOUT at the SDK default when timeoutMs is not set', async () => {
-    const client = createClient(60_000);
+    const client = createClient(SDK_DEFAULT_TIMEOUT_MS * 2);
 
     const promise = client.fetchPrototypes({ limit: 1 });
     await vi.advanceTimersByTimeAsync(SDK_DEFAULT_TIMEOUT_MS);

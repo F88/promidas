@@ -38,7 +38,7 @@
  *
  * ## API Client Version Compatibility
  *
- * This library supports `protopedia-api-v2-client` v3.0.0 and later.
+ * This library supports `protopedia-api-v2-client` v5.
  *
  * @example
  * ```typescript

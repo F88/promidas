@@ -13,12 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### General
 
-- **Peer dependency**: `protopedia-api-v2-client` now requires `^4.0.0`
+- **Peer dependency**: `protopedia-api-v2-client` now requires `^5.0.0`
   (previously `^3.0.0`).
-    - Apps that list `protopedia-api-v2-client@^3` in their own
-      `package.json` must upgrade it to `^4.0.0` together with promidas;
-      otherwise npm fails with `ERESOLVE`. Apps that rely on npm's automatic
-      peer installation get v4 automatically.
+    - Apps that list `protopedia-api-v2-client` in their own `package.json`
+      must upgrade it to `^5.0.0` together with promidas; otherwise npm fails
+      with `ERESOLVE`. Apps that rely on npm's automatic peer installation get
+      v5 automatically.
     - The SDK v4 breaking changes (Node.js 20 support dropped,
       `ListPrototypesParams_Old` removed) do not affect promidas users:
       promidas already requires Node.js 22+ and does not use the removed type.
@@ -34,6 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
       `fetchPrototypes()` and check `result.kind === 'timeout'`.
     - `timeoutMs: 0` now disables the timeout (SDK semantics). Previously it
       aborted the request almost immediately.
+- **`timeoutMs` covers the whole response**: With SDK v5, `timeoutMs` limits the
+  time until the response body is received, not only the response headers. A
+  slow download that succeeded before can now time out. Without `timeoutMs`, the
+  SDK default is now 60s (previously 15s). Set a larger `timeoutMs` if needed.
 
 ### Fixed
 
@@ -45,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SDK timeouts were misclassified**: a `TimeoutError` was reported as
   `kind: 'network'` with `code: 23` (the legacy `DOMException` code) instead
   of `kind: 'timeout'` / `code: 'TIMEOUT'`. This also affected requests
-  without `timeoutMs`, which time out at the SDK default of 15s (#134).
+  without `timeoutMs`, which time out at the SDK default (#134).
 
 ### Changed
 
