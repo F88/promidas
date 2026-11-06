@@ -282,20 +282,16 @@ describe('handleNotProtoPediaApiError', () => {
       });
     });
 
-    it.each([
-      'fetch failed',
-      'Load failed',
-      'NetworkError when attempting to fetch resource.',
-    ])('maps browser fetch TypeError(%s) to NETWORK_ERROR code', (message) => {
-      const error = new TypeError(message);
+    it('maps Node.js fetch TypeError without a code to a network failure', () => {
+      const error = new TypeError('fetch failed');
       const result = handleNotProtoPediaApiError(error);
 
       expect(result).toEqual({
         ok: false,
         origin: 'fetcher',
-        kind: 'cors',
-        code: 'CORS_BLOCKED',
-        error: message,
+        kind: 'network',
+        code: 'NETWORK_ERROR',
+        error: 'fetch failed',
         details: {
           res: {
             code: 'NETWORK_ERROR',
@@ -303,6 +299,33 @@ describe('handleNotProtoPediaApiError', () => {
         },
       });
     });
+
+    it('does not treat a non-TypeError with the Node.js message as a network failure', () => {
+      const result = handleNotProtoPediaApiError(new Error('fetch failed'));
+
+      expect(result).toMatchObject({ kind: 'unknown', code: 'UNKNOWN' });
+    });
+
+    it.each(['Load failed', 'NetworkError when attempting to fetch resource.'])(
+      'maps browser fetch TypeError(%s) to NETWORK_ERROR code',
+      (message) => {
+        const error = new TypeError(message);
+        const result = handleNotProtoPediaApiError(error);
+
+        expect(result).toEqual({
+          ok: false,
+          origin: 'fetcher',
+          kind: 'cors',
+          code: 'CORS_BLOCKED',
+          error: message,
+          details: {
+            res: {
+              code: 'NETWORK_ERROR',
+            },
+          },
+        });
+      },
+    );
 
     it('does not overwrite extracted code with NETWORK_ERROR', () => {
       const error = Object.assign(new TypeError('Failed to fetch'), {
