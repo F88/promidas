@@ -42,7 +42,7 @@ API クライアントの設定を行います。
 
 - `protoPediaApiClientOptions`:
     - `token`: API トークン
-    - `timeoutMs`: タイムアウト時間
+    - `timeoutMs`: レスポンスの受信完了までの時間の上限 (ミリ秒)
 - `logger`: クライアント専用のロガー
 - `logLevel`: クライアント専用のログレベル
 
