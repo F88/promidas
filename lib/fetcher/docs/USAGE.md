@@ -99,71 +99,49 @@ as Node.js, browsers, or Next.js server components.
 ```ts
 import { ProtopediaApiCustomClient } from 'promidas';
 
-const CONNECTION_AND_HEADER_TIMEOUT_MS = 5_000;
-
 export const customClientForNextJs = new ProtopediaApiCustomClient({
     logger: myLogger,
     progressLog: true, // Progress tracking enabled
     protoPediaApiClientOptions: {
         token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
         baseUrl: 'https://api.protopedia.net',
-        fetch: async (url, init) => {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(
-                () => controller.abort(),
-                CONNECTION_AND_HEADER_TIMEOUT_MS,
-            );
-
-            try {
-                return await globalThis.fetch(url, {
-                    ...init,
-                    signal: controller.signal,
-                    cache: 'force-cache',
-                    next: {
-                        revalidate: 60,
-                    },
-                });
-            } finally {
-                clearTimeout(timeoutId);
-            }
-        },
+        timeoutMs: 60_000,
+        fetch: (url, init) =>
+            globalThis.fetch(url, {
+                ...init,
+                cache: 'force-cache',
+                next: {
+                    revalidate: 60,
+                },
+            }),
     },
 });
 ```
 
-**Key Point**: Your custom fetch (with timeout and Next.js caching) is
-automatically wrapped with progress tracking. Both features work together!
+**Key Point**: Your custom fetch (with Next.js caching) is automatically wrapped
+with progress tracking. Both features work together!
+
+**Keep `init.signal`**: `timeoutMs` and cancellation work through the `signal` in
+`init`. Do not replace it with your own signal. To add your own abort condition,
+combine them with `AbortSignal.any()`.
 
 #### Direct SDK usage (without progress tracking)
 
 ```ts
 import { createProtoPediaClient } from 'protopedia-api-v2-client';
 
-const CONNECTION_AND_HEADER_TIMEOUT_MS = 5_000;
-
 export const customClientForNextJs = createProtoPediaClient({
     token: process.env.PROTOPEDIA_API_V2_TOKEN ?? 'no-token',
     baseUrl: 'https://api.protopedia.net',
-    fetch: async (url, init) => {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(
-            () => controller.abort(),
-            CONNECTION_AND_HEADER_TIMEOUT_MS,
-        );
-
-        try {
-            return await globalThis.fetch(url, {
-                ...init,
-                signal: controller.signal,
-                cache: 'force-cache',
-                next: {
-                    revalidate: 60,
-                },
-            });
-        } finally {
-            clearTimeout(timeoutId);
-        }
-    },
+    timeoutMs: 60_000,
+    fetch: (url, init) =>
+        globalThis.fetch(url, {
+            ...init,
+            cache: 'force-cache',
+            next: {
+                revalidate: 60,
+            },
+        }),
     // Reduce noisy logs in development; can be overridden via env
     logLevel: process.env.NODE_ENV === 'production' ? 'error' : 'debug',
 });

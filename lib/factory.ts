@@ -59,7 +59,7 @@ import { VERSION } from './version.js';
  * - Max Data Size: 30 MiB (hard limit)
  *
  * **API Client:**
- * - Timeout: 90 seconds (accommodates 1-2 Mbps connections)
+ * - Timeout: 90 seconds (20MB needs about 2 Mbps or more)
  * - User-Agent: `PromidasForLocal/{version}`
  *
  * ## Use Cases
@@ -134,7 +134,7 @@ export function createPromidasForLocal(config: {
       //   - 5 Mbps: ~32s
       //   - 1 Mbps: ~160s (2m40s)
       //   - 0.5 Mbps: ~320s (5m20s)
-      timeoutMs: 90 * 1_000, // 90 seconds (accommodates 1-2 Mbps)
+      timeoutMs: 90 * 1_000, // 90 seconds (20MB needs about 2 Mbps or more)
       userAgent: `PromidasForLocal/${VERSION}`,
       // Ensure SDK-level network logs are controlled consistently.
       // Note: The SDK logger interface is compatible with promidas logger.
