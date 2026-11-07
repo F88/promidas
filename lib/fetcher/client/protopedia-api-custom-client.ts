@@ -26,7 +26,6 @@ import {
 } from '../../logger/index.js';
 import type { NormalizedPrototype } from '../../types/index.js';
 import { sanitizeDataForLogging } from '../../utils/index.js';
-import { VERSION } from '../../version.js';
 import type {
   NetworkFailure,
   UpstreamPrototype,
@@ -169,41 +168,17 @@ export class ProtopediaApiCustomClient {
       sanitizeDataForLogging(config),
     );
 
-    const hasWindow =
-      typeof (globalThis as { window?: unknown }).window !== 'undefined';
-    const hasDocument =
-      typeof (globalThis as { document?: unknown }).document !== 'undefined';
-    const isBrowserRuntime = hasWindow && hasDocument;
-
-    // Determine User-Agent header
-    const userAgent =
-      sdkOptions.userAgent ?? `ProtopediaApiCustomClient/${VERSION} (promidas)`;
-
-    // Issue #55 (browser CORS): `protopedia-api-v2-client` adds
-    // `x-client-user-agent` by design. In browsers, custom request headers
-    // trigger a CORS preflight and the request may be blocked because the
-    // server may not allow that header.
-    //
-    // Mitigation (promidas-side): In browser runtimes, strip
-    // `x-client-user-agent` from the outgoing request in our fetch wrapper.
-    // Server-side Node.js execution is not affected.
-
-    // Determine headers to strip based on runtime environment
-    const stripHeaders = isBrowserRuntime ? ['x-client-user-agent'] : undefined;
-
     const customFetch = createClientFetch({
       logger: this.#logger,
       enableProgressLog: progressLog,
       progressCallback,
       providedFetch: providedFetch as typeof fetch | undefined,
-      stripHeaders,
     });
 
     // Create underlying protopedia-api-v2-client
     // Note: SDK client logging is controlled via protoPediaApiClientOptions
     this.#client = createProtoPediaClient({
       ...sdkOptions,
-      userAgent,
       ...(customFetch !== undefined && { fetch: customFetch }),
     });
   }

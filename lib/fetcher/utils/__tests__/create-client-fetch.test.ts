@@ -17,56 +17,6 @@ describe('createClientFetch', () => {
     selectCustomFetchMock.mockReset();
   });
 
-  it('returns strippedFetch when stripping is enabled and progress wrapper is disabled', () => {
-    const logger = new ConsoleLogger('info');
-    const providedFetch = vi.fn();
-
-    selectCustomFetchMock.mockImplementation(
-      (args: { baseFetch?: typeof fetch | undefined }) => args.baseFetch,
-    );
-
-    const result = createClientFetch({
-      logger,
-      enableProgressLog: false,
-      progressCallback: undefined,
-      providedFetch,
-      stripHeaders: ['x-client-user-agent'],
-    });
-
-    expect(result).toBeTypeOf('function');
-    expect(selectCustomFetchMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        logger,
-        enableProgressLog: false,
-        baseFetch: expect.any(Function),
-      }),
-    );
-  });
-
-  it('returns undefined when stripping is requested but no fetch is available', () => {
-    const logger = new ConsoleLogger('info');
-
-    const originalGlobalFetch = globalThis.fetch;
-    // Simulate an environment where global fetch is not available.
-
-    (globalThis as { fetch?: unknown }).fetch = undefined;
-
-    selectCustomFetchMock.mockReturnValue(undefined);
-
-    const result = createClientFetch({
-      logger,
-      enableProgressLog: false,
-      progressCallback: undefined,
-      providedFetch: undefined,
-      stripHeaders: ['x-client-user-agent'],
-    });
-
-    expect(result).toBeUndefined();
-
-    // Restore global fetch for other tests.
-    globalThis.fetch = originalGlobalFetch;
-  });
-
   it('returns fetch returned by selectCustomFetch', () => {
     const logger = new ConsoleLogger('info');
     const expectedFetch = vi.fn();

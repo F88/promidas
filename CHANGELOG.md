@@ -13,10 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### General
 
-- **Peer dependency**: `protopedia-api-v2-client` now requires `^5.0.0`
+- **Peer dependency**: `protopedia-api-v2-client` now requires `^5.1.0`
   (previously `^3.0.0`).
     - Apps that list `protopedia-api-v2-client` in their own `package.json`
-      must upgrade it to `^5.0.0` together with promidas; otherwise npm fails
+      must upgrade it to `^5.1.0` together with promidas; otherwise npm fails
       with `ERESOLVE`. Apps that rely on npm's automatic peer installation get
       v5 automatically.
     - The SDK v4 breaking changes (Node.js 20 support dropped,
@@ -25,6 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### `lib/fetcher`
 
+- **`userAgent` is no longer set by default**: promidas no longer passes
+  `ProtopediaApiCustomClient/...`, `PromidasForLocal/...`, or
+  `PromidasForServer/...` to the SDK. A `userAgent` set by the caller is sent as
+  the `User-Agent` header, and browsers may block such a request because of CORS.
+  The browser detection and the `x-client-user-agent` stripping are removed, since
+  the SDK no longer sends that header.
 - **Timeout delegated to the SDK**: `ProtopediaApiCustomClient` now passes
   `timeoutMs` to `protopedia-api-v2-client` instead of applying its own fetch
   timeout wrapper (#134).

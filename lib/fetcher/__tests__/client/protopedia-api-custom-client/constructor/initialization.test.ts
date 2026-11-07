@@ -35,9 +35,6 @@ describe('ProtopediaApiCustomClient - Constructor - Initialization', () => {
       expect.objectContaining({
         token,
         baseUrl,
-        userAgent: expect.stringMatching(
-          /^ProtopediaApiCustomClient\/\d+\.\d+\.\d+ \(promidas\)$/,
-        ),
       }),
     );
     expect(client).toBeInstanceOf(ProtopediaApiCustomClient);
@@ -64,9 +61,6 @@ describe('ProtopediaApiCustomClient - Constructor - Initialization', () => {
         token,
         baseUrl,
         logLevel,
-        userAgent: expect.stringMatching(
-          /^ProtopediaApiCustomClient\/\d+\.\d+\.\d+ \(promidas\)$/,
-        ),
       }),
     );
     expect(client).toBeInstanceOf(ProtopediaApiCustomClient);
@@ -78,13 +72,9 @@ describe('ProtopediaApiCustomClient - Constructor - Initialization', () => {
 
     const client = new ProtopediaApiCustomClient();
 
-    expect(createProtoPediaClientMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        userAgent: expect.stringMatching(
-          /^ProtopediaApiCustomClient\/\d+\.\d+\.\d+ \(promidas\)$/,
-        ),
-      }),
-    );
+    const callArgs = createProtoPediaClientMock.mock.calls[0]?.[0];
+    expect(callArgs).toBeDefined();
+    expect(callArgs).not.toHaveProperty('userAgent');
     expect(client).toBeInstanceOf(ProtopediaApiCustomClient);
   });
 
@@ -106,9 +96,6 @@ describe('ProtopediaApiCustomClient - Constructor - Initialization', () => {
     expect(createProtoPediaClientMock).toHaveBeenCalledWith({
       fetch: expect.any(Function),
       timeoutMs,
-      userAgent: expect.stringMatching(
-        /^ProtopediaApiCustomClient\/\d+\.\d+\.\d+ \(promidas\)$/,
-      ),
     });
     expect(client).toBeInstanceOf(ProtopediaApiCustomClient);
   });
