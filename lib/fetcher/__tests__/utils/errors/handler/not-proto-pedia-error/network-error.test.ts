@@ -49,7 +49,7 @@ describe('handleNotProtoPediaApiError', () => {
       });
     });
 
-    it('keeps the Node.js error code from the nested cause', () => {
+    it('keeps the Node.js error code from the nested cause in details', () => {
       const cause = new TypeError('terminated', {
         cause: Object.assign(new Error('other side closed'), {
           code: 'UND_ERR_SOCKET',
@@ -62,19 +62,21 @@ describe('handleNotProtoPediaApiError', () => {
 
       expect(result).toMatchObject({
         kind: 'network',
-        code: 'UND_ERR_SOCKET',
+        code: 'NETWORK_ERROR',
         details: { res: { code: 'UND_ERR_SOCKET' } },
       });
     });
 
-    it('keeps an error code on the cause itself', () => {
-      const cause = Object.assign(new Error('reset'), { code: 'ECONNRESET' });
+    it('exposes a known error code on the cause itself', () => {
+      const cause = Object.assign(new Error('timed out'), {
+        code: 'ETIMEDOUT',
+      });
 
       const result = handleNotProtoPediaApiError(
         new ResponseBodyReadError({ req, cause }),
       );
 
-      expect(result).toMatchObject({ kind: 'network', code: 'ECONNRESET' });
+      expect(result).toMatchObject({ kind: 'network', code: 'ETIMEDOUT' });
     });
   });
 
@@ -257,7 +259,7 @@ describe('handleNotProtoPediaApiError', () => {
       if (!result.ok) {
         expect(result.origin).toBe('fetcher');
         expect(result.kind).toBe('network');
-        expect(result.code).toBe('CUSTOM_CODE');
+        expect(result.code).toBe('NETWORK_ERROR');
         expect(result.details?.res?.code).toBe('CUSTOM_CODE');
       }
     });
@@ -381,7 +383,7 @@ describe('handleNotProtoPediaApiError', () => {
       },
     );
 
-    it('does not overwrite extracted code with NETWORK_ERROR', () => {
+    it('keeps an extracted code in details instead of classifying as CORS', () => {
       const error = Object.assign(new TypeError('Failed to fetch'), {
         code: 'CUSTOM_CODE',
       });
@@ -391,7 +393,7 @@ describe('handleNotProtoPediaApiError', () => {
         ok: false,
         origin: 'fetcher',
         kind: 'network',
-        code: 'CUSTOM_CODE',
+        code: 'NETWORK_ERROR',
         error: 'Failed to fetch',
         details: {
           res: {
@@ -553,7 +555,7 @@ describe('handleNotProtoPediaApiError', () => {
         expect(result.origin).toBe('fetcher');
         // DOMException has a numeric code property, so it's extracted as network
         expect(result.kind).toBe('network');
-        expect(result.code).toBe(domError.code);
+        expect(result.code).toBe('NETWORK_ERROR');
         expect(result.status).toBeUndefined();
         expect(result.error).toBe('Invalid state');
         expect(result.details.res?.code).toBe(domError.code);

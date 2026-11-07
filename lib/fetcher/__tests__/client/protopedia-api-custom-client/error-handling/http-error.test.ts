@@ -147,7 +147,7 @@ describe('ProtopediaApiCustomClient - Error Handling - HTTP Errors', () => {
       // code is extracted as network error
       expect(result.origin).toBe('fetcher');
       expect(result.kind).toBe('network');
-      expect(result.code).toBe('INVALID_PARAMETER');
+      expect(result.code).toBe('NETWORK_ERROR');
       expect(result.details.res?.code).toBe('INVALID_PARAMETER');
     }
   });
