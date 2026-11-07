@@ -61,7 +61,6 @@ const repository = createPromidasForServer();
 | **デフォルトログレベル**     | `info`                   | `warn`                               |
 | **キャッシュ有効期限 (TTL)** | 30分                     | 10分                                 |
 | **APIタイムアウト**          | 90秒                     | 30秒                                 |
-| **User-Agent**               | `PromidasForLocal/...`   | `PromidasForServer/...`              |
 
 ## カスタマイズ
 

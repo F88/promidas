@@ -43,6 +43,7 @@ API クライアントの設定を行います。
 - `protoPediaApiClientOptions`:
     - `token`: API トークン
     - `timeoutMs`: レスポンスの受信完了までの時間の上限 (ミリ秒)
+    - `userAgent`: `User-Agent` ヘッダーの値。既定では設定しない。ブラウザでは CORS によりリクエストが止まることがある
 - `logger`: クライアント専用のロガー
 - `logLevel`: クライアント専用のログレベル
 

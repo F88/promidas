@@ -13,7 +13,6 @@ import { PromidasRepositoryBuilder } from '../../builder.js';
 import { createPromidasForLocal } from '../../factory.js';
 import type { ProtopediaInMemoryRepository } from '../../repository/types/index.js';
 import { LIMIT_DATA_SIZE_BYTES } from '../../store/index.js';
-import { VERSION } from '../../version.js';
 
 describe('createPromidasForLocal', () => {
   let mockRepository: ProtopediaInMemoryRepository;
@@ -76,7 +75,7 @@ describe('createPromidasForLocal', () => {
     expect(storeConfigArg?.logLevel).toBeUndefined();
   });
 
-  it('should configure API client with token, User-Agent, timeout, and shared logger', () => {
+  it('should configure API client with token, timeout, and shared logger', () => {
     createPromidasForLocal({
       protopediaApiToken: 'test-token-123',
     });
@@ -84,7 +83,6 @@ describe('createPromidasForLocal', () => {
     expect(setApiClientConfigSpy).toHaveBeenCalledWith({
       protoPediaApiClientOptions: {
         token: 'test-token-123',
-        userAgent: `PromidasForLocal/${VERSION}`,
         timeoutMs: 90000, // 90 seconds
         logger: expect.any(Object),
         logLevel: 'info',
@@ -238,16 +236,6 @@ describe('createPromidasForLocal', () => {
 
     expect(repo1).not.toBe(repo2);
     expect(buildSpy).toHaveBeenCalledTimes(2);
-  });
-
-  it('should use correct VERSION constant in User-Agent', () => {
-    createPromidasForLocal({ protopediaApiToken: 'test-token' });
-
-    const configArg = setApiClientConfigSpy.mock.calls[0]?.[0];
-    const userAgent = configArg?.protoPediaApiClientOptions?.userAgent;
-
-    expect(userAgent).toBe(`PromidasForLocal/${VERSION}`);
-    expect(userAgent).toMatch(/^PromidasForLocal\/\d+\.\d+\.\d+$/);
   });
 
   it('should use correct LIMIT_DATA_SIZE_BYTES constant', () => {

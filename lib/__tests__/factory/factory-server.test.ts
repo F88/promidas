@@ -13,7 +13,6 @@ import { PromidasRepositoryBuilder } from '../../builder.js';
 import { createPromidasForServer } from '../../factory.js';
 import type { ProtopediaInMemoryRepository } from '../../repository/types/index.js';
 import { LIMIT_DATA_SIZE_BYTES } from '../../store/index.js';
-import { VERSION } from '../../version.js';
 
 describe('createPromidasForServer', () => {
   let mockRepository: ProtopediaInMemoryRepository;
@@ -146,14 +145,14 @@ describe('createPromidasForServer', () => {
       vi.unstubAllEnvs();
     });
 
-    it('should configure API client with correct User-Agent', () => {
+    it('should not set userAgent', () => {
       createPromidasForServer();
 
       const apiClientConfigArg = setApiClientConfigSpy.mock.calls[0]?.[0];
-      const userAgent =
-        apiClientConfigArg?.protoPediaApiClientOptions?.userAgent;
 
-      expect(userAgent).toBe(`PromidasForServer/${VERSION}`);
+      expect(apiClientConfigArg?.protoPediaApiClientOptions).not.toHaveProperty(
+        'userAgent',
+      );
     });
 
     it('should configure API client with 30-second timeout', () => {
@@ -361,16 +360,6 @@ describe('createPromidasForServer', () => {
 
     afterEach(() => {
       vi.unstubAllEnvs();
-    });
-
-    it('should use correct VERSION constant in User-Agent', () => {
-      createPromidasForServer();
-
-      const configArg = setApiClientConfigSpy.mock.calls[0]?.[0];
-      const userAgent = configArg?.protoPediaApiClientOptions?.userAgent;
-
-      expect(userAgent).toBe(`PromidasForServer/${VERSION}`);
-      expect(userAgent).toMatch(/^PromidasForServer\/\d+\.\d+\.\d+$/);
     });
 
     it('should use correct LIMIT_DATA_SIZE_BYTES constant', () => {

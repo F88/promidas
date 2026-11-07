@@ -283,7 +283,6 @@ constructor(config?: ProtopediaApiCustomClientConfig | null) {
         enableProgressLog: progressLog,
         progressCallback, // Single event handler function
         providedFetch,
-        stripHeaders, // Browser compatibility
     });
 
     // Pass to SDK client (sdkOptions includes timeoutMs; the SDK owns the timeout)
@@ -319,7 +318,6 @@ const customFetch = selectCustomFetch({
 
 this.#client = createProtoPediaClient({
     ...protoPediaApiClientOptions,
-    userAgent,
     fetch: customFetch, // Wrapped with progress tracking
 });
 ```
@@ -569,7 +567,7 @@ export type ProtopediaApiCustomClientConfig = {
 
 ### Overhead
 
-- Minimal: Only wraps fetch when `progressLog: true` (progress tracking) or when browser-only header stripping is enabled
+- Minimal: Only wraps fetch when `progressLog: true` (progress tracking)
 - Streaming processing: No buffering of entire response
 - Callback execution: Synchronous, non-blocking
 - Event throttling: download-progress events limited to once per 500ms

@@ -39,7 +39,6 @@ import type {
 } from './repository/types/index.js';
 import { LIMIT_DATA_SIZE_BYTES as STORE_MAX_DATA_SIZE_BYTES_LIMIT } from './store/index.js';
 import type { PrototypeInMemoryStoreConfig } from './store/index.js';
-import { VERSION } from './version.js';
 
 /**
  * Creates a PromidasRepository instance optimized for local execution environments.
@@ -60,7 +59,6 @@ import { VERSION } from './version.js';
  *
  * **API Client:**
  * - Timeout: 90 seconds (20MB needs about 2 Mbps or more)
- * - User-Agent: `PromidasForLocal/{version}`
  *
  * ## Use Cases
  *
@@ -135,7 +133,6 @@ export function createPromidasForLocal(config: {
       //   - 1 Mbps: ~160s (2m40s)
       //   - 0.5 Mbps: ~320s (5m20s)
       timeoutMs: 90 * 1_000, // 90 seconds (20MB needs about 2 Mbps or more)
-      userAgent: `PromidasForLocal/${VERSION}`,
       // Ensure SDK-level network logs are controlled consistently.
       // Note: The SDK logger interface is compatible with promidas logger.
       logger,
@@ -178,7 +175,6 @@ export function createPromidasForLocal(config: {
  *
  * **API Client:**
  * - Timeout: 30 seconds until the response is received (server-grade connection)
- * - User-Agent: `PromidasForServer/{version}`
  *
  * ## Use Cases
  *
@@ -251,7 +247,6 @@ export function createPromidasForServer(config?: {
     protoPediaApiClientOptions: {
       token: protopediaApiToken,
       timeoutMs: 30 * 1_000, // 30 seconds
-      userAgent: `PromidasForServer/${VERSION}`,
       // Ensure SDK-level network logs are controlled consistently.
       logger,
       logLevel,
