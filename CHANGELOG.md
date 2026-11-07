@@ -7,12 +7,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [4.0.0] - 2026-11-08
 
 ### BREAKING CHANGES
 
 #### General
 
+- **`promidas-utils`**: Use `promidas-utils` 4.0.0 or later with this release.
+  With `promidas-utils` 3.x, a missing API token is shown as an unknown error,
+  because the SDK changed that message.
 - **Peer dependency**: `protopedia-api-v2-client` now requires `^5.2.0`
   (previously `^3.0.0`).
     - Apps that list `protopedia-api-v2-client` in their own `package.json`
@@ -30,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `PromidasForServer/...` to the SDK. A `userAgent` set by the caller is sent as
   the `User-Agent` header, and browsers may block such a request because of CORS.
   The browser detection and the `x-client-user-agent` stripping are removed, since
-  the SDK no longer sends that header.
+  the SDK no longer sends that header (#150).
 - **Timeout delegated to the SDK**: `ProtopediaApiCustomClient` now passes
   `timeoutMs` to `protopedia-api-v2-client` instead of applying its own fetch
   timeout wrapper (#134).
