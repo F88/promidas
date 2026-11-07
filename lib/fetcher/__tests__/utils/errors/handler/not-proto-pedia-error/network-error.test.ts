@@ -16,6 +16,7 @@
  * This split improves test maintainability without fragmenting the implementation.
  */
 
+import { ResponseBodyReadError } from 'protopedia-api-v2-client';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -24,6 +25,59 @@ import {
 } from '../../../../../utils/errors/handler.js';
 
 describe('handleNotProtoPediaApiError', () => {
+  describe('ResponseBodyReadError', () => {
+    const req = { method: 'GET', url: 'https://example.com/prototype/list' };
+
+    it.each([
+      ['Chrome', new TypeError('Failed to fetch')],
+      ['Safari', new TypeError('Load failed')],
+      ['Firefox', new TypeError('Error in input stream')],
+      // A DOMException has a legacy numeric code, which must not be used.
+      ['an unaborted AbortError', new DOMException('Aborted', 'AbortError')],
+    ])('maps the cause from %s to NETWORK_ERROR', (_name, cause) => {
+      const result = handleNotProtoPediaApiError(
+        new ResponseBodyReadError({ req, cause }),
+      );
+
+      expect(result).toEqual({
+        ok: false,
+        origin: 'fetcher',
+        kind: 'network',
+        code: 'NETWORK_ERROR',
+        error: 'Failed to read the response body',
+        details: { res: { code: 'NETWORK_ERROR' } },
+      });
+    });
+
+    it('keeps the Node.js error code from the nested cause', () => {
+      const cause = new TypeError('terminated', {
+        cause: Object.assign(new Error('other side closed'), {
+          code: 'UND_ERR_SOCKET',
+        }),
+      });
+
+      const result = handleNotProtoPediaApiError(
+        new ResponseBodyReadError({ req, cause }),
+      );
+
+      expect(result).toMatchObject({
+        kind: 'network',
+        code: 'UND_ERR_SOCKET',
+        details: { res: { code: 'UND_ERR_SOCKET' } },
+      });
+    });
+
+    it('keeps an error code on the cause itself', () => {
+      const cause = Object.assign(new Error('reset'), { code: 'ECONNRESET' });
+
+      const result = handleNotProtoPediaApiError(
+        new ResponseBodyReadError({ req, cause }),
+      );
+
+      expect(result).toMatchObject({ kind: 'network', code: 'ECONNRESET' });
+    });
+  });
+
   describe('unexpected error handling', () => {
     it('maps unexpected Error to network error without status', () => {
       const error = new Error('Unexpected crash');

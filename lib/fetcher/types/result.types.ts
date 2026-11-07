@@ -7,7 +7,8 @@ import type { NetworkFailure } from './prototype-api.types.js';
  *
  * - http: HTTP response was received (status is available)
  * - cors: Browser returned an opaque response (no status/code observable)
- * - network: Network/socket error without HTTP response (ENOTFOUND, ECONNREFUSED, etc.)
+ * - network: Network/socket error without HTTP response (ENOTFOUND, ECONNREFUSED, etc.),
+ *   or a failed read of a successful response body
  * - timeout: Fetcher-level timeout (no HTTP response)
  * - abort: Caller-driven abort (AbortController)
  * - unknown: Classification failed; fall back to code UNKNOWN
