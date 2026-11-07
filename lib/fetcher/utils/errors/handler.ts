@@ -56,6 +56,16 @@ const ERROR_MESSAGES = {
 const DEFAULT_NETWORK_ERROR_CODE = 'NETWORK_ERROR' as const;
 
 /**
+ * Network error codes exposed as {@link FetcherErrorCode}.
+ */
+const KNOWN_NETWORK_ERROR_CODES = [
+  DEFAULT_NETWORK_ERROR_CODE,
+  'ECONNREFUSED',
+  'ENOTFOUND',
+  'ETIMEDOUT',
+] as const satisfies readonly FetcherErrorCode[];
+
+/**
  * A small set of well-known fetch network error messages.
  *
  * Browsers commonly surface CORS/network failures as a generic TypeError with
@@ -198,6 +208,22 @@ function updateDetailsWithCode(
 }
 
 /**
+ * Convert a runtime error code into a {@link FetcherErrorCode}.
+ *
+ * Runtimes have many more codes (e.g. UND_ERR_SOCKET in Node.js). Those stay
+ * available in `details.res.code`.
+ *
+ * @param code - The runtime error code
+ * @returns The code itself if it is a known network code, otherwise NETWORK_ERROR
+ */
+function toNetworkErrorCode(code: string): FetcherErrorCode {
+  return (
+    KNOWN_NETWORK_ERROR_CODES.find((known) => known === code) ??
+    DEFAULT_NETWORK_ERROR_CODE
+  );
+}
+
+/**
  * Find the network error code of a failed body read.
  *
  * Node.js native fetch keeps it in `cause.cause.code` here. Only strings count:
@@ -295,7 +321,7 @@ export function handleNotProtoPediaApiError(
       error.message,
       updateDetailsWithCode({}, code),
     );
-    return finalize(result, 'network', code as FetcherErrorCode);
+    return finalize(result, 'network', toNetworkErrorCode(code));
   }
 
   const message =
@@ -344,8 +370,7 @@ export function handleNotProtoPediaApiError(
 
   if (details.res?.code !== undefined) {
     const result = createFailureResult(message, details);
-    const code = details.res.code as FetcherErrorCode;
-    return finalize(result, 'network', code);
+    return finalize(result, 'network', toNetworkErrorCode(details.res.code));
   }
 
   const result = createFailureResult(message, details);

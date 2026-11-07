@@ -46,13 +46,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `code: 'CORS_BLOCKED'`. Browser messages keep `CORS_BLOCKED` (#141).
 - **A failed read of a response body is reported as a network failure**: when a
   successful response body cannot be read, such as a dropped connection,
-  `fetchPrototypes()` now returns `kind: 'network'`. `code` is `NETWORK_ERROR`, or
-  the runtime's code such as `UND_ERR_SOCKET` in Node.js. Previously browsers
+  `fetchPrototypes()` now returns `kind: 'network'`. Previously browsers
   returned `cors` / `CORS_BLOCKED` (Chrome, Safari) or `abort` / `ABORTED` or
   `unknown` / `UNKNOWN` (Firefox). The `error` message is now
   `Failed to read the response body` in all runtimes. `listPrototypes()` now
   throws the SDK's `ResponseBodyReadError`, with the original error as `cause`
   (#152).
+- **`result.code` only holds values of `FetcherErrorCode`**: a network error code
+  outside the type, such as `UND_ERR_SOCKET` in Node.js, is now `NETWORK_ERROR`.
+  Read the original value from `details.res.code`. `ECONNREFUSED`, `ENOTFOUND`, and
+  `ETIMEDOUT` are unchanged (#154).
 - **`timeoutMs` covers the whole response**: With SDK v5, `timeoutMs` limits the
   time until the response body is received, not only the response headers. A
   slow download that succeeded before can now time out. Without `timeoutMs`, the

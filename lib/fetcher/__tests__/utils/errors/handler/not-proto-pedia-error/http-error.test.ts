@@ -230,7 +230,7 @@ describe('handleNotProtoPediaApiError', () => {
           ok: false,
           origin: 'fetcher',
           kind: 'network',
-          code: 'RESOURCE_NOT_FOUND',
+          code: 'NETWORK_ERROR',
           error: 'Prototype not found',
           details: {
             res: {
@@ -295,7 +295,7 @@ describe('handleNotProtoPediaApiError', () => {
         if (!result.ok) {
           expect(result.origin).toBe('fetcher');
           expect(result.kind).toBe('network');
-          expect(result.code).toBe('VALIDATION_ERROR');
+          expect(result.code).toBe('NETWORK_ERROR');
           expect(result.error).toBe('Complete error');
           expect(result.details).toEqual({
             res: {
@@ -401,7 +401,7 @@ describe('handleNotProtoPediaApiError', () => {
           ok: false,
           origin: 'fetcher',
           kind: 'network',
-          code: 'SERVICE_UNAVAILABLE',
+          code: 'NETWORK_ERROR',
           error: 'Service temporarily unavailable',
           details: {
             res: {
