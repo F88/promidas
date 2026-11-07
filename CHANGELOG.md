@@ -13,10 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### General
 
-- **Peer dependency**: `protopedia-api-v2-client` now requires `^5.1.0`
+- **Peer dependency**: `protopedia-api-v2-client` now requires `^5.2.0`
   (previously `^3.0.0`).
     - Apps that list `protopedia-api-v2-client` in their own `package.json`
-      must upgrade it to `^5.1.0` together with promidas; otherwise npm fails
+      must upgrade it to `^5.2.0` together with promidas; otherwise npm fails
       with `ERESOLVE`. Apps that rely on npm's automatic peer installation get
       v5 automatically.
     - The SDK v4 breaking changes (Node.js 20 support dropped,
@@ -44,6 +44,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   message `fetch failed` and no error code, such as a refused connection, is now
   `kind: 'network'` / `code: 'NETWORK_ERROR'` instead of `kind: 'cors'` /
   `code: 'CORS_BLOCKED'`. Browser messages keep `CORS_BLOCKED` (#141).
+- **A failed read of a response body is reported as a network failure**: when a
+  successful response body cannot be read, such as a dropped connection,
+  `fetchPrototypes()` now returns `kind: 'network'`. `code` is `NETWORK_ERROR`, or
+  the runtime's code such as `UND_ERR_SOCKET` in Node.js. Previously browsers
+  returned `cors` / `CORS_BLOCKED` (Chrome, Safari) or `abort` / `ABORTED` or
+  `unknown` / `UNKNOWN` (Firefox). The `error` message is now
+  `Failed to read the response body` in all runtimes. `listPrototypes()` now
+  throws the SDK's `ResponseBodyReadError`, with the original error as `cause`
+  (#152).
 - **`timeoutMs` covers the whole response**: With SDK v5, `timeoutMs` limits the
   time until the response body is received, not only the response headers. A
   slow download that succeeded before can now time out. Without `timeoutMs`, the

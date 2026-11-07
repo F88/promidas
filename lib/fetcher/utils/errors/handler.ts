@@ -14,11 +14,15 @@
  * - Normalizing {@link ProtoPediaApiError} into HTTP failures with status/statusText.
  * - Preserving network error codes (ENOTFOUND, ECONNREFUSED, etc.) when available.
  * - Classifying Node.js fetch failures without a code as NETWORK_ERROR.
+ * - Classifying failed reads of a response body as network failures.
  * - Classifying opaque browser fetch failures (TypeError with well-known messages) as CORS_BLOCKED.
  * - Ensuring all API errors are normalized into {@link FetchPrototypesResult}
  *   without throwing exceptions.
  */
-import { ProtoPediaApiError } from 'protopedia-api-v2-client';
+import {
+  ProtoPediaApiError,
+  ResponseBodyReadError,
+} from 'protopedia-api-v2-client';
 
 import type { NetworkFailure } from '../../types/prototype-api.types.js';
 import type {
@@ -194,6 +198,26 @@ function updateDetailsWithCode(
 }
 
 /**
+ * Find the network error code of a failed body read.
+ *
+ * Node.js native fetch keeps it in `cause.cause.code` here. Only strings count:
+ * a DOMException cause has a legacy numeric `code`.
+ *
+ * @param error - The failed body read
+ * @returns The network error code, or the default when the runtime has none
+ */
+function getBodyReadErrorCode(error: ResponseBodyReadError): string {
+  const cause = error.cause as
+    { code?: unknown; cause?: { code?: unknown } } | undefined;
+  for (const code of [cause?.code, cause?.cause?.code]) {
+    if (typeof code === 'string') {
+      return code;
+    }
+  }
+  return DEFAULT_NETWORK_ERROR_CODE;
+}
+
+/**
  * Normalize a {@link ProtoPediaApiError} into a fetcher HTTP failure result.
  *
  * @param error - ProtoPedia API client error containing status and metadata
@@ -225,6 +249,7 @@ export function handleProtoPediaApiError(
  * Paths:
  * - TimeoutError → timeout/TIMEOUT (request timeout, no HTTP status)
  * - AbortError → abort/ABORTED (caller-driven abort, no HTTP status)
+ * - ResponseBodyReadError → network/<code> or network/NETWORK_ERROR
  * - Network-ish errors with code → network/<code>
  * - Node.js fetch failure without a code → network/NETWORK_ERROR
  * - Opaque browser fetch (known TypeError messages) → cors/CORS_BLOCKED
@@ -260,6 +285,17 @@ export function handleNotProtoPediaApiError(
     });
 
     return finalize(result, 'abort', 'ABORTED');
+  }
+
+  // The response was received, so this is not CORS. Checked before the message
+  // and code checks below, because the cause differs by runtime (Issue #152).
+  if (error instanceof ResponseBodyReadError) {
+    const code = getBodyReadErrorCode(error);
+    const result = createFailureResult(
+      error.message,
+      updateDetailsWithCode({}, code),
+    );
+    return finalize(result, 'network', code as FetcherErrorCode);
   }
 
   const message =
