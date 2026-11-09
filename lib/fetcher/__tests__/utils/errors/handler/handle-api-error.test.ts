@@ -55,15 +55,11 @@ describe('handleApiError - delegation', () => {
       kind: 'abort',
       code: 'ABORTED',
       error: 'Upstream request aborted',
-      details: {
-        res: {
-          code: 'ABORTED',
-        },
-      },
+      details: {},
     });
   });
 
-  it('classifies browser TypeError("Failed to fetch") as CORS_BLOCKED', () => {
+  it('classifies browser TypeError("Failed to fetch") as BROWSER_FETCH_FAILED', () => {
     const error = new TypeError('Failed to fetch');
 
     const result = handleApiError(error);
@@ -71,14 +67,10 @@ describe('handleApiError - delegation', () => {
     expect(result).toEqual({
       ok: false,
       origin: 'fetcher',
-      kind: 'cors',
-      code: 'CORS_BLOCKED',
+      kind: 'browser_fetch',
+      code: 'BROWSER_FETCH_FAILED',
       error: 'Failed to fetch',
-      details: {
-        res: {
-          code: 'NETWORK_ERROR',
-        },
-      },
+      details: {},
     });
   });
 

@@ -7,6 +7,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### BREAKING CHANGES
+
+#### General
+
+- **`promidas-utils`**: Use `promidas-utils` 5.0.0 or later with this release.
+  `promidas-utils` 4.x supports promidas 4.x.
+
+#### `lib/fetcher`
+
+- **`cors` and `CORS_BLOCKED` are renamed**: `kind: 'cors'` is now
+  `kind: 'browser_fetch'`, and `code: 'CORS_BLOCKED'` is now
+  `code: 'BROWSER_FETCH_FAILED'`. Browsers give JavaScript the same error for a
+  CORS block, an authentication error without CORS headers, and a failed
+  connection, so the old names stated a cause that cannot be known. When to report
+  this failure does not change (#157).
+- **`details.res.code` is replaced by `details.causeCode`**: `details.res` now
+  only holds `statusText`, and only when a response was received.
+  `details.causeCode` only holds a string code found on the error, such as
+  `ECONNREFUSED` or `UND_ERR_SOCKET`.
+    - `TIMEOUT`, `ABORTED`, and the `NETWORK_ERROR` that promidas set are no longer
+      repeated there. Use `result.code` for them.
+    - `constructDisplayMessage()` no longer prefixes those values.
+- **A `DOMException` other than `AbortError` and `TimeoutError` is now
+  `unknown` / `UNKNOWN`**: it was `network` with its legacy numeric `code` in
+  `result.code` or `NETWORK_ERROR`, which was not a network failure.
+
+#### Migration
+
+TypeScript reports each place to change, because the old values and
+`details.res.code` no longer exist in the types.
+
+| Before                                | After                                                                         |
+| ------------------------------------- | ----------------------------------------------------------------------------- |
+| `result.kind === 'cors'`              | `result.kind === 'browser_fetch'`                                             |
+| `result.code === 'CORS_BLOCKED'`      | `result.code === 'BROWSER_FETCH_FAILED'`                                      |
+| `result.details.res?.code`            | `result.details.causeCode`                                                    |
+| `details.res.code` of `TIMEOUT`, etc. | `result.code` (`TIMEOUT`, `ABORTED`, `NETWORK_ERROR`, `BROWSER_FETCH_FAILED`) |
+
 ## [4.0.0] - 2026-11-08
 
 ### BREAKING CHANGES

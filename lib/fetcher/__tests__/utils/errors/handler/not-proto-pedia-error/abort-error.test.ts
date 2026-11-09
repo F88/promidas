@@ -30,11 +30,7 @@ describe('handleNotProtoPediaApiError', () => {
       kind: 'abort',
       code: 'ABORTED',
       error: 'Upstream request aborted',
-      details: {
-        res: {
-          code: 'ABORTED',
-        },
-      },
+      details: {},
     });
   });
 

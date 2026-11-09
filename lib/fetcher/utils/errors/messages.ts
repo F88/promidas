@@ -48,8 +48,8 @@ export const resolveErrorMessage = (value: unknown): string => {
  * Construct a user-friendly display message from a network failure object.
  *
  * This function builds a comprehensive error message by combining:
- * 1. A prefix from `details.statusText` (e.g., "Not Found") or
- *    `details.code` (e.g., "ENOTFOUND").
+ * 1. A prefix from `details.res.statusText` (e.g., "Not Found") or
+ *    `details.causeCode` (e.g., "ENOTFOUND").
  * 2. The resolved error message from {@link resolveErrorMessage}.
  * 3. The HTTP status code appended in parentheses (e.g., "(404)") if
  *    status is defined. For network errors without a status, the code
@@ -76,7 +76,7 @@ export const resolveErrorMessage = (value: unknown): string => {
  * // Network error without status
  * const networkFailure: NetworkFailure = {
  *   error: new Error('Connection refused'),
- *   details: { res: { code: 'ECONNREFUSED' } },
+ *   details: { causeCode: 'ECONNREFUSED' },
  * };
  *
  * constructDisplayMessage(networkFailure);
@@ -86,7 +86,7 @@ export const resolveErrorMessage = (value: unknown): string => {
 export const constructDisplayMessage = (failure: NetworkFailure): string => {
   const { error, status, details } = failure;
   const statusText = details?.res?.statusText;
-  const code = details?.res?.code;
+  const code = details?.causeCode;
   let message = resolveErrorMessage(error);
 
   const prefix = statusText || code;

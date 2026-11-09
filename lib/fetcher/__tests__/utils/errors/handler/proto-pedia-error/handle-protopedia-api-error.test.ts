@@ -153,7 +153,7 @@ describe('handleProtoPediaApiError', () => {
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.details?.res?.code).toBeUndefined();
+        expect(result.details?.causeCode).toBeUndefined();
       }
     });
 

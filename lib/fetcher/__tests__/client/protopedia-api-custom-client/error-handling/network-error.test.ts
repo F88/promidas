@@ -46,7 +46,7 @@ describe('ProtopediaApiCustomClient - Error Handling - Network Errors', () => {
     if (!result.ok) {
       expect(result.status).toBeUndefined();
       expect(result.error).toBe('getaddrinfo ENOTFOUND');
-      expect(result.details.res?.code).toBe('ENOTFOUND');
+      expect(result.details.causeCode).toBe('ENOTFOUND');
     }
   });
 
@@ -66,7 +66,7 @@ describe('ProtopediaApiCustomClient - Error Handling - Network Errors', () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.status).toBeUndefined();
-      expect(result.details.res?.code).toBe('ECONNREFUSED');
+      expect(result.details.causeCode).toBe('ECONNREFUSED');
     }
   });
 
@@ -85,7 +85,7 @@ describe('ProtopediaApiCustomClient - Error Handling - Network Errors', () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.status).toBeUndefined();
-      expect(result.details.res?.code).toBe('ETIMEDOUT');
+      expect(result.details.causeCode).toBe('ETIMEDOUT');
     }
   });
 

@@ -17,11 +17,7 @@ describe('handleNotProtoPediaApiError', () => {
       kind: 'timeout',
       code: 'TIMEOUT',
       error: 'Upstream request timed out',
-      details: {
-        res: {
-          code: 'TIMEOUT',
-        },
-      },
+      details: {},
     });
   });
 

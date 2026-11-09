@@ -233,9 +233,7 @@ describe('handleNotProtoPediaApiError', () => {
           code: 'NETWORK_ERROR',
           error: 'Prototype not found',
           details: {
-            res: {
-              code: 'RESOURCE_NOT_FOUND',
-            },
+            causeCode: 'RESOURCE_NOT_FOUND',
           },
         });
       });
@@ -298,9 +296,7 @@ describe('handleNotProtoPediaApiError', () => {
           expect(result.code).toBe('NETWORK_ERROR');
           expect(result.error).toBe('Complete error');
           expect(result.details).toEqual({
-            res: {
-              code: 'VALIDATION_ERROR',
-            },
+            causeCode: 'VALIDATION_ERROR',
           });
         }
       });
@@ -404,9 +400,7 @@ describe('handleNotProtoPediaApiError', () => {
           code: 'NETWORK_ERROR',
           error: 'Service temporarily unavailable',
           details: {
-            res: {
-              code: 'SERVICE_UNAVAILABLE',
-            },
+            causeCode: 'SERVICE_UNAVAILABLE',
           },
         });
       });

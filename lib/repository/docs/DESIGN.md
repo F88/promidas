@@ -363,7 +363,7 @@ async setupSnapshot() {
         ok: false,
         error: apiResult.error,
         status: apiResult.status,
-        code: apiResult.details?.res?.code
+        code: apiResult.code
       };
     }
 

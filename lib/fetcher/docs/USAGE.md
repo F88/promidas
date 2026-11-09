@@ -410,7 +410,9 @@ if (!result.ok) {
     // Access error details
     console.error('Error:', result.error); // Error message
     console.error('Status:', result.status); // HTTP status code if available
-    console.error('Code:', result.details?.res?.code); // API error code if available
+    console.error('Kind:', result.kind); // Failure classification
+    console.error('Code:', result.code); // Canonical error code
+    console.error('Cause code:', result.details.causeCode); // Code of the error if available
 }
 ```
 
