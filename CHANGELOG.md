@@ -11,11 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### BREAKING CHANGES
 
-#### General
-
-- **`promidas-utils`**: Use `promidas-utils` 5.0.0 or later with this release.
-  `promidas-utils` 4.x supports promidas 4.x.
-
 #### `lib/fetcher`
 
 - **`cors` and `CORS_BLOCKED` are renamed**: `kind: 'cors'` is now
@@ -53,9 +48,6 @@ TypeScript reports each place to change, because the old values and
 
 #### General
 
-- **`promidas-utils`**: Use `promidas-utils` 4.0.0 or later with this release.
-  With `promidas-utils` 3.x, a missing API token is shown as an unknown error,
-  because the SDK changed that message.
 - **Peer dependency**: `protopedia-api-v2-client` now requires `^5.2.0`
   (previously `^3.0.0`).
     - Apps that list `protopedia-api-v2-client` in their own `package.json`
