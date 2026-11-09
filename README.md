@@ -186,6 +186,7 @@ import {
 
 PROMIDAS を利用しているプロジェクトです。
 
+- **[promidas-utils](https://f88.github.io/promidas-utils/)** ([GitHub](https://github.com/F88/promidas-utils)) - PROMIDAS と組み合わせて使うユーティリティ (トークン管理、エラー文言の日本語化など)
 - **[PROMIDAS Playground](https://f88.github.io/PROMIDAS-demo/)** ([GitHub](https://github.com/F88/PROMIDAS-demo)) - PROMIDAS の機能をブラウザで試せるデモサイト
 - **[MUGEN ProtoPedia (無限 ProtoPedia)](https://mugen-pp.vercel.app)** ([GitHub](https://github.com/F88/mugen-protopedia)) - ProtoPedia の作品を果てしなく探索する Web アプリ
 - **[PP Karuta](https://f88.github.io/pp-karuta/)** ([GitHub](https://github.com/F88/pp-karuta)) - ProtoPedia の作品の画像で遊ぶかるたゲーム
