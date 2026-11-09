@@ -15,7 +15,7 @@
  * - Preserving network error codes (ENOTFOUND, ECONNREFUSED, etc.) when available.
  * - Classifying Node.js fetch failures without a code as NETWORK_ERROR.
  * - Classifying failed reads of a response body as network failures.
- * - Classifying opaque browser fetch failures (TypeError with well-known messages) as CORS_BLOCKED.
+ * - Classifying browser fetch failures that hide the cause (TypeError with well-known messages) as BROWSER_FETCH_FAILED.
  * - Ensuring all API errors are normalized into {@link FetchPrototypesResult}
  *   without throwing exceptions.
  */
@@ -51,7 +51,7 @@ const ERROR_MESSAGES = {
 
 /**
  * Default error code for network failures where the runtime does not provide
- * a more specific code (e.g. browser fetch TypeError("Failed to fetch")).
+ * a more specific code.
  */
 const DEFAULT_NETWORK_ERROR_CODE = 'NETWORK_ERROR' as const;
 
@@ -66,12 +66,12 @@ const KNOWN_NETWORK_ERROR_CODES = [
 ] as const satisfies readonly FetcherErrorCode[];
 
 /**
- * A small set of well-known fetch network error messages.
+ * Messages of a failed browser fetch.
  *
- * Browsers commonly surface CORS/network failures as a generic TypeError with
- * a short message (e.g. "Failed to fetch"), without any structured error code.
+ * Browsers give JavaScript the same TypeError for a CORS block, an auth error
+ * without CORS headers, and a failed connection, so the cause cannot be told.
  */
-const KNOWN_FETCH_NETWORK_ERROR_MESSAGES = new Set<string>([
+const BROWSER_FETCH_FAILURE_MESSAGES = new Set<string>([
   'Failed to fetch',
   'Load failed',
   'NetworkError when attempting to fetch resource.',
@@ -118,30 +118,6 @@ function isAbortError(error: unknown): error is DOMException {
  */
 function isTimeoutError(error: unknown): error is DOMException {
   return error instanceof DOMException && error.name === ERROR_NAMES.TIMEOUT;
-}
-
-/**
- * Type guard to check if an error has a code property.
- *
- * This intentionally uses a broad `error is object` type guard to handle
- * nested error structures flexibly. Node.js native fetch wraps network
- * error codes in `error.cause.code`:
- *
- * @example
- * ```ts
- * const error = new Error('fetch failed');
- * error.cause = { code: 'ENOTFOUND' };
- * // hasErrorCode(error) returns true, allowing us to check error.cause.code
- * ```
- *
- * A more specific type guard like `error is { code: string }` would reject
- * errors that only have `cause.code`, preventing extraction of nested codes.
- *
- * @param error - The error to check
- * @returns True if the error is an object that might contain code information
- */
-function hasErrorCode(error: unknown): error is object {
-  return error !== null && typeof error === 'object';
 }
 
 type FetchPrototypesFailureBase = Omit<FetchPrototypesFailure, 'kind' | 'code'>;
@@ -194,24 +170,11 @@ function finalize(
   } satisfies FetchPrototypesResult;
 }
 
-function updateDetailsWithCode(
-  details: NetworkFailure['details'],
-  code: string,
-): NetworkFailure['details'] {
-  return {
-    ...details,
-    res: {
-      ...details.res,
-      code,
-    },
-  };
-}
-
 /**
  * Convert a runtime error code into a {@link FetcherErrorCode}.
  *
  * Runtimes have many more codes (e.g. UND_ERR_SOCKET in Node.js). Those stay
- * available in `details.res.code`.
+ * available in `details.causeCode`.
  *
  * @param code - The runtime error code
  * @returns The code itself if it is a known network code, otherwise NETWORK_ERROR
@@ -224,23 +187,29 @@ function toNetworkErrorCode(code: string): FetcherErrorCode {
 }
 
 /**
- * Find the network error code of a failed body read.
+ * Find the code of an error.
  *
- * Node.js native fetch keeps it in `cause.cause.code` here. Only strings count:
- * a DOMException cause has a legacy numeric `code`.
+ * Node.js native fetch keeps it in `cause.code`, and a failed body read in
+ * `cause.cause.code`. Only strings count: a DOMException has a legacy numeric
+ * `code`.
  *
- * @param error - The failed body read
- * @returns The network error code, or the default when the runtime has none
+ * @param error - The error to check
+ * @returns The code, or undefined when the error has none
  */
-function getBodyReadErrorCode(error: ResponseBodyReadError): string {
-  const cause = error.cause as
-    { code?: unknown; cause?: { code?: unknown } } | undefined;
-  for (const code of [cause?.code, cause?.cause?.code]) {
-    if (typeof code === 'string') {
-      return code;
-    }
+function findCauseCode(error: unknown): string | undefined {
+  const { code, cause } = (error ?? {}) as { code?: unknown; cause?: unknown };
+  if (typeof code === 'string') {
+    return code;
   }
-  return DEFAULT_NETWORK_ERROR_CODE;
+  const { code: causeCode, cause: nestedCause } = (cause ?? {}) as {
+    code?: unknown;
+    cause?: { code?: unknown };
+  };
+  if (typeof causeCode === 'string') {
+    return causeCode;
+  }
+  const nestedCode = nestedCause?.code;
+  return typeof nestedCode === 'string' ? nestedCode : undefined;
 }
 
 /**
@@ -276,14 +245,14 @@ export function handleProtoPediaApiError(
  * - TimeoutError → timeout/TIMEOUT (request timeout, no HTTP status)
  * - AbortError → abort/ABORTED (caller-driven abort, no HTTP status)
  * - ResponseBodyReadError → network/<code> or network/NETWORK_ERROR
- * - Network-ish errors with code → network/<code>
+ * - Errors with a code → network/<code> or network/NETWORK_ERROR
  * - Node.js fetch failure without a code → network/NETWORK_ERROR
- * - Opaque browser fetch (known TypeError messages) → cors/CORS_BLOCKED
+ * - Browser fetch failure (known TypeError messages) → browser_fetch/BROWSER_FETCH_FAILED
  * - Fallback → unknown/UNKNOWN
  *
  * Notes:
  * - Do not trust arbitrary error.status; do not treat non-ProtoPedia errors as HTTP.
- * - If details.res.code exists, classify as network; otherwise choose cors/unknown.
+ * - `details.causeCode` only holds a code found on the error.
  */
 export function handleNotProtoPediaApiError(
   error: unknown,
@@ -293,87 +262,52 @@ export function handleNotProtoPediaApiError(
   // legacy numeric `code` (23 for TimeoutError) that must not be mistaken for
   // a network error code (Issue #134). Not an HTTP 408 response.
   if (isTimeoutError(error)) {
-    const result = createFailureResult(ERROR_MESSAGES.TIMEOUT, {
-      res: {
-        code: 'TIMEOUT',
-      },
-    });
+    const result = createFailureResult(ERROR_MESSAGES.TIMEOUT, {});
 
     return finalize(result, 'timeout', 'TIMEOUT');
   }
 
   // Handle AbortError (caller-driven abort) - network error, no status
   if (isAbortError(error)) {
-    const result = createFailureResult(ERROR_MESSAGES.ABORTED, {
-      res: {
-        code: 'ABORTED',
-      },
-    });
+    const result = createFailureResult(ERROR_MESSAGES.ABORTED, {});
 
     return finalize(result, 'abort', 'ABORTED');
   }
 
-  // The response was received, so this is not CORS. Checked before the message
-  // and code checks below, because the cause differs by runtime (Issue #152).
+  const causeCode = findCauseCode(error);
+  const details: NetworkFailure['details'] =
+    causeCode === undefined ? {} : { causeCode };
+
+  // The response was received, so the browser did not hide it. Checked before the
+  // message check below, because the cause differs by runtime (Issue #152).
   if (error instanceof ResponseBodyReadError) {
-    const code = getBodyReadErrorCode(error);
-    const result = createFailureResult(
-      error.message,
-      updateDetailsWithCode({}, code),
-    );
-    return finalize(result, 'network', toNetworkErrorCode(code));
+    const result = createFailureResult(error.message, details);
+    const code =
+      causeCode === undefined
+        ? DEFAULT_NETWORK_ERROR_CODE
+        : toNetworkErrorCode(causeCode);
+    return finalize(result, 'network', code);
   }
 
   const message =
     error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN;
+  const result = createFailureResult(message, details);
 
-  let details: NetworkFailure['details'] = {};
-  // Extract network error code from error.code or error.cause.code
-  // (Node.js native fetch wraps ENOTFOUND etc. in error.cause)
-  if (hasErrorCode(error)) {
-    const errorObj = error as {
-      code?: string;
-      cause?: { code?: string };
-    };
-    const code = errorObj.code ?? errorObj.cause?.code;
-    if (code !== undefined) {
-      details = updateDetailsWithCode(details, code);
-    }
+  if (causeCode !== undefined) {
+    return finalize(result, 'network', toNetworkErrorCode(causeCode));
   }
 
-  if (
-    details.res?.code === undefined &&
-    error instanceof TypeError &&
-    message === NODE_FETCH_FAILURE_MESSAGE
-  ) {
-    const newDetails = updateDetailsWithCode(
-      details,
-      DEFAULT_NETWORK_ERROR_CODE,
-    );
-    const result = createFailureResult(message, newDetails);
+  if (error instanceof TypeError && message === NODE_FETCH_FAILURE_MESSAGE) {
     return finalize(result, 'network', DEFAULT_NETWORK_ERROR_CODE);
   }
 
-  const isOpaqueFetchError =
+  if (
     error instanceof TypeError &&
-    KNOWN_FETCH_NETWORK_ERROR_MESSAGES.has(message);
-
-  if (details.res?.code === undefined && isOpaqueFetchError) {
-    // Keep diagnostics (use generic network code) but classify as CORS_BLOCKED.
-    const newDetails = updateDetailsWithCode(
-      details,
-      DEFAULT_NETWORK_ERROR_CODE,
-    );
-    const result = createFailureResult(message, newDetails);
-    return finalize(result, 'cors', 'CORS_BLOCKED');
+    BROWSER_FETCH_FAILURE_MESSAGES.has(message)
+  ) {
+    return finalize(result, 'browser_fetch', 'BROWSER_FETCH_FAILED');
   }
 
-  if (details.res?.code !== undefined) {
-    const result = createFailureResult(message, details);
-    return finalize(result, 'network', toNetworkErrorCode(details.res.code));
-  }
-
-  const result = createFailureResult(message, details);
   return finalize(result, 'unknown', 'UNKNOWN');
 }
 
@@ -383,12 +317,12 @@ export function handleNotProtoPediaApiError(
  *
  * Delegation:
  * - ProtoPediaApiError → {@link handleProtoPediaApiError} (HTTP, preserves status/statusText)
- * - Others → {@link handleNotProtoPediaApiError} (timeout/abort/network/cors/unknown)
+ * - Others → {@link handleNotProtoPediaApiError} (timeout/abort/network/browser_fetch/unknown)
  *
  * Notes:
  * - Only ProtoPediaApiError is treated as trusted HTTP (status/statusText retained).
- * - If a network code is available, store it in details.res.code and return kind 'network'.
- * - Known opaque fetch messages (TypeError) are classified as CORS_BLOCKED.
+ * - If the error has a code, store it in details.causeCode and return kind 'network'.
+ * - Known browser fetch messages (TypeError) are classified as BROWSER_FETCH_FAILED.
  */
 export function handleApiError(error: unknown): FetchPrototypesResult {
   // Handle ProtoPediaApiError specifically - HTTP error with status

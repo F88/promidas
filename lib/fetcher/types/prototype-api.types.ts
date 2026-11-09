@@ -52,7 +52,8 @@ export type UpstreamPrototype = ResultOfListPrototypesApiResponse;
  * The `details` object is always present and may contain:
  * - Empty object `{}` for errors without metadata (AbortError, unexpected errors)
  * - `req` object with URL and HTTP method from the request
- * - `res` object with HTTP status text and optional error code
+ * - `res` object with HTTP status text, only when a response was received
+ * - `causeCode` with the code of the error, only when the error has one
  *
  * @example
  * ```ts
@@ -70,7 +71,7 @@ export type UpstreamPrototype = ResultOfListPrototypesApiResponse;
  * const networkError: NetworkFailure = {
  *   error: 'connect ECONNREFUSED',
  *   details: {
- *     res: { code: 'ECONNREFUSED' }
+ *     causeCode: 'ECONNREFUSED'
  *   }
  * };
  * ```
@@ -103,12 +104,12 @@ export type NetworkFailure = {
     readonly res?: {
       /** HTTP status text (e.g., "Not Found", "Internal Server Error") */
       readonly statusText?: string;
-      /**
-       * Error identifier from the API or runtime/network layer
-       * (e.g., "RESOURCE_NOT_FOUND", "ENOTFOUND", "ECONNREFUSED",
-       * "TIMEOUT", "ABORTED", "NETWORK_ERROR").
-       */
-      readonly code?: string;
     };
+    /**
+     * Code of the error from the runtime or a custom `fetch`
+     * (e.g., "ENOTFOUND", "ECONNREFUSED", "UND_ERR_SOCKET"). It can be outside
+     * `FetcherErrorCode`. Not set when the error has no string code.
+     */
+    readonly causeCode?: string;
   };
 };

@@ -46,11 +46,7 @@ describe('ProtopediaApiCustomClient - Error Handling - AbortError', () => {
     if (!result.ok) {
       expect(result.error).toBe('Upstream request aborted');
       expect(result.status).toBeUndefined();
-      expect(result.details).toEqual({
-        res: {
-          code: 'ABORTED',
-        },
-      });
+      expect(result.details).toEqual({});
     }
     expect(mockLogger.error).toHaveBeenCalled();
   });
@@ -94,11 +90,7 @@ describe('ProtopediaApiCustomClient - Error Handling - AbortError', () => {
     if (!result.ok) {
       expect(result.error).toBe('Upstream request timed out');
       expect(result.status).toBeUndefined();
-      expect(result.details).toEqual({
-        res: {
-          code: 'TIMEOUT',
-        },
-      });
+      expect(result.details).toEqual({});
     }
   });
 

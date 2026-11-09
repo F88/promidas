@@ -6,7 +6,9 @@ import type { NetworkFailure } from './prototype-api.types.js';
  * Coarse-grained discriminant for fetcher failures.
  *
  * - http: HTTP response was received (status is available)
- * - cors: Browser returned an opaque response (no status/code observable)
+ * - browser_fetch: Browser fetch failed without giving a response to JavaScript,
+ *   with an error that hides the cause. It can be a CORS block, an auth error, or
+ *   a failed connection.
  * - network: Network/socket error without HTTP response (ENOTFOUND, ECONNREFUSED, etc.),
  *   or a failed read of a successful response body
  * - timeout: Fetcher-level timeout (no HTTP response)
@@ -14,7 +16,7 @@ import type { NetworkFailure } from './prototype-api.types.js';
  * - unknown: Classification failed; fall back to code UNKNOWN
  */
 export type FetchFailureKind =
-  'http' | 'cors' | 'network' | 'timeout' | 'abort' | 'unknown';
+  'http' | 'browser_fetch' | 'network' | 'timeout' | 'abort' | 'unknown';
 
 /**
  * Canonical error codes exposed by the fetcher.
@@ -26,7 +28,7 @@ export type FetchFailureKind =
  * SERVER_GATEWAY_TIMEOUT / SERVER_SERVICE_UNAVAILABLE / SERVER_ERROR (other 5xx)
  * Network: NETWORK_ERROR / ECONNREFUSED / ENOTFOUND / ETIMEDOUT
  * Control: TIMEOUT (fetcher timeout), ABORTED (AbortController)
- * CORS: CORS_BLOCKED (opaque response; status/code not observable)
+ * Browser fetch: BROWSER_FETCH_FAILED (the cause cannot be determined; see `browser_fetch` above)
  * Fallback: UNKNOWN
  */
 export type FetcherErrorCode =
@@ -49,7 +51,7 @@ export type FetcherErrorCode =
   | 'ETIMEDOUT'
   | 'TIMEOUT'
   | 'ABORTED'
-  | 'CORS_BLOCKED'
+  | 'BROWSER_FETCH_FAILED'
   | 'UNKNOWN';
 
 /**
@@ -69,7 +71,7 @@ export type FetchPrototypesFailure = {
   readonly origin: 'fetcher';
   /** Coarse-grained classification of the failure cause. */
   readonly kind: FetchFailureKind;
-  /** Canonicalized error code (in addition to details.res.code). */
+  /** Canonicalized error code (in addition to details.causeCode). */
   readonly code: FetcherErrorCode;
   /** Human-readable error message. */
   readonly error: string;

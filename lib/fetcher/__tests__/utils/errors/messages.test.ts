@@ -99,9 +99,7 @@ describe('error-messages', () => {
         status: 500,
         error: new Error('Connection failed'),
         details: {
-          res: {
-            code: 'ECONNREFUSED',
-          },
+          causeCode: 'ECONNREFUSED',
         },
       };
 
@@ -152,15 +150,15 @@ describe('error-messages', () => {
       );
     });
 
-    it('prioritizes statusText over code', () => {
+    it('prioritizes statusText over causeCode', () => {
       const failure: NetworkFailure = {
         status: 404,
         error: new Error('Not found'),
         details: {
           res: {
             statusText: 'Not Found',
-            code: 'ERR_404',
           },
+          causeCode: 'ERR_404',
         },
       };
 
@@ -200,9 +198,7 @@ describe('error-messages', () => {
         status: 500,
         error: new Error('Connection error'),
         details: {
-          res: {
-            code: '',
-          },
+          causeCode: '',
         },
       };
 
@@ -216,8 +212,8 @@ describe('error-messages', () => {
         details: {
           res: {
             statusText: '',
-            code: 'ECONNREFUSED',
           },
+          causeCode: 'ECONNREFUSED',
         },
       };
 
@@ -295,9 +291,7 @@ describe('error-messages', () => {
         status: 500,
         error: new Error('Error: Something went wrong'),
         details: {
-          res: {
-            code: 'ERROR',
-          },
+          causeCode: 'ERROR',
         },
       };
 
@@ -326,9 +320,7 @@ describe('error-messages', () => {
       const failure: NetworkFailure = {
         error: new Error('Connection refused'),
         details: {
-          res: {
-            code: 'ECONNREFUSED',
-          },
+          causeCode: 'ECONNREFUSED',
         },
       };
 

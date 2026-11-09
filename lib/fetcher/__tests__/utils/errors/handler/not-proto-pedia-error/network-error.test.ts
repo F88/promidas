@@ -45,7 +45,7 @@ describe('handleNotProtoPediaApiError', () => {
         kind: 'network',
         code: 'NETWORK_ERROR',
         error: 'Failed to read the response body',
-        details: { res: { code: 'NETWORK_ERROR' } },
+        details: {},
       });
     });
 
@@ -63,7 +63,7 @@ describe('handleNotProtoPediaApiError', () => {
       expect(result).toMatchObject({
         kind: 'network',
         code: 'NETWORK_ERROR',
-        details: { res: { code: 'UND_ERR_SOCKET' } },
+        details: { causeCode: 'UND_ERR_SOCKET' },
       });
     });
 
@@ -176,9 +176,7 @@ describe('handleNotProtoPediaApiError', () => {
         code: 'ENOTFOUND',
         error: 'getaddrinfo ENOTFOUND',
         details: {
-          res: {
-            code: 'ENOTFOUND',
-          },
+          causeCode: 'ENOTFOUND',
         },
       });
     });
@@ -202,9 +200,7 @@ describe('handleNotProtoPediaApiError', () => {
         code: 'ENOTFOUND',
         error: 'fetch failed',
         details: {
-          res: {
-            code: 'ENOTFOUND',
-          },
+          causeCode: 'ENOTFOUND',
         },
       });
     });
@@ -224,7 +220,7 @@ describe('handleNotProtoPediaApiError', () => {
         expect(result.kind).toBe('network');
         expect(result.code).toBe('ECONNREFUSED');
         expect(result.status).toBeUndefined();
-        expect(result.details?.res?.code).toBe('ECONNREFUSED');
+        expect(result.details?.causeCode).toBe('ECONNREFUSED');
       }
     });
 
@@ -243,7 +239,7 @@ describe('handleNotProtoPediaApiError', () => {
         expect(result.kind).toBe('network');
         expect(result.code).toBe('ETIMEDOUT');
         expect(result.status).toBeUndefined();
-        expect(result.details?.res?.code).toBe('ETIMEDOUT');
+        expect(result.details?.causeCode).toBe('ETIMEDOUT');
       }
     });
 
@@ -260,7 +256,7 @@ describe('handleNotProtoPediaApiError', () => {
         expect(result.origin).toBe('fetcher');
         expect(result.kind).toBe('network');
         expect(result.code).toBe('NETWORK_ERROR');
-        expect(result.details?.res?.code).toBe('CUSTOM_CODE');
+        expect(result.details?.causeCode).toBe('CUSTOM_CODE');
       }
     });
 
@@ -327,14 +323,10 @@ describe('handleNotProtoPediaApiError', () => {
       expect(result).toEqual({
         ok: false,
         origin: 'fetcher',
-        kind: 'cors',
-        code: 'CORS_BLOCKED',
+        kind: 'browser_fetch',
+        code: 'BROWSER_FETCH_FAILED',
         error: 'Failed to fetch',
-        details: {
-          res: {
-            code: 'NETWORK_ERROR',
-          },
-        },
+        details: {},
       });
     });
 
@@ -348,11 +340,7 @@ describe('handleNotProtoPediaApiError', () => {
         kind: 'network',
         code: 'NETWORK_ERROR',
         error: 'fetch failed',
-        details: {
-          res: {
-            code: 'NETWORK_ERROR',
-          },
-        },
+        details: {},
       });
     });
 
@@ -371,14 +359,10 @@ describe('handleNotProtoPediaApiError', () => {
         expect(result).toEqual({
           ok: false,
           origin: 'fetcher',
-          kind: 'cors',
-          code: 'CORS_BLOCKED',
+          kind: 'browser_fetch',
+          code: 'BROWSER_FETCH_FAILED',
           error: message,
-          details: {
-            res: {
-              code: 'NETWORK_ERROR',
-            },
-          },
+          details: {},
         });
       },
     );
@@ -396,9 +380,7 @@ describe('handleNotProtoPediaApiError', () => {
         code: 'NETWORK_ERROR',
         error: 'Failed to fetch',
         details: {
-          res: {
-            code: 'CUSTOM_CODE',
-          },
+          causeCode: 'CUSTOM_CODE',
         },
       });
     });
@@ -553,12 +535,12 @@ describe('handleNotProtoPediaApiError', () => {
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.origin).toBe('fetcher');
-        // DOMException has a numeric code property, so it's extracted as network
-        expect(result.kind).toBe('network');
-        expect(result.code).toBe('NETWORK_ERROR');
+        // The legacy numeric code of a DOMException is not a cause code.
+        expect(result.kind).toBe('unknown');
+        expect(result.code).toBe('UNKNOWN');
         expect(result.status).toBeUndefined();
         expect(result.error).toBe('Invalid state');
-        expect(result.details.res?.code).toBe(domError.code);
+        expect(result.details).toEqual({});
       }
     });
 

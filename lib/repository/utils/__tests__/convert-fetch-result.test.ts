@@ -115,7 +115,6 @@ describe('convertFetchResult', () => {
           },
           res: {
             statusText: 'Not Found',
-            code: 'RESOURCE_NOT_FOUND',
           },
         },
       });
@@ -132,18 +131,14 @@ describe('convertFetchResult', () => {
       const fetchFailure = makeFetchFailure({
         error: 'Error',
         details: {
-          res: {
-            code: 'INTERNAL_ERROR',
-          },
+          causeCode: 'INTERNAL_ERROR',
         },
       });
 
       convertFetchResult(fetchFailure);
 
       expect(fetchFailure.details).toStrictEqual({
-        res: {
-          code: 'INTERNAL_ERROR',
-        },
+        causeCode: 'INTERNAL_ERROR',
       });
     });
   });
@@ -217,9 +212,7 @@ describe('convertFetchResult', () => {
         error: 'Resource not found',
         status: 404,
         details: {
-          res: {
-            code: 'RESOURCE_NOT_FOUND',
-          },
+          causeCode: 'RESOURCE_NOT_FOUND',
         },
       });
 
@@ -235,7 +228,7 @@ describe('convertFetchResult', () => {
     it('should handle various kinds', () => {
       const testCases: Array<FetchPrototypesFailure['kind']> = [
         'http',
-        'cors',
+        'browser_fetch',
         'network',
         'timeout',
         'abort',
@@ -279,7 +272,7 @@ describe('convertFetchResult', () => {
         'ETIMEDOUT',
         'TIMEOUT',
         'ABORTED',
-        'CORS_BLOCKED',
+        'BROWSER_FETCH_FAILED',
         'UNKNOWN',
       ];
 
@@ -309,7 +302,6 @@ describe('convertFetchResult', () => {
         status: 401,
         details: {
           res: {
-            code: 'UNAUTHORIZED',
             statusText: 'Unauthorized',
           },
         },
@@ -326,7 +318,6 @@ describe('convertFetchResult', () => {
         status: 401,
         details: {
           res: {
-            code: 'UNAUTHORIZED',
             statusText: 'Unauthorized',
           },
         },
@@ -345,7 +336,6 @@ describe('convertFetchResult', () => {
             url: 'https://example.com/api',
           },
           res: {
-            code: 'INTERNAL_ERROR',
             statusText: 'Internal Server Error',
           },
         },
@@ -366,7 +356,6 @@ describe('convertFetchResult', () => {
             url: 'https://example.com/api',
           },
           res: {
-            code: 'INTERNAL_ERROR',
             statusText: 'Internal Server Error',
           },
         },
@@ -386,7 +375,6 @@ describe('convertFetchResult', () => {
           },
           res: {
             statusText: 'Internal Server Error',
-            code: 'INTERNAL_ERROR',
           },
         },
       });
@@ -403,7 +391,6 @@ describe('convertFetchResult', () => {
         },
         res: {
           statusText: 'Internal Server Error',
-          code: 'INTERNAL_ERROR',
         },
       });
     });
@@ -457,7 +444,6 @@ describe('convertFetchResult', () => {
         details: {
           res: {
             statusText: 'Not Found',
-            code: 'RESOURCE_NOT_FOUND',
           },
         },
       });
@@ -474,7 +460,6 @@ describe('convertFetchResult', () => {
         details: {
           res: {
             statusText: 'Not Found',
-            code: 'RESOURCE_NOT_FOUND',
           },
         },
       });
@@ -511,13 +496,11 @@ describe('convertFetchResult', () => {
       expect(result.message).toBe('');
     });
 
-    it('should preserve details.res.code even when empty', () => {
+    it('should preserve details.causeCode even when empty', () => {
       const fetchFailure = makeFetchFailure({
         error: 'Error',
         details: {
-          res: {
-            code: '',
-          },
+          causeCode: '',
         },
       });
 
@@ -527,9 +510,7 @@ describe('convertFetchResult', () => {
         expect.fail('Expected failure result');
       }
       expect(result.details).toStrictEqual({
-        res: {
-          code: '',
-        },
+        causeCode: '',
       });
     });
 
@@ -619,9 +600,7 @@ describe('convertFetchResult', () => {
         error: 'Error',
         status: 500,
         details: {
-          res: {
-            code: 'INTERNAL_ERROR',
-          },
+          causeCode: 'INTERNAL_ERROR',
         },
       });
 
@@ -662,7 +641,6 @@ describe('convertFetchResult', () => {
           },
           res: {
             statusText: 'Not Found',
-            code: 'RESOURCE_NOT_FOUND',
           },
         },
       });
@@ -683,7 +661,6 @@ describe('convertFetchResult', () => {
           },
           res: {
             statusText: 'Not Found',
-            code: 'RESOURCE_NOT_FOUND',
           },
         },
       });
@@ -695,9 +672,7 @@ describe('convertFetchResult', () => {
         code: 'TIMEOUT',
         error: 'Request timeout',
         details: {
-          res: {
-            code: 'ETIMEDOUT',
-          },
+          causeCode: 'ETIMEDOUT',
         },
       });
 
@@ -710,9 +685,7 @@ describe('convertFetchResult', () => {
         code: 'TIMEOUT',
         message: 'Request timeout',
         details: {
-          res: {
-            code: 'ETIMEDOUT',
-          },
+          causeCode: 'ETIMEDOUT',
         },
       });
     });
@@ -723,9 +696,7 @@ describe('convertFetchResult', () => {
         code: 'ECONNREFUSED',
         error: 'connect ECONNREFUSED',
         details: {
-          res: {
-            code: 'ECONNREFUSED',
-          },
+          causeCode: 'ECONNREFUSED',
         },
       });
 
@@ -738,9 +709,7 @@ describe('convertFetchResult', () => {
         code: 'ECONNREFUSED',
         message: 'connect ECONNREFUSED',
         details: {
-          res: {
-            code: 'ECONNREFUSED',
-          },
+          causeCode: 'ECONNREFUSED',
         },
       });
     });
@@ -758,7 +727,6 @@ describe('convertFetchResult', () => {
           },
           res: {
             statusText: 'Unauthorized',
-            code: 'UNAUTHORIZED',
           },
         },
       });
@@ -779,7 +747,6 @@ describe('convertFetchResult', () => {
           },
           res: {
             statusText: 'Unauthorized',
-            code: 'UNAUTHORIZED',
           },
         },
       });
@@ -798,7 +765,6 @@ describe('convertFetchResult', () => {
           },
           res: {
             statusText: 'Internal Server Error',
-            code: 'INTERNAL_ERROR',
           },
         },
       });
@@ -819,7 +785,6 @@ describe('convertFetchResult', () => {
           },
           res: {
             statusText: 'Internal Server Error',
-            code: 'INTERNAL_ERROR',
           },
         },
       });
@@ -831,9 +796,7 @@ describe('convertFetchResult', () => {
         code: 'ENOTFOUND',
         error: 'getaddrinfo ENOTFOUND example.com',
         details: {
-          res: {
-            code: 'ENOTFOUND',
-          },
+          causeCode: 'ENOTFOUND',
         },
       });
 
@@ -846,9 +809,7 @@ describe('convertFetchResult', () => {
         code: 'ENOTFOUND',
         message: 'getaddrinfo ENOTFOUND example.com',
         details: {
-          res: {
-            code: 'ENOTFOUND',
-          },
+          causeCode: 'ENOTFOUND',
         },
       });
     });
@@ -858,11 +819,7 @@ describe('convertFetchResult', () => {
         kind: 'network',
         code: 'NETWORK_ERROR',
         error: 'Failed to fetch',
-        details: {
-          res: {
-            code: 'NETWORK_ERROR',
-          },
-        },
+        details: {},
       });
 
       const result = convertFetchResult(fetchFailure);
@@ -873,11 +830,7 @@ describe('convertFetchResult', () => {
         kind: 'network',
         code: 'NETWORK_ERROR',
         message: 'Failed to fetch',
-        details: {
-          res: {
-            code: 'NETWORK_ERROR',
-          },
-        },
+        details: {},
       });
     });
 
@@ -903,8 +856,8 @@ describe('convertFetchResult', () => {
 
     it('should handle CORS blocked errors', () => {
       const fetchFailure = makeFetchFailure({
-        kind: 'cors',
-        code: 'CORS_BLOCKED',
+        kind: 'browser_fetch',
+        code: 'BROWSER_FETCH_FAILED',
         error: 'CORS policy blocked',
         details: {},
       });
@@ -914,8 +867,8 @@ describe('convertFetchResult', () => {
       expect(result).toStrictEqual({
         ok: false,
         origin: 'fetcher',
-        kind: 'cors',
-        code: 'CORS_BLOCKED',
+        kind: 'browser_fetch',
+        code: 'BROWSER_FETCH_FAILED',
         message: 'CORS policy blocked',
         details: {},
       });

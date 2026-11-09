@@ -35,7 +35,7 @@ import type {
  *   error: 'Not Found',
  *   code: 'CLIENT_NOT_FOUND',
  *   status: 404,
- *   details: { res: { code: 'RESOURCE_NOT_FOUND' } }
+ *   details: { res: { statusText: 'Not Found' } }
  * };
  * const snapshotFailure = convertFetchResult(fetchFailure);
  * // {
@@ -45,7 +45,7 @@ import type {
  * //   code: 'CLIENT_NOT_FOUND',
  * //   message: 'Not Found',
  * //   status: 404,
- * //   details: { res: { code: 'RESOURCE_NOT_FOUND' } }
+ * //   details: { res: { statusText: 'Not Found' } }
  * // }
  * ```
  */
