@@ -179,3 +179,14 @@ import {
 **Project History:**
 
 - [CHANGELOG.md](CHANGELOG.md) - Version history and release notes
+
+---
+
+## PROMIDAS の利用例
+
+PROMIDAS を利用しているプロジェクトです。
+
+- **[PROMIDAS Playground](https://f88.github.io/PROMIDAS-demo/)** ([GitHub](https://github.com/F88/PROMIDAS-demo)) - PROMIDAS の機能をブラウザで試せるデモサイト
+- **[MUGEN ProtoPedia (無限 ProtoPedia)](https://mugen-pp.vercel.app)** ([GitHub](https://github.com/F88/mugen-protopedia)) - ProtoPedia の作品を果てしなく探索する Web アプリ
+- **[PP Karuta](https://f88.github.io/pp-karuta/)** ([GitHub](https://github.com/F88/pp-karuta)) - ProtoPedia の作品の画像で遊ぶかるたゲーム
+- **[ppv26-cli](https://www.npmjs.com/package/ppv26-cli)** ([GitHub](https://github.com/F88/ppv26-cli)) - ローカルの snapshot から ProtoPedia API のデータを調べる CLI
